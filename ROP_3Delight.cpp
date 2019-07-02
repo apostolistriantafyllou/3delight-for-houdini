@@ -13,6 +13,13 @@ static const float k_one_line = 0.267;
 static PRM_Template*
 GetTemplates()
 {
+	static PRM_Name separator1("separator1", "");
+	static PRM_Name separator2("separator2", "");
+	static PRM_Name separator3("separator3", "");
+	static PRM_Name separator4("separator4", "");
+	static PRM_Name separator5("separator5", "");
+
+
 	// Quality
 
 	static PRM_Name shading_samples("shading_samples", "Shading Samples");
@@ -74,9 +81,12 @@ GetTemplates()
 		PRM_Template(PRM_INT, 1, &shading_samples, &shading_samples_d, nullptr, &shading_samples_r),
 		PRM_Template(PRM_INT, 1, &pixel_samples, &pixel_samples_d, nullptr, &pixel_samples_r),
 		PRM_Template(PRM_INT, 1, &volume_samples, &volume_samples_d, nullptr, &volume_samples_r),
+		PRM_Template(PRM_SEPARATOR, 0, &separator1),
 		PRM_Template(PRM_STRING, 1, &pixel_filter, &pixel_filter_d, &pixel_filter_c),
 		PRM_Template(PRM_FLT, 1, &filter_width, &filter_width_d, nullptr, &filter_width_r),
+		PRM_Template(PRM_SEPARATOR, 0, &separator2),
 		PRM_Template(PRM_TOGGLE, 1, &motion_blur, &motion_blur_d),
+		PRM_Template(PRM_SEPARATOR, 0, &separator3),
 		PRM_Template(PRM_INT, 1, &max_diffuse_depth, &max_diffuse_depth_d, nullptr, &max_diffuse_depth_r),
 		PRM_Template(PRM_INT, 1, &max_reflection_depth, &max_reflection_depth_d, nullptr, &max_reflection_depth_r),
 		PRM_Template(PRM_INT, 1, &max_refraction_depth, &max_refraction_depth_d, nullptr, &max_refraction_depth_r),
@@ -200,11 +210,13 @@ GetTemplates()
 		PRM_Template(PRM_TOGGLE, 1, &save_ids_as_cryptomatte, &save_ids_as_cryptomatte_d),
 		PRM_Template(PRM_ORD, 1, &batch_output_mode, &batch_output_mode_d, &batch_output_mode_c),
 		PRM_Template(PRM_ORD, 1, &interactive_output_mode, &interactive_output_mode_d, &interactive_output_mode_c),
+		PRM_Template(PRM_SEPARATOR, 0, &separator4),
 		PRM_Template(PRM_MultiType(PRM_MULTITYPE_SCROLL|PRM_MULTITYPE_NO_CONTROL_UI), aov_templates, k_one_line*4.0f, &aov, &nb_aovs),
 		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &add_layer),
 		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &remove_layer),
 		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &duplicate_layer),
-		PRM_Template(PRM_CALLBACK, 1, &view_layer)
+		PRM_Template(PRM_CALLBACK, 1, &view_layer),
+		PRM_Template(PRM_SEPARATOR, 0, &separator5)
 	};
 
 	//// Matte
@@ -333,6 +345,9 @@ GetTemplates()
 			quality_templates[8],
 			quality_templates[9],
 			quality_templates[10],
+			quality_templates[11],
+			quality_templates[12],
+			quality_templates[13],
 
 			image_layers_templates[0],
 			image_layers_templates[1],
@@ -345,6 +360,8 @@ GetTemplates()
 			image_layers_templates[8],
 			image_layers_templates[9],
 			image_layers_templates[10],
+			image_layers_templates[11],
+			image_layers_templates[12],
 
 			PRM_Template(
 				PRM_SWITCHER,
