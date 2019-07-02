@@ -69,7 +69,10 @@ newDriverOperator(OP_OperatorTable *table)
 			0,
 			0,
 			GetVariablePair(),
-			0u));
+			0u,
+			nullptr,
+			0,
+			"Render"));
 }
 
 
