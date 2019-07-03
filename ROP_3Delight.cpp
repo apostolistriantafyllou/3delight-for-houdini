@@ -60,16 +60,10 @@ GetTemplates()
 
 	static PRM_Name motion_blur_note1(
 		"motion_blur_note1",
-		"\tThis enables linear blur with 2 samples.");
+		"This enables linear blur with 2 samples. For motion blur with noticeable");
 	static PRM_Name motion_blur_note2(
 		"motion_blur_note2",
-		"\tFor motion blur with noticeable curvature,");
-	static PRM_Name motion_blur_note3(
-		"motion_blur_note3",
-		"\tadditional samples can be specified per");
-	static PRM_Name motion_blur_note4(
-		"motion_blur_note4",
-		"\tobject and per set.");
+		"curvature, additional samples can be specified per object and per set.");
 
 	static PRM_Name max_diffuse_depth("max_diffuse_depth", "Max Diffuse Depth");
 	static PRM_Default max_diffuse_depth_d(2);
@@ -103,8 +97,6 @@ GetTemplates()
 		PRM_Template(PRM_TOGGLE, 1, &motion_blur, &motion_blur_d),
 		PRM_Template(PRM_LABEL, 0, &motion_blur_note1),
 		PRM_Template(PRM_LABEL, 0, &motion_blur_note2),
-		PRM_Template(PRM_LABEL, 0, &motion_blur_note3),
-		PRM_Template(PRM_LABEL, 0, &motion_blur_note4),
 		PRM_Template(PRM_SEPARATOR, 0, &separator3),
 		PRM_Template(PRM_INT, 1, &max_diffuse_depth, &max_diffuse_depth_d, nullptr, &max_diffuse_depth_r),
 		PRM_Template(PRM_INT, 1, &max_reflection_depth, &max_reflection_depth_d, nullptr, &max_reflection_depth_r),
@@ -291,8 +283,9 @@ GetTemplates()
 
 	// Overrides
 
-	static PRM_Name speed_boost("speed_boost", "Enable Interactive Previewing with Speed Boost");
+	static PRM_Name speed_boost("speed_boost", "Enable Interactive Previewing with Speed Boost\t");
 	static PRM_Default speed_boost_d(false);
+	static PRM_Name speed_boost_align("speed_boost_align", "\t");
 
 	static PRM_Name disable_motion_blur("disable_motion_blur", "Disable Motion Blur");
 	static PRM_Default disable_motion_blur_d(false);
@@ -331,13 +324,13 @@ GetTemplates()
 	};
 	static PRM_ChoiceList sampling_factor_c(PRM_CHOICELIST_SINGLE, sampling_factor_i);
 
-	static PRM_Name overrides_note1("overrides_note1", "\tThese settings are ignored in batch rendering");
-	static PRM_Name overrides_note2("overrides_note2", "\t(unless specifically called for using the command");
-	static PRM_Name overrides_note3("overrides_note3", "\tline option -overrides).");
+	static PRM_Name overrides_note_spacing("overrides_note_spacing", "");
+	static PRM_Name overrides_note("overrides_note", "These settings are ignored in batch rendering");
 
 	static std::vector<PRM_Template> overrides_templates =
 	{
-		PRM_Template(PRM_TOGGLE, 1, &speed_boost, &speed_boost_d),
+		PRM_Template(PRM_TOGGLE|PRM_TYPE_JOIN_NEXT, 1, &speed_boost, &speed_boost_d),
+		PRM_Template(PRM_LABEL, 0, &speed_boost_align),
 		PRM_Template(PRM_TOGGLE, 1, &disable_motion_blur, &disable_motion_blur_d),
 		PRM_Template(PRM_TOGGLE, 1, &disable_depth_of_field, &disable_depth_of_field_d),
 		PRM_Template(PRM_TOGGLE, 1, &disable_displacement, &disable_displacement_d),
@@ -345,9 +338,8 @@ GetTemplates()
 		PRM_Template(PRM_SEPARATOR, 0, &separator6),
 		PRM_Template(PRM_ORD, 1, &resolution_factor, &resolution_factor_d, &resolution_factor_c),
 		PRM_Template(PRM_ORD, 1, &sampling_factor, &sampling_factor_d, &sampling_factor_c),
-		PRM_Template(PRM_LABEL, 0, &overrides_note1),
-		PRM_Template(PRM_LABEL, 0, &overrides_note2),
-		PRM_Template(PRM_LABEL, 0, &overrides_note3)
+		PRM_Template(PRM_LABEL, 0, &overrides_note_spacing),
+		PRM_Template(PRM_LABEL, 0, &overrides_note)
 	};
 
 	// Put everything together
