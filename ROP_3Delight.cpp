@@ -11,6 +11,44 @@
 
 static const float k_one_line = 0.267;
 
+static const char* k_shading_samples = "shading_samples";
+static const char* k_pixel_samples = "pixel_samples";
+static const char* k_volume_samples = "volume_samples";
+static const char* k_pixel_filter = "pixel_filter";
+static const char* k_filter_width = "filter_width";
+static const char* k_motion_blur = "motion_blur";
+static const char* k_max_diffuse_depth = "max_diffuse_depth";
+static const char* k_max_reflection_depth = "max_reflection_depth";
+static const char* k_max_refraction_depth = "max_refraction_depth";
+static const char* k_max_hair_depth = "max_hair_depth";
+static const char* k_max_distance = "max_distance";
+static const char* k_camera = "camera";
+static const char* k_default_image_filename = "default_image_filename";
+static const char* k_default_image_format = "default_image_format";
+static const char* k_default_image_bits = "default_image_bits";
+static const char* k_save_ids_as_cryptomatte = "save_ids_as_cryptomatte";
+static const char* k_batch_output_mode = "batch_output_mode";
+static const char* k_interactive_output_mode = "interactive_output_mode";
+static const char* k_aovs = "aovs";
+static const char* k_aov = "aov";
+static const char* k_framebuffer_output = "framebuffer_output_#";
+static const char* k_file_output = "file_output_#";
+static const char* k_jpeg_output = "jpeg_output_#";
+static const char* k_aov_name = "aov_name_#";
+static const char* k_ignore_matte_attribute = "ignore_matte_attribute";
+static const char* k_matte_sets = "matte_sets";
+static const char* k_light_sets = "light_sets";
+static const char* k_use_light_set = "use_light_set_#";
+static const char* k_light_set = "light_set_#";
+static const char* k_display_all_lights = "display_all_lights";
+static const char* k_speed_boost = "speed_boost";
+static const char* k_disable_motion_blur = "disable_motion_blur";
+static const char* k_disable_depth_of_field = "disable_depth_of_field";
+static const char* k_disable_displacement = "disable_displacement";
+static const char* k_disable_subsurface = "disable_subsurface";
+static const char* k_resolution_factor = "resolution_factor";
+static const char* k_sampling_factor = "sampling_factor";
+
 static PRM_Template*
 GetTemplates()
 {
@@ -24,19 +62,19 @@ GetTemplates()
 
 	// Quality
 
-	static PRM_Name shading_samples("shading_samples", "Shading Samples");
+	static PRM_Name shading_samples(k_shading_samples, "Shading Samples");
 	static PRM_Default shading_samples_d(64);
 	static PRM_Range shading_samples_r(PRM_RANGE_RESTRICTED, 1, PRM_RANGE_UI, 400);
 
-	static PRM_Name pixel_samples("pixel_samples", "Pixel Samples");
+	static PRM_Name pixel_samples(k_pixel_samples, "Pixel Samples");
 	static PRM_Default pixel_samples_d(8);
 	static PRM_Range pixel_samples_r(PRM_RANGE_RESTRICTED, 1, PRM_RANGE_UI, 100);
 
-	static PRM_Name volume_samples("volume_samples", "Volume Samples");
+	static PRM_Name volume_samples(k_volume_samples, "Volume Samples");
 	static PRM_Default volume_samples_d(16);
 	static PRM_Range volume_samples_r(PRM_RANGE_RESTRICTED, 1, PRM_RANGE_UI, 400);
 
-	static PRM_Name pixel_filter("pixel_filter", "Pixel Filter");
+	static PRM_Name pixel_filter(k_pixel_filter, "Pixel Filter");
 	static PRM_Default pixel_filter_d(0.0f, "blackmann-harris");
 	static PRM_Item pixel_filter_i[] =
 	{
@@ -51,11 +89,11 @@ GetTemplates()
 	};
 	static PRM_ChoiceList pixel_filter_c(PRM_CHOICELIST_SINGLE, pixel_filter_i);
 
-	static PRM_Name filter_width("filter_width", "Filter Width");
+	static PRM_Name filter_width(k_filter_width, "Filter Width");
 	static PRM_Default filter_width_d(3.0f);
 	static PRM_Range filter_width_r(PRM_RANGE_RESTRICTED, 0.001f, PRM_RANGE_RESTRICTED, 10.0f);
 
-	static PRM_Name motion_blur("motion_blur", "Motion Blur");
+	static PRM_Name motion_blur(k_motion_blur, "Motion Blur");
 	static PRM_Default motion_blur_d(true);
 
 	static PRM_Name motion_blur_note1(
@@ -65,23 +103,23 @@ GetTemplates()
 		"motion_blur_note2",
 		"curvature, additional samples can be specified per object and per set.");
 
-	static PRM_Name max_diffuse_depth("max_diffuse_depth", "Max Diffuse Depth");
+	static PRM_Name max_diffuse_depth(k_max_diffuse_depth, "Max Diffuse Depth");
 	static PRM_Default max_diffuse_depth_d(2);
 	static PRM_Range max_diffuse_depth_r(PRM_RANGE_RESTRICTED, 0, PRM_RANGE_UI, 10);
 
-	static PRM_Name max_reflection_depth("max_reflection_depth", "Max Reflection Depth");
+	static PRM_Name max_reflection_depth(k_max_reflection_depth, "Max Reflection Depth");
 	static PRM_Default max_reflection_depth_d(2);
 	static PRM_Range max_reflection_depth_r(PRM_RANGE_RESTRICTED, 0, PRM_RANGE_UI, 10);
 
-	static PRM_Name max_refraction_depth("max_refraction_depth", "Max Refraction Depth");
+	static PRM_Name max_refraction_depth(k_max_refraction_depth, "Max Refraction Depth");
 	static PRM_Default max_refraction_depth_d(4);
 	static PRM_Range max_refraction_depth_r(PRM_RANGE_RESTRICTED, 0, PRM_RANGE_UI, 10);
 
-	static PRM_Name max_hair_depth("max_hair_depth", "Max Hair Depth");
+	static PRM_Name max_hair_depth(k_max_hair_depth, "Max Hair Depth");
 	static PRM_Default max_hair_depth_d(5);
 	static PRM_Range max_hair_depth_r(PRM_RANGE_RESTRICTED, 0, PRM_RANGE_UI, 10);
 
-	static PRM_Name max_distance("max_distance", "Max Distance");
+	static PRM_Name max_distance(k_max_distance, "Max Distance");
 	static PRM_Default max_distance_d(1000.0f);
 	static PRM_Range max_distance_r(PRM_RANGE_RESTRICTED, 0.0f, PRM_RANGE_UI, 2000.0f);
 
@@ -107,7 +145,7 @@ GetTemplates()
 
 	// Scene elements
 
-	static PRM_Name camera("camera", "Camera");
+	static PRM_Name camera(k_camera, "Camera");
 	static PRM_Default camera_d(0.0f, "/obj/cam1");
 
 	static std::vector<PRM_Template> scene_elements_templates =
@@ -140,10 +178,10 @@ GetTemplates()
 
 	// Image Layers
 
-	static PRM_Name default_image_filename("default_image_filename", "Default Image Filename");
+	static PRM_Name default_image_filename(k_default_image_filename, "Default Image Filename");
 	static PRM_Default default_image_filename_d(0.0f, "3delight/<scene>/image/<scene>_<pass>_#.<ext>");
 
-	static PRM_Name default_image_format("default_image_format", "Default Image Format");
+	static PRM_Name default_image_format(k_default_image_format, "Default Image Format");
 	static PRM_Default default_image_format_d(0.0f, "exr");
 	static PRM_Item default_image_format_i[] =
 	{
@@ -156,7 +194,7 @@ GetTemplates()
 	};
 	static PRM_ChoiceList default_image_format_c(PRM_CHOICELIST_SINGLE, default_image_format_i);
 
-	static PRM_Name default_image_bits("default_image_bits", "Default Image Bits");
+	static PRM_Name default_image_bits(k_default_image_bits, "Default Image Bits");
 	static PRM_Default default_image_bits_d(0.0f, "float16");
 	static PRM_Item default_image_bits_i[] =
 	{
@@ -168,10 +206,10 @@ GetTemplates()
 	};
 	static PRM_ChoiceList default_image_bits_c(PRM_CHOICELIST_SINGLE, default_image_bits_i);
 
-	static PRM_Name save_ids_as_cryptomatte("save_ids_as_cryptomatte", "Save IDs as Cryptomatte");
+	static PRM_Name save_ids_as_cryptomatte(k_save_ids_as_cryptomatte, "Save IDs as Cryptomatte");
 	static PRM_Default save_ids_as_cryptomatte_d(false);
 
-	static PRM_Name batch_output_mode("batch_output_mode", "Batch Output Mode");
+	static PRM_Name batch_output_mode(k_batch_output_mode, "Batch Output Mode");
 	static PRM_Default batch_output_mode_d(0);
 	static PRM_Item batch_output_mode_i[] =
 	{
@@ -181,7 +219,7 @@ GetTemplates()
 	};
 	static PRM_ChoiceList batch_output_mode_c(PRM_CHOICELIST_SINGLE, batch_output_mode_i);
 
-	static PRM_Name interactive_output_mode("interactive_output_mode", "Interactive Output Mode");
+	static PRM_Name interactive_output_mode(k_interactive_output_mode, "Interactive Output Mode");
 	static PRM_Default interactive_output_mode_d(0);
 	static PRM_Item interactive_output_mode_i[] =
 	{
@@ -192,15 +230,15 @@ GetTemplates()
 	};
 	static PRM_ChoiceList interactive_output_mode_c(PRM_CHOICELIST_SINGLE, interactive_output_mode_i);
 
-	static PRM_Name aovs("aovs", "Image Layers");
-	static PRM_Name aov("aov", "Image Layer (AOV)");
-	static PRM_Name framebuffer_output("framebuffer_output_#", "FB");
+	static PRM_Name aovs(k_aovs, "Image Layers");
+	static PRM_Name aov(k_aov, "Image Layer (AOV)");
+	static PRM_Name framebuffer_output(k_framebuffer_output, "FB");
 	static PRM_Default framebuffer_output_d(true);
-	static PRM_Name file_output("file_output_#", "File");
+	static PRM_Name file_output(k_file_output, "File");
 	static PRM_Default file_output_d(true);
-	static PRM_Name jpeg_output("jpeg_output_#", "JPG");
+	static PRM_Name jpeg_output(k_jpeg_output, "JPG");
 	static PRM_Default jpeg_output_d(false);
-	static PRM_Name aov_name("aov_name_#", "AOV");
+	static PRM_Name aov_name(k_aov_name, "AOV");
 	static PRM_Default aov_name_d(0.0f, "Ci");
 //	static PRM_Name override_image_filename
 //	static PRM_Name override_image_format
@@ -239,9 +277,9 @@ GetTemplates()
 
 	//// Matte
 
-	static PRM_Name ignore_matte_attribute("ignore_matte_attribute", "Ignore Matte Attribute");
+	static PRM_Name ignore_matte_attribute(k_ignore_matte_attribute, "Ignore Matte Attribute");
 	static PRM_Default ignore_matte_attribute_d(false);
-	static PRM_Name matte_sets("matte_sets", "Matte Sets");
+	static PRM_Name matte_sets(k_matte_sets, "Matte Sets");
 
 	static std::vector<PRM_Template> matte_templates =
 	{
@@ -251,10 +289,10 @@ GetTemplates()
 
 	//// Multi-Light
 
-	static PRM_Name light_sets("light_sets", "Light Sets");
-	static PRM_Name use_light_set("use_light_set_#", "Use Light Set");
+	static PRM_Name light_sets(k_light_sets, "Light Sets");
+	static PRM_Name use_light_set(k_use_light_set, "Use Light Set");
 	static PRM_Default use_light_set_d(false);
-	static PRM_Name light_set("light_set_#", "Light Set");
+	static PRM_Name light_set(k_light_set, "Light Set");
 	static PRM_Default nb_lights(10);
 	static PRM_Template light_set_templates[] =
 	{
@@ -263,7 +301,7 @@ GetTemplates()
 		PRM_Template()
 	};
 
-	static PRM_Name display_all_lights("display_all_lights", "Display All Lights");
+	static PRM_Name display_all_lights(k_display_all_lights, "Display All Lights");
 	static PRM_Default display_all_lights_d(false);
 	static PRM_Name refresh_lights("refresh_lights", "Refresh");
 
@@ -283,23 +321,23 @@ GetTemplates()
 
 	// Overrides
 
-	static PRM_Name speed_boost("speed_boost", "Enable Interactive Previewing with Speed Boost\t");
+	static PRM_Name speed_boost(k_speed_boost, "Enable Interactive Previewing with Speed Boost\t");
 	static PRM_Default speed_boost_d(false);
 	static PRM_Name speed_boost_align("speed_boost_align", "\t");
 
-	static PRM_Name disable_motion_blur("disable_motion_blur", "Disable Motion Blur");
+	static PRM_Name disable_motion_blur(k_disable_motion_blur, "Disable Motion Blur");
 	static PRM_Default disable_motion_blur_d(false);
 
-	static PRM_Name disable_depth_of_field("disable_depth_of_field", "Disable Depth of Field");
+	static PRM_Name disable_depth_of_field(k_disable_depth_of_field, "Disable Depth of Field");
 	static PRM_Default disable_depth_of_field_d(false);
 
-	static PRM_Name disable_displacement("disable_displacement", "Disable Displacement");
+	static PRM_Name disable_displacement(k_disable_displacement, "Disable Displacement");
 	static PRM_Default disable_displacement_d(false);
 
-	static PRM_Name disable_subsurface("disable_subsurface", "Disable Subsurface");
+	static PRM_Name disable_subsurface(k_disable_subsurface, "Disable Subsurface");
 	static PRM_Default disable_subsurface_d(false);
 
-	static PRM_Name resolution_factor("resolution_factor", "Resolution");
+	static PRM_Name resolution_factor(k_resolution_factor, "Resolution");
 	static PRM_Default resolution_factor_d(0);
 	static PRM_Item resolution_factor_i[] =
 	{
@@ -311,7 +349,7 @@ GetTemplates()
 	};
 	static PRM_ChoiceList resolution_factor_c(PRM_CHOICELIST_SINGLE, resolution_factor_i);
 
-	static PRM_Name sampling_factor("sampling_factor", "Sampling");
+	static PRM_Name sampling_factor(k_sampling_factor, "Sampling");
 	static PRM_Default sampling_factor_d(0.1f);
 	static PRM_Item sampling_factor_i[] =
 	{
