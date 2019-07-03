@@ -422,7 +422,7 @@ newDriverOperator(OP_OperatorTable *table)
 {
 	table->addOperator(
 		new OP_Operator(
-			"3delight",
+			"3Delight",
 			"3Delight",
 			ROP_3Delight::alloc,
 			GetTemplatePair(),
