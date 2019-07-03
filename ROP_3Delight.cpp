@@ -18,6 +18,7 @@ GetTemplates()
 	static PRM_Name separator3("separator3", "");
 	static PRM_Name separator4("separator4", "");
 	static PRM_Name separator5("separator5", "");
+	static PRM_Name separator6("separator6", "");
 
 
 	// Quality
@@ -56,6 +57,19 @@ GetTemplates()
 	static PRM_Name motion_blur("motion_blur", "Motion Blur");
 	static PRM_Default motion_blur_d(true);
 
+	static PRM_Name motion_blur_note1(
+		"motion_blur_note1",
+		"\tThis enables linear blur with 2 samples.");
+	static PRM_Name motion_blur_note2(
+		"motion_blur_note2",
+		"\tFor motion blur with noticeable curvature,");
+	static PRM_Name motion_blur_note3(
+		"motion_blur_note3",
+		"\tadditional samples can be specified per");
+	static PRM_Name motion_blur_note4(
+		"motion_blur_note4",
+		"\tobject and per set.");
+
 	static PRM_Name max_diffuse_depth("max_diffuse_depth", "Max Diffuse Depth");
 	static PRM_Default max_diffuse_depth_d(2);
 	static PRM_Range max_diffuse_depth_r(PRM_RANGE_RESTRICTED, 0, PRM_RANGE_UI, 10);
@@ -86,6 +100,10 @@ GetTemplates()
 		PRM_Template(PRM_FLT, 1, &filter_width, &filter_width_d, nullptr, &filter_width_r),
 		PRM_Template(PRM_SEPARATOR, 0, &separator2),
 		PRM_Template(PRM_TOGGLE, 1, &motion_blur, &motion_blur_d),
+		PRM_Template(PRM_LABEL, 0, &motion_blur_note1),
+		PRM_Template(PRM_LABEL, 0, &motion_blur_note2),
+		PRM_Template(PRM_LABEL, 0, &motion_blur_note3),
+		PRM_Template(PRM_LABEL, 0, &motion_blur_note4),
 		PRM_Template(PRM_SEPARATOR, 0, &separator3),
 		PRM_Template(PRM_INT, 1, &max_diffuse_depth, &max_diffuse_depth_d, nullptr, &max_diffuse_depth_r),
 		PRM_Template(PRM_INT, 1, &max_reflection_depth, &max_reflection_depth_d, nullptr, &max_reflection_depth_r),
@@ -305,6 +323,10 @@ GetTemplates()
 	};
 	static PRM_ChoiceList sampling_factor_c(PRM_CHOICELIST_SINGLE, sampling_factor_i);
 
+	static PRM_Name overrides_note1("overrides_note1", "\tThese settings are ignored in batch rendering");
+	static PRM_Name overrides_note2("overrides_note2", "\t(unless specifically called for using the command");
+	static PRM_Name overrides_note3("overrides_note3", "\tline option -overrides).");
+
 	static PRM_Template overrides_templates[] =
 	{
 		PRM_Template(PRM_TOGGLE, 1, &speed_boost, &speed_boost_d),
@@ -312,8 +334,12 @@ GetTemplates()
 		PRM_Template(PRM_TOGGLE, 1, &disable_depth_of_field, &disable_depth_of_field_d),
 		PRM_Template(PRM_TOGGLE, 1, &disable_displacement, &disable_displacement_d),
 		PRM_Template(PRM_TOGGLE, 1, &disable_subsurface, &disable_subsurface_d),
+		PRM_Template(PRM_SEPARATOR, 0, &separator6),
 		PRM_Template(PRM_ORD, 1, &resolution_factor, &resolution_factor_d, &resolution_factor_c),
-		PRM_Template(PRM_ORD, 1, &sampling_factor, &sampling_factor_d, &sampling_factor_c)
+		PRM_Template(PRM_ORD, 1, &sampling_factor, &sampling_factor_d, &sampling_factor_c),
+		PRM_Template(PRM_LABEL, 0, &overrides_note1),
+		PRM_Template(PRM_LABEL, 0, &overrides_note2),
+		PRM_Template(PRM_LABEL, 0, &overrides_note3)
 	};
 
 	// Put everything together
@@ -348,6 +374,10 @@ GetTemplates()
 			quality_templates[11],
 			quality_templates[12],
 			quality_templates[13],
+			quality_templates[14],
+			quality_templates[15],
+			quality_templates[16],
+			quality_templates[17],
 
 			image_layers_templates[0],
 			image_layers_templates[1],
@@ -383,6 +413,10 @@ GetTemplates()
 			overrides_templates[4],
 			overrides_templates[5],
 			overrides_templates[6],
+			overrides_templates[7],
+			overrides_templates[8],
+			overrides_templates[9],
+			overrides_templates[10],
 
 		PRM_Template()
 	};
