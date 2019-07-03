@@ -3,9 +3,6 @@
 
 #include <ROP/ROP_Node.h>
 
-class OP_TemplatePair;
-class OP_VariablePair;
-
 
 class ROP_3Delight : public ROP_Node
 {
