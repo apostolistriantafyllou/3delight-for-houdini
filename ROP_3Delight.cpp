@@ -90,7 +90,7 @@ GetTemplates()
 	static PRM_Default max_distance_d(1000.0f);
 	static PRM_Range max_distance_r(PRM_RANGE_RESTRICTED, 0.0f, PRM_RANGE_UI, 2000.0f);
 
-	static PRM_Template quality_templates[] =
+	static std::vector<PRM_Template> quality_templates =
 	{
 		PRM_Template(PRM_INT, 1, &shading_samples, &shading_samples_d, nullptr, &shading_samples_r),
 		PRM_Template(PRM_INT, 1, &pixel_samples, &pixel_samples_d, nullptr, &pixel_samples_r),
@@ -220,7 +220,7 @@ GetTemplates()
 	static PRM_Name duplicate_layer("duplicate_layer", "Duplicate");
 	static PRM_Name view_layer("view_layer", "View...");
 
-	static PRM_Template image_layers_templates[] =
+	static std::vector<PRM_Template> image_layers_templates =
 	{
 		PRM_Template(PRM_FILE, 1, &default_image_filename, &default_image_filename_d),
 		PRM_Template(PRM_STRING|PRM_TYPE_JOIN_NEXT, 1, &default_image_format, &default_image_format_d, &default_image_format_c),
@@ -243,7 +243,7 @@ GetTemplates()
 	static PRM_Default ignore_matte_attribute_d(false);
 	static PRM_Name matte_sets("matte_sets", "Matte Sets");
 
-	static PRM_Template matte_templates[] =
+	static std::vector<PRM_Template> matte_templates =
 	{
 		PRM_Template(PRM_TOGGLE, 1, &ignore_matte_attribute),
 		PRM_Template(PRM_STRING, 1, &matte_sets)
@@ -267,7 +267,7 @@ GetTemplates()
 	static PRM_Default display_all_lights_d(false);
 	static PRM_Name refresh_lights("refresh_lights", "Refresh");
 
-	static PRM_Template multi_light_templates[] =
+	static std::vector<PRM_Template> multi_light_templates =
 	{
 		PRM_Template(PRM_MultiType(PRM_MULTITYPE_SCROLL|PRM_MULTITYPE_NO_CONTROL_UI), light_set_templates, k_one_line*10.0f, &light_sets, &nb_lights),
 		PRM_Template(PRM_TOGGLE, 1, &display_all_lights, &display_all_lights_d),
@@ -275,10 +275,10 @@ GetTemplates()
 	};
 
 	static PRM_Name image_layers_tabs_name("image_layers_tabs");
-	static PRM_Default image_layers_tabs[] =
+	static std::vector<PRM_Default> image_layers_tabs =
 	{
-		PRM_Default(sizeof(matte_templates)/sizeof(matte_templates[0]), "Matte"),
-		PRM_Default(sizeof(multi_light_templates)/sizeof(multi_light_templates[0]), "Multi-Light")
+		PRM_Default(matte_templates.size(), "Matte"),
+		PRM_Default(multi_light_templates.size(), "Multi-Light")
 	};
 
 	// Overrides
@@ -327,7 +327,7 @@ GetTemplates()
 	static PRM_Name overrides_note2("overrides_note2", "\t(unless specifically called for using the command");
 	static PRM_Name overrides_note3("overrides_note3", "\tline option -overrides).");
 
-	static PRM_Template overrides_templates[] =
+	static std::vector<PRM_Template> overrides_templates =
 	{
 		PRM_Template(PRM_TOGGLE, 1, &speed_boost, &speed_boost_d),
 		PRM_Template(PRM_TOGGLE, 1, &disable_motion_blur, &disable_motion_blur_d),
@@ -345,83 +345,44 @@ GetTemplates()
 	// Put everything together
 
 	static PRM_Name main_tabs_name("main_tabs");
-	static PRM_Default main_tabs[] =
+	static std::vector<PRM_Default> main_tabs =
 	{
-		PRM_Default(sizeof(quality_templates)/sizeof(quality_templates[0]), "Quality"),
-		PRM_Default(sizeof(image_layers_templates)/sizeof(image_layers_templates[0])+1, "Image Layers"),
-		PRM_Default(sizeof(overrides_templates)/sizeof(overrides_templates[0]), "Overrides")
+		PRM_Default(quality_templates.size(), "Quality"),
+		PRM_Default(image_layers_templates.size()+1, "Image Layers"),
+		PRM_Default(overrides_templates.size(), "Overrides")
 	};
 
-	static PRM_Template templates[] =
+	static std::vector<PRM_Template> templates;
+	if(templates.size() == 0)
 	{
-		PRM_Template(
-			PRM_SWITCHER,
-			sizeof(main_tabs)/sizeof(main_tabs[0]),
-			&main_tabs_name,
-			main_tabs),
-
-			quality_templates[0],
-			quality_templates[1],
-			quality_templates[2],
-			quality_templates[3],
-			quality_templates[4],
-			quality_templates[5],
-			quality_templates[6],
-			quality_templates[7],
-			quality_templates[8],
-			quality_templates[9],
-			quality_templates[10],
-			quality_templates[11],
-			quality_templates[12],
-			quality_templates[13],
-			quality_templates[14],
-			quality_templates[15],
-			quality_templates[16],
-			quality_templates[17],
-
-			image_layers_templates[0],
-			image_layers_templates[1],
-			image_layers_templates[2],
-			image_layers_templates[3],
-			image_layers_templates[4],
-			image_layers_templates[5],
-			image_layers_templates[6],
-			image_layers_templates[7],
-			image_layers_templates[8],
-			image_layers_templates[9],
-			image_layers_templates[10],
-			image_layers_templates[11],
-			image_layers_templates[12],
-
+		templates.push_back(
 			PRM_Template(
 				PRM_SWITCHER,
-				sizeof(image_layers_tabs)/sizeof(image_layers_tabs[0]),
-				&image_layers_tabs_name,
-				image_layers_tabs),
+				main_tabs.size(),
+				&main_tabs_name,
+				&main_tabs[0]));
 
-				matte_templates[0],
-				matte_templates[1],
+			// Quality
+			templates.insert(templates.end(), quality_templates.begin(), quality_templates.end());
 
-				multi_light_templates[0],
-				multi_light_templates[1],
-				multi_light_templates[2],
+			// Image Layers
+			templates.insert(templates.end(), image_layers_templates.begin(), image_layers_templates.end());
+			templates.push_back(
+				PRM_Template(
+					PRM_SWITCHER,
+					image_layers_tabs.size(),
+					&image_layers_tabs_name,
+					&image_layers_tabs[0]));
+				templates.insert(templates.end(), matte_templates.begin(), matte_templates.end());
+				templates.insert(templates.end(), multi_light_templates.begin(), multi_light_templates.end());
 
-			overrides_templates[0],
-			overrides_templates[1],
-			overrides_templates[2],
-			overrides_templates[3],
-			overrides_templates[4],
-			overrides_templates[5],
-			overrides_templates[6],
-			overrides_templates[7],
-			overrides_templates[8],
-			overrides_templates[9],
-			overrides_templates[10],
+			// Overrides
+			templates.insert(templates.end(), overrides_templates.begin(), overrides_templates.end());
 
-		PRM_Template()
-	};
+		templates.push_back(PRM_Template());
+	}
 
-	return templates;
+	return &templates[0];
 }
 
 static OP_TemplatePair*
