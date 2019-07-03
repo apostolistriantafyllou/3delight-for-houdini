@@ -1,6 +1,7 @@
 #include "ROP_3Delight.h"
 
 #include <PRM/PRM_Include.h>
+#include <PRM/PRM_SpareData.h>
 #include <ROP/ROP_Error.h>
 #include <ROP/ROP_Templates.h>
 #include <OP/OP_OperatorTable.h>
@@ -112,10 +113,17 @@ GetTemplates()
 		PRM_Template(PRM_FLT, 1, &max_distance, &max_distance_d, nullptr, &max_distance_r)
 	};
 
-/*
-	//? Scene elements
+	// Scene elements
 
-	Camera
+	static PRM_Name camera("camera", "Camera");
+	static PRM_Default camera_d(0.0f, "/obj/cam1");
+
+	static std::vector<PRM_Template> scene_elements_templates =
+	{
+		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &camera, &camera_d, nullptr, nullptr, nullptr, &PRM_SpareData::objCameraPath)
+	};
+
+/*
 	Environment
 	Atmosphere
 	Objects To Render
@@ -348,7 +356,8 @@ GetTemplates()
 	static std::vector<PRM_Default> main_tabs =
 	{
 		PRM_Default(quality_templates.size(), "Quality"),
-		PRM_Default(image_layers_templates.size()+1, "Image Layers"),
+		PRM_Default(scene_elements_templates.size(), "Scene Elements"),
+		PRM_Default(image_layers_templates.size() + 1, "Image Layers"),
 		PRM_Default(overrides_templates.size(), "Overrides")
 	};
 
@@ -363,21 +372,43 @@ GetTemplates()
 				&main_tabs[0]));
 
 			// Quality
-			templates.insert(templates.end(), quality_templates.begin(), quality_templates.end());
+			templates.insert(
+				templates.end(),
+				quality_templates.begin(),
+				quality_templates.end());
+
+			// Scene Elements
+			templates.insert(
+				templates.end(),
+				scene_elements_templates.begin(),
+				scene_elements_templates.end());
 
 			// Image Layers
-			templates.insert(templates.end(), image_layers_templates.begin(), image_layers_templates.end());
+			templates.insert(
+				templates.end(),
+				image_layers_templates.begin(),
+				image_layers_templates.end());
+			// That's what the "+ 1" in the definition of main_tabs is for
 			templates.push_back(
 				PRM_Template(
 					PRM_SWITCHER,
 					image_layers_tabs.size(),
 					&image_layers_tabs_name,
 					&image_layers_tabs[0]));
-				templates.insert(templates.end(), matte_templates.begin(), matte_templates.end());
-				templates.insert(templates.end(), multi_light_templates.begin(), multi_light_templates.end());
+				templates.insert(
+					templates.end(),
+					matte_templates.begin(),
+					matte_templates.end());
+				templates.insert(
+					templates.end(),
+					multi_light_templates.begin(),
+					multi_light_templates.end());
 
 			// Overrides
-			templates.insert(templates.end(), overrides_templates.begin(), overrides_templates.end());
+			templates.insert(
+				templates.end(),
+				overrides_templates.begin(),
+				overrides_templates.end());
 
 		templates.push_back(PRM_Template());
 	}
