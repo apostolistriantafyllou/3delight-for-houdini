@@ -6,7 +6,6 @@
 class OP_TemplatePair;
 class OP_VariablePair;
 
-
 class ROP_3Delight : public ROP_Node
 {
 public:
@@ -23,8 +22,8 @@ protected:
 	virtual ROP_RENDER_CODE endRender();
 
 private:
-
-	fpreal end_time;
+	/* \ref endRender */
+	fpreal m_end_time;
 };
 
 #endif

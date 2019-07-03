@@ -458,7 +458,8 @@ ROP_3Delight::~ROP_3Delight()
 int
 ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 {
-	end_time = tend;
+	m_end_time = tend;
+
 	if(error() < UT_ERROR_ABORT)
 	{
 		executePreRenderScript(tstart);
@@ -485,7 +486,7 @@ ROP_3Delight::endRender()
 {
 	if(error() < UT_ERROR_ABORT)
 	{
-		executePostRenderScript(end_time);
+		executePostRenderScript(m_end_time);
 	}
 
 	return ROP_CONTINUE_RENDER;
