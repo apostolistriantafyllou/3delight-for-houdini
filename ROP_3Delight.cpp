@@ -6,7 +6,10 @@
 #include <ROP/ROP_Templates.h>
 #include <OP/OP_OperatorTable.h>
 #include <OP/OP_Director.h>
+#include <OP/OP_Context.h>
 #include <OBJ/OBJ_Node.h>
+#include <SOP/SOP_Node.h>
+#include <GU/GU_Detail.h>
 
 #include <UT/UT_DSOVersion.h>
 #include "nsi.hpp"
@@ -616,22 +619,50 @@ ROP_3Delight::endRender()
 	return ROP_CONTINUE_RENDER;
 }
 
-void ROP_3Delight::process_obj(OP_Node *node)
+/**
+*/
+void ROP_3Delight::export_obj( OBJ_Node *i_object )
 {
-	OBJ_Node *obj = node->castToOBJNode();
+	SOP_Node *sop = i_object->getRenderSopPtr();
+	if( !sop )
+		return;
 
-	if( !obj )
+	OP_Context context( 0 );
+
+	const GU_DetailHandleAutoReadLock detail_handle( sop->getCookedGeoHandle(context) );
+	if( !detail_handle.isValid() )
 	{
+		std::cout << "invalid detail for " << i_object->getFullPath() << std::endl;
+		//assert( !"invalid detail handle" );
 		return;
 	}
+
+	const GU_Detail &detail = *detail_handle;
+
+	std::cout << i_object->getName() << " --> " << detail.getNumPoints() << " / " <<
+		detail.getNumPrimitives() << std::endl;
+}
+
+/**
+	\brief Decide what to do with this OBJ.
+
+	NULLs are output, always. They are the internal nodes of our scene
+	tree. Other than that, we output any obj that is a OBJ_GEOMETRY
+	and that is renderable in the current frame range.
+*/
+void ROP_3Delight::process_obj(
+	OP_Node *i_node,
+	std::vector<OBJ_Node *> &o_to_export )
+{
+	OBJ_Node *obj = i_node->castToOBJNode();
+
+	if( !obj )
+		return;
 
 	bool renderable = false;
 
 	if( obj->getObjectType() & OBJ_NULL )
 	{
-		/*
-			Transforms are always output.
-		*/
 		renderable = true;
 	}
 	else
@@ -642,12 +673,7 @@ void ROP_3Delight::process_obj(OP_Node *node)
 
 	if( renderable )
 	{
-		OBJ_Node *parent = obj->getParentObject();
-		if( parent )
-			std::cout << obj->getFullPath() << " - " << parent->getFullPath().buffer() << " - " << obj->getObjectType() << std::endl;
-		else
-			std::cout << obj->getFullPath() << " - " << obj->getObjectType() << std::endl;
-
+		o_to_export.push_back( obj );
 	}
 }
 
@@ -658,23 +684,45 @@ void ROP_3Delight::process_obj(OP_Node *node)
 */
 void ROP_3Delight::scan_obj( OP_Network *i_network )
 {
-	int nkids = i_network->getNchildren();
-	for( int i=0; i< nkids; i++ )
+	std::vector< OBJ_Node * > to_export;
+
+	/* A traversal stack to abvoid recursion */
+	std::vector< OP_Network * > traversal;
+	traversal.push_back( i_network );
+	i_network = nullptr; // avoid typos below.
+
+	/*
+		After this while loop, to_export will be filled with the OBJs
+		to export.
+	*/
+	while( traversal.size() )
 	{
-		OP_Node *node = i_network->getChild(i);
-		process_obj( node );
+		OP_Node *network = traversal.back();
+		traversal.pop_back();
 
-		if( !node->isNetwork() )
-		{
-			continue;
-		}
+		assert( network->isNetwork() );
 
-		OP_Network *kidnet = (OP_Network *)node;
-		if( kidnet->getNchildren() )
+		int nkids = network->getNchildren();
+		for( int i=0; i< nkids; i++ )
 		{
-			/* NOTE: recursive */
-			scan_obj( kidnet );
+			OP_Node *node = network->getChild(i);
+			process_obj( node, to_export );
+
+			if( !node->isNetwork() )
+				continue;
+
+			OP_Network *kidnet = (OP_Network *)node;
+			if( kidnet->getNchildren() )
+			{
+				traversal.push_back( kidnet );
+			}
 		}
+	}
+
+	std::cout << "Export queue size is " << to_export.size() << std::endl;
+	for( auto &obj : to_export )
+	{
+		export_obj( obj );
 	}
 }
 
