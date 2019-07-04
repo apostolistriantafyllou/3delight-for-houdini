@@ -8,6 +8,8 @@
 
 #include <UT/UT_DSOVersion.h>
 
+#include "nsi.hpp"
+
 
 static const float k_one_line = 0.267;
 
@@ -498,6 +500,68 @@ ROP_3Delight::alloc(OP_Network* net, const char* name, OP_Operator* op)
 	return new ROP_3Delight(net, name, op);
 }
 
+bool
+ROP_3Delight::HasMotionBlur()const
+{
+	return
+		evalInt(k_motion_blur, 0, 0.0f) &&
+		!(HasSpeedBoost() && evalInt(k_disable_motion_blur, 0, 0.0f));
+}
+
+void
+ROP_3Delight::ExportGlobals(NSI::Context& io_nsi)const
+{
+	int shading_samples = evalInt(k_shading_samples, 0, 0.0f);
+	shading_samples = int(float(shading_samples) * GetSamplingFactor() + 0.5f);
+	int volume_samples = evalInt(k_volume_samples, 0, 0.0f);
+	io_nsi.SetAttribute(
+		".global",
+		(
+			NSI::IntegerArg("quality.shadingsamples", shading_samples),
+			NSI::IntegerArg("quality.volumesamples", volume_samples)
+		) );
+
+	int max_diffuse_depth = evalInt(k_max_diffuse_depth, 0, 0.0f);
+	int max_reflection_depth = evalInt(k_max_reflection_depth, 0, 0.0f);
+	int max_refraction_depth = evalInt(k_max_refraction_depth, 0, 0.0f);
+	int max_hair_depth = evalInt(k_max_hair_depth, 0, 0.0f);
+	io_nsi.SetAttribute(
+		".global",
+		(
+			NSI::IntegerArg("maximumraydepth.diffuse", max_diffuse_depth),
+			NSI::IntegerArg("maximumraydepth.reflection", max_reflection_depth),
+			NSI::IntegerArg("maximumraydepth.refraction", max_refraction_depth),
+			NSI::IntegerArg("maximumraydepth.hair", max_hair_depth)
+		) );
+
+	float max_distance = evalInt(k_max_distance, 0, 0.0f);
+	io_nsi.SetAttribute(
+		".global",
+		(
+			 NSI::DoubleArg( "maximumraylength.specular", max_distance),
+			 NSI::DoubleArg( "maximumraylength.diffuse", max_distance ),
+			 NSI::DoubleArg( "maximumraylength.reflection", max_distance),
+			 NSI::DoubleArg( "maximumraylength.refraction", max_distance),
+			 NSI::DoubleArg( "maximumraylength.hair", max_distance)
+		) );
+
+	if(HasSpeedBoost())
+	{
+
+		if(evalInt(k_disable_displacement, 0, 0.0f))
+		{
+			io_nsi.SetAttribute(
+				".global", NSI::IntegerArg("show.displacement", 0));
+		}
+
+		if(evalInt(k_disable_subsurface, 0, 0.0f))
+		{
+			io_nsi.SetAttribute(
+				".global", NSI::IntegerArg("show.osl.subsurface", 0));
+		}
+	}
+}
+
 ROP_3Delight::ROP_3Delight(
 	OP_Network* net,
 	const char* name,
@@ -547,3 +611,49 @@ ROP_3Delight::endRender()
 	return ROP_CONTINUE_RENDER;
 }
 
+bool
+ROP_3Delight::HasSpeedBoost()const
+{
+	int speed_boost = evalInt(k_speed_boost, 0, 0.0f);
+	return speed_boost;
+}
+
+float
+ROP_3Delight::GetResolutionFactor()const
+{
+	if(!HasSpeedBoost())
+	{
+		return 1.0f;
+	}
+
+	int resolution_factor = evalInt(k_resolution_factor, 0, 0.0f);
+
+	float factors[] = { 1.0f, 0.25f, 0.1f, 0.04f, 0.01f };
+	if(resolution_factor < 0 ||
+		resolution_factor >= sizeof(factors) / sizeof(factors[0]))
+	{
+		return 1.0f;
+	}
+
+	return factors[resolution_factor];
+}
+
+float
+ROP_3Delight::GetSamplingFactor()const
+{
+	if(!HasSpeedBoost())
+	{
+		return 1.0f;
+	}
+
+	int sampling_factor = evalInt(k_sampling_factor, 0, 0.0f);
+
+	float factors[] = { 1.0f, 0.5f, 0.25f, 0.125f };
+	if(sampling_factor < 0 ||
+		sampling_factor >= sizeof(factors) / sizeof(factors[0]))
+	{
+		return 1.0f;
+	}
+
+	return factors[sampling_factor];
+}

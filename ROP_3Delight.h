@@ -3,12 +3,17 @@
 
 #include <ROP/ROP_Node.h>
 
+namespace NSI { class Context; }
 
 class ROP_3Delight : public ROP_Node
 {
 public:
 
 	static OP_Node* alloc(OP_Network* net, const char* name, OP_Operator* op);
+
+	bool HasMotionBlur()const;
+
+	void ExportGlobals(NSI::Context& io_nsi)const;
 
 protected:
 
@@ -20,6 +25,10 @@ protected:
 	virtual ROP_RENDER_CODE endRender();
 
 private:
+
+	bool HasSpeedBoost()const;
+	float GetResolutionFactor()const;
+	float GetSamplingFactor()const;
 
 	fpreal end_time;
 };
