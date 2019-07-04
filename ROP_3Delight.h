@@ -28,7 +28,6 @@ protected:
 
 	void process_obj(
 		OP_Node *node, std::vector<OBJ_Node*> &o_to_export );
-	void export_obj( OBJ_Node * );
 	void scan_obj( OP_Network *i_network );
 
 private:

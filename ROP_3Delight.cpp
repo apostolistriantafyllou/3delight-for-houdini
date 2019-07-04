@@ -1,18 +1,17 @@
 #include "ROP_3Delight.h"
 
+#include "mesh.h"
+
 #include <PRM/PRM_Include.h>
 #include <PRM/PRM_SpareData.h>
 #include <ROP/ROP_Error.h>
 #include <ROP/ROP_Templates.h>
 #include <OP/OP_OperatorTable.h>
 #include <OP/OP_Director.h>
-#include <OP/OP_Context.h>
 #include <OBJ/OBJ_Node.h>
-#include <SOP/SOP_Node.h>
-#include <GU/GU_Detail.h>
 
 #include <UT/UT_DSOVersion.h>
-#include "nsi.hpp"
+#include <nsi.hpp>
 
 #include <iostream>
 
@@ -620,30 +619,6 @@ ROP_3Delight::endRender()
 }
 
 /**
-*/
-void ROP_3Delight::export_obj( OBJ_Node *i_object )
-{
-	SOP_Node *sop = i_object->getRenderSopPtr();
-	if( !sop )
-		return;
-
-	OP_Context context( 0 );
-
-	const GU_DetailHandleAutoReadLock detail_handle( sop->getCookedGeoHandle(context) );
-	if( !detail_handle.isValid() )
-	{
-		std::cout << "invalid detail for " << i_object->getFullPath() << std::endl;
-		//assert( !"invalid detail handle" );
-		return;
-	}
-
-	const GU_Detail &detail = *detail_handle;
-
-	std::cout << i_object->getName() << " --> " << detail.getNumPoints() << " / " <<
-		detail.getNumPrimitives() << std::endl;
-}
-
-/**
 	\brief Decide what to do with this OBJ.
 
 	NULLs are output, always. They are the internal nodes of our scene
@@ -722,7 +697,7 @@ void ROP_3Delight::scan_obj( OP_Network *i_network )
 	std::cout << "Export queue size is " << to_export.size() << std::endl;
 	for( auto &obj : to_export )
 	{
-		export_obj( obj );
+		mesh::export_object( obj );
 	}
 }
 
