@@ -4,8 +4,12 @@
 #include <ROP/ROP_Error.h>
 #include <ROP/ROP_Templates.h>
 #include <OP/OP_OperatorTable.h>
+#include <OP/OP_Director.h>
+#include <OBJ/OBJ_Node.h>
 
 #include <UT/UT_DSOVersion.h>
+
+#include <iostream>
 
 
 static const float k_one_line = 0.267;
@@ -455,14 +459,16 @@ ROP_3Delight::~ROP_3Delight()
 {
 }
 
-int
-ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
+
+int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 {
 	m_end_time = tend;
 
 	if(error() < UT_ERROR_ABORT)
 	{
 		executePreRenderScript(tstart);
+
+		export_scene();
 	}
 
 	return 1;
@@ -492,3 +498,71 @@ ROP_3Delight::endRender()
 	return ROP_CONTINUE_RENDER;
 }
 
+void ROP_3Delight::process_obj(OP_Node *node)
+{
+	OBJ_Node *obj = node->castToOBJNode();
+
+	if( !obj )
+	{
+		return;
+	}
+
+	bool renderable = false;
+
+	if( obj->getObjectType() & OBJ_NULL )
+	{
+		/*
+			Transforms are always output.
+		*/
+		renderable = true;
+	}
+	else
+	{
+		renderable = obj->isObjectRenderable(0) &&
+			(obj->getObjectType() & OBJ_GEOMETRY);
+	}
+
+	if( renderable )
+	{
+		OBJ_Node *parent = obj->getParentObject();
+		if( parent )
+			std::cout << obj->getFullPath() << " - " << parent->getFullPath().buffer() << " - " << obj->getObjectType() << std::endl;
+		else
+			std::cout << obj->getFullPath() << " - " << obj->getObjectType() << std::endl;
+
+	}
+}
+
+/**
+	\brief Scans for geometry, cameras, lights, etc...
+
+	History: started with the traverse.C sample file.
+*/
+void ROP_3Delight::scan_obj( OP_Network *i_network )
+{
+	int nkids = i_network->getNchildren();
+	for( int i=0; i< nkids; i++ )
+	{
+		OP_Node *node = i_network->getChild(i);
+		process_obj( node );
+
+		if( !node->isNetwork() )
+		{
+			continue;
+		}
+
+		OP_Network *kidnet = (OP_Network *)node;
+		if( kidnet->getNchildren() )
+		{
+			/* NOTE: recursive */
+			scan_obj( kidnet );
+		}
+	}
+}
+
+void ROP_3Delight::export_scene( void )
+{
+	OP_Node *our_dear_leader = OPgetDirector();
+
+	scan_obj( (OP_Network*)our_dear_leader->findNode( "/obj") );
+}

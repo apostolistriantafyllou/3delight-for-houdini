@@ -21,6 +21,11 @@ protected:
 	virtual ROP_RENDER_CODE renderFrame(fpreal time, UT_Interrupt* boss);
 	virtual ROP_RENDER_CODE endRender();
 
+	void export_scene( void );
+
+	void process_obj(OP_Node *node);
+	void scan_obj( OP_Network *i_network );
+
 private:
 	/* \ref endRender */
 	fpreal m_end_time;
