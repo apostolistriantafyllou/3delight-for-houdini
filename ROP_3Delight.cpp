@@ -12,6 +12,7 @@
 #include <ROP/ROP_Templates.h>
 #include <OP/OP_OperatorTable.h>
 #include <OP/OP_Director.h>
+#include <OBJ/OBJ_Camera.h>
 #include <OBJ/OBJ_Node.h>
 
 #include <UT/UT_DSOVersion.h>
@@ -594,7 +595,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 
 	nsi.Begin( NSI::IntegerArg("streamfiledescriptor", 1) );
 
-	context ctx( nsi, tstart, tend, HasMotionBlur() );
+	context ctx( nsi, tstart, tend, GetShutterInterval(tstart) );
 
 	if(error() < UT_ERROR_ABORT)
 	{
@@ -712,7 +713,7 @@ void ROP_3Delight::scan_obj(
 /**
 
 	Create Step:
-	- Create a "tansform" for each NULL object.
+	- Create a "transform" for each NULL object.
 	- Craete a geometry node AND a "transform" for each OBG_Geometry. In NSI,
 	  transforms and objects are separated, not so in HOUDINI.
 
@@ -859,4 +860,31 @@ ROP_3Delight::GetSamplingFactor()const
 	}
 
 	return factors[sampling_factor];
+}
+
+OBJ_Camera*
+ROP_3Delight::GetCamera()const
+{
+	UT_String cam_path;
+	evalString(cam_path, k_camera, 0, 0.0f);
+
+	OBJ_Node* obj_node = OPgetDirector()->findOBJNode(cam_path);
+	if(!obj_node)
+	{
+		return nullptr;
+	}
+
+	return obj_node->castToOBJCamera();
+}
+
+float
+ROP_3Delight::GetShutterInterval(float i_time)const
+{
+	if(!HasMotionBlur())
+	{
+		return 0.0f;
+	}
+
+	OBJ_Camera* cam = ROP_3Delight::GetCamera();
+	return cam ? cam->SHUTTER(i_time) : 1.0f;
 }

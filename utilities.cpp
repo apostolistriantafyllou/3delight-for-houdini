@@ -2,6 +2,8 @@
 
 #include <assert.h>
 
+#include <CH/CH_Manager.h>
+#include <OP/OP_Director.h>
 #include <OP/OP_Node.h>
 #include <OBJ/OBJ_Node.h>
 #include <string>
@@ -31,6 +33,11 @@ const char *nsi_node_type( const OBJ_Node *i_node )
 
 	assert( !"utilities::nsi_node_type" );
 	return "unknown";
+}
+
+float fps()
+{
+	return OPgetDirector()->getChannelManager()->getSamplesPerSec();
 }
 
 }
