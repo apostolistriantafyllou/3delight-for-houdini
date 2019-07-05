@@ -5,12 +5,15 @@
 
 namespace NSI { class Context; }
 
+class context;
+
 class ROP_3Delight : public ROP_Node
 {
 public:
 
 	static OP_Node* alloc(OP_Network* net, const char* name, OP_Operator* op);
 
+	/** \brief Returns true if motion blur is enabled. */
 	bool HasMotionBlur()const;
 
 	void ExportGlobals(NSI::Context& io_nsi)const;
@@ -24,11 +27,15 @@ protected:
 	virtual ROP_RENDER_CODE renderFrame(fpreal time, UT_Interrupt* boss);
 	virtual ROP_RENDER_CODE endRender();
 
-	void export_scene( void );
+	void export_scene( const context & );
 
 	void process_obj(
 		OP_Node *node, std::vector<OBJ_Node*> &o_to_export );
-	void scan_obj( OP_Network *i_network );
+
+	void scan_obj(
+		const context &,
+		OP_Network *i_network,
+		std::vector<OBJ_Node *> &o_to_export );
 
 private:
 

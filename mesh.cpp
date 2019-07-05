@@ -1,5 +1,6 @@
 
 #include "mesh.h"
+#include "context.h"
 
 #include <OBJ/OBJ_Node.h>
 #include <SOP/SOP_Node.h>
@@ -8,15 +9,17 @@
 
 #include <nsi.hpp>
 
-void mesh::export_object( OBJ_Node *i_object )
+void mesh::export_object( const context &i_context, OBJ_Node *i_object )
 {
 	SOP_Node *sop = i_object->getRenderSopPtr();
 	if( !sop )
 		return;
 
-	OP_Context context( 0 );
+	OP_Context context( i_context.m_start_time );
 
-	const GU_DetailHandleAutoReadLock detail_handle( sop->getCookedGeoHandle(context) );
+	const GU_DetailHandleAutoReadLock detail_handle(
+		sop->getCookedGeoHandle(context) );
+
 	if( !detail_handle.isValid() )
 	{
 		std::cout << "invalid detail for " << i_object->getFullPath() << std::endl;

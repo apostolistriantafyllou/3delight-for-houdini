@@ -1,6 +1,7 @@
 #include "ROP_3Delight.h"
 
 #include "mesh.h"
+#include "context.h"
 
 #include <PRM/PRM_Include.h>
 #include <PRM/PRM_SpareData.h>
@@ -582,13 +583,15 @@ ROP_3Delight::~ROP_3Delight()
 
 int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 {
-	m_end_time = tend;
+	m_end_time = tend; // \ref endRender
+
+	NSI::Context nsi;
+	context ctx( nsi, tstart, tend, HasMotionBlur() );
 
 	if(error() < UT_ERROR_ABORT)
 	{
 		executePreRenderScript(tstart);
-
-		export_scene();
+		export_scene( ctx );
 	}
 
 	return 1;
@@ -654,13 +657,12 @@ void ROP_3Delight::process_obj(
 
 /**
 	\brief Scans for geometry, cameras, lights, etc...
-
-	History: started with the traverse.C sample file.
 */
-void ROP_3Delight::scan_obj( OP_Network *i_network )
+void ROP_3Delight::scan_obj(
+	const context &i_context,
+	OP_Network *i_network,
+	std::vector< OBJ_Node * > &o_to_export )
 {
-	std::vector< OBJ_Node * > to_export;
-
 	/* A traversal stack to abvoid recursion */
 	std::vector< OP_Network * > traversal;
 	traversal.push_back( i_network );
@@ -681,7 +683,7 @@ void ROP_3Delight::scan_obj( OP_Network *i_network )
 		for( int i=0; i< nkids; i++ )
 		{
 			OP_Node *node = network->getChild(i);
-			process_obj( node, to_export );
+			process_obj( node, o_to_export );
 
 			if( !node->isNetwork() )
 				continue;
@@ -694,18 +696,24 @@ void ROP_3Delight::scan_obj( OP_Network *i_network )
 		}
 	}
 
-	std::cout << "Export queue size is " << to_export.size() << std::endl;
-	for( auto &obj : to_export )
-	{
-		mesh::export_object( obj );
-	}
 }
 
-void ROP_3Delight::export_scene( void )
+void ROP_3Delight::export_scene( const context &i_context )
 {
 	OP_Node *our_dear_leader = OPgetDirector();
 
-	scan_obj( (OP_Network*)our_dear_leader->findNode( "/obj") );
+	std::vector<OBJ_Node *> to_export;
+
+	scan_obj(
+		i_context,
+		(OP_Network*)our_dear_leader->findNode( "/obj"),
+		to_export );
+
+	std::cout << "Export iset size is " << to_export.size() << std::endl;
+	for( auto &obj : to_export )
+	{
+		mesh::export_object( i_context, obj );
+	}
 }
 
 bool
