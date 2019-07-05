@@ -13,8 +13,7 @@ add_library( ${library_name} SHARED
 	ROP_3Delight.cpp
 	mesh.cpp
 	transform.cpp
-	utilities.cpp
-	ROP_3Delight.svg )
+	utilities.cpp)
 
 # 3Deligt includes
 target_include_directories( ${library_name} PRIVATE "$ENV{DELIGHT}/include"  )
@@ -22,6 +21,9 @@ target_include_directories( ${library_name} PRIVATE "$ENV{DELIGHT}/include"  )
 # Link against the Houdini libraries, and add required include directories and
 # compile definitions.
 target_link_libraries( ${library_name} Houdini )
+
+configure_file(
+	ROP_3Delight.svg $ENV{HIH}/config/Icons/ROP_3Delight.svg COPYONLY )
 
 # Configure several common target properties, such as its output directory.
 houdini_configure_target( ${library_name} )
