@@ -11,7 +11,10 @@ find_package( Houdini REQUIRED )
 set( library_name ROP_3Delight )
 add_library( ${library_name} SHARED
 	ROP_3Delight.cpp
-	mesh.cpp )
+	mesh.cpp
+	transform.cpp
+	utilities.cpp
+	ROP_3Delight.svg )
 
 # 3Deligt includes
 target_include_directories( ${library_name} PRIVATE "$ENV{DELIGHT}/include"  )

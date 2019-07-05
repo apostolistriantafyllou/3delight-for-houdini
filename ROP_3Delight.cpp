@@ -1,7 +1,9 @@
 #include "ROP_3Delight.h"
 
 #include "mesh.h"
+#include "transform.h"
 #include "context.h"
+#include "utilities.h"
 
 #include <PRM/PRM_Include.h>
 #include <PRM/PRM_SpareData.h>
@@ -13,6 +15,7 @@
 
 #include <UT/UT_DSOVersion.h>
 #include <nsi.hpp>
+#include <nsi_dynamic.hpp>
 
 #include <iostream>
 
@@ -585,7 +588,11 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 {
 	m_end_time = tend; // \ref endRender
 
-	NSI::Context nsi;
+	NSI::DynamicAPI api;
+	NSI::Context nsi(api);
+
+	nsi.Begin( NSI::IntegerArg("streamfiledescriptor", 1) );
+
 	context ctx( nsi, tstart, tend, HasMotionBlur() );
 
 	if(error() < UT_ERROR_ABORT)
@@ -593,6 +600,8 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		executePreRenderScript(tstart);
 		export_scene( ctx );
 	}
+
+	nsi.End();
 
 	return 1;
 }
@@ -695,9 +704,18 @@ void ROP_3Delight::scan_obj(
 			}
 		}
 	}
-
 }
 
+/**
+
+	Create Step:
+	- Create a "tansform" for each NULL object.
+	- Craete a geometry node AND a "transform" for each OBG_Geometry. In NSI,
+	  transforms and objects are separated, not so in HOUDINI.
+
+	Connection Step:
+	- We connect object transforms to their parent's transforms.
+*/
 void ROP_3Delight::export_scene( const context &i_context )
 {
 	OP_Node *our_dear_leader = OPgetDirector();
@@ -710,8 +728,73 @@ void ROP_3Delight::export_scene( const context &i_context )
 		to_export );
 
 	std::cout << "Export set size is " << to_export.size() << std::endl;
+
+	NSI::Context &nsi = i_context.m_nsi;
+
+	/*
+		Create phase. This will creat all the NSI nodes from the Houdini
+		objects that we support.
+
+		\ref process_obj to see which objects end up here.
+	*/
 	for( auto &obj : to_export )
 	{
+		const char *handle = utilities::handle(obj);
+		const char *nsi_type = utilities::nsi_node_type(obj);
+
+		std::string transform_handle(handle); transform_handle += "|transform";
+
+		/* Always create a tranform */
+		nsi.Create( transform_handle.c_str(), "transform" );
+
+		if( nsi_type != utilities::k_nsi_transform )
+		{
+			/* Create the geo node and connect it to its transform */
+			nsi.Create( utilities::handle(obj), nsi_type );
+			nsi.Connect(
+				utilities::handle(obj), "",
+				transform_handle.c_str(), "objects" );
+		}
+	}
+
+	/*
+		Connect to parents. This will effectively create the entire scene
+		hierarchy in one go.
+	*/
+	for( auto &obj : to_export )
+	{
+		/*
+			Parent in scene hierarchy. The parent is already created by
+			create loop above.
+		*/
+		OBJ_Node *parent = obj->getParentObject();
+
+		std::string handle( utilities::handle(obj) );
+		handle += "|transform";
+
+		if( parent )
+		{
+			std::string parent_handle( utilities::handle(parent) );
+			parent_handle += "|transform";
+
+			nsi.Connect(
+				handle.c_str(), "",
+				parent_handle.c_str(), "objects" );
+		}
+		else
+		{
+			nsi.Connect( handle.c_str(), "", NSI_SCENE_ROOT, "objects" );
+		}
+	}
+
+	/* Finally, SetAttributes[AtTime], in parallel (FIXME) */
+	for( auto &obj : to_export )
+	{
+		transform::export_object( i_context, obj );
+
+		if( utilities::nsi_node_type(obj) == utilities::k_nsi_transform )
+			continue;
+
 		mesh::export_object( i_context, obj );
 	}
 }
