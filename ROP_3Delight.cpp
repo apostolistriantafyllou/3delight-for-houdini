@@ -709,7 +709,7 @@ void ROP_3Delight::export_scene( const context &i_context )
 		(OP_Network*)our_dear_leader->findNode( "/obj"),
 		to_export );
 
-	std::cout << "Export iset size is " << to_export.size() << std::endl;
+	std::cout << "Export set size is " << to_export.size() << std::endl;
 	for( auto &obj : to_export )
 	{
 		mesh::export_object( i_context, obj );
