@@ -1,5 +1,6 @@
 #include "ROP_3Delight.h"
 
+#include "camera.h"
 #include "mesh.h"
 #include "transform.h"
 #include "context.h"
@@ -732,7 +733,7 @@ void ROP_3Delight::export_scene( const context &i_context )
 	NSI::Context &nsi = i_context.m_nsi;
 
 	/*
-		Create phase. This will creat all the NSI nodes from the Houdini
+		Create phase. This will create all the NSI nodes from the Houdini
 		objects that we support.
 
 		\ref process_obj to see which objects end up here.
@@ -790,12 +791,24 @@ void ROP_3Delight::export_scene( const context &i_context )
 	/* Finally, SetAttributes[AtTime], in parallel (FIXME) */
 	for( auto &obj : to_export )
 	{
-		transform::export_object( i_context, obj );
+		const char* nsi_type = utilities::nsi_node_type(obj);
 
-		if( utilities::nsi_node_type(obj) == utilities::k_nsi_transform )
+		if( nsi_type == utilities::k_nsi_transform )
+		{
+			transform::export_object( i_context, obj );
 			continue;
+		}
 
-		mesh::export_object( i_context, obj );
+		// FIXME : export local transform
+
+		if( nsi_type == utilities::k_nsi_mesh )
+		{
+			mesh::export_object( i_context, obj );
+		}
+		else if( nsi_type == utilities::k_nsi_camera )
+		{
+			camera::export_object( i_context, obj );
+		}
 	}
 }
 

@@ -7,6 +7,7 @@ namespace utilities
 {
 	extern "C" const char *k_nsi_transform;
 	extern "C" const char *k_nsi_mesh;
+	extern "C" const char *k_nsi_camera;
 
 	/**
 		\brief Returns the NSI handle for HOUDINI node.
