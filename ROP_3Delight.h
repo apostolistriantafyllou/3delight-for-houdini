@@ -16,8 +16,6 @@ public:
 	/** \brief Returns true if motion blur is enabled. */
 	bool HasMotionBlur()const;
 
-	void ExportGlobals(NSI::Context& io_nsi)const;
-
 protected:
 
 	ROP_3Delight(OP_Network* net, const char* name, OP_Operator* entry);
@@ -38,6 +36,8 @@ protected:
 		std::vector<OBJ_Node *> &o_to_export );
 
 private:
+
+	void ExportGlobals(const context& i_ctx)const;
 
 	bool HasSpeedBoost()const;
 	float GetResolutionFactor()const;

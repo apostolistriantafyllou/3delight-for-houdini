@@ -518,12 +518,12 @@ ROP_3Delight::HasMotionBlur()const
 }
 
 void
-ROP_3Delight::ExportGlobals(NSI::Context& io_nsi)const
+ROP_3Delight::ExportGlobals(const context& i_ctx)const
 {
 	int shading_samples = evalInt(k_shading_samples, 0, 0.0f);
 	shading_samples = int(float(shading_samples) * GetSamplingFactor() + 0.5f);
 	int volume_samples = evalInt(k_volume_samples, 0, 0.0f);
-	io_nsi.SetAttribute(
+	i_ctx.m_nsi.SetAttribute(
 		".global",
 		(
 			NSI::IntegerArg("quality.shadingsamples", shading_samples),
@@ -534,7 +534,7 @@ ROP_3Delight::ExportGlobals(NSI::Context& io_nsi)const
 	int max_reflection_depth = evalInt(k_max_reflection_depth, 0, 0.0f);
 	int max_refraction_depth = evalInt(k_max_refraction_depth, 0, 0.0f);
 	int max_hair_depth = evalInt(k_max_hair_depth, 0, 0.0f);
-	io_nsi.SetAttribute(
+	i_ctx.m_nsi.SetAttribute(
 		".global",
 		(
 			NSI::IntegerArg("maximumraydepth.diffuse", max_diffuse_depth),
@@ -544,7 +544,7 @@ ROP_3Delight::ExportGlobals(NSI::Context& io_nsi)const
 		) );
 
 	float max_distance = evalInt(k_max_distance, 0, 0.0f);
-	io_nsi.SetAttribute(
+	i_ctx.m_nsi.SetAttribute(
 		".global",
 		(
 			 NSI::DoubleArg( "maximumraylength.specular", max_distance),
@@ -559,13 +559,13 @@ ROP_3Delight::ExportGlobals(NSI::Context& io_nsi)const
 
 		if(evalInt(k_disable_displacement, 0, 0.0f))
 		{
-			io_nsi.SetAttribute(
+			i_ctx.m_nsi.SetAttribute(
 				".global", NSI::IntegerArg("show.displacement", 0));
 		}
 
 		if(evalInt(k_disable_subsurface, 0, 0.0f))
 		{
-			io_nsi.SetAttribute(
+			i_ctx.m_nsi.SetAttribute(
 				".global", NSI::IntegerArg("show.osl.subsurface", 0));
 		}
 	}
@@ -601,6 +601,8 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		executePreRenderScript(tstart);
 		export_scene( ctx );
 	}
+
+	ExportGlobals(ctx);
 
 	nsi.End();
 
