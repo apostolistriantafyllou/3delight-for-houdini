@@ -15,6 +15,7 @@ add_library( ${library_name} SHARED
 	exporter.cpp
 	mesh.cpp
 	null.cpp
+	scene.cpp
 	transform.cpp
 	utilities.cpp)
 

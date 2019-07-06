@@ -27,17 +27,6 @@ protected:
 	virtual ROP_RENDER_CODE renderFrame(fpreal time, UT_Interrupt* boss);
 	virtual ROP_RENDER_CODE endRender();
 
-	void export_scene( const context & );
-
-	void process_obj(
-		const context &i_context,
-		OP_Node *node, std::vector<exporter*> &o_to_export );
-
-	void scan_obj(
-		const context &,
-		OP_Network *i_network,
-		std::vector<exporter *> &o_to_export );
-
 private:
 
 	void ExportGlobals(const context& i_ctx)const;
