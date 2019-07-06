@@ -7,6 +7,7 @@ namespace NSI { class Context; }
 
 class context;
 class OBJ_Camera;
+class exporter;
 
 class ROP_3Delight : public ROP_Node
 {
@@ -29,12 +30,13 @@ protected:
 	void export_scene( const context & );
 
 	void process_obj(
-		OP_Node *node, std::vector<OBJ_Node*> &o_to_export );
+		const context &i_context,
+		OP_Node *node, std::vector<exporter*> &o_to_export );
 
 	void scan_obj(
 		const context &,
 		OP_Network *i_network,
-		std::vector<OBJ_Node *> &o_to_export );
+		std::vector<exporter *> &o_to_export );
 
 private:
 

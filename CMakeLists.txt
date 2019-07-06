@@ -12,7 +12,9 @@ set( library_name ROP_3Delight )
 add_library( ${library_name} SHARED
 	ROP_3Delight.cpp
 	camera.cpp
+	exporter.cpp
 	mesh.cpp
+	null.cpp
 	transform.cpp
 	utilities.cpp)
 

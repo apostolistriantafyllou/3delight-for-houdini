@@ -3,14 +3,15 @@
 #include "exporter.h"
 
 /**
-	\brief camera exporter.
+	\brief Poly and poly soupe exporter.
 */
-class camera : public exporter
+class null : public exporter
 {
 public:
-	camera( NSI::Context &, OBJ_Node *, const GT_PrimitiveHandle & );
+	null( NSI::Context &, OBJ_Node *, const GT_PrimitiveHandle & );
 
 	void create( void ) const override;
 	void set_attributes( void ) const override;
 	void set_attributes_at_time( double i_time ) const override;
+	const OBJ_Node *parent( void ) const override;
 };

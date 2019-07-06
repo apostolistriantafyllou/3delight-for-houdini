@@ -1,12 +1,16 @@
 #pragma once
 
-class OBJ_Node;
-class context;
+#include "exporter.h"
 
 /**
 	\brief Poly and poly soupe exporter.
 */
-struct mesh
+class mesh : public exporter
 {
-	static void export_object( const context &, OBJ_Node * );
+public:
+	mesh( NSI::Context &, OBJ_Node *, const GT_PrimitiveHandle & );
+
+	void create( void ) const override;
+	void set_attributes( void ) const override;
+	void set_attributes_at_time( double i_time ) const override;
 };

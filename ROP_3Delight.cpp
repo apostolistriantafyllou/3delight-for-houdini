@@ -2,6 +2,9 @@
 
 #include "camera.h"
 #include "mesh.h"
+#include "null.h"
+#include "camera.h"
+
 #include "transform.h"
 #include "context.h"
 #include "utilities.h"
@@ -12,9 +15,14 @@
 #include <ROP/ROP_Templates.h>
 #include <OP/OP_OperatorTable.h>
 #include <OP/OP_Director.h>
+#include <SOP/SOP_Node.h>
 #include <OBJ/OBJ_Camera.h>
 #include <OBJ/OBJ_Node.h>
 
+#include <GT/GT_Refine.h>
+#include <GT/GT_GEODetail.h>
+
+#include <UT/UT_PackageUtils.h>
 #include <UT/UT_DSOVersion.h>
 #include <nsi.hpp>
 #include <nsi_dynamic.hpp>
@@ -634,6 +642,35 @@ ROP_3Delight::endRender()
 	return ROP_CONTINUE_RENDER;
 }
 
+struct Refiner : public GT_Refine
+{
+	OBJ_Node *m_node;
+	std::vector<exporter *> &m_result;
+	const context &m_context;
+
+	Refiner(
+		OBJ_Node *i_node,
+		const context &i_context,
+		std::vector< exporter *> &i_result )
+	:
+		m_result(i_result),
+		m_node(i_node),
+		m_context(i_context)
+	{
+	}
+
+	void addPrimitive( const GT_PrimitiveHandle &i_primitive )
+	{
+		switch( i_primitive->getPrimitiveType() )
+		{
+		case GT_PRIM_POLYGON_MESH:
+			m_result.push_back( new mesh(m_context.m_nsi, m_node,i_primitive) );
+			break;
+		}
+	}
+};
+
+
 /**
 	\brief Decide what to do with this OBJ.
 
@@ -642,30 +679,72 @@ ROP_3Delight::endRender()
 	and that is renderable in the current frame range.
 */
 void ROP_3Delight::process_obj(
+	const context &i_context,
 	OP_Node *i_node,
-	std::vector<OBJ_Node *> &o_to_export )
+	std::vector<exporter *> &o_to_export )
 {
 	OBJ_Node *obj = i_node->castToOBJNode();
 
 	if( !obj )
 		return;
 
-	bool renderable = false;
+	/*
+		Each object is its own null transform. This will proiduce useless
+		transforms but I am looking for code simplicity here.
+	*/
+	GT_PrimitiveHandle empty;
+	o_to_export.push_back( new null(i_context.m_nsi, obj, empty) );
 
 	if( obj->getObjectType() & OBJ_NULL )
 	{
-		renderable = true;
-	}
-	else
-	{
-		renderable = obj->isObjectRenderable(0) &&
-			(obj->getObjectType() & OBJ_GEOMETRY);
+		return;
 	}
 
-	if( renderable )
+	if( obj->castToOBJCamera() )
 	{
-		o_to_export.push_back( obj );
+		o_to_export.push_back( new camera(i_context.m_nsi, obj, empty) );
+		return;
 	}
+
+	bool renderable = obj->isObjectRenderable(0) &&
+		(obj->getObjectType() & OBJ_GEOMETRY);
+
+	if( !renderable )
+		return;
+
+	SOP_Node *sop = obj->getRenderSopPtr();
+
+	if( !sop )
+	{
+		std::cout << "3Deligh for Houdini: no SOP for  for " <<
+			obj->getFullPath() << std::endl;
+		return;
+	}
+
+	/* FIXME: motion blur */
+	OP_Context context( i_context.m_start_time );
+	const GU_ConstDetailHandle detail_handle( sop->getCookedGeoHandle(context) );
+
+	if( !detail_handle.isValid() )
+	{
+		assert( false );
+		std::cout << "3Delight for Houdini: " << obj->getFullPath() <<
+			" has no valud detail" << std::endl;
+		return;
+	}
+
+	std::vector< exporter *> gt_primitives;
+
+	GT_PrimitiveHandle gt( GT_GEODetail::makeDetail(detail_handle) );
+	Refiner refiner( obj, i_context, gt_primitives );
+	gt->refine( refiner, nullptr );
+
+	std::cout << obj->getFullPath() << " gave birth to " <<
+		gt_primitives.size() << " primitives." << std::endl;
+
+	o_to_export.insert(
+		o_to_export.end(), gt_primitives.begin(), gt_primitives.end() );
+
 }
 
 /**
@@ -674,7 +753,7 @@ void ROP_3Delight::process_obj(
 void ROP_3Delight::scan_obj(
 	const context &i_context,
 	OP_Network *i_network,
-	std::vector< OBJ_Node * > &o_to_export )
+	std::vector< exporter * > &o_to_export )
 {
 	/* A traversal stack to abvoid recursion */
 	std::vector< OP_Network * > traversal;
@@ -696,7 +775,7 @@ void ROP_3Delight::scan_obj(
 		for( int i=0; i< nkids; i++ )
 		{
 			OP_Node *node = network->getChild(i);
-			process_obj( node, o_to_export );
+			process_obj( i_context, node, o_to_export );
 
 			if( !node->isNetwork() )
 				continue;
@@ -724,7 +803,7 @@ void ROP_3Delight::export_scene( const context &i_context )
 {
 	OP_Node *our_dear_leader = OPgetDirector();
 
-	std::vector<OBJ_Node *> to_export;
+	std::vector<exporter *> to_export;
 
 	scan_obj(
 		i_context,
@@ -739,79 +818,55 @@ void ROP_3Delight::export_scene( const context &i_context )
 		Create phase. This will create all the NSI nodes from the Houdini
 		objects that we support.
 
-		\ref process_obj to see which objects end up here.
+		\see process_obj() to see which objects end up here.
 	*/
-	for( auto &obj : to_export )
+	for( auto &exporter : to_export )
 	{
-		const char *handle = utilities::handle(obj);
-		const char *nsi_type = utilities::nsi_node_type(obj);
-
-		std::string transform_handle(handle); transform_handle += "|transform";
-
-		/* Always create a tranform */
-		nsi.Create( transform_handle.c_str(), "transform" );
-
-		if( nsi_type != utilities::k_nsi_transform )
-		{
-			/* Create the geo node and connect it to its transform */
-			nsi.Create( utilities::handle(obj), nsi_type );
-			nsi.Connect(
-				utilities::handle(obj), "",
-				transform_handle.c_str(), "objects" );
-		}
+		exporter->create();
 	}
 
 	/*
 		Connect to parents. This will effectively create the entire scene
 		hierarchy in one go.
 	*/
-	for( auto &obj : to_export )
+	for( auto exporter : to_export )
 	{
+#if 0
+		if( exporter->instanced() )
+		{
+			/*
+				This object will be referenced by an instancer, we don't
+				need to connect it anywhere.
+			*/
+			continue;
+		}
+#endif
+
 		/*
 			Parent in scene hierarchy. The parent is already created by
 			create loop above.
 		*/
-		OBJ_Node *parent = obj->getParentObject();
-
-		std::string handle( utilities::handle(obj) );
-		handle += "|transform";
+		const OBJ_Node *parent = exporter->parent();
 
 		if( parent )
 		{
-			std::string parent_handle( utilities::handle(parent) );
-			parent_handle += "|transform";
-
 			nsi.Connect(
-				handle.c_str(), "",
-				parent_handle.c_str(), "objects" );
+				exporter->handle().c_str(), "",
+				parent->getFullPath().buffer(), "objects" );
 		}
 		else
 		{
-			nsi.Connect( handle.c_str(), "", NSI_SCENE_ROOT, "objects" );
+			nsi.Connect(
+				exporter->handle().c_str(),
+				"", NSI_SCENE_ROOT, "objects" );
 		}
 	}
 
 	/* Finally, SetAttributes[AtTime], in parallel (FIXME) */
-	for( auto &obj : to_export )
+	for( auto &exporter : to_export )
 	{
-		const char* nsi_type = utilities::nsi_node_type(obj);
-
-		if( nsi_type == utilities::k_nsi_transform )
-		{
-			transform::export_object( i_context, obj );
-			continue;
-		}
-
-		// FIXME : export local transform
-
-		if( nsi_type == utilities::k_nsi_mesh )
-		{
-			mesh::export_object( i_context, obj );
-		}
-		else if( nsi_type == utilities::k_nsi_camera )
-		{
-			camera::export_object( i_context, obj );
-		}
+		exporter->set_attributes();
+		exporter->set_attributes_at_time( i_context.m_start_time );
 	}
 }
 
