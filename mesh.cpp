@@ -17,7 +17,7 @@ void mesh::export_object( const context &i_context, OBJ_Node *i_object )
 
 	OP_Context context( i_context.m_start_time );
 
-	const GU_DetailHandleAutoReadLock detail_handle(
+	const GU_ConstDetailHandle detail_handle(
 		sop->getCookedGeoHandle(context) );
 
 	if( !detail_handle.isValid() )
@@ -27,7 +27,7 @@ void mesh::export_object( const context &i_context, OBJ_Node *i_object )
 		return;
 	}
 
-	const GU_Detail &detail = *detail_handle;
+	const GU_Detail &detail = *detail_handle.gdp();
 
 	std::cout << i_object->getName() << " --> " << detail.getNumPoints() << " / " <<
 		detail.getNumPrimitives() << std::endl;
