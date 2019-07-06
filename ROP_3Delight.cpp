@@ -1,5 +1,6 @@
 #include "ROP_3Delight.h"
 
+#include "camera.h"
 #include "mesh.h"
 #include "transform.h"
 #include "context.h"
@@ -11,6 +12,7 @@
 #include <ROP/ROP_Templates.h>
 #include <OP/OP_OperatorTable.h>
 #include <OP/OP_Director.h>
+#include <OBJ/OBJ_Camera.h>
 #include <OBJ/OBJ_Node.h>
 
 #include <UT/UT_DSOVersion.h>
@@ -517,12 +519,12 @@ ROP_3Delight::HasMotionBlur()const
 }
 
 void
-ROP_3Delight::ExportGlobals(NSI::Context& io_nsi)const
+ROP_3Delight::ExportGlobals(const context& i_ctx)const
 {
 	int shading_samples = evalInt(k_shading_samples, 0, 0.0f);
 	shading_samples = int(float(shading_samples) * GetSamplingFactor() + 0.5f);
 	int volume_samples = evalInt(k_volume_samples, 0, 0.0f);
-	io_nsi.SetAttribute(
+	i_ctx.m_nsi.SetAttribute(
 		".global",
 		(
 			NSI::IntegerArg("quality.shadingsamples", shading_samples),
@@ -533,7 +535,7 @@ ROP_3Delight::ExportGlobals(NSI::Context& io_nsi)const
 	int max_reflection_depth = evalInt(k_max_reflection_depth, 0, 0.0f);
 	int max_refraction_depth = evalInt(k_max_refraction_depth, 0, 0.0f);
 	int max_hair_depth = evalInt(k_max_hair_depth, 0, 0.0f);
-	io_nsi.SetAttribute(
+	i_ctx.m_nsi.SetAttribute(
 		".global",
 		(
 			NSI::IntegerArg("maximumraydepth.diffuse", max_diffuse_depth),
@@ -543,7 +545,7 @@ ROP_3Delight::ExportGlobals(NSI::Context& io_nsi)const
 		) );
 
 	float max_distance = evalInt(k_max_distance, 0, 0.0f);
-	io_nsi.SetAttribute(
+	i_ctx.m_nsi.SetAttribute(
 		".global",
 		(
 			 NSI::DoubleArg( "maximumraylength.specular", max_distance),
@@ -558,13 +560,13 @@ ROP_3Delight::ExportGlobals(NSI::Context& io_nsi)const
 
 		if(evalInt(k_disable_displacement, 0, 0.0f))
 		{
-			io_nsi.SetAttribute(
+			i_ctx.m_nsi.SetAttribute(
 				".global", NSI::IntegerArg("show.displacement", 0));
 		}
 
 		if(evalInt(k_disable_subsurface, 0, 0.0f))
 		{
-			io_nsi.SetAttribute(
+			i_ctx.m_nsi.SetAttribute(
 				".global", NSI::IntegerArg("show.osl.subsurface", 0));
 		}
 	}
@@ -593,13 +595,15 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 
 	nsi.Begin( NSI::IntegerArg("streamfiledescriptor", 1) );
 
-	context ctx( nsi, tstart, tend, HasMotionBlur() );
+	context ctx( nsi, tstart, tend, GetShutterInterval(tstart) );
 
 	if(error() < UT_ERROR_ABORT)
 	{
 		executePreRenderScript(tstart);
 		export_scene( ctx );
 	}
+
+	ExportGlobals(ctx);
 
 	nsi.End();
 
@@ -709,7 +713,7 @@ void ROP_3Delight::scan_obj(
 /**
 
 	Create Step:
-	- Create a "tansform" for each NULL object.
+	- Create a "transform" for each NULL object.
 	- Craete a geometry node AND a "transform" for each OBG_Geometry. In NSI,
 	  transforms and objects are separated, not so in HOUDINI.
 
@@ -732,7 +736,7 @@ void ROP_3Delight::export_scene( const context &i_context )
 	NSI::Context &nsi = i_context.m_nsi;
 
 	/*
-		Create phase. This will creat all the NSI nodes from the Houdini
+		Create phase. This will create all the NSI nodes from the Houdini
 		objects that we support.
 
 		\ref process_obj to see which objects end up here.
@@ -790,12 +794,24 @@ void ROP_3Delight::export_scene( const context &i_context )
 	/* Finally, SetAttributes[AtTime], in parallel (FIXME) */
 	for( auto &obj : to_export )
 	{
-		transform::export_object( i_context, obj );
+		const char* nsi_type = utilities::nsi_node_type(obj);
 
-		if( utilities::nsi_node_type(obj) == utilities::k_nsi_transform )
+		if( nsi_type == utilities::k_nsi_transform )
+		{
+			transform::export_object( i_context, obj );
 			continue;
+		}
 
-		mesh::export_object( i_context, obj );
+		// FIXME : export local transform
+
+		if( nsi_type == utilities::k_nsi_mesh )
+		{
+			mesh::export_object( i_context, obj );
+		}
+		else if( nsi_type == utilities::k_nsi_camera )
+		{
+			camera::export_object( i_context, obj );
+		}
 	}
 }
 
@@ -844,4 +860,31 @@ ROP_3Delight::GetSamplingFactor()const
 	}
 
 	return factors[sampling_factor];
+}
+
+OBJ_Camera*
+ROP_3Delight::GetCamera()const
+{
+	UT_String cam_path;
+	evalString(cam_path, k_camera, 0, 0.0f);
+
+	OBJ_Node* obj_node = OPgetDirector()->findOBJNode(cam_path);
+	if(!obj_node)
+	{
+		return nullptr;
+	}
+
+	return obj_node->castToOBJCamera();
+}
+
+float
+ROP_3Delight::GetShutterInterval(float i_time)const
+{
+	if(!HasMotionBlur())
+	{
+		return 0.0f;
+	}
+
+	OBJ_Camera* cam = ROP_3Delight::GetCamera();
+	return cam ? cam->SHUTTER(i_time) : 1.0f;
 }

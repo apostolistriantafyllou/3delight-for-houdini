@@ -7,10 +7,11 @@ project( ROP_3Delight )
 list( APPEND CMAKE_PREFIX_PATH "$ENV{HFS}/toolkit/cmake" )
 find_package( Houdini REQUIRED )
 
-# Add a library with two source files.
+# Add a library
 set( library_name ROP_3Delight )
 add_library( ${library_name} SHARED
 	ROP_3Delight.cpp
+	camera.cpp
 	mesh.cpp
 	transform.cpp
 	utilities.cpp)

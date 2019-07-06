@@ -6,6 +6,7 @@
 namespace NSI { class Context; }
 
 class context;
+class OBJ_Camera;
 
 class ROP_3Delight : public ROP_Node
 {
@@ -15,8 +16,6 @@ public:
 
 	/** \brief Returns true if motion blur is enabled. */
 	bool HasMotionBlur()const;
-
-	void ExportGlobals(NSI::Context& io_nsi)const;
 
 protected:
 
@@ -39,9 +38,13 @@ protected:
 
 private:
 
+	void ExportGlobals(const context& i_ctx)const;
+
 	bool HasSpeedBoost()const;
 	float GetResolutionFactor()const;
 	float GetSamplingFactor()const;
+	OBJ_Camera* GetCamera()const;
+	float GetShutterInterval(float i_time)const;
 
 	fpreal m_end_time;
 };
