@@ -16,7 +16,6 @@ add_library( ${library_name} SHARED
 	mesh.cpp
 	null.cpp
 	scene.cpp
-	transform.cpp
 	utilities.cpp)
 
 # 3Deligt includes
