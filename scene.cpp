@@ -5,7 +5,6 @@
 #include "mesh.h"
 #include "null.h"
 #include "camera.h"
-#include "transform.h"
 #include "context.h"
 #include "utilities.h"
 
