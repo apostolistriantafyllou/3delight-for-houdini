@@ -32,10 +32,23 @@ void null::set_attributes( void ) const
 {
 }
 
-void null::set_attributes_at_time( double ) const
+void null::set_attributes_at_time( double i_time ) const
 {
+	OP_Context context( i_time );
+	UT_DMatrix4 local;
+	m_object->getLocalTransform( context, local );
+
+	/* The stars are aligned for Houdini and NSI */
+	m_nsi.SetAttributeAtTime(
+		m_handle.c_str(),
+		i_time,
+		NSI::DoubleMatrixArg( "transformationmatrix", local.data() ) );
 }
 
+/**
+	Unlike geo, the parent of a null node it's really the parent in
+	the scene hierarchy.
+*/
 const OBJ_Node *null::parent( void ) const
 {
 	assert( m_object );
