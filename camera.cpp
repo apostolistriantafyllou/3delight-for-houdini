@@ -1,6 +1,9 @@
 
 #include "camera.h"
 
+#include <OBJ/OBJ_Node.h>
+#include <OBJ/OBJ_Camera.h>
+
 #include <nsi.hpp>
 
 #include <iostream>
@@ -11,6 +14,8 @@ camera::camera(
 :
 	exporter( i_nsi, i_object, i_gt_primitive )
 {
+	m_handle = i_object->getFullPath();
+	m_handle += "|camera";
 }
 
 void camera::create( void ) const
