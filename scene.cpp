@@ -43,6 +43,12 @@ struct Refiner : public GT_Refine
 		case GT_PRIM_POLYGON_MESH:
 			m_result.push_back( new mesh(m_context.m_nsi, m_node,i_primitive) );
 			break;
+
+		case GT_PRIM_SUBDIVISION_MESH:
+			mesh *subdiv =  new mesh(m_context.m_nsi, m_node,i_primitive);
+			subdiv->set_as_subdiv();
+			m_result.push_back( subdiv );
+			break;
 		}
 	}
 };
