@@ -77,8 +77,9 @@ void scene::process_obj(
 		return;
 
 	/*
-		Each object is its own null transform. This will proiduce useless
-		transforms but I am looking for code simplicity here.
+		Each object is its own null transform. This could produce useless
+		transforms if we decide not to output the node after all but I am
+		aiming for code simplicity here.
 	*/
 	GT_PrimitiveHandle empty;
 	o_to_export.push_back( new null(i_context.m_nsi, obj, empty) );
