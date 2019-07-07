@@ -13,6 +13,7 @@ add_library( ${library_name} SHARED
 	ROP_3Delight.cpp
 	camera.cpp
 	exporter.cpp
+	light.cpp
 	mesh.cpp
 	pointmesh.cpp
 	null.cpp

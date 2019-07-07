@@ -1,12 +1,12 @@
 #include "scene.h"
 
-#include "exporter.h"
-#include "camera.h"
-#include "mesh.h"
-#include "pointmesh.h"
-#include "null.h"
 #include "camera.h"
 #include "context.h"
+#include "exporter.h"
+#include "light.h"
+#include "mesh.h"
+#include "null.h"
+#include "pointmesh.h"
 #include "utilities.h"
 
 #include <OP/OP_Director.h>
@@ -86,6 +86,18 @@ void scene::process_obj(
 	if( obj->getObjectType() & OBJ_NULL )
 	{
 		return;
+	}
+
+	if( obj->castToOBJLight() )
+	{
+		o_to_export.push_back( new light(i_context.m_nsi, obj, empty) );
+
+		/*
+			We don't return here because an OBJ_Light is also and OBJ_Camera
+			and we want to export both. This will alow us, for example, to
+			render the scene from the point of view of a light source if
+			that's what the user wishes.
+		*/
 	}
 
 	if( obj->castToOBJCamera() )
