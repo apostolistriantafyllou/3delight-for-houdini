@@ -14,6 +14,7 @@ add_library( ${library_name} SHARED
 	camera.cpp
 	exporter.cpp
 	mesh.cpp
+	pointmesh.cpp
 	null.cpp
 	scene.cpp
 	utilities.cpp)

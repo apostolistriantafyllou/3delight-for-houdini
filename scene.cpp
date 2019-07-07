@@ -3,6 +3,7 @@
 #include "exporter.h"
 #include "camera.h"
 #include "mesh.h"
+#include "pointmesh.h"
 #include "null.h"
 #include "camera.h"
 #include "context.h"
@@ -48,6 +49,11 @@ struct Refiner : public GT_Refine
 		case GT_PRIM_SUBDIVISION_MESH:
 			m_result.push_back(
 				new mesh(m_context.m_nsi, m_node,i_primitive, true) );
+			break;
+
+		case GT_PRIM_POINT_MESH:
+			m_result.push_back(
+				new pointmesh(m_context.m_nsi, m_node,i_primitive) );
 			break;
 		}
 	}
