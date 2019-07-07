@@ -18,15 +18,15 @@
 #include <GT/GT_GEODetail.h>
 
 /**
-	A refiner for the refine() method.
+	A GT refiner for an OBJ_Node
 */
-struct Refiner : public GT_Refine
+struct OBJ_Node_Refiner : public GT_Refine
 {
 	OBJ_Node *m_node;
 	std::vector<exporter *> &m_result;
 	const context &m_context;
 
-	Refiner(
+	OBJ_Node_Refiner(
 		OBJ_Node *i_node,
 		const context &i_context,
 		std::vector< exporter *> &i_result )
@@ -54,6 +54,10 @@ struct Refiner : public GT_Refine
 		case GT_PRIM_POINT_MESH:
 			m_result.push_back(
 				new pointmesh(m_context.m_nsi, m_node,i_primitive) );
+			break;
+		default:
+			std::cout << "Unsupported object " << m_node->getFullPath() <<
+				" of type " << i_primitive->className() << std::endl;
 			break;
 		}
 	}
@@ -107,17 +111,11 @@ void scene::process_obj(
 		return;
 	}
 
-	bool renderable = obj->isObjectRenderable(0) &&
-		(obj->getObjectType() & OBJ_GEOMETRY);
-
-	if( !renderable )
-		return;
-
 	SOP_Node *sop = obj->getRenderSopPtr();
 
 	if( !sop )
 	{
-		std::cout << "3Deligh for Houdini: no SOP for  for " <<
+		std::cout << "3Delight for Houdini: no render SOP for " <<
 			obj->getFullPath() << std::endl;
 		return;
 	}
@@ -128,7 +126,6 @@ void scene::process_obj(
 
 	if( !detail_handle.isValid() )
 	{
-		assert( false );
 		std::cout << "3Delight for Houdini: " << obj->getFullPath() <<
 			" has no valud detail" << std::endl;
 		return;
@@ -137,7 +134,7 @@ void scene::process_obj(
 	std::vector< exporter *> gt_primitives;
 
 	GT_PrimitiveHandle gt( GT_GEODetail::makeDetail(detail_handle) );
-	Refiner refiner( obj, i_context, gt_primitives );
+	OBJ_Node_Refiner refiner( obj, i_context, gt_primitives );
 	gt->refine( refiner, nullptr );
 
 	std::cout << obj->getFullPath() << " gave birth to " <<
