@@ -29,6 +29,7 @@ protected:
 
 private:
 
+	void ExportOutputs(const context& i_ctx)const;
 	void ExportGlobals(const context& i_ctx)const;
 
 	bool HasSpeedBoost()const;
@@ -36,6 +37,7 @@ private:
 	float GetSamplingFactor()const;
 	OBJ_Camera* GetCamera()const;
 	float GetShutterInterval(float i_time)const;
+	bool HasDepthOfField()const;
 
 	fpreal m_end_time;
 };
