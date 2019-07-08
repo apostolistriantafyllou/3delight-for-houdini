@@ -5,10 +5,10 @@
 /**
 	\brief Poly and poly soupe exporter.
 */
-class mesh : public exporter
+class polygonmesh : public exporter
 {
 public:
-	mesh( const context&, OBJ_Node *, const GT_PrimitiveHandle &, bool subdiv );
+	polygonmesh( const context&, OBJ_Node *, const GT_PrimitiveHandle &, bool subdiv );
 
 	void create( void ) const override;
 	void set_attributes( void ) const override;

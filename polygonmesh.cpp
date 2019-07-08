@@ -1,4 +1,4 @@
-#include "mesh.h"
+#include "polygonmesh.h"
 
 #include "context.h"
 
@@ -6,7 +6,7 @@
 #include <OBJ/OBJ_Node.h>
 #include <nsi.hpp>
 
-mesh::mesh(
+polygonmesh::polygonmesh(
 	const context& i_ctx,
 	OBJ_Node *i_object,
 	const GT_PrimitiveHandle &i_gt_primitive,
@@ -22,18 +22,18 @@ mesh::mesh(
 		m_handle += "|polygonmesh";
 }
 
-void mesh::create( void ) const
+void polygonmesh::create( void ) const
 {
 	m_nsi.Create( m_handle.c_str(), "mesh" );
 }
 
-void mesh::set_attributes( void ) const
+void polygonmesh::set_attributes( void ) const
 {
      const GT_PrimPolygonMesh *polygon_mesh =
 	    static_cast<const GT_PrimPolygonMesh *>(m_gt_primitive.get());
 }
 
-void mesh::set_attributes_at_time( double ) const
+void polygonmesh::set_attributes_at_time( double ) const
 {
      const GT_PrimPolygonMesh *polygon_mesh =
 	    static_cast<const GT_PrimPolygonMesh *>(m_gt_primitive.get());

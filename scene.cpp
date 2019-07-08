@@ -4,7 +4,7 @@
 #include "context.h"
 #include "exporter.h"
 #include "light.h"
-#include "mesh.h"
+#include "polygonmesh.h"
 #include "null.h"
 #include "pointmesh.h"
 #include "utilities.h"
@@ -43,12 +43,12 @@ struct OBJ_Node_Refiner : public GT_Refine
 		{
 		case GT_PRIM_POLYGON_MESH:
 			m_result.push_back(
-				new mesh(m_context, m_node,i_primitive, false) );
+				new polygonmesh(m_context, m_node,i_primitive, false) );
 			break;
 
 		case GT_PRIM_SUBDIVISION_MESH:
 			m_result.push_back(
-				new mesh(m_context, m_node,i_primitive, true) );
+				new polygonmesh(m_context, m_node,i_primitive, true) );
 			break;
 
 		case GT_PRIM_POINT_MESH:
