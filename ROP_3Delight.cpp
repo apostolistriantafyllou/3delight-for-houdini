@@ -207,8 +207,8 @@ GetTemplates()
 	{
 		PRM_Item("uint8", "8-bit"),
 		PRM_Item("uint16", "16-bit"),
-		PRM_Item("float16", "16-bit float"),
-		PRM_Item("float32", "32-bit float"),
+		PRM_Item("half", "16-bit float"),
+		PRM_Item("float", "32-bit float"),
 		PRM_Item(),
 	};
 	static PRM_ChoiceList default_image_bits_c(PRM_CHOICELIST_SINGLE, default_image_bits_i);
