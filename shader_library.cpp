@@ -89,6 +89,8 @@ static std::string library_path( void )
 			return std::string( info.dli_fname );
 	}
 #endif
+
+	return {};
 }
 
 static bool file_exists( const char *i_path )
