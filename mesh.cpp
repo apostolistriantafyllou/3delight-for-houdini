@@ -1,16 +1,18 @@
 #include "mesh.h"
 
+#include "context.h"
+
 #include <GT/GT_PrimPolygonMesh.h>
 #include <OBJ/OBJ_Node.h>
 #include <nsi.hpp>
 
 mesh::mesh(
-	NSI::Context &i_nsi,
+	const context& i_ctx,
 	OBJ_Node *i_object,
 	const GT_PrimitiveHandle &i_gt_primitive,
 	bool is_subdivision )
 :
-	exporter( i_nsi, i_object, i_gt_primitive ),
+	exporter( i_ctx, i_object, i_gt_primitive ),
 	m_is_subdiv(is_subdivision)
 {
 	m_handle = i_object->getFullPath();

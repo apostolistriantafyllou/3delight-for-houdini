@@ -8,7 +8,7 @@
 class null : public exporter
 {
 public:
-	null( NSI::Context &, OBJ_Node *, const GT_PrimitiveHandle & );
+	null( const context&, OBJ_Node *, const GT_PrimitiveHandle & );
 
 	void create( void ) const override;
 	void set_attributes( void ) const override;

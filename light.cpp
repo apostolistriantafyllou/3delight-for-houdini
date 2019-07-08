@@ -1,5 +1,6 @@
-
 #include "light.h"
+
+#include "context.h"
 
 #include <OP/OP_Director.h>
 #include <OBJ/OBJ_Node.h>
@@ -11,11 +12,11 @@
 #include <iostream>
 
 light::light(
-	NSI::Context &i_nsi,
+	const context& i_ctx,
 	OBJ_Node *i_object,
 	const GT_PrimitiveHandle &i_gt_primitive )
 :
-	exporter( i_nsi, i_object, i_gt_primitive )
+	exporter( i_ctx, i_object, i_gt_primitive )
 {
 	m_handle = i_object->getFullPath();
 	m_handle += "|light";

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "context.h"
+
 /* WARNING: The order of the following two includes is important  { */
 #include <GT/GT_Primitive.h>
 #include <GT/GT_Handles.h>
@@ -11,7 +13,6 @@
 #include <string>
 
 class OBJ_Node;
-
 namespace NSI { class Context; }
 
 /**
@@ -20,7 +21,7 @@ namespace NSI { class Context; }
 class exporter
 {
 public:
-	exporter( NSI::Context &, OBJ_Node *, const GT_PrimitiveHandle & );
+	exporter( const context &, OBJ_Node *, const GT_PrimitiveHandle & );
 
 	/**
 		\brief Create any NSI node required for this object. For example,
@@ -63,7 +64,10 @@ protected:
 
 	GT_PrimitiveHandle m_gt_primitive;
 
-	/* The NSI export context. */
+	/* The export context. */
+	const context& m_context;
+
+	/* The NSI export context, which is redundant with m_context.m_nsi. */
 	NSI::Context &m_nsi;
 
 	/** The NSI handle */

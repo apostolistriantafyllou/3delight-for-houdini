@@ -1,5 +1,6 @@
-
 #include "null.h"
+
+#include "context.h"
 
 #include <OBJ/OBJ_Node.h>
 
@@ -10,11 +11,11 @@
 #include <iostream>
 
 null::null(
-	NSI::Context &i_nsi,
+	const context& i_ctx,
 	OBJ_Node *i_object,
 	const GT_PrimitiveHandle &i_gt_primitive )
 :
-	exporter( i_nsi, i_object, i_gt_primitive )
+	exporter( i_ctx, i_object, i_gt_primitive )
 {
 	/*
 		The null object has its full path as handle.

@@ -24,7 +24,7 @@ class light : public exporter
 	};
 
 public:
-	light( NSI::Context &, OBJ_Node *, const GT_PrimitiveHandle & );
+	light( const context&, OBJ_Node *, const GT_PrimitiveHandle & );
 
 	void create( void ) const override;
 	void set_attributes( void ) const override;

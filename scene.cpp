@@ -43,17 +43,17 @@ struct OBJ_Node_Refiner : public GT_Refine
 		{
 		case GT_PRIM_POLYGON_MESH:
 			m_result.push_back(
-				new mesh(m_context.m_nsi, m_node,i_primitive, false) );
+				new mesh(m_context, m_node,i_primitive, false) );
 			break;
 
 		case GT_PRIM_SUBDIVISION_MESH:
 			m_result.push_back(
-				new mesh(m_context.m_nsi, m_node,i_primitive, true) );
+				new mesh(m_context, m_node,i_primitive, true) );
 			break;
 
 		case GT_PRIM_POINT_MESH:
 			m_result.push_back(
-				new pointmesh(m_context.m_nsi, m_node,i_primitive) );
+				new pointmesh(m_context, m_node,i_primitive) );
 			break;
 		default:
 			std::cout << "Unsupported object " << m_node->getFullPath() <<
@@ -86,7 +86,7 @@ void scene::process_obj(
 		aiming for code simplicity here.
 	*/
 	GT_PrimitiveHandle empty;
-	o_to_export.push_back( new null(i_context.m_nsi, obj, empty) );
+	o_to_export.push_back( new null(i_context, obj, empty) );
 
 	if( obj->getObjectType() & OBJ_NULL )
 	{
@@ -95,7 +95,7 @@ void scene::process_obj(
 
 	if( obj->castToOBJLight() )
 	{
-		o_to_export.push_back( new light(i_context.m_nsi, obj, empty) );
+		o_to_export.push_back( new light(i_context, obj, empty) );
 
 		/*
 			We don't return here because an OBJ_Light is also and OBJ_Camera
@@ -107,7 +107,7 @@ void scene::process_obj(
 
 	if( obj->castToOBJCamera() )
 	{
-		o_to_export.push_back( new camera(i_context.m_nsi, obj, empty) );
+		o_to_export.push_back( new camera(i_context, obj, empty) );
 		return;
 	}
 
