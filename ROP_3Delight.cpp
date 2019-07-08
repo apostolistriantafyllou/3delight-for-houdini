@@ -18,6 +18,8 @@
 
 #include <iostream>
 
+#define DO_RENDER
+
 static const float k_one_line = 0.267;
 
 static const char* k_shading_samples = "shading_samples";
@@ -590,7 +592,11 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	NSI::DynamicAPI api;
 	NSI::Context nsi(api);
 
+#ifdef DO_RENDER
+	nsi.Begin();
+#else
 	nsi.Begin( NSI::IntegerArg("streamfiledescriptor", 1) );
+#endif
 
 	context ctx(
 		nsi,	
@@ -609,6 +615,11 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	ExportOutputs(ctx);
 
 	ExportGlobals(ctx);
+
+#ifdef DO_RENDER
+	nsi.RenderControl(NSI::CStringPArg("action", "start"));
+	nsi.RenderControl(NSI::CStringPArg("action", "wait"));
+#endif
 
 	nsi.End();
 
