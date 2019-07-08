@@ -31,6 +31,13 @@ void light::create( void ) const
 	*/
 	m_nsi.Create( m_handle.c_str(), "transform" );
 
+	/*
+		Create the attribute node so that we can connect the surface
+		shader used for the light source.
+	*/
+	std::string attributes( m_handle ); attributes += "|attributes";
+	m_nsi.Create( attributes.c_str(), "attributes" );
+
 }
 
 void light::create_default_geometry( void ) const

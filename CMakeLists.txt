@@ -18,7 +18,8 @@ add_library( ${library_name} SHARED
 	pointmesh.cpp
 	null.cpp
 	scene.cpp
-	utilities.cpp)
+	shader_library.cpp
+	utilities.cpp )
 
 # 3Deligt includes
 target_include_directories( ${library_name} PRIVATE "$ENV{DELIGHT}/include"  )
