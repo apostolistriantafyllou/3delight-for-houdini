@@ -154,7 +154,10 @@ void light::create_default_geometry( void ) const
 			return;
 		}
 
-		/* Simpply connect to the named geo, welcome to NSI! */
+		/*
+			Simply connect to the named geo, welcome to NSI!
+			FIXME: support "intothisobject"
+		*/
 		geo_name = obj_node->getFullPath();
 	}
 
