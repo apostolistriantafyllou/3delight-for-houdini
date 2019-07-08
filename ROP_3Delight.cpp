@@ -590,7 +590,12 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 
 	nsi.Begin( NSI::IntegerArg("streamfiledescriptor", 1) );
 
-	context ctx( nsi, tstart, tend, GetShutterInterval(tstart) );
+	context ctx(
+		nsi,	
+		tstart,
+		tend,
+		GetShutterInterval(tstart),
+		HasDepthOfField());
 
 	if(error() < UT_ERROR_ABORT)
 	{
@@ -702,4 +707,10 @@ ROP_3Delight::GetShutterInterval(float i_time)const
 
 	OBJ_Camera* cam = ROP_3Delight::GetCamera();
 	return cam ? cam->SHUTTER(i_time) : 1.0f;
+}
+
+bool
+ROP_3Delight::HasDepthOfField()const
+{
+	return !(HasSpeedBoost() && evalInt(k_disable_depth_of_field, 0, 0.0f));
 }

@@ -36,6 +36,7 @@ private:
 	float GetSamplingFactor()const;
 	OBJ_Camera* GetCamera()const;
 	float GetShutterInterval(float i_time)const;
+	bool HasDepthOfField()const;
 
 	fpreal m_end_time;
 };
