@@ -21,6 +21,8 @@ add_library( ${library_name} SHARED
 	shader_library.cpp
 	utilities.cpp )
 
+add_subdirectory( osl osl )
+
 # 3Deligt includes
 target_include_directories( ${library_name} PRIVATE "$ENV{DELIGHT}/include"  )
 
