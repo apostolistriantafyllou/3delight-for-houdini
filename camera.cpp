@@ -14,8 +14,8 @@ camera::camera(
 :
 	exporter( i_ctx, i_object, i_gt_primitive )
 {
-	m_handle = i_object->getFullPath();
-	m_handle += "|camera";
+	assert(i_object);
+	m_handle = get_nsi_handle(*i_object);
 }
 
 void camera::create( void ) const
@@ -66,4 +66,10 @@ void camera::set_attributes_at_time( double i_time ) const
 				NSI::DoubleArg("depthoffield.focaldistance", cam->FOCUS(i_time))
 			) );
 	}
+}
+
+std::string
+camera::get_nsi_handle(OBJ_Node& i_camera)
+{
+	return std::string(i_camera.getFullPath()) + "|camera";
 }

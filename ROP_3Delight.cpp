@@ -1,4 +1,6 @@
 #include "ROP_3Delight.h"
+
+#include "camera.h"
 #include "scene.h"
 #include "context.h"
 
@@ -604,6 +606,8 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		scene::export_scene( ctx );
 	}
 
+	ExportOutputs(ctx);
+
 	ExportGlobals(ctx);
 
 	nsi.End();
@@ -633,6 +637,96 @@ ROP_3Delight::endRender()
 	}
 
 	return ROP_CONTINUE_RENDER;
+}
+
+void
+ROP_3Delight::ExportOutputs(const context& i_ctx)const
+{
+	OBJ_Camera* cam = GetCamera();
+	assert(cam);
+
+	int default_resolution[2] = { 1234, 765 };
+	i_ctx.m_nsi.Create("default_screen", "screen");
+	i_ctx.m_nsi.SetAttribute(
+		"default_screen",
+		(
+			*NSI::Argument::New("resolution")
+			->SetArrayType(NSITypeInteger, 2)
+			->SetCount(1)
+			->CopyValue(default_resolution, sizeof(default_resolution)),
+			NSI::IntegerArg("oversampling", 8)
+		) );
+	i_ctx.m_nsi.Connect(
+		"default_screen", "",
+		camera::get_nsi_handle(*cam), "screens");
+
+	i_ctx.m_nsi.Create("default_layer", "outputlayer");
+	i_ctx.m_nsi.SetAttribute(
+		"default_layer",
+		(
+			NSI::CStringPArg("variablename", "Ci"),
+			NSI::CStringPArg("variablesource", "shader"),
+			NSI::CStringPArg("scalarformat", "half"),
+			NSI::CStringPArg("layertype", "color"),
+			NSI::IntegerArg("withalpha", 1)
+		) );
+	i_ctx.m_nsi.Connect(
+		"default_layer", "",
+		"default_screen", "outputlayers");
+
+	i_ctx.m_nsi.Create("default_driver", "outputdriver");
+	i_ctx.m_nsi.SetAttribute(
+		"default_driver",
+		(
+			NSI::CStringPArg("drivername", "idisplay"),
+			NSI::CStringPArg("imagefilename", "overlord")
+		) );
+	i_ctx.m_nsi.Connect(
+		"default_driver", "",
+		"default_layer", "outputdrivers");
+
+
+/*
+FIXME : do the real thing
+
+use the following accessor:
+GetResolutionFactor()
+
+and the following camera attributes:
+cam->RESX()
+cam->RESY()
+cam->CROPL()
+cam->CROPR()
+cam->CROPB()
+cam->CROPT()
+cam->WINPX()
+cam->WINPY()
+cam->WINX()
+cam->WINY()
+cam->WINSIZEX()
+cam->WINSIZEY()
+
+and the following ROP_3Delight node attributes:
+k_pixel_samples
+k_resolution_factor
+k_pixel_filter
+k_filter_width
+k_default_image_filename
+k_default_image_format
+k_default_image_bits
+k_save_ids_as_cryptomatte
+k_batch_output_mode
+k_interactive_output_mode
+k_aovs
+k_aov
+k_framebuffer_output
+k_file_output
+k_jpeg_output
+k_aov_name
+
+refer to
+https://www.sidefx.com/docs/hdk/_h_d_k__node_intro__working_with_parameters.html
+*/
 }
 
 bool

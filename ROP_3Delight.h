@@ -29,6 +29,7 @@ protected:
 
 private:
 
+	void ExportOutputs(const context& i_ctx)const;
 	void ExportGlobals(const context& i_ctx)const;
 
 	bool HasSpeedBoost()const;
