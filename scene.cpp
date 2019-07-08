@@ -148,7 +148,7 @@ void scene::process_obj(
 /**
 	\brief Scans for geometry, cameras, lights, etc...
 */
-void scene::scane_geo_network(
+void scene::scan_geo_network(
 	const context &i_context,
 	OP_Network *i_network,
 	std::vector< exporter * > &o_to_export )
@@ -194,7 +194,7 @@ void scene::export_scene( const context &i_context )
 	OP_Node *our_dear_leader = OPgetDirector();
 	std::vector<exporter *> to_export;
 
-	scane_geo_network(
+	scan_geo_network(
 		i_context,
 		(OP_Network*)our_dear_leader->findNode( "/obj"),
 		to_export );

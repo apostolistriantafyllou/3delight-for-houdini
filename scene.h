@@ -17,7 +17,7 @@ public:
 	static void export_scene( const context & );
 
 private:
-	static void scane_geo_network(
+	static void scan_geo_network(
 		const context &i_context,
 		OP_Network *i_network,
 		std::vector< exporter * > &o_to_export );

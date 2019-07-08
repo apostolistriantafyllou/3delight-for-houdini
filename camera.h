@@ -14,6 +14,6 @@ public:
 	void set_attributes( void ) const override;
 	void set_attributes_at_time( double i_time ) const override;
 
-	/// Returns the NSI ahndle used for the camera i_camera
+	/// Returns the NSI handle used for the camera i_camera
 	static std::string get_nsi_handle(OBJ_Node& i_camera);
 };
