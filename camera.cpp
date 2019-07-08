@@ -60,7 +60,8 @@ void camera::set_attributes_at_time( double i_time ) const
 			m_handle,
 			(
 				NSI::FloatArg("fov",  cam->APERTURE(i_time)),
-				NSI::IntegerArg("depthoffield.enable", m_context.m_dof),
+				// FIXME : DOF is broken
+				NSI::IntegerArg("depthoffield.enable", false),//m_context.m_dof),
 				NSI::DoubleArg("depthoffield.fstop", cam->FSTOP(i_time)),
 				NSI::DoubleArg("depthoffield.focallength", cam->FOCAL(i_time)),
 				NSI::DoubleArg("depthoffield.focaldistance", cam->FOCUS(i_time))
