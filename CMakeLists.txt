@@ -1,6 +1,6 @@
 #  Specify the minimum required version of CMake to build the project.
 cmake_minimum_required( VERSION 3.6 )
-project( ROP_3Delight )
+project( 3Delight_for_Houdini )
 
 # Locate Houdini's libraries and header files.
 # Registers an imported library target named 'Houdini'.
@@ -8,7 +8,7 @@ list( APPEND CMAKE_PREFIX_PATH "$ENV{HFS}/toolkit/cmake" )
 find_package( Houdini REQUIRED )
 
 # Add a library
-set( library_name ROP_3Delight )
+set( library_name 3Delight_for_Houdini )
 add_library( ${library_name} SHARED
 	ROP_3Delight.cpp
 	camera.cpp
@@ -24,7 +24,7 @@ add_library( ${library_name} SHARED
 
 add_subdirectory( osl osl )
 
-# 3Deligt includes
+# 3Delight includes
 target_include_directories( ${library_name} PRIVATE "$ENV{DELIGHT}/include"  )
 
 # Link against the Houdini libraries, and add required include directories and
