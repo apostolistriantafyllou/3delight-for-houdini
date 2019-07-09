@@ -27,11 +27,21 @@ shader_library::shader_library()
 	m_rop_path = library_path();
 
 	assert( m_rop_path.size() != 0 );
+
+	m_api.LoadFunction(m_shader_info_ptr, "DlGetShaderInfo");
 }
 
 const shader_library &shader_library::get_instance( void )
 {
 	return g_shader_library;
+}
+
+DlShaderInfo *shader_library::get_shader_info( const char *path ) const
+{
+	if( !m_shader_info_ptr )
+		return nullptr;
+
+	return m_shader_info_ptr( path );
 }
 
 /**
