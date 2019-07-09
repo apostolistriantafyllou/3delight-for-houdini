@@ -654,7 +654,14 @@ void
 ROP_3Delight::ExportOutputs(const context& i_ctx)const
 {
 	OBJ_Camera* cam = GetCamera();
-	assert(cam);
+
+	if( !cam )
+	{
+#ifdef DO_RENDER
+		assert( false );
+#endif
+		return;
+	}
 
 	int default_resolution[2] = { 1234, 765 };
 	i_ctx.m_nsi.Create("default_screen", "screen");
