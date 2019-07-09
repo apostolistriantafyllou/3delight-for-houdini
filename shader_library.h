@@ -18,5 +18,5 @@ public:
 	std::string get_shader_path( const char *i_name ) const;
 
 public:
-	std::string m_rop_path;
+	std::string m_plugin_path;
 };

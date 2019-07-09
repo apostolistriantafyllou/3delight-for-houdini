@@ -17,6 +17,7 @@ add_library( ${library_name} SHARED
 	polygonmesh.cpp
 	pointmesh.cpp
 	null.cpp
+	plugin.cpp
 	scene.cpp
 	shader_library.cpp
 	vop.cpp

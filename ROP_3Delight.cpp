@@ -4,15 +4,13 @@
 #include "scene.h"
 #include "context.h"
 
+#include <OBJ/OBJ_Camera.h>
+#include <OP/OP_Director.h>
+#include <OP/OP_OperatorTable.h>
 #include <PRM/PRM_Include.h>
 #include <PRM/PRM_SpareData.h>
-#include <ROP/ROP_Error.h>
 #include <ROP/ROP_Templates.h>
-#include <OP/OP_OperatorTable.h>
-#include <OP/OP_Director.h>
-#include <OBJ/OBJ_Camera.h>
-#include <UT/UT_PackageUtils.h>
-#include <UT/UT_DSOVersion.h>
+
 #include <nsi.hpp>
 #include <nsi_dynamic.hpp>
 
@@ -485,9 +483,9 @@ GetVariablePair()
 }
 
 void
-newDriverOperator(OP_OperatorTable *table)
+ROP_3Delight::Register(OP_OperatorTable* io_table)
 {
-	table->addOperator(
+	io_table->addOperator(
 		new OP_Operator(
 			"3Delight",
 			"3Delight",
@@ -501,7 +499,6 @@ newDriverOperator(OP_OperatorTable *table)
 			0,
 			"Render"));
 }
-
 
 OP_Node*
 ROP_3Delight::alloc(OP_Network* net, const char* name, OP_Operator* op)
