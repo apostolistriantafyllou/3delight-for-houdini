@@ -8,7 +8,7 @@
 class camera : public exporter
 {
 public:
-	camera( const context&, OBJ_Node *, const GT_PrimitiveHandle & );
+	camera( const context&, OBJ_Node *);
 
 	void create( void ) const override;
 	void set_attributes( void ) const override;

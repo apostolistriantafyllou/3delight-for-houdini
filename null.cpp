@@ -10,12 +10,9 @@
 #include <nsi.hpp>
 #include <iostream>
 
-null::null(
-	const context& i_ctx,
-	OBJ_Node *i_object,
-	const GT_PrimitiveHandle &i_gt_primitive )
+null::null( const context& i_ctx, OBJ_Node *i_object )
 :
-	exporter( i_ctx, i_object, i_gt_primitive )
+	exporter( i_ctx, i_object )
 {
 	/*
 		The null object has its full path as handle.
@@ -47,11 +44,25 @@ void null::set_attributes_at_time( double i_time ) const
 }
 
 /**
-	Unlike geo, the parent of a null node it's really the parent in
-	the scene hierarchy.
+	\brief Connect to the parent object of this null object. This could
+	be the immediate parent in Houdini's scene hierary or NSI_NODE_ROOT
+	if this null object has no parent.
 */
-const OBJ_Node *null::parent( void ) const
+void null::connect( void ) const
 {
 	assert( m_object );
-	return m_object->getParentObject();
+	OBJ_Node *parent = m_object->getParentObject();
+
+	if( parent )
+	{
+		m_nsi.Connect(
+			m_handle.c_str(), "",
+			parent->getFullPath().buffer(), "objects" );
+	}
+	else
+	{
+		m_nsi.Connect(
+			m_handle.c_str(), "",
+			NSI_SCENE_ROOT, "objects" );
+	}
 }

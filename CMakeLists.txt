@@ -19,6 +19,7 @@ add_library( ${library_name} SHARED
 	null.cpp
 	scene.cpp
 	shader_library.cpp
+	vop.cpp
 	utilities.cpp )
 
 add_subdirectory( osl osl )

@@ -9,10 +9,9 @@
 
 camera::camera(
 	const context& i_ctx,
-	OBJ_Node *i_object,
-	const GT_PrimitiveHandle &i_gt_primitive )
+	OBJ_Node *i_object )
 :
-	exporter( i_ctx, i_object, i_gt_primitive )
+	exporter( i_ctx, i_object )
 {
 	assert(i_object);
 	m_handle = get_nsi_handle(*i_object);

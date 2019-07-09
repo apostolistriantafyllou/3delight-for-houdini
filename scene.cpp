@@ -1,24 +1,27 @@
 #include "scene.h"
 
+/* exporters { */
 #include "camera.h"
-#include "context.h"
 #include "exporter.h"
 #include "light.h"
 #include "polygonmesh.h"
 #include "null.h"
 #include "pointmesh.h"
+#include "vop.h"
+/* } */
+
+#include "context.h"
 #include "utilities.h"
 
-#include <OP/OP_Director.h>
-#include <SOP/SOP_Node.h>
+#include <GT/GT_GEODetail.h>
+#include <GT/GT_Refine.h>
 #include <OBJ/OBJ_Camera.h>
 #include <OBJ/OBJ_Node.h>
-
-#include <GT/GT_Refine.h>
-#include <GT/GT_GEODetail.h>
+#include <OP/OP_Director.h>
+#include <SOP/SOP_Node.h>
 
 /**
-	A GT refiner for an OBJ_Node
+	\brief A GT refiner for an OBJ_Node.
 */
 struct OBJ_Node_Refiner : public GT_Refine
 {
@@ -70,13 +73,24 @@ struct OBJ_Node_Refiner : public GT_Refine
 	tree. Other than that, we output any obj that is a OBJ_GEOMETRY
 	and that is renderable in the current frame range.
 */
-void scene::process_obj(
+void scene::process_node(
 	const context &i_context,
 	OP_Node *i_node,
 	std::vector<exporter *> &o_to_export )
 {
-	OBJ_Node *obj = i_node->castToOBJNode();
+	if( i_node->castToVOPNode() )
+	{
+		/*
+		   Our material network connections is done :) The connection
+		   between nodes is done in \ref vop::copnnect
+		   Read vop.cpp if you are bewildered by this simplicity.
+		*/
+		o_to_export.push_back(
+			new vop(i_context, i_node->castToVOPNode()) );
+		return;
+	}
 
+	OBJ_Node *obj = i_node->castToOBJNode();
 	if( !obj )
 		return;
 
@@ -85,8 +99,7 @@ void scene::process_obj(
 		transforms if we decide not to output the node after all but I am
 		aiming for code simplicity here.
 	*/
-	GT_PrimitiveHandle empty;
-	o_to_export.push_back( new null(i_context, obj, empty) );
+	o_to_export.push_back( new null(i_context, obj) );
 
 	if( obj->getObjectType() & OBJ_NULL )
 	{
@@ -95,19 +108,18 @@ void scene::process_obj(
 
 	if( obj->castToOBJLight() )
 	{
-		o_to_export.push_back( new light(i_context, obj, empty) );
+		o_to_export.push_back( new light(i_context, obj) );
 
 		/*
 			We don't return here because an OBJ_Light is also and OBJ_Camera
-			and we want to export both. This will alow us, for example, to
-			render the scene from the point of view of a light source if
-			that's what the user wishes.
+			and we want to export both. This will allow to render the scene
+			from the point of view of a light source.
 		*/
 	}
 
 	if( obj->castToOBJCamera() )
 	{
-		o_to_export.push_back( new camera(i_context, obj, empty) );
+		o_to_export.push_back( new camera(i_context, obj) );
 		return;
 	}
 
@@ -146,21 +158,25 @@ void scene::process_obj(
 }
 
 /**
-	\brief Scans for geometry, cameras, lights, etc...
+	\brief Scans for geometry, cameras, lights, vops etc... and produces
+	a list of exporters.
+
+	\ref exporter
 */
-void scene::scan_geo_network(
+void scene::scan(
 	const context &i_context,
-	OP_Network *i_network,
-	std::vector< exporter * > &o_to_export )
+	std::vector<exporter *> &o_to_export )
 {
-	/* A traversal stack to abvoid recursion */
-	std::vector< OP_Network * > traversal;
-	traversal.push_back( i_network );
-	i_network = nullptr; // avoid typos below.
+	/* A traversal stack to avoid recursion */
+	std::vector< OP_Node * > traversal;
+
+	OP_Node *our_dear_leader = OPgetDirector();
+	traversal.push_back( our_dear_leader->findNode( "/obj") );
+	traversal.push_back( our_dear_leader->findNode( "/mat") );
 
 	/*
 		After this while loop, to_export will be filled with the OBJs
-		to export.
+		and the VOPs to convert to NSI.
 	*/
 	while( traversal.size() )
 	{
@@ -173,7 +189,7 @@ void scene::scan_geo_network(
 		for( int i=0; i< nkids; i++ )
 		{
 			OP_Node *node = network->getChild(i);
-			process_obj( i_context, node, o_to_export );
+			process_node( i_context, node, o_to_export );
 
 			if( !node->isNetwork() )
 				continue;
@@ -188,24 +204,20 @@ void scene::scan_geo_network(
 }
 
 /**
+	\brief Contains the high-level logic of scene conversion to
+	a NSI representation.
+
+	\see process_node
 */
-void scene::export_scene( const context &i_context )
+void scene::convert_to_nsi( const context &i_context )
 {
-	OP_Node *our_dear_leader = OPgetDirector();
+	/* Start be getting the list of exporter for the scene */
 	std::vector<exporter *> to_export;
-
-	scan_geo_network(
-		i_context,
-		(OP_Network*)our_dear_leader->findNode( "/obj"),
-		to_export );
-
-	NSI::Context &nsi = i_context.m_nsi;
+	scan( i_context, to_export );
 
 	/*
 		Create phase. This will create all the NSI nodes from the Houdini
 		objects that we support.
-
-		\see process_obj() to see which objects end up here.
 	*/
 	for( auto &exporter : to_export )
 	{
@@ -213,40 +225,12 @@ void scene::export_scene( const context &i_context )
 	}
 
 	/*
-		Connect to parents. This will effectively create the entire scene
-		hierarchy in one go.
+		Now connect nodes together. This has to be done after the create
+		so that all the nodes are present.
 	*/
-	for( auto exporter : to_export )
+	for( auto &exporter : to_export )
 	{
-#if 0
-		if( exporter->instanced() )
-		{
-			/*
-				This object will be referenced by an instancer, we don't
-				need to connect it anywhere.
-			*/
-			continue;
-		}
-#endif
-
-		/*
-			Parent in scene hierarchy. The parent is already created by
-			create loop above.
-		*/
-		const OBJ_Node *parent = exporter->parent();
-
-		if( parent )
-		{
-			nsi.Connect(
-				exporter->handle().c_str(), "",
-				parent->getFullPath().buffer(), "objects" );
-		}
-		else
-		{
-			nsi.Connect(
-				exporter->handle().c_str(),
-				"", NSI_SCENE_ROOT, "objects" );
-		}
+		exporter->connect();
 	}
 
 	/* Finally, SetAttributes[AtTime], in parallel (FIXME) */

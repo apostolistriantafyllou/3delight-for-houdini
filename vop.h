@@ -3,12 +3,13 @@
 #include "exporter.h"
 
 /**
-	\brief Poly and poly soupe exporter.
+	\brief Exports a VOP (shader). This means attributes (parameters)
+	and connections to other VOP nodes.
 */
-class null : public exporter
+class vop : public exporter
 {
 public:
-	null( const context&, OBJ_Node * );
+	vop( const context&, VOP_Node *);
 
 	void create( void ) const override;
 	void set_attributes( void ) const override;

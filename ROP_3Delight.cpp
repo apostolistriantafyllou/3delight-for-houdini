@@ -599,7 +599,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 #endif
 
 	context ctx(
-		nsi,	
+		nsi,
 		tstart,
 		tend,
 		GetShutterInterval(tstart),
@@ -609,7 +609,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	{
 		executePreRenderScript(tstart);
 
-		scene::export_scene( ctx );
+		scene::convert_to_nsi( ctx );
 	}
 
 	ExportOutputs(ctx);

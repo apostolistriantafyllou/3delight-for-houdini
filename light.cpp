@@ -11,12 +11,9 @@
 #include <nsi.hpp>
 #include <iostream>
 
-light::light(
-	const context& i_ctx,
-	OBJ_Node *i_object,
-	const GT_PrimitiveHandle &i_gt_primitive )
+light::light( const context& i_ctx, OBJ_Node *i_object )
 :
-	exporter( i_ctx, i_object, i_gt_primitive )
+	exporter( i_ctx, i_object )
 {
 	m_handle = i_object->getFullPath();
 	m_handle += "|light";
