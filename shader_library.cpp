@@ -26,7 +26,6 @@ shader_library::shader_library()
 {
 	m_plugin_path = library_path();
 
-	assert( m_rop_path.size() != 0 );
 	assert( m_plugin_path.size() != 0 );
 
 	m_api.LoadFunction(m_shader_info_ptr, "DlGetShaderInfo");

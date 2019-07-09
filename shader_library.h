@@ -23,7 +23,6 @@ public:
 
 
 public:
-	std::string m_rop_path;
 	std::string m_plugin_path;
 
 	NSI::DynamicAPI m_api;
