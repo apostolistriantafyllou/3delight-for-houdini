@@ -657,9 +657,6 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 	if( !cam )
 	{
-#ifdef DO_RENDER
-		assert( false );
-#endif
 		return;
 	}
 
