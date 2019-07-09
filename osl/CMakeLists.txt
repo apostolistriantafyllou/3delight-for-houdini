@@ -15,7 +15,7 @@ foreach(osl_file ${OSL_SRCS})
 
     add_custom_target( ${osl_name} DEPENDS ${osl_name}.oso ${osl_file} )
 
-	add_dependencies( ROP_3Delight ${osl_name} )
+	add_dependencies( 3Delight_for_Houdini ${osl_name} )
 
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${osl_name}.oso DESTINATION $ENV{HIH}/osl)
 

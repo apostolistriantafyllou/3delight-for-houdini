@@ -19,16 +19,18 @@ static bool file_exists( const char *name );
 
 
 /**
-	Find the path of the dso (ROP) and guess the shader path from there
+	Find the path of the plugin's dso and guess the shader path from there
 	for all Houdini shaders.
 */
 shader_library::shader_library()
 {
-	m_rop_path = library_path();
+	m_plugin_path = library_path();
 
 	assert( m_rop_path.size() != 0 );
+	assert( m_plugin_path.size() != 0 );
 
 	m_api.LoadFunction(m_shader_info_ptr, "DlGetShaderInfo");
+
 }
 
 const shader_library &shader_library::get_instance( void )
@@ -55,7 +57,7 @@ DlShaderInfo *shader_library::get_shader_info( const char *path ) const
 std::string shader_library::get_shader_path( const char *name ) const
 {
 	std::string installation_path =
-		m_rop_path + "/osl/" + name + ".oso";
+		m_plugin_path + "/osl/" + name + ".oso";
 
 	if( file_exists( installation_path.c_str()) )
 		return installation_path;

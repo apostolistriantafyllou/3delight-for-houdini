@@ -13,6 +13,8 @@ class ROP_3Delight : public ROP_Node
 {
 public:
 
+	/// Registers the 3Delight ROP
+	static void Register(OP_OperatorTable* io_table);
 	static OP_Node* alloc(OP_Network* net, const char* name, OP_Operator* op);
 
 	/** \brief Returns true if motion blur is enabled. */
