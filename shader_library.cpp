@@ -26,7 +26,7 @@ shader_library::shader_library()
 {
 	m_rop_path = library_path();
 
-	assert( m_rop_path.size() == 0 );
+	assert( m_rop_path.size() != 0 );
 }
 
 const shader_library &shader_library::get_instance( void )
