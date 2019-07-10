@@ -657,7 +657,10 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		return;
 	}
 
-	int default_resolution[2] = { 1234, 765 };
+	int default_resolution[2] = { cam->RESX(0), cam->RESY(0) };
+//    fprintf(stderr, "cam->RESX: %d, cam->RESY: %d\n", cam->RESX(0), cam->RESY(0));
+	float crop[2][2] = {{ float(cam->CROPL(0)), float(cam->CROPB(0)) },
+						{ float(cam->CROPR(0)), float(cam->CROPT(0)) }};
 	i_ctx.m_nsi.Create("default_screen", "screen");
 	i_ctx.m_nsi.SetAttribute(
 		"default_screen",
@@ -666,6 +669,10 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 			->SetArrayType(NSITypeInteger, 2)
 			->SetCount(1)
 			->CopyValue(default_resolution, sizeof(default_resolution)),
+			*NSI::Argument::New("crop")
+			->SetArrayType(NSITypeFloat, 2)
+			->SetCount(2)
+			->SetValuePointer(crop),
 			NSI::IntegerArg("oversampling", 8)
 		) );
 	i_ctx.m_nsi.Connect(
@@ -705,12 +712,6 @@ use the following accessor:
 GetResolutionFactor()
 
 and the following camera attributes:
-cam->RESX()
-cam->RESY()
-cam->CROPL()
-cam->CROPR()
-cam->CROPB()
-cam->CROPT()
 cam->WINPX()
 cam->WINPY()
 cam->WINX()
