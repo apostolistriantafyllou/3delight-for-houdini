@@ -86,7 +86,10 @@ void light::create_default_geometry( void ) const
 	}
 	else if( type == e_grid || is_spot )
 	{
-		float scale = is_spot ? 0.001f : 1.0f;
+		if( is_spot )
+		{
+			x_size = y_size = 0.001f;
+		}
 
 		float P[] = {
 			-x_size, -y_size, 0.0f,  -x_size, y_size, 0.0f,
