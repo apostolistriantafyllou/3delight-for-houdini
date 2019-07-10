@@ -11,6 +11,7 @@ find_package( Houdini REQUIRED )
 set( library_name 3Delight_for_Houdini )
 add_library( ${library_name} SHARED
 	ROP_3Delight.cpp
+	VOP_ExternalOSL.cpp
 	camera.cpp
 	exporter.cpp
 	light.cpp

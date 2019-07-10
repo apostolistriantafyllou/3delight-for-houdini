@@ -5,6 +5,9 @@
 
 #include <string>
 
+class OP_OperatorTable;
+
+
 /**
 	\brief This class (singleton) is reponsible for loading OSO shaders and
 	creating VOP nodes. It also gives the full path to any shader (for light
@@ -12,7 +15,6 @@
 */
 class shader_library
 {
-
 public:
 	static const shader_library &get_instance( void );
 	shader_library();
@@ -21,6 +23,7 @@ public:
 	std::string get_shader_path( const char *i_name ) const;
 	DlShaderInfo *get_shader_info( const char *i_path ) const;
 
+	void Register(OP_OperatorTable* io_table)const;
 
 public:
 	std::string m_plugin_path;

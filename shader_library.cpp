@@ -1,5 +1,11 @@
 #include "shader_library.h"
 
+#include "VOP_ExternalOSL.h"
+
+#include <VOP/VOP_Operator.h>
+
+#include <vector>
+
 #include <assert.h>
 
 #ifdef _WIN32
@@ -62,11 +68,45 @@ std::string shader_library::get_shader_path( const char *name ) const
 {
 	std::string installation_path =
 		m_plugin_path + "/../osl/" + name + ".oso";
-
 	if( file_exists( installation_path.c_str()) )
 		return installation_path;
 
+// FIXME : wrong, hardcoded path
+	std::string dl_shaders_path = 
+		m_plugin_path + "/../external-osl/" + name + ".oso";
+	if( file_exists( dl_shaders_path.c_str()) )
+		return dl_shaders_path;
+
 	return {};
+}
+
+static void
+FindExternalShaders(std::vector<std::string>& o_osos)
+{
+	o_osos.push_back("dlPrincipled");
+	o_osos.push_back("areaLight");
+}
+
+
+/// Registers one VOP for each .oso file found in the shaders path
+void
+shader_library::Register(OP_OperatorTable* io_table)const
+{
+	std::vector<std::string> osos;
+	FindExternalShaders(osos);
+
+	for(const std::string& oso : osos)
+	{
+		const DlShaderInfo* info =
+			get_shader_info(get_shader_path(oso.c_str()).c_str());
+		if(!info)
+		{
+			continue;
+		}
+
+		io_table->addOperator(
+			new VOP_ExternalOSLOperator(StructuredShaderInfo(info), oso));
+	}
 }
 
 /* -----------------------------------------------------------------------------
