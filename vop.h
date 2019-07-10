@@ -5,8 +5,11 @@
 class OP_Parameters;
 
 /**
-	\brief Exports a VOP (shader). This means attributes (parameters)
-	and connections to other VOP nodes.
+	Creates the NSI representation of a VOP node by creating a shader node
+	with VOP's type id as the shader file name and connecting it to it's
+	input VOP nodes. So implementing any VEX node is just a matter of providing
+	the OSL implementation in the osl/ directory. Of course, some VEX nodes are
+	not implementable in OSL.
 */
 class vop : public exporter
 {
@@ -33,6 +36,8 @@ protected:
 			The node where to get parameter values.
 		\param i_shader
 			The OSL shader from where to get parameter names.
+		\param i_time
+			The time to use for the parameter's eval.
 		\param o_list
 			The resulting NSI argument list that can be passed directly
 			to NSISetAttribute[AtTime]
@@ -40,5 +45,15 @@ protected:
 	static void list_shader_parameters(
 		const OP_Parameters *i_parameters,
 		const char *i_shader,
+		float i_time,
 		NSI::ArgumentList &o_list );
+
+private:
+	/**
+		\returns a legalized OSL name from vop->getOperator()->getName()
+		as these names can contain illegal character for a file system.
+
+		principled::2.0 would be converted to principled--2.0.
+	*/
+	std::string osl_name( void ) const;
 };
