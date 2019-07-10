@@ -191,7 +191,7 @@ void light::set_attributes( void ) const
 void light::set_attributes_at_time( double i_time ) const
 {
 	NSI::ArgumentList list;
-	vop::list_shader_parameters( m_vop, "hlight", list );
+	vop::list_shader_parameters( m_vop, "hlight", i_time, list );
 
 	m_nsi.SetAttributeAtTime( m_handle.c_str(), i_time,  list );
 }
