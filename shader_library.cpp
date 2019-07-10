@@ -76,6 +76,8 @@ std::string shader_library::get_shader_path( const char *name ) const
 
    -------------------------------------------------------------------------- */
 
+#include <locale>
+
 static std::string library_path( void )
 {
 	static int foo = 0;

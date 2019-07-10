@@ -1,0 +1,22 @@
+/**
+	Replicates basic texture::2.0 functionality.
+
+	Note: don't implement things like "extrapolate derivatives", these are
+	total nonsense and come from the dinosaurs era.
+*/
+shader texture__2_0(
+	string map = "",
+	//string wrap = "" ,
+	float width = 1,
+	float blur = 0,
+	int interp = 0,
+	output color cr = 0 )
+{
+	float st[2] = {u, v};
+	getattribute( "st", st );
+	cr = texture(
+		map, st[0], st[1], "width", width, "blur", blur, "wrap", "periodic");
+}
+
+
+
