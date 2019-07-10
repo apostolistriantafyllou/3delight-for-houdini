@@ -1,8 +1,9 @@
 #include "light.h"
+#include "vop.h"
 
 #include "context.h"
 
-#include <OP/OP_Director.h>
+#include <VOP/VOP_Node.h>
 #include <OBJ/OBJ_Node.h>
 #include <UT/UT_String.h>
 #include <GT/GT_Handles.h>
@@ -182,7 +183,15 @@ void light::set_attributes( void ) const
 	create_default_geometry();
 }
 
+/**
+	We set the attributes of the surface shader here. We trick ourselves
+	to believe that hlight is actually a vop node so that we just have
+	to write an "hlight.osl" and that's it.
+*/
 void light::set_attributes_at_time( double i_time ) const
 {
-	return;
+	NSI::ArgumentList list;
+	vop::list_shader_parameters( m_vop, "hlight", list );
+
+	m_nsi.SetAttributeAtTime( m_handle.c_str(), i_time,  list );
 }

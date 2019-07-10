@@ -1,3 +1,18 @@
-shader hlight()
+surface hlight(
+	float light_color = color(1),
+	float light_intensity = 1,
+	float exposure = 1,
+	int singlesided = 0 )
 {
+	Ci = 0;
+
+	/* So that area light doesn't cast any shadows. */
+	if( singlesided==1 && !raytype("camera") )
+	{
+		Ci += transparent();
+	}
+
+	color result = light_color * light_intensity * pow(2,exposure);
+
+	Ci += result * emission();
 }

@@ -31,6 +31,7 @@ shader_library::shader_library()
 
 	m_api.LoadFunction(m_shader_info_ptr, "DlGetShaderInfo");
 
+	assert( m_shader_info_ptr );
 }
 
 const shader_library &shader_library::get_instance( void )
