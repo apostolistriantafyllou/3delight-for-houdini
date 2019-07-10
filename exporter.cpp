@@ -38,12 +38,28 @@ const std::string &exporter::handle( void ) const
 }
 
 /**
-	\brief Connect to the parent object of this exporter.
+	\brief Connect to the parent object of this exporter and also
+	perform local material assignment if this op node has a
+	"shop_materialpath" parameter.
 */
 void exporter::connect( void ) const
 {
-	// FIXME: assert( this object is not a vop )
+	if( !m_object )
+		return;
+
 	m_nsi.Connect(
 		m_handle.c_str(), "",
 		m_object->getFullPath().buffer(), "objects" );
+
+	int index = m_object->getParmIndex( "shop_materialpath" );
+	if( index < 0 )
+		return;
+
+	std::string attributes( m_handle + "|attributes" );
+	UT_String material_path;
+	m_object->evalString( material_path, "shop_materialpath", 0, 0.f );
+
+	m_nsi.Create( attributes, "attributes" );
+	m_nsi.Connect( attributes, "", m_handle, "geometryattributes" );
+	m_nsi.Connect( material_path.buffer(), "", attributes, "surfaceshader" );
 }

@@ -33,6 +33,7 @@ private:
 
 	void ExportOutputs(const context& i_ctx)const;
 	void ExportGlobals(const context& i_ctx)const;
+	void ExportDefaultMaterial( const context &i_context ) const;
 
 	bool HasSpeedBoost()const;
 	float GetResolutionFactor()const;

@@ -1,5 +1,6 @@
 #include "light.h"
 #include "vop.h"
+#include "shader_library.h"
 
 #include "context.h"
 
@@ -27,15 +28,25 @@ void light::create( void ) const
 		Note that we create the light even if not enabled. This will
 		be useful for IPR.
 	*/
-	m_nsi.Create( m_handle.c_str(), "transform" );
+	m_nsi.Create( m_handle, "transform" );
 
 	/*
 		Create the attribute node so that we can connect the surface
 		shader used for the light source.
 	*/
 	std::string attributes( m_handle ); attributes += "|attributes";
-	m_nsi.Create( attributes.c_str(), "attributes" );
+	m_nsi.Create( attributes, "attributes" );
 
+	std::string shader( m_handle ); shader += "|shader";
+	m_nsi.Create( shader, "shader" );
+
+	const shader_library& library = shader_library::get_instance();
+	std::string path_to_hlight = library.get_shader_path( "hlight" );
+	m_nsi.SetAttribute(
+		shader, NSI::StringArg("shaderfilename", path_to_hlight) );
+
+	m_nsi.Connect( shader, "", attributes, "surfaceshader" );
+	m_nsi.Connect( attributes, "", m_handle, "geometryattributes" );
 }
 
 void light::create_default_geometry( void ) const
@@ -73,7 +84,7 @@ void light::create_default_geometry( void ) const
 		}
 		else
 		{
-			args.push( new NSI::FloatArg( "width", 2.0f ) );
+			args.push( new NSI::FloatArg( "width", 1.0f ) );
 		}
 
 		if( type == e_disk )
@@ -151,6 +162,15 @@ void light::create_default_geometry( void ) const
 			->SetValuePointer( &indices[0] ) );
 		m_nsi.SetAttribute( geo_name.c_str(), args );
 	}
+	else if( type == e_distant )
+	{
+		/*
+			Yes ladies and gentlemen, a distant light is just an environment
+			with an angle of 0 :)
+		*/
+		m_nsi.Create( m_handle, "environment" );
+		m_nsi.SetAttribute( m_handle, NSI::DoubleArg("angle", 0) );
+	}
 	else if( type == e_geometry )
 	{
 		UT_String path;
@@ -170,9 +190,7 @@ void light::create_default_geometry( void ) const
 	}
 
 	/* Connect to parent transform. */
-	m_nsi.Connect(
-		geo_name.c_str(), "",
-		m_handle.c_str(), "objects" );
+	m_nsi.Connect( geo_name, "", m_handle, "objects" );
 }
 
 void light::set_attributes( void ) const
@@ -191,7 +209,8 @@ void light::set_attributes( void ) const
 void light::set_attributes_at_time( double i_time ) const
 {
 	NSI::ArgumentList list;
-	vop::list_shader_parameters( m_vop, "hlight", list );
+	vop::list_shader_parameters( m_vop, "hlight", i_time, list );
 
-	m_nsi.SetAttributeAtTime( m_handle.c_str(), i_time,  list );
+	std::string shader(m_handle); shader += "|shader";
+	m_nsi.SetAttributeAtTime( shader, i_time, list );
 }

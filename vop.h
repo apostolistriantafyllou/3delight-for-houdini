@@ -27,6 +27,16 @@ public:
 	void set_attributes_at_time( double i_time ) const override;
 	void connect( void ) const override;
 
+	/**
+		\returns a legalized OSL name from vop->getOperator()->getName()
+		as these names can contain illegal characters for a file system
+		and/or OSL.
+
+		principled::2.0 would be converted to principled__2_0.
+	*/
+	std::string osl_name( void ) const;
+	static std::string osl_name( const char * );
+
 protected:
 	/**
 		Set all parameters of 'i_shader' by finding their values pairs
@@ -50,10 +60,14 @@ protected:
 
 private:
 	/**
-		\returns a legalized OSL name from vop->getOperator()->getName()
-		as these names can contain illegal character for a file system.
-
-		principled::2.0 would be converted to principled--2.0.
+		\returns true if we should not connect this VOP to its subnetworks.
+		(probably because the OSL version has all the functionality inside).
 	*/
-	std::string osl_name( void ) const;
+	bool ignore_subnetworks( void ) const;
+
+	/**
+		\returns true if unsupported shader. Meaning that we don't have an
+		OSL counterpart for this shader.
+	*/
+	bool unsupported( void ) const;
 };

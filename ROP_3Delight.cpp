@@ -3,6 +3,8 @@
 #include "camera.h"
 #include "scene.h"
 #include "context.h"
+#include "shader_library.h"
+#include "vop.h"
 
 #include <OBJ/OBJ_Camera.h>
 #include <OP/OP_Director.h>
@@ -514,6 +516,30 @@ ROP_3Delight::HasMotionBlur()const
 		!(HasSpeedBoost() && evalInt(k_disable_motion_blur, 0, 0.0f));
 }
 
+/**
+	Let's use Houdini's Principled Shader as the default material so that
+	any changes we make in there will appear by default in our render.
+*/
+void ROP_3Delight::ExportDefaultMaterial( const context &i_context ) const
+{
+	const std::string k_shader( "__default__shader__" );
+	const std::string k_attributes( "__default__attributes__" );
+
+	NSI::Context &nsi = i_context.m_nsi;
+	const shader_library &library = shader_library::get_instance();
+	std::string path =
+		library.get_shader_path(
+			vop::osl_name("principledshader::2.0").c_str() );
+
+	nsi.Create( k_shader, "shader" );
+	nsi.Create( k_attributes, "attributes" );
+
+	nsi.SetAttribute( k_shader, NSI::StringArg("shaderfilename", path) );
+
+	nsi.Connect( k_attributes, "", NSI_SCENE_ROOT, "geometryattributes" );
+	nsi.Connect( k_shader, "", k_attributes, "surfaceshader" );
+}
+
 void
 ROP_3Delight::ExportGlobals(const context& i_ctx)const
 {
@@ -612,6 +638,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	ExportOutputs(ctx);
 
 	ExportGlobals(ctx);
+	ExportDefaultMaterial(ctx);
 
 #ifdef DO_RENDER
 	nsi.RenderControl(NSI::CStringPArg("action", "start"));

@@ -1,22 +1,23 @@
 /**
 	Replicates basic texture::2.0 functionality.
 
+	We ignore the subnetworks of this operator as it contains inline VEX
+	code and some specific things for UDIMs which we actually support inside
+	3Delight.
+
 	Note: don't implement things like "extrapolate derivatives", these are
 	total nonsense and come from the dinosaurs era.
 */
-shader texture__2_0(
+shader texture__2_0 [[ string tags[1] = {"ignoresubnetworks"} ]] (
 	string map = "",
 	//string wrap = "" ,
 	float width = 1,
 	float blur = 0,
 	int interp = 0,
-	output color cr = 0 )
+	output color clr = 0 )
 {
 	float st[2] = {u, v};
 	getattribute( "st", st );
-	cr = texture(
+	clr = texture(
 		map, st[0], st[1], "width", width, "blur", blur, "wrap", "periodic");
 }
-
-
-

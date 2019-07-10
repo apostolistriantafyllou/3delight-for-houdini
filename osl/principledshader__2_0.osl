@@ -1,0 +1,9 @@
+/**
+	Poor man's principled = diffuse only :)
+*/
+surface principledshader__2_0(
+	color basecolor = color(1)
+)
+{
+	Ci = diffuse(N) * basecolor;
+}

@@ -1,5 +1,5 @@
 surface hlight(
-	float light_color = color(1),
+	color light_color = color(1),
 	float light_intensity = 1,
 	float exposure = 1,
 	int singlesided = 0 )

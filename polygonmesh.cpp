@@ -42,6 +42,9 @@ void polygonmesh::set_attributes( void ) const
 
 	NSI::ArgumentList mesh_args;
 
+	/* Our dear Houdini friends are RenderMan affectionados */
+	mesh_args.Add( new NSI::IntegerArg("clockwisewinding", 1) );
+
 	/*
 		Prepare the 'nvertices' attribute which contains, for each face,
 		the total number of points.
