@@ -688,7 +688,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 			->SetArrayType(NSITypeDouble, 2)
 			->SetCount(2)
 			->SetValuePointer(sw),
-			NSI::IntegerArg("oversampling", 8)
+			NSI::IntegerArg("oversampling", GetPixelSamples())
 		) );
 	i_ctx.m_nsi.Connect(
 		"default_screen", "",
@@ -724,7 +724,6 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 FIXME : do the real thing
 
 and the following ROP_3Delight node attributes:
-k_pixel_samples
 k_pixel_filter
 k_filter_width
 k_default_image_filename
@@ -790,6 +789,13 @@ ROP_3Delight::GetSamplingFactor()const
 	}
 
 	return factors[sampling_factor];
+}
+
+int
+ROP_3Delight::GetPixelSamples()const
+{
+	int pixel_samples = evalInt(k_pixel_samples, 0, 0.0f);
+	return pixel_samples;
 }
 
 OBJ_Camera*
