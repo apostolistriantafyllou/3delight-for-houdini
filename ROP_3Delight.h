@@ -38,6 +38,7 @@ private:
 	bool HasSpeedBoost()const;
 	float GetResolutionFactor()const;
 	float GetSamplingFactor()const;
+	int GetPixelSamples()const;
 	OBJ_Camera* GetCamera()const;
 	float GetShutterInterval(float i_time)const;
 	bool HasDepthOfField()const;

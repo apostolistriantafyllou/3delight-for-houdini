@@ -684,7 +684,21 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		return;
 	}
 
-	int default_resolution[2] = { 1234, 765 };
+	int default_resolution[2] =
+	{
+		int(::roundf(cam->RESX(0)*GetResolutionFactor())),
+		int(::roundf(cam->RESY(0)*GetResolutionFactor()))
+	};
+	float crop[2][2] = {{ float(cam->CROPL(0)), float(cam->CROPB(0)) },
+						{ float(cam->CROPR(0)), float(cam->CROPT(0)) }};
+	// screenwindow
+	double size[2] = { cam->WINSIZEX(0), cam->WINSIZEY(0) };
+	double center[2] = { cam->WINX(0), cam->WINY(0) };
+	double sw[2][2] =
+	{
+		{ center[0] - size[0], center[1] - size[1] },
+		{ center[0] + size[0], center[1] + size[1] }
+	};
 	i_ctx.m_nsi.Create("default_screen", "screen");
 	i_ctx.m_nsi.SetAttribute(
 		"default_screen",
@@ -693,7 +707,15 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 			->SetArrayType(NSITypeInteger, 2)
 			->SetCount(1)
 			->CopyValue(default_resolution, sizeof(default_resolution)),
-			NSI::IntegerArg("oversampling", 8)
+			*NSI::Argument::New("crop")
+			->SetArrayType(NSITypeFloat, 2)
+			->SetCount(2)
+			->SetValuePointer(crop),
+			*NSI::Argument::New("screenwindow")
+			->SetArrayType(NSITypeDouble, 2)
+			->SetCount(2)
+			->SetValuePointer(sw),
+			NSI::IntegerArg("oversampling", GetPixelSamples())
 		) );
 	i_ctx.m_nsi.Connect(
 		"default_screen", "",
@@ -728,26 +750,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 /*
 FIXME : do the real thing
 
-use the following accessor:
-GetResolutionFactor()
-
-and the following camera attributes:
-cam->RESX()
-cam->RESY()
-cam->CROPL()
-cam->CROPR()
-cam->CROPB()
-cam->CROPT()
-cam->WINPX()
-cam->WINPY()
-cam->WINX()
-cam->WINY()
-cam->WINSIZEX()
-cam->WINSIZEY()
-
 and the following ROP_3Delight node attributes:
-k_pixel_samples
-k_resolution_factor
 k_pixel_filter
 k_filter_width
 k_default_image_filename
@@ -785,7 +788,7 @@ ROP_3Delight::GetResolutionFactor()const
 
 	int resolution_factor = evalInt(k_resolution_factor, 0, 0.0f);
 
-	float factors[] = { 1.0f, 0.25f, 0.1f, 0.04f, 0.01f };
+	float factors[] = { 1.0f, 0.5f, 0.25f, 0.125f };
 	if(resolution_factor < 0 ||
 		resolution_factor >= sizeof(factors) / sizeof(factors[0]))
 	{
@@ -805,7 +808,7 @@ ROP_3Delight::GetSamplingFactor()const
 
 	int sampling_factor = evalInt(k_sampling_factor, 0, 0.0f);
 
-	float factors[] = { 1.0f, 0.5f, 0.25f, 0.125f };
+	float factors[] = { 1.0f, 0.25f, 0.1f, 0.04f, 0.01f };
 	if(sampling_factor < 0 ||
 		sampling_factor >= sizeof(factors) / sizeof(factors[0]))
 	{
@@ -813,6 +816,13 @@ ROP_3Delight::GetSamplingFactor()const
 	}
 
 	return factors[sampling_factor];
+}
+
+int
+ROP_3Delight::GetPixelSamples()const
+{
+	int pixel_samples = evalInt(k_pixel_samples, 0, 0.0f);
+	return pixel_samples;
 }
 
 OBJ_Camera*
