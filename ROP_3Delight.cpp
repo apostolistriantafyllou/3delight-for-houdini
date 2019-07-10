@@ -657,8 +657,11 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		return;
 	}
 
-	int default_resolution[2] = { cam->RESX(0), cam->RESY(0) };
-//    fprintf(stderr, "cam->RESX: %d, cam->RESY: %d\n", cam->RESX(0), cam->RESY(0));
+	int default_resolution[2] =
+	{
+		int(::roundf(cam->RESX(0)*GetResolutionFactor())),
+		int(::roundf(cam->RESY(0)*GetResolutionFactor()))
+	};
 	float crop[2][2] = {{ float(cam->CROPL(0)), float(cam->CROPB(0)) },
 						{ float(cam->CROPR(0)), float(cam->CROPT(0)) }};
 	i_ctx.m_nsi.Create("default_screen", "screen");
@@ -708,9 +711,6 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 /*
 FIXME : do the real thing
 
-use the following accessor:
-GetResolutionFactor()
-
 and the following camera attributes:
 cam->WINPX()
 cam->WINPY()
@@ -759,7 +759,7 @@ ROP_3Delight::GetResolutionFactor()const
 
 	int resolution_factor = evalInt(k_resolution_factor, 0, 0.0f);
 
-	float factors[] = { 1.0f, 0.25f, 0.1f, 0.04f, 0.01f };
+	float factors[] = { 1.0f, 0.5f, 0.25f, 0.125f };
 	if(resolution_factor < 0 ||
 		resolution_factor >= sizeof(factors) / sizeof(factors[0]))
 	{
@@ -779,7 +779,7 @@ ROP_3Delight::GetSamplingFactor()const
 
 	int sampling_factor = evalInt(k_sampling_factor, 0, 0.0f);
 
-	float factors[] = { 1.0f, 0.5f, 0.25f, 0.125f };
+	float factors[] = { 1.0f, 0.25f, 0.1f, 0.04f, 0.01f };
 	if(sampling_factor < 0 ||
 		sampling_factor >= sizeof(factors) / sizeof(factors[0]))
 	{
