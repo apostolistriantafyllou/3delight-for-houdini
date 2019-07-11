@@ -150,6 +150,7 @@ struct VOP_ExternalOSLOperator : public VOP_Operator
 				i_shader_info.NumOutputs()),
 			m_shader_info(i_shader_info)
 	{
+		setOpTabSubMenuPath("3Delight");
 	}
 
 	/// The shader information we want to pass to the VOP_ExternalOSL node
