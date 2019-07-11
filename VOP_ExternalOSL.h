@@ -137,7 +137,7 @@ struct VOP_ExternalOSLOperator : public VOP_Operator
 		const StructuredShaderInfo& i_shader_info,
 		const std::string& i_name)
 		:	VOP_Operator(
-				i_name.c_str(),
+				("3Delight::" + i_name).c_str(),
 				i_name.c_str(),
 				VOP_ExternalOSL::alloc,
 				VOP_ExternalOSL::GetTemplates(i_shader_info),
