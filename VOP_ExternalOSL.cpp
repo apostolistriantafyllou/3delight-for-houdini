@@ -89,6 +89,22 @@ static VOP_Type GetVOPType(const DlShaderInfo::TypeDesc& i_osl_type)
 	return VOP_TYPE_STRING;
 }
 
+static void
+FindMetaData(
+	const char*& o_value,
+	const DlShaderInfo::constvector<DlShaderInfo::Parameter>& i_metadata,
+	const char* i_name)
+{
+	for(const DlShaderInfo::Parameter& meta : i_metadata)
+	{
+		if(meta.name == i_name)
+		{
+			o_value = meta.sdefault[0].c_str();
+			return;
+		}
+	}
+}
+
 
 StructuredShaderInfo::StructuredShaderInfo(const DlShaderInfo* i_info)
 	:	m_dl(*i_info)
@@ -137,15 +153,16 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 	for(unsigned p = 0; p < i_shader_info.NumInputs(); p++)
 	{
 		const DlShaderInfo::Parameter& param = i_shader_info.GetInput(p);
-		const char* page_name = "";
-		for(const DlShaderInfo::Parameter& meta : param.metadata)
+
+		const char* widget = "";
+		FindMetaData(widget, param.metadata, "widget");
+		if(strcmp(widget, "null") == 0)
 		{
-			if(meta.name == "page")
-			{
-				page_name = meta.sdefault[0].c_str();
-				break;
-			}
+			continue;
 		}
+
+		const char* page_name = "";
+		FindMetaData(page_name, param.metadata, "page");
 
 		std::pair<page_map_t::iterator, bool> inserted =
 			page_map.insert(page_map_t::value_type(page_name, page_components()));
