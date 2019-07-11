@@ -105,6 +105,112 @@ FindMetaData(
 	}
 }
 
+struct ParameterMetaData
+{
+	const char* m_label = nullptr;
+	const char* m_widget = nullptr;
+	const int* m_imin = nullptr;
+	const int* m_imax = nullptr;
+	const int* m_slider_imin = nullptr;
+	const int* m_slider_imax = nullptr;
+	const float* m_fmin = nullptr;
+	const float* m_fmax = nullptr;
+	const float* m_slider_fmin = nullptr;
+	const float* m_slider_fmax = nullptr;
+};
+
+static void
+GetParameterMetaData(
+	ParameterMetaData& o_data,
+	const DlShaderInfo::constvector<DlShaderInfo::Parameter>& i_metadata)
+{
+	for(const DlShaderInfo::Parameter& meta : i_metadata)
+	{
+		if(meta.name == "label")
+		{
+			if(!meta.sdefault.empty())
+			{
+				o_data.m_label = meta.sdefault[0].c_str();
+			}
+		}
+		if(meta.name == "widget")
+		{
+			if(!meta.sdefault.empty())
+			{
+				o_data.m_widget = meta.sdefault[0].c_str();
+			}
+		}
+		else if(meta.name == "min")
+		{
+			if(meta.type.type == NSITypeInteger)
+			{
+				if(!meta.idefault.empty())
+				{
+					o_data.m_imin = &meta.idefault[0];
+				}
+			}
+			else
+			{
+				if(!meta.idefault.empty())
+				{
+					o_data.m_fmin = &meta.fdefault[0];
+				}
+			}
+		}
+		else if(meta.name == "max")
+		{
+			if(meta.type.type == NSITypeInteger)
+			{
+				if(!meta.idefault.empty())
+				{
+					o_data.m_imax = &meta.idefault[0];
+				}
+			}
+			else
+			{
+				if(!meta.idefault.empty())
+				{
+					o_data.m_fmax = &meta.fdefault[0];
+				}
+			}
+		}
+		else if(meta.name == "slidermin")
+		{
+			if(meta.type.type == NSITypeInteger)
+			{
+				if(!meta.idefault.empty())
+				{
+					o_data.m_slider_imin = &meta.idefault[0];
+				}
+			}
+			else
+			{
+				if(!meta.idefault.empty())
+				{
+					o_data.m_slider_fmin = &meta.fdefault[0];
+				}
+			}
+		}
+		else if(meta.name == "slidermax")
+		{
+			if(meta.type.type == NSITypeInteger)
+			{
+				if(!meta.idefault.empty())
+				{
+					o_data.m_slider_imax = &meta.idefault[0];
+				}
+			}
+			else
+			{
+				if(!meta.idefault.empty())
+				{
+					o_data.m_slider_fmax = &meta.fdefault[0];
+				}
+			}
+		}
+	}
+}
+
 
 StructuredShaderInfo::StructuredShaderInfo(const DlShaderInfo* i_info)
 	:	m_dl(*i_info)
@@ -226,8 +332,12 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 				continue;
 			}
 
+			ParameterMetaData meta;
+			meta.m_label = param->name.c_str();
+			GetParameterMetaData(meta, param->metadata);
+
 			PRM_Name* name =
-				LEAKED(new PRM_Name(param->name.c_str(), param->name.c_str()));
+				LEAKED(new PRM_Name(param->name.c_str(), meta.m_label));
 			templates->push_back(
 				PRM_Template(GetPRMType(param->type), num_components, name));
 		}
