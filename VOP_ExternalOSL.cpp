@@ -1,5 +1,11 @@
 #include "VOP_ExternalOSL.h"
 
+/*
+	Simple identity macro that does nothing but helps to identify allocations of
+	memory that will never be deleted, until we find a way to do so.
+*/
+#define LEAKED(x) (x)
+
 
 // Returns a PRM_Type that corresponds to a DlShaderInfo::TypeDesc
 static PRM_Type GetPRMType(const DlShaderInfo::TypeDesc& i_osl_type)
@@ -161,15 +167,17 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 		multiple operator types, each with an arbitrary number of parameters, to
 		be created.
 		It could be interesting to keep them around in VOP_ExternalOSLOperator
-		and delete them when its destructor is called.
+		and delete them when its destructor is called. Unfortunately, even
+		VOP_Operator's destructor doesn't seem to even be called, so we simply
+		use the LEAKED macro to mark them until we find out what we should do.
 	*/
-	std::vector<PRM_Template>* templates = new std::vector<PRM_Template>;
+	std::vector<PRM_Template>* templates = LEAKED(new std::vector<PRM_Template>);
 
 	// Create the pages switcher
 	if(page_list.size() > 1)
 	{
-		PRM_Name* tabs_name = new PRM_Name("tabs");
-		std::vector<PRM_Default>* tabs = new std::vector<PRM_Default>;
+		PRM_Name* tabs_name = LEAKED(new PRM_Name("tabs"));
+		std::vector<PRM_Default>* tabs = LEAKED(new std::vector<PRM_Default>);
 		for(const page_list_t::value_type& pa : page_list)
 		{
 			tabs->push_back(PRM_Default(pa.second->size(), pa.first));
@@ -202,7 +210,7 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 			}
 
 			PRM_Name* name =
-				new PRM_Name(param->name.c_str(), param->name.c_str());
+				LEAKED(new PRM_Name(param->name.c_str(), param->name.c_str()));
 			templates->push_back(
 				PRM_Template(GetPRMType(param->type), num_components, name));
 		}
