@@ -117,6 +117,41 @@ VOP_ExternalOSL::alloc(OP_Network* net, const char* name, OP_Operator* entry)
 PRM_Template*
 VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 {
+	typedef std::vector<const DlShaderInfo::Parameter*> page_components;
+	typedef std::map<std::string, page_components> page_map_t;
+	typedef std::vector<std::pair<const char*, page_components*> > page_list_t;
+
+	/*
+		Classify shader parameters into pages.  We sort them using a map, but we
+		keep a separate, ordered page list to keep them in the same order as the
+		first parameter of each page.
+	*/
+	page_map_t page_map;
+	page_list_t page_list;
+	for(unsigned p = 0; p < i_shader_info.NumInputs(); p++)
+	{
+		const DlShaderInfo::Parameter& param = i_shader_info.GetInput(p);
+		const char* page_name = "";
+		for(const DlShaderInfo::Parameter& meta : param.metadata)
+		{
+			if(meta.name == "page")
+			{
+				page_name = meta.sdefault[0].c_str();
+				break;
+			}
+		}
+
+		std::pair<page_map_t::iterator, bool> inserted =
+			page_map.insert(page_map_t::value_type(page_name, page_components()));
+		inserted.first->second.push_back(&param);
+
+		if(inserted.second)
+		{
+			page_list.push_back(
+				page_list_t::value_type(page_name, &inserted.first->second));
+		}
+	}
+
 	/*
 		The templates and their components (names and such) are dynamically
 		allocated here but never deleted, since they're expected to be valid for
@@ -125,34 +160,52 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 		one type of operator is defined. Allocating them dynamically allows
 		multiple operator types, each with an arbitrary number of parameters, to
 		be created.
+		It could be interesting to keep them around in VOP_ExternalOSLOperator
+		and delete them when its destructor is called.
 	*/
 	std::vector<PRM_Template>* templates = new std::vector<PRM_Template>;
 
-	unsigned num_inputs = i_shader_info.NumInputs();
-	for(unsigned p = 0; p < num_inputs; p++)
+	// Create the pages switcher
+	if(page_list.size() > 1)
 	{
-		const DlShaderInfo::Parameter& param = i_shader_info.GetInput(p);
-
-		// Closures can only be read through connections
-		if(param.isclosure)
+		PRM_Name* tabs_name = new PRM_Name("tabs");
+		std::vector<PRM_Default>* tabs = new std::vector<PRM_Default>;
+		for(const page_list_t::value_type& pa : page_list)
 		{
-			continue;
+			tabs->push_back(PRM_Default(pa.second->size(), pa.first));
 		}
 
-		int num_components = param.type.arraylen;
-		if(num_components == 0)
-		{
-			num_components = 1;
-		}
-		else if(num_components < 0)
-		{
-			// FIXME : support variable length arrays
-			continue;
-		}
-
-		PRM_Name* name = new PRM_Name(param.name.c_str(), param.name.c_str());
 		templates->push_back(
-			PRM_Template(GetPRMType(param.type), num_components, name));
+			PRM_Template(PRM_SWITCHER, tabs->size(), tabs_name, &(*tabs)[0]));
+	}
+
+	// Create each page's components
+	for(const page_list_t::value_type& pa : page_list)
+	{
+		for(const DlShaderInfo::Parameter* param : *pa.second)
+		{
+			// Closures can only be read through connections
+			if(param->isclosure)
+			{
+				continue;
+			}
+
+			int num_components = param->type.arraylen;
+			if(num_components == 0)
+			{
+				num_components = 1;
+			}
+			else if(num_components < 0)
+			{
+				// FIXME : support variable length arrays
+				continue;
+			}
+
+			PRM_Name* name =
+				new PRM_Name(param->name.c_str(), param->name.c_str());
+			templates->push_back(
+				PRM_Template(GetPRMType(param->type), num_components, name));
+		}
 	}
 
 	templates->push_back(PRM_Template());
@@ -219,7 +272,6 @@ VOP_ExternalOSL::getInputFromNameSubclass(const UT_String &in) const
 		}
 	}
 
-	assert(false);
 	return -1;
 }
 
