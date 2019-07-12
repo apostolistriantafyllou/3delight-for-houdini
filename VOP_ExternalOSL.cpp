@@ -1,11 +1,27 @@
 #include "VOP_ExternalOSL.h"
 
+#include <PRM/PRM_Include.h>
+
+
 /*
 	Simple identity macro that does nothing but helps to identify allocations of
 	memory that will never be deleted, until we find a way to do so.
 */
 #define LEAKED(x) (x)
 
+struct ParameterMetaData
+{
+	const char* m_label = nullptr;
+	const char* m_widget = nullptr;
+	const int* m_imin = nullptr;
+	const int* m_imax = nullptr;
+	const int* m_slider_imin = nullptr;
+	const int* m_slider_imax = nullptr;
+	const float* m_fmin = nullptr;
+	const float* m_fmax = nullptr;
+	const float* m_slider_fmin = nullptr;
+	const float* m_slider_fmax = nullptr;
+};
 
 // Returns a PRM_Type that corresponds to a DlShaderInfo::TypeDesc
 static PRM_Type GetPRMType(
@@ -51,6 +67,54 @@ static PRM_Type GetPRMType(
 	}
 
 	return PRM_STRING;
+}
+
+/*
+	Returns a newly allocated PRM_Range built from the shader parameter's
+	meta-data.
+	Unfortunately, Houdini doesn't seem to allow the specification of a soft,
+	"UI" minimum along with a hard minimum (or the equivalent for the maximum).
+	So, there is only one min and one max, and each of them can be either soft
+	or hard. This means that a "soft" bound imply an infinite corresponding
+	"hard" bound, since the "soft" bound is only appolied in the UI.
+*/
+static PRM_Range*
+NewPRMRange(
+	const DlShaderInfo::TypeDesc& i_osl_type,
+	const ParameterMetaData& i_meta)
+{
+	if(i_osl_type.type == NSITypeFloat || i_osl_type.type == NSITypeDouble)
+	{
+		if(!(i_meta.m_fmin || i_meta.m_slider_fmin) ||
+			!(i_meta.m_fmax || i_meta.m_slider_fmax))
+		{
+			return nullptr;
+		}
+
+		return
+			new PRM_Range(
+				i_meta.m_fmin ? PRM_RANGE_RESTRICTED : PRM_RANGE_UI,
+				i_meta.m_fmin ? *i_meta.m_fmin : *i_meta.m_slider_fmin,
+				i_meta.m_fmax ? PRM_RANGE_RESTRICTED : PRM_RANGE_UI,
+				i_meta.m_fmax ? *i_meta.m_fmax : *i_meta.m_slider_fmax);
+	}
+	else if(i_osl_type.type == NSITypeInteger)
+	{
+		if(!(i_meta.m_imin || i_meta.m_slider_imin) ||
+			!(i_meta.m_imax || i_meta.m_slider_imax))
+		{
+			return nullptr;
+		}
+
+		return
+			new PRM_Range(
+				i_meta.m_imin ? PRM_RANGE_RESTRICTED : PRM_RANGE_UI,
+				float(i_meta.m_imin ? *i_meta.m_imin : *i_meta.m_slider_imin),
+				i_meta.m_imax ? PRM_RANGE_RESTRICTED : PRM_RANGE_UI,
+				float(i_meta.m_imax ? *i_meta.m_imax : *i_meta.m_slider_imax));
+	}
+
+	return nullptr;
 }
 
 // Returns a VOP_Type that corresponds to a DlShaderInfo::TypeDesc
@@ -111,20 +175,6 @@ FindMetaData(
 	}
 }
 
-struct ParameterMetaData
-{
-	const char* m_label = nullptr;
-	const char* m_widget = nullptr;
-	const int* m_imin = nullptr;
-	const int* m_imax = nullptr;
-	const int* m_slider_imin = nullptr;
-	const int* m_slider_imax = nullptr;
-	const float* m_fmin = nullptr;
-	const float* m_fmax = nullptr;
-	const float* m_slider_fmin = nullptr;
-	const float* m_slider_fmax = nullptr;
-};
-
 static void
 GetParameterMetaData(
 	ParameterMetaData& o_data,
@@ -148,70 +198,46 @@ GetParameterMetaData(
 		}
 		else if(meta.name == "min")
 		{
-			if(meta.type.type == NSITypeInteger)
+			if(!meta.idefault.empty())
 			{
-				if(!meta.idefault.empty())
-				{
-					o_data.m_imin = &meta.idefault[0];
-				}
+				o_data.m_imin = &meta.idefault[0];
 			}
-			else
+			if(!meta.fdefault.empty())
 			{
-				if(!meta.idefault.empty())
-				{
-					o_data.m_fmin = &meta.fdefault[0];
-				}
+				o_data.m_fmin = &meta.fdefault[0];
 			}
 		}
 		else if(meta.name == "max")
 		{
-			if(meta.type.type == NSITypeInteger)
+			if(!meta.idefault.empty())
 			{
-				if(!meta.idefault.empty())
-				{
-					o_data.m_imax = &meta.idefault[0];
-				}
+				o_data.m_imax = &meta.idefault[0];
 			}
-			else
+			if(!meta.fdefault.empty())
 			{
-				if(!meta.idefault.empty())
-				{
-					o_data.m_fmax = &meta.fdefault[0];
-				}
+				o_data.m_fmax = &meta.fdefault[0];
 			}
 		}
 		else if(meta.name == "slidermin")
 		{
-			if(meta.type.type == NSITypeInteger)
+			if(!meta.idefault.empty())
 			{
-				if(!meta.idefault.empty())
-				{
-					o_data.m_slider_imin = &meta.idefault[0];
-				}
+				o_data.m_slider_imin = &meta.idefault[0];
 			}
-			else
+			if(!meta.fdefault.empty())
 			{
-				if(!meta.idefault.empty())
-				{
-					o_data.m_slider_fmin = &meta.fdefault[0];
-				}
+				o_data.m_slider_fmin = &meta.fdefault[0];
 			}
 		}
 		else if(meta.name == "slidermax")
 		{
-			if(meta.type.type == NSITypeInteger)
+			if(!meta.idefault.empty())
 			{
-				if(!meta.idefault.empty())
-				{
-					o_data.m_slider_imax = &meta.idefault[0];
-				}
+				o_data.m_slider_imax = &meta.idefault[0];
 			}
-			else
+			if(!meta.fdefault.empty())
 			{
-				if(!meta.idefault.empty())
-				{
-					o_data.m_slider_fmax = &meta.fdefault[0];
-				}
+				o_data.m_slider_fmax = &meta.fdefault[0];
 			}
 		}
 	}
@@ -345,7 +371,9 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 			PRM_Name* name =
 				LEAKED(new PRM_Name(param->name.c_str(), meta.m_label));
 			PRM_Type type = GetPRMType(param->type, meta.m_widget);
-			templates->push_back(PRM_Template(type, num_components, name));
+			PRM_Range* range = LEAKED(NewPRMRange(param->type, meta));
+			templates->push_back(
+				PRM_Template(type, num_components, name, nullptr, nullptr, range));
 		}
 	}
 
