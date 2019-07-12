@@ -119,8 +119,12 @@ std::string shader_library::vop_to_osl( const char *i_vop )
 static void
 FindExternalShaders(std::vector<std::string>& o_osos)
 {
-	o_osos.push_back("dlPrincipled");
 	o_osos.push_back("areaLight");
+	o_osos.push_back("dlPrincipled");
+	o_osos.push_back("dlWorleyNoise");
+	o_osos.push_back("remapColor");
+	o_osos.push_back("remapValue");
+	o_osos.push_back("vdbVolume");
 }
 
 
