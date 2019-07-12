@@ -117,6 +117,66 @@ NewPRMRange(
 	return nullptr;
 }
 
+/*
+	Returns a newly allocated PRM_Default built from a shader parameter.
+
+	It's still incomplete as we haven't figured out how to specify default
+	values for non-scalar types, such as color, vectors and matrices.
+*/
+static PRM_Default* NewPRMDefault(
+	const DlShaderInfo::Parameter& i_param)
+{
+	switch(i_param.type.type)
+	{
+		case NSITypeFloat:
+		case NSITypeDouble:
+			if(!i_param.fdefault.empty())
+			{
+				return new PRM_Default(i_param.fdefault[0]);
+			}
+			return nullptr;
+
+		case NSITypeInteger:
+			if(!i_param.idefault.empty())
+			{
+				return new PRM_Default(i_param.idefault[0]);
+			}
+			return nullptr;
+
+		case NSITypeString:
+			if(!i_param.sdefault.empty())
+			{
+				return new PRM_Default(0.0f, i_param.sdefault[0].c_str());
+			}
+			return nullptr;
+
+		case NSITypeColor:
+			// FIXME
+			return nullptr;
+
+		case NSITypePoint:
+		case NSITypeVector:
+		case NSITypeNormal:
+			// FIXME
+			return nullptr;
+
+		case NSITypeMatrix:
+		case NSITypeDoubleMatrix:
+			// FIXME
+			return nullptr;
+
+		case NSITypePointer:
+			// We don't want to show "closure color" inputs in the UI
+			assert(false);
+			break;
+
+		default:
+			break;
+	}
+
+	return nullptr;
+}
+
 // Returns a VOP_Type that corresponds to a DlShaderInfo::TypeDesc
 static VOP_Type GetVOPType(const DlShaderInfo::TypeDesc& i_osl_type)
 {
@@ -372,8 +432,9 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 				LEAKED(new PRM_Name(param->name.c_str(), meta.m_label));
 			PRM_Type type = GetPRMType(param->type, meta.m_widget);
 			PRM_Range* range = LEAKED(NewPRMRange(param->type, meta));
+			PRM_Default* defau1t = LEAKED(NewPRMDefault(*param));
 			templates->push_back(
-				PRM_Template(type, num_components, name, nullptr, nullptr, range));
+				PRM_Template(type, num_components, name, defau1t, nullptr, range));
 		}
 	}
 
