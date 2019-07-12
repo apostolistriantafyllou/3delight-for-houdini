@@ -8,7 +8,9 @@
 
 
 // Returns a PRM_Type that corresponds to a DlShaderInfo::TypeDesc
-static PRM_Type GetPRMType(const DlShaderInfo::TypeDesc& i_osl_type)
+static PRM_Type GetPRMType(
+	const DlShaderInfo::TypeDesc& i_osl_type,
+	const char* i_widget_hint)
 {
 	switch(i_osl_type.type)
 	{
@@ -17,6 +19,10 @@ static PRM_Type GetPRMType(const DlShaderInfo::TypeDesc& i_osl_type)
 			return PRM_FLT;
 
 		case NSITypeInteger:
+			if(i_widget_hint && strcmp(i_widget_hint, "checkBox") == 0)
+			{
+				return PRM_TOGGLE;
+			}
 			return PRM_INT;
 
 		case NSITypeString:
@@ -338,8 +344,8 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 
 			PRM_Name* name =
 				LEAKED(new PRM_Name(param->name.c_str(), meta.m_label));
-			templates->push_back(
-				PRM_Template(GetPRMType(param->type), num_components, name));
+			PRM_Type type = GetPRMType(param->type, meta.m_widget);
+			templates->push_back(PRM_Template(type, num_components, name));
 		}
 	}
 
