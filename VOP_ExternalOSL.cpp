@@ -13,6 +13,7 @@ struct ParameterMetaData
 {
 	const char* m_label = nullptr;
 	const char* m_widget = nullptr;
+	const char* m_options = nullptr;
 	const int* m_imin = nullptr;
 	const int* m_imax = nullptr;
 	const int* m_slider_imin = nullptr;
@@ -26,7 +27,7 @@ struct ParameterMetaData
 // Returns a PRM_Type that corresponds to a DlShaderInfo::TypeDesc
 static PRM_Type GetPRMType(
 	const DlShaderInfo::TypeDesc& i_osl_type,
-	const char* i_widget_hint)
+	const ParameterMetaData& i_meta)
 {
 	switch(i_osl_type.type)
 	{
@@ -35,10 +36,15 @@ static PRM_Type GetPRMType(
 			return PRM_FLT;
 
 		case NSITypeInteger:
-			if(i_widget_hint && strcmp(i_widget_hint, "checkBox") == 0)
+			if(i_meta.m_widget && strcmp(i_meta.m_widget, "checkBox") == 0)
 			{
 				return PRM_TOGGLE;
 			}
+			else if(i_meta.m_options)
+			{
+				return PRM_ORD;
+			}
+
 			return PRM_INT;
 
 		case NSITypeString:
@@ -177,6 +183,70 @@ static PRM_Default* NewPRMDefault(
 	return nullptr;
 }
 
+// Returns a newly allocated PRM_ChoiceList built from a shader parameter.
+PRM_ChoiceList*
+NewPRMChoiceList(
+	const DlShaderInfo::TypeDesc& i_osl_type,
+	const ParameterMetaData& i_meta)
+{
+	if(i_osl_type.type != NSITypeInteger || !i_meta.m_options)
+	{
+		return nullptr;
+	}
+
+	char* options = LEAKED(strdup(i_meta.m_options));
+	std::vector<PRM_Item>* items = LEAKED(new std::vector<PRM_Item>);
+	while(*options)
+	{
+		// The label is terminated by a colon
+		char* colon = strchr(options, ':');
+		if(!colon)
+		{
+			assert(false);
+			return nullptr;
+		}
+
+		// Then comes the value
+		int value = 0;
+		int offset = 0;
+		int read = sscanf(colon+1, "%d%n", &value, &offset);
+		if(read == 0 || value < 0)
+		{
+			assert(false);
+			return nullptr;
+		}
+
+		char* next = colon+1+offset;
+
+		// Items are separated with vertical bar
+		if(*next && *next != '|')
+		{
+			assert(false);
+			return nullptr;
+		}
+		if(*next)
+		{
+			next++;
+		}
+
+		// Fill gaps with blank items
+		while(items->size() <= value)
+		{
+			items->push_back(PRM_Item("", ""));
+		}
+
+		// Use our "options" copy as the string passed to the item
+		*colon = '\0';
+		(*items)[value] = PRM_Item("", options);
+
+		options = next;
+	}
+
+	items->push_back(PRM_Item());
+
+	return new PRM_ChoiceList(PRM_CHOICELIST_SINGLE, &(*items)[0]);
+}
+
 // Returns a VOP_Type that corresponds to a DlShaderInfo::TypeDesc
 static VOP_Type GetVOPType(const DlShaderInfo::TypeDesc& i_osl_type)
 {
@@ -254,6 +324,13 @@ GetParameterMetaData(
 			if(!meta.sdefault.empty())
 			{
 				o_data.m_widget = meta.sdefault[0].c_str();
+			}
+		}
+		if(meta.name == "options")
+		{
+			if(!meta.sdefault.empty())
+			{
+				o_data.m_options = meta.sdefault[0].c_str();
 			}
 		}
 		else if(meta.name == "min")
@@ -430,11 +507,14 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 
 			PRM_Name* name =
 				LEAKED(new PRM_Name(param->name.c_str(), meta.m_label));
-			PRM_Type type = GetPRMType(param->type, meta.m_widget);
+			PRM_Type type = GetPRMType(param->type, meta);
 			PRM_Range* range = LEAKED(NewPRMRange(param->type, meta));
 			PRM_Default* defau1t = LEAKED(NewPRMDefault(*param));
+			PRM_ChoiceList* choices =
+				LEAKED(NewPRMChoiceList(param->type, meta));
+
 			templates->push_back(
-				PRM_Template(type, num_components, name, defau1t, nullptr, range));
+				PRM_Template(type, num_components, name, defau1t, choices, range));
 		}
 	}
 
