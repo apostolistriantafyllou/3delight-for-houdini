@@ -59,6 +59,14 @@ public:
 	*/
 	const std::string &handle( void ) const;
 
+	/**
+		\brief Declare this as an instnaced object. Such objects
+		do not have to be connected to a parent transform because
+		they will be using the 'instance' exporter.
+	*/
+	void set_as_instanced( void ) { m_instanced = true; }
+
+
 protected:
 	/** Depending on what we are exporting, an OBJ or a VOP node */
 	union
@@ -84,4 +92,7 @@ protected:
 
 	/** The NSI handle */
 	std::string m_handle;
+
+	/** =true if instanced geo */
+	bool m_instanced{false};
 };

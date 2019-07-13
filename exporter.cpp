@@ -53,6 +53,18 @@ void exporter::connect( void ) const
 
 	std::string parent;
 
+	if( m_instanced )
+	{
+		/**
+			This geometry will be connected to the "sourcemodels" of an NSI
+			instances node and doesn't need to be connected to any other
+			parent.
+
+			\ref instancer::connect
+		*/
+		goto assign_material; // one goto for assembly gods.
+	}
+
 	/*
 	   We support the transformation of the GT_Primitive by inserting
 	   a local NSI transform node between the object and its parent.
@@ -77,6 +89,8 @@ void exporter::connect( void ) const
 
 	m_nsi.Connect( m_handle, "", parent, "objects" );
 
+
+assign_material:
 	/* Do local material assignment */
 	int index = m_object->getParmIndex( "shop_materialpath" );
 	if( index < 0 )

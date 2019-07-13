@@ -3,6 +3,7 @@
 /* exporters { */
 #include "camera.h"
 #include "exporter.h"
+#include "instance.h"
 #include "light.h"
 #include "polygonmesh.h"
 #include "null.h"
@@ -15,6 +16,7 @@
 
 #include <GT/GT_GEODetail.h>
 #include <GT/GT_Refine.h>
+#include <GT/GT_PrimInstance.h>
 #include <OBJ/OBJ_Camera.h>
 #include <OBJ/OBJ_Node.h>
 #include <OP/OP_Director.h>
@@ -66,22 +68,31 @@ struct OBJ_Node_Refiner : public GT_Refine
 				new pointmesh(m_context, m_node,i_primitive) );
 			break;
 
-#if 0
 		case GT_PRIM_INSTANCE:
 		{
-			m_result.push_back(
-				new instance(m_context, m_node,i_primitive) );
+			size_t s = m_result.size();
 
-			const GT_PrimInstance *instance =
+			/* First add the primitive so that we can get its handle. */
+			const GT_PrimInstance *I =
 				static_cast<const GT_PrimInstance *>( i_primitive.get() );
+			addPrimitive( I->geometry() );
 
-			addPrimitive( instance->geometry() );
+			if( s == m_result.size() )
+			{
+				std::cout << "Unable to create instancer" << std::endl;
+				return;
+			}
+
+			exporter *instanced = m_result.back();
+			instanced->set_as_instanced();
+			m_result.push_back(
+				new instance(
+					m_context, m_node, i_primitive, instanced->handle()) );
 			break;
 		}
-#endif
 
 		default:
-			if( m_level < 3 )
+			if( m_level < 5 )
 			{
 				std::cout << "Refining " << m_node->getFullPath() <<
 					" to level " << m_level  << std::endl;

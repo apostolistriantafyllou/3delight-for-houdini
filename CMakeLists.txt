@@ -14,6 +14,7 @@ add_library( ${library_name} SHARED
 	VOP_ExternalOSL.cpp
 	camera.cpp
 	exporter.cpp
+	instance.cpp
 	light.cpp
 	polygonmesh.cpp
 	pointmesh.cpp
