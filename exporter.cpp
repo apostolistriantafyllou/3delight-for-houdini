@@ -5,8 +5,11 @@
 #include <GT/GT_Handles.h>
 #include <OBJ/OBJ_Node.h>
 
+#include <iostream>
+
 GT_PrimitiveHandle exporter::sm_invalid_gt_primitive;
 
+static int s_handle = 0;
 exporter::exporter(
 	const context& i_context, OBJ_Node *i_object,
 	const GT_PrimitiveHandle &i_gt_primitive )
@@ -21,7 +24,8 @@ exporter::exporter(
 		it leaves the full path handle to the parent transform.
 	*/
 	m_handle = i_object->getFullPath();
-	m_handle += "|geometry";
+	m_handle += "|object|";
+	m_handle += std::to_string( s_handle ++ );
 }
 
 exporter::exporter( const context &i_context, VOP_Node *i_node )
@@ -47,10 +51,33 @@ void exporter::connect( void ) const
 	if( !m_object )
 		return;
 
-	m_nsi.Connect(
-		m_handle.c_str(), "",
-		m_object->getFullPath().buffer(), "objects" );
+	std::string parent;
 
+	/*
+	   We support the transformation of the GT_Primitive by inserting
+	   a local NSI transform node between the object and its parent.
+	*/
+	if( m_gt_primitive != sm_invalid_gt_primitive )
+	{
+		parent = m_handle + "|transform";
+		const GT_TransformHandle &transform =
+			m_gt_primitive->getPrimitiveTransform();
+		UT_Matrix4D matrix;
+		transform->getMatrix( matrix );
+
+		m_nsi.Create( parent, "transform" );
+		m_nsi.SetAttribute( parent,
+				NSI::DoubleMatrixArg( "transformationmatrix", matrix.data() ) );
+		m_nsi.Connect( parent, "", m_object->getFullPath().c_str(), "objects" );
+	}
+	else
+	{
+		parent = m_object->getFullPath().c_str();
+	}
+
+	m_nsi.Connect( m_handle, "", parent, "objects" );
+
+	/* Do local material assignment */
 	int index = m_object->getParmIndex( "shop_materialpath" );
 	if( index < 0 )
 		return;
@@ -58,6 +85,11 @@ void exporter::connect( void ) const
 	std::string attributes( m_handle + "|attributes" );
 	UT_String material_path;
 	m_object->evalString( material_path, "shop_materialpath", 0, 0.f );
+
+	if( material_path.length()==0 )
+	{
+		return;
+	}
 
 	m_nsi.Create( attributes, "attributes" );
 	m_nsi.Connect( attributes, "", m_handle, "geometryattributes" );

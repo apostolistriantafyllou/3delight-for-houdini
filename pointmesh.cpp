@@ -13,8 +13,6 @@ pointmesh::pointmesh(
 :
 	exporter( i_ctx, i_object, i_gt_primitive )
 {
-	m_handle = i_object->getFullPath();
-	m_handle += "|pointmesh";
 }
 
 void pointmesh::create( void ) const

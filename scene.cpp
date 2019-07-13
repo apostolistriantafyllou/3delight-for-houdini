@@ -22,21 +22,28 @@
 
 /**
 	\brief A GT refiner for an OBJ_Node.
+
+	When an OBJ_Node is refined, the top node is a null to which
+	we will connect all newly created primitives. The GT prmitives
+	are not registered as
 */
 struct OBJ_Node_Refiner : public GT_Refine
 {
 	OBJ_Node *m_node;
 	std::vector<exporter *> &m_result;
 	const context &m_context;
+	int m_level;
 
 	OBJ_Node_Refiner(
 		OBJ_Node *i_node,
 		const context &i_context,
-		std::vector< exporter *> &i_result )
+		std::vector< exporter *> &i_result,
+		int level = 0 )
 	:
 		m_result(i_result),
 		m_node(i_node),
-		m_context(i_context)
+		m_context(i_context),
+		m_level(level)
 	{
 	}
 
@@ -58,10 +65,37 @@ struct OBJ_Node_Refiner : public GT_Refine
 			m_result.push_back(
 				new pointmesh(m_context, m_node,i_primitive) );
 			break;
-		default:
-			std::cout << "Unsupported object " << m_node->getFullPath() <<
-				" of type " << i_primitive->className() << std::endl;
+
+#if 0
+		case GT_PRIM_INSTANCE:
+		{
+			m_result.push_back(
+				new instance(m_context, m_node,i_primitive) );
+
+			const GT_PrimInstance *instance =
+				static_cast<const GT_PrimInstance *>( i_primitive.get() );
+
+			addPrimitive( instance->geometry() );
 			break;
+		}
+#endif
+
+		default:
+			if( m_level < 3 )
+			{
+				std::cout << "Refining " << m_node->getFullPath() <<
+					" to level " << m_level  << std::endl;
+
+				OBJ_Node_Refiner refiner(
+					m_node, m_context, m_result, m_level+1 );
+				i_primitive->refine( refiner, nullptr );
+			}
+			else
+			{
+				std::cout << "Unsupported object " << m_node->getFullPath() <<
+					" of type " << i_primitive->className() << std::endl;
+			}
+			return;
 		}
 	}
 };

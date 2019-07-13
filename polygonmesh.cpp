@@ -17,12 +17,6 @@ polygonmesh::polygonmesh(
 	exporter( i_ctx, i_object, i_gt_primitive ),
 	m_is_subdiv(is_subdivision)
 {
-	m_handle = i_object->getFullPath();
-
-	if( is_subdivision )
-		m_handle += "|subdivision";
-	else
-		m_handle += "|polygonmesh";
 }
 
 void polygonmesh::create( void ) const
