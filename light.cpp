@@ -68,8 +68,6 @@ void light::create_default_geometry( void ) const
 
 	if( type == e_point || type == e_disk || type == e_sphere )
 	{
-		m_nsi.Create( geo_name.c_str(), "particles" );
-
 		NSI::ArgumentList args;
 		float P[3] = { 0.0f, 0.0f, 0.0f };
 		float N[3] = { 0.0f, 0.0f, -1.0f }; // for disks
@@ -94,7 +92,8 @@ void light::create_default_geometry( void ) const
 				->SetValuePointer( &N[0] ) );
 		}
 
-		m_nsi.SetAttribute( geo_name.c_str(), args );
+		m_nsi.Create( geo_name, "particles" );
+		m_nsi.SetAttribute( geo_name, args );
 	}
 	else if( type == e_grid || is_spot )
 	{
@@ -121,12 +120,12 @@ void light::create_default_geometry( void ) const
 			->SetCount( 1 )
 			->SetValuePointer( const_cast<int*>(nvertices)) );
 
-		m_nsi.Create( geo_name.c_str(), "mesh" );
-		m_nsi.SetAttribute( geo_name.c_str(), mesh_attributes );
+		m_nsi.Create( geo_name, "mesh" );
+		m_nsi.SetAttribute( geo_name, mesh_attributes );
 	}
 	else if( type == e_tube )
 	{
-		m_nsi.Create( geo_name.c_str(), "mesh" );
+		m_nsi.Create( geo_name, "mesh" );
 
 		/* The cylinder is 1 unit long (in X) and has a radius of 0.5. */
 		std::vector<float> P;
@@ -160,7 +159,7 @@ void light::create_default_geometry( void ) const
 			->SetType( NSITypeInteger )
 			->SetCount( 4 * kNumSteps )
 			->SetValuePointer( &indices[0] ) );
-		m_nsi.SetAttribute( geo_name.c_str(), args );
+		m_nsi.SetAttribute( geo_name, args );
 	}
 	else if( type == e_distant )
 	{
