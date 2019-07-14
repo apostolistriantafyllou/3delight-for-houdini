@@ -633,11 +633,10 @@ VOP_ExternalOSL::getOutputTypeInfoSubclass(VOP_TypeInfo& o_type_info, int i_idx)
 
 
 VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
-	const StructuredShaderInfo& i_shader_info,
-	const std::string& i_name)
+	const StructuredShaderInfo& i_shader_info)
 	:	VOP_Operator(
-			("3Delight::" + i_name).c_str(),
-			i_name.c_str(),
+			("3Delight::" + i_shader_info.m_dl.shadername().string()).c_str(),
+			i_shader_info.m_dl.shadername().c_str(),
 			VOP_ExternalOSL::alloc,
 			VOP_ExternalOSL::GetTemplates(i_shader_info),
 			VOP_ExternalOSL::theChildTableName,
@@ -649,7 +648,7 @@ VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
 			i_shader_info.NumOutputs()),
 		m_shader_info(i_shader_info)
 {
-	const char* name = i_name.c_str();
+	const char* name = i_shader_info.m_dl.shadername().c_str();
 	FindMetaData(name, i_shader_info.m_dl.metadata(), "niceName");
 	setEnglish(name);
 
