@@ -26,6 +26,39 @@ struct ParameterMetaData
 	const float* m_slider_fmax = nullptr;
 };
 
+// Returns the number of scalar channels in the specified type
+static unsigned GetNumChannels(const DlShaderInfo::TypeDesc& i_osl_type)
+{
+	switch(i_osl_type.type)
+	{
+		case NSITypeFloat:
+		case NSITypeDouble:
+		case NSITypeInteger:
+		case NSITypeString:
+			return 1;
+
+		case NSITypeColor:
+		case NSITypePoint:
+		case NSITypeVector:
+		case NSITypeNormal:
+			return 3;
+
+		case NSITypeMatrix:
+		case NSITypeDoubleMatrix:
+			return 16;
+
+		case NSITypePointer:
+			// We don't want to show "closure color" inputs in the UI
+			assert(false);
+			break;
+
+		default:
+			break;
+	}
+
+	return 1;
+}
+
 // Returns a PRM_Type that corresponds to a DlShaderInfo::TypeDesc
 static PRM_Type GetPRMType(
 	const DlShaderInfo::TypeDesc& i_osl_type,
@@ -125,12 +158,7 @@ NewPRMRange(
 	return nullptr;
 }
 
-/*
-	Returns a newly allocated PRM_Default built from a shader parameter.
-
-	It's still incomplete as we haven't figured out how to specify default
-	values for non-scalar types, such as color, vectors and matrices.
-*/
+// Returns a newly allocated array of PRM_Defaults built from a shader parameter.
 static PRM_Default* NewPRMDefault(
 	const DlShaderInfo::Parameter& i_param)
 {
@@ -140,37 +168,56 @@ static PRM_Default* NewPRMDefault(
 		case NSITypeDouble:
 			if(!i_param.fdefault.empty())
 			{
-				return new PRM_Default(i_param.fdefault[0]);
+				PRM_Default* def = new PRM_Default[1];
+				def[0] = PRM_Default(i_param.fdefault[0]);
+				return def;
 			}
 			return nullptr;
 
 		case NSITypeInteger:
 			if(!i_param.idefault.empty())
 			{
-				return new PRM_Default(i_param.idefault[0]);
+				PRM_Default* def = new PRM_Default[1];
+				def[0] = PRM_Default(i_param.idefault[0]);
+				return def;
 			}
 			return nullptr;
 
 		case NSITypeString:
 			if(!i_param.sdefault.empty())
 			{
-				return new PRM_Default(0.0f, i_param.sdefault[0].c_str());
+				PRM_Default* def = new PRM_Default[1];
+				def[0] = PRM_Default(0.0f, i_param.sdefault[0].c_str());
+				return def;
 			}
 			return nullptr;
 
 		case NSITypeColor:
-			// FIXME
-			return nullptr;
-
 		case NSITypePoint:
 		case NSITypeVector:
 		case NSITypeNormal:
-			// FIXME
+			if(i_param.fdefault.size() >= 3)
+			{
+				PRM_Default* def = new PRM_Default[3];
+				for(unsigned i = 0; i < 3; i++)
+				{
+					def[i] = PRM_Default(i_param.fdefault[i]);
+				}
+				return def;
+			}
 			return nullptr;
 
 		case NSITypeMatrix:
 		case NSITypeDoubleMatrix:
-			// FIXME
+			if(i_param.fdefault.size() >= 16)
+			{
+				PRM_Default* def = new PRM_Default[16];
+				for(unsigned i = 0; i < 16; i++)
+				{
+					def[i] = PRM_Default(i_param.fdefault[i]);
+				}
+				return def;
+			}
 			return nullptr;
 
 		case NSITypePointer:
@@ -505,6 +552,8 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 				// FIXME : support variable length arrays
 				continue;
 			}
+
+			num_components *= GetNumChannels(param->type);
 
 			ParameterMetaData meta;
 			meta.m_label = param->name.c_str();
