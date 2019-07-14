@@ -14,5 +14,8 @@ surface hlight(
 
 	color result = light_color * light_intensity * pow(2,exposure);
 
+	/* Houdini light is normalized by its area. */
+	result /= surfacearea();
+
 	Ci += result * emission();
 }
