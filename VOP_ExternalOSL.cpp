@@ -424,7 +424,9 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 		first parameter of each page.
 	*/
 	page_map_t page_map;
-	page_list_t page_list;
+	std::pair<page_map_t::iterator, bool> main =
+		page_map.insert(page_map_t::value_type("", page_components()));
+	page_list_t page_list(1, page_list_t::value_type("", &main.first->second));
 	for(unsigned p = 0; p < i_shader_info.NumInputs(); p++)
 	{
 		const DlShaderInfo::Parameter& param = i_shader_info.GetInput(p);
