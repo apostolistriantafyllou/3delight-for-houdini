@@ -478,7 +478,10 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 		std::vector<PRM_Default>* tabs = LEAKED(new std::vector<PRM_Default>);
 		for(const page_list_t::value_type& pa : page_list)
 		{
-			tabs->push_back(PRM_Default(pa.second->size(), pa.first));
+			if(!pa.second->empty())
+			{
+				tabs->push_back(PRM_Default(pa.second->size(), pa.first));
+			}
 		}
 
 		templates->push_back(
