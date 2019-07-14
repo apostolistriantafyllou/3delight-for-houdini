@@ -28,14 +28,9 @@ public:
 	void connect( void ) const override;
 
 	/**
-		\returns a legalized OSL name from vop->getOperator()->getName()
-		as these names can contain illegal characters for a file system
-		and/or OSL.
-
-		principled::2.0 would be converted to principled__2_0.
+		\returns m_vop->getOperator()->getName()
 	*/
-	std::string osl_name( void ) const;
-	static std::string osl_name( const char * );
+	std::string vop_name( void ) const;
 
 protected:
 	/**

@@ -58,26 +58,57 @@ DlShaderInfo *shader_library::get_shader_info( const char *path ) const
 
 /**
 	\param name
-		The name of the shader to look for without extension
+		The name of the operator to look for without extension
 
 	Just a quick implementation to get us to the next step:
 	- we check plug-ins installation path + OSO
 	- and some developper path (to be removed later on).
 */
-std::string shader_library::get_shader_path( const char *name ) const
+std::string shader_library::get_shader_path( const char *vop ) const
 {
+	std::string name = vop_to_osl(vop);
+	if( name.size() == 0 )
+		return {};
+
 	std::string installation_path =
 		m_plugin_path + "/../osl/" + name + ".oso";
 	if( file_exists( installation_path.c_str()) )
 		return installation_path;
 
 // FIXME : wrong, hardcoded path
-	std::string dl_shaders_path = 
+	std::string dl_shaders_path =
 		m_plugin_path + "/../external-osl/" + name + ".oso";
 	if( file_exists( dl_shaders_path.c_str()) )
 		return dl_shaders_path;
 
 	return {};
+}
+
+std::string shader_library::vop_to_osl( const char *i_vop )
+{
+	std::string legalized( i_vop );
+
+	auto p1 = legalized.find( "::" );
+	if( p1 == std::string::npos )
+	{
+		/* no occurences, nothing to do. */
+		return legalized;
+	}
+
+	auto p2 = legalized.find( "::", p1+2 );
+
+	/* Legalize for file system */
+	std::replace( legalized.begin(), legalized.end(), '.', '_' );
+	std::replace( legalized.begin(), legalized.end(), ':', '_' );
+
+	if( p2 == std::string::npos )
+	{
+		/* only one occurence, no name space */
+		return legalized;
+	}
+
+	/* two occurences, skip namespace */
+	return legalized.substr(p2 + 2);
 }
 
 static void

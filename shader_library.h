@@ -20,10 +20,23 @@ public:
 	shader_library();
 
 public:
-	std::string get_shader_path( const char *i_name ) const;
+	std::string get_shader_path( const char *i_vop_name ) const;
 	DlShaderInfo *get_shader_info( const char *i_path ) const;
 
-	void Register(OP_OperatorTable* io_table)const;
+	void Register( OP_OperatorTable* io_table) const;
+
+	/**
+		\brief given an operator name, returns the OSL name.
+
+		\param i_vop
+			The name of the operator as returned by
+			VOP_Node::getOperator()->getName().
+
+		\returns a name usable on the file system.
+
+		https://www.sidefx.com/docs/houdini/assets/namespaces.html
+	*/
+	static std::string vop_to_osl( const char *i_vop );
 
 public:
 	std::string m_plugin_path;

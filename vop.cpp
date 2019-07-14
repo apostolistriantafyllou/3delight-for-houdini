@@ -23,7 +23,7 @@ vop::vop(
 void vop::create( void ) const
 {
 	const shader_library &library = shader_library::get_instance();
-	std::string path = library.get_shader_path( osl_name().c_str() );
+	std::string path = library.get_shader_path( vop_name().c_str() );
 	if( path.length() == 0 )
 		return;
 
@@ -115,7 +115,7 @@ void vop::list_shader_parameters(
 	NSI::ArgumentList &o_list )
 {
 	const shader_library &library = shader_library::get_instance();
-	std::string path = library.get_shader_path( osl_name(i_shader).c_str() );
+	std::string path = library.get_shader_path( i_shader );
 	if( path.size() == 0 )
 	{
 		return;
@@ -190,25 +190,16 @@ void vop::list_shader_parameters(
 	}
 }
 
-std::string vop::osl_name( void ) const
+std::string vop::vop_name( void ) const
 {
-	return osl_name( m_vop->getOperator()->getName().buffer() );
+	return m_vop->getOperator()->getName().buffer();
 }
 
-std::string vop::osl_name( const char *i_shader )
-{
-	std::string legalized( i_shader );
-
-	std::replace( legalized.begin(), legalized.end(), ':', '_' );
-	std::replace( legalized.begin(), legalized.end(), '.', '_' );
-
-	return legalized;
-}
 
 bool vop::ignore_subnetworks( void ) const
 {
 	const shader_library &library = shader_library::get_instance();
-	std::string path = library.get_shader_path( osl_name().c_str() );
+	std::string path = library.get_shader_path( vop_name().c_str() );
 	if( path.size() == 0 )
 	{
 		return false;
@@ -235,6 +226,6 @@ bool vop::ignore_subnetworks( void ) const
 bool vop::unsupported( void ) const
 {
 	const shader_library &library = shader_library::get_instance();
-	std::string path = library.get_shader_path( osl_name().c_str() );
+	std::string path = library.get_shader_path( vop_name().c_str() );
 	return path.size() == 0;
 }

@@ -4,7 +4,6 @@
 #include "scene.h"
 #include "context.h"
 #include "shader_library.h"
-#include "vop.h"
 
 #include <OBJ/OBJ_Camera.h>
 #include <OP/OP_Director.h>
@@ -539,9 +538,7 @@ void ROP_3Delight::ExportDefaultMaterial( const context &i_context ) const
 
 	NSI::Context &nsi = i_context.m_nsi;
 	const shader_library &library = shader_library::get_instance();
-	std::string path =
-		library.get_shader_path(
-			vop::osl_name("principledshader::2.0").c_str() );
+	std::string path = library.get_shader_path( "principledshader::2.0" );
 
 	nsi.Create( k_shader, "shader" );
 	nsi.Create( k_attributes, "attributes" );
