@@ -429,6 +429,12 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 	{
 		const DlShaderInfo::Parameter& param = i_shader_info.GetInput(p);
 
+		// Closures can only be read through connections
+		if(param.isclosure)
+		{
+			continue;
+		}
+
 		const char* widget = "";
 		FindMetaData(widget, param.metadata, "widget");
 		if(strcmp(widget, "null") == 0)
@@ -484,12 +490,6 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 	{
 		for(const DlShaderInfo::Parameter* param : *pa.second)
 		{
-			// Closures can only be read through connections
-			if(param->isclosure)
-			{
-				continue;
-			}
-
 			int num_components = param->type.arraylen;
 			if(num_components == 0)
 			{
