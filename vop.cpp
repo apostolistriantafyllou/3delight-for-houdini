@@ -27,8 +27,8 @@ void vop::create( void ) const
 	if( path.length() == 0 )
 		return;
 
-	m_nsi.Create( m_handle.c_str(), "shader" );
-	m_nsi.SetAttribute( m_handle.c_str(),
+	m_nsi.Create( m_handle, "shader" );
+	m_nsi.SetAttribute( m_handle,
 		NSI::CStringPArg( "shaderfilename", path.c_str()) );
 }
 
@@ -48,7 +48,7 @@ void vop::set_attributes_at_time( double i_time ) const
 
 	if( !list.empty() )
 	{
-		m_nsi.SetAttributeAtTime( m_handle.c_str(), i_time, list );
+		m_nsi.SetAttributeAtTime( m_handle, i_time, list );
 	}
 }
 
@@ -96,10 +96,18 @@ void vop::connect( void ) const
 
 		m_nsi.Connect(
 			output->getFullPath().buffer(), output_name.buffer(),
-			m_handle.c_str(), input_name.buffer() );
+			m_handle, input_name.buffer() );
 	}
 }
 
+/**
+	\brief Fill a list of NSI arguments from an OP_Parameters node.
+
+	The only gotcha here is regarding texture parameteres: we detect
+	them by checking for the srccolorspace attribute. Which means
+	it's a "Texture" node. I think we need something better here but
+	for now this will do.
+*/
 void vop::list_shader_parameters(
 	const OP_Parameters *i_parameters,
 	const char *i_shader,
@@ -114,6 +122,14 @@ void vop::list_shader_parameters(
 	}
 
 	DlShaderInfo *shader_info = library.get_shader_info( path.c_str() );
+
+	const char *k_srccolorspace = "srccolorspace";
+	UT_String color_space;
+	int srccolorspace_index = i_parameters->getParmIndex( k_srccolorspace );
+	if( srccolorspace_index >= 0 )
+	{
+		i_parameters->evalString( color_space, k_srccolorspace, 0, i_time );
+	}
 
 	for( int i=0; i<shader_info->nparams(); i++ )
 	{
@@ -160,7 +176,14 @@ void vop::list_shader_parameters(
 			UT_String str;
 			i_parameters->evalString( str, parameter->name.c_str(), 0, i_time);
 			o_list.Add(
-				new NSI::CStringPArg( parameter->name.c_str(), str.buffer()) );
+				new NSI::StringArg( parameter->name.c_str(), str.buffer()) );
+
+			if( color_space != "" )
+			{
+				std::string param( parameter->name.c_str() );
+				param += ".meta.colorspace";
+				o_list.Add( new NSI::StringArg(param, color_space.buffer()) );
+			}
 			break;
 		}
 		}
