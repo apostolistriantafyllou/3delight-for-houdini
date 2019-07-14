@@ -3,7 +3,7 @@
 #include <PRM/PRM_Include.h>
 
 
-/*
+/**
 	Simple identity macro that does nothing but helps to identify allocations of
 	memory that will never be deleted, until we find a way to do so.
 */
@@ -26,7 +26,7 @@ struct ParameterMetaData
 	const float* m_slider_fmax = nullptr;
 };
 
-// Returns the number of scalar channels in the specified type
+/// Returns the number of scalar channels in the specified type
 static unsigned GetNumChannels(const DlShaderInfo::TypeDesc& i_osl_type)
 {
 	switch(i_osl_type.type)
@@ -59,7 +59,7 @@ static unsigned GetNumChannels(const DlShaderInfo::TypeDesc& i_osl_type)
 	return 1;
 }
 
-// Returns a PRM_Type that corresponds to a DlShaderInfo::TypeDesc
+/// Returns a PRM_Type that corresponds to a DlShaderInfo::TypeDesc
 static PRM_Type GetPRMType(
 	const DlShaderInfo::TypeDesc& i_osl_type,
 	const ParameterMetaData& i_meta)
@@ -110,7 +110,7 @@ static PRM_Type GetPRMType(
 	return PRM_STRING;
 }
 
-/*
+/**
 	Returns a newly allocated PRM_Range built from the shader parameter's
 	meta-data.
 	Unfortunately, Houdini doesn't seem to allow the specification of a soft,
@@ -158,7 +158,7 @@ NewPRMRange(
 	return nullptr;
 }
 
-// Returns a newly allocated array of PRM_Defaults built from a shader parameter.
+/// Returns a newly allocated array of PRM_Defaults built from a shader parameter.
 static PRM_Default* NewPRMDefault(
 	const DlShaderInfo::Parameter& i_param)
 {
@@ -656,7 +656,7 @@ VOP_ExternalOSL::getInputTypeInfoSubclass(VOP_TypeInfo &o_type_info, int i_idx)
 	o_type_info.setType(GetVOPType(param.type));
 }
 
-void	 
+void 
 VOP_ExternalOSL::getAllowedInputTypeInfosSubclass( unsigned i_idx,
 					      VOP_VopTypeInfoArray &o_type_infos)
 {
