@@ -18,10 +18,13 @@
 
 #include <iostream>
 
-#define DO_RENDER
+#define EXPORT_NSI_CHECKBOX
 
 static const float k_one_line = 0.267;
 
+#ifdef EXPORT_NSI_CHECKBOX
+static const char* k_export_nsi = "export_nsi";
+#endif
 static const char* k_shading_samples = "shading_samples";
 static const char* k_pixel_samples = "pixel_samples";
 static const char* k_volume_samples = "volume_samples";
@@ -70,6 +73,10 @@ GetTemplates()
 	static PRM_Name separator5("separator5", "");
 	static PRM_Name separator6("separator6", "");
 
+#ifdef EXPORT_NSI_CHECKBOX
+	static PRM_Name export_nsi(k_export_nsi, "Export NSI");
+	static PRM_Default export_nsi_d(true);
+#endif
 
 	// Quality
 
@@ -405,6 +412,11 @@ GetTemplates()
 	static std::vector<PRM_Template> templates;
 	if(templates.size() == 0)
 	{
+#ifdef EXPORT_NSI_CHECKBOX
+		templates.push_back(
+			PRM_Template(PRM_TOGGLE, 1, &export_nsi, &export_nsi_d));
+#endif
+
 		templates.push_back(
 			PRM_Template(
 				PRM_SWITCHER,
@@ -615,11 +627,16 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	NSI::DynamicAPI api;
 	NSI::Context nsi(api);
 
-#ifdef DO_RENDER
-	nsi.Begin();
-#else
-	nsi.Begin( NSI::IntegerArg("streamfiledescriptor", 1) );
-#endif
+	bool render = !evalInt(k_export_nsi, 0, 0.0f);
+
+	if(render)
+	{
+		nsi.Begin();
+	}
+	else
+	{
+		nsi.Begin( NSI::IntegerArg("streamfiledescriptor", 1) );
+	}
 
 	context ctx(
 		nsi,
@@ -640,10 +657,11 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	ExportGlobals(ctx);
 	ExportDefaultMaterial(ctx);
 
-#ifdef DO_RENDER
-	nsi.RenderControl(NSI::CStringPArg("action", "start"));
-	nsi.RenderControl(NSI::CStringPArg("action", "wait"));
-#endif
+	if(render)
+	{
+		nsi.RenderControl(NSI::CStringPArg("action", "start"));
+		nsi.RenderControl(NSI::CStringPArg("action", "wait"));
+	}
 
 	nsi.End();
 
