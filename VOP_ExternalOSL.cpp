@@ -9,6 +9,8 @@
 */
 #define LEAKED(x) (x)
 
+const char* k_main_page = "";
+
 struct ParameterMetaData
 {
 	const char* m_label = nullptr;
@@ -425,8 +427,8 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 	*/
 	page_map_t page_map;
 	std::pair<page_map_t::iterator, bool> main =
-		page_map.insert(page_map_t::value_type("", page_components()));
-	page_list_t page_list(1, page_list_t::value_type("", &main.first->second));
+		page_map.insert(page_map_t::value_type(k_main_page, page_components()));
+	page_list_t page_list(1, page_list_t::value_type(k_main_page, &main.first->second));
 	for(unsigned p = 0; p < i_shader_info.NumInputs(); p++)
 	{
 		const DlShaderInfo::Parameter& param = i_shader_info.GetInput(p);
@@ -473,24 +475,22 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 	*/
 	std::vector<PRM_Template>* templates = LEAKED(new std::vector<PRM_Template>);
 
-	// Create the pages switcher
-	if(page_list.size() > 1)
+	// Prepare a tab for each page (except the main one)
+	assert(!page_list.empty());
+	assert(page_list[0].first == k_main_page);
+	PRM_Name* tabs_name = LEAKED(new PRM_Name("tabs"));
+	std::vector<PRM_Default>* tabs = LEAKED(new std::vector<PRM_Default>);
+	for(unsigned p = 1; p < page_list.size(); p++)
 	{
-		PRM_Name* tabs_name = LEAKED(new PRM_Name("tabs"));
-		std::vector<PRM_Default>* tabs = LEAKED(new std::vector<PRM_Default>);
-		for(const page_list_t::value_type& pa : page_list)
+		const page_list_t::value_type& pa = page_list[p];
+		if(!pa.second->empty())
 		{
-			if(!pa.second->empty())
-			{
-				tabs->push_back(PRM_Default(pa.second->size(), pa.first));
-			}
+			tabs->push_back(PRM_Default(pa.second->size(), pa.first));
 		}
-
-		templates->push_back(
-			PRM_Template(PRM_SWITCHER, tabs->size(), tabs_name, &(*tabs)[0]));
 	}
 
 	// Create each page's components
+	bool needs_switcher = tabs->size() > 0;
 	for(const page_list_t::value_type& pa : page_list)
 	{
 		for(const DlShaderInfo::Parameter* param : *pa.second)
@@ -520,6 +520,14 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 
 			templates->push_back(
 				PRM_Template(type, num_components, name, defau1t, choices, range));
+		}
+
+		// Add the switcher once the main page's parameters have been created
+		if(needs_switcher)
+		{
+			templates->push_back(
+				PRM_Template(PRM_SWITCHER, tabs->size(), tabs_name, &(*tabs)[0]));
+			needs_switcher = false;
 		}
 	}
 
