@@ -136,7 +136,7 @@ shader_library::Register(OP_OperatorTable* io_table)const
 		}
 
 		io_table->addOperator(
-			new VOP_ExternalOSLOperator(StructuredShaderInfo(info), oso));
+			new VOP_ExternalOSLOperator(StructuredShaderInfo(info)));
 	}
 }
 

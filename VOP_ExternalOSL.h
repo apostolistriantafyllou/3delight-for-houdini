@@ -133,25 +133,8 @@ private:
 */
 struct VOP_ExternalOSLOperator : public VOP_Operator
 {
-	VOP_ExternalOSLOperator(
-		const StructuredShaderInfo& i_shader_info,
-		const std::string& i_name)
-		:	VOP_Operator(
-				("3Delight::" + i_name).c_str(),
-				i_name.c_str(),
-				VOP_ExternalOSL::alloc,
-				VOP_ExternalOSL::GetTemplates(i_shader_info),
-				VOP_ExternalOSL::theChildTableName,
-				i_shader_info.NumInputs(),
-				i_shader_info.NumInputs(),
-				"*",
-				nullptr,
-				i_shader_info.IsTerminal() ? OP_FLAG_OUTPUT : 0u,
-				i_shader_info.NumOutputs()),
-			m_shader_info(i_shader_info)
-	{
-		setOpTabSubMenuPath("3Delight");
-	}
+	/// Constructor.
+	VOP_ExternalOSLOperator(const StructuredShaderInfo& i_shader_info);
 
 	/// The shader information we want to pass to the VOP_ExternalOSL node
 	StructuredShaderInfo m_shader_info;
