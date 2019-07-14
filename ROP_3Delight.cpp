@@ -692,6 +692,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	float crop[2][2] = {{ float(cam->CROPL(0)), float(cam->CROPB(0)) },
 						{ float(cam->CROPR(0)), float(cam->CROPT(0)) }};
 	// screenwindow
+#if 0
 	double size[2] = { cam->WINSIZEX(0), cam->WINSIZEY(0) };
 	double center[2] = { cam->WINX(0), cam->WINY(0) };
 	double sw[2][2] =
@@ -699,6 +700,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		{ center[0] - size[0], center[1] - size[1] },
 		{ center[0] + size[0], center[1] + size[1] }
 	};
+#endif
 	i_ctx.m_nsi.Create("default_screen", "screen");
 	i_ctx.m_nsi.SetAttribute(
 		"default_screen",
@@ -711,10 +713,12 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 			->SetArrayType(NSITypeFloat, 2)
 			->SetCount(2)
 			->SetValuePointer(crop),
+#if 0
 			*NSI::Argument::New("screenwindow")
 			->SetArrayType(NSITypeDouble, 2)
 			->SetCount(2)
 			->SetValuePointer(sw),
+#endif
 			NSI::IntegerArg("oversampling", GetPixelSamples())
 		) );
 	i_ctx.m_nsi.Connect(
