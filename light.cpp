@@ -167,8 +167,8 @@ void light::create_default_geometry( void ) const
 			Yes ladies and gentlemen, a distant light is just an environment
 			with an angle of 0 :)
 		*/
-		m_nsi.Create( m_handle, "environment" );
-		m_nsi.SetAttribute( m_handle, NSI::DoubleArg("angle", 0) );
+		m_nsi.Create( geo_name, "environment" );
+		m_nsi.SetAttribute( geo_name, NSI::DoubleArg("angle", 0) );
 	}
 	else if( type == e_geometry )
 	{
