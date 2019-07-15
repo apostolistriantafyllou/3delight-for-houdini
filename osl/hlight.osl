@@ -4,7 +4,13 @@ surface hlight(
 	float light_exposure = 1,
 	int normalizearea  = 1,
 	int singlesided = 0,
-	int reverse = 0 )
+	int reverse = 0,
+
+	/* spot light */
+	int coneenable = 0,
+	float coneangle = 45,
+	float conedelta = 10
+)
 {
 	Ci = 0;
 
@@ -14,18 +20,34 @@ surface hlight(
 		Ci += transparent();
 	}
 
-	if( singlesided && backfacing() != reverse )
+	float scale = 1;
+	if( coneenable )
 	{
-		Ci = transparent();
-		return;
+		/* Cone and penumbra */
+		float cosangle = abs( dot(-normalize(I), normalize(N)) );
+		float _coneangle = radians(coneangle);
+		float penumbraangle = radians(conedelta);
+
+		float coslimit = cos(_coneangle / 2);
+		float cospen = cos((_coneangle / 2) + penumbraangle);
+		float low = min(cospen, coslimit);
+		float high = max(cospen, coslimit);
+
+		scale = M_PI * smoothstep(low, high, cosangle);
+		scale /= surfacearea();
+	}
+	else
+	{
+		/* all other lights */
+		if( singlesided && backfacing() != reverse )
+		{
+			Ci = transparent();
+			return;
+		}
+
+		if( normalizearea == 1 )
+			scale /= surfacearea();
 	}
 
-	color result = light_color * light_intensity * pow(2,light_exposure);
-
-	if( normalizearea == 1 )
-	{
-		result /= surfacearea();
-	}
-
-	Ci += result * emission();
+	Ci += scale * light_color * light_intensity * pow(2, light_exposure) * emission();
 }

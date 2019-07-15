@@ -66,7 +66,35 @@ void light::create_default_geometry( void ) const
 
 	std::string geo_name = m_handle + "|geometry";
 
-	if( type == e_point || type == e_disk || type == e_sphere )
+	if( type == e_grid || is_spot )
+	{
+		if( is_spot )
+		{
+			x_size = y_size = 0.001f;
+		}
+
+		float P[] = {
+			-x_size, -y_size, 0.0f,  -x_size, y_size, 0.0f,
+			x_size, y_size, 0.0f,   x_size, -y_size, 0.0f };
+		int nvertices[] = { 4 };
+
+		NSI::ArgumentList mesh_attributes;
+		mesh_attributes.Add(
+			NSI::Argument::New( "P" )
+			->SetType( NSITypePoint )
+			->SetCount( 4 )
+			->SetValuePointer( const_cast<float*>(P)) );
+
+		mesh_attributes.Add(
+			NSI::Argument::New( "nvertices" )
+			->SetType( NSITypeInteger )
+			->SetCount( 1 )
+			->SetValuePointer( const_cast<int*>(nvertices)) );
+
+		m_nsi.Create( geo_name, "mesh" );
+		m_nsi.SetAttribute( geo_name, mesh_attributes );
+	}
+	else if( type == e_point || type == e_disk || type == e_sphere )
 	{
 		NSI::ArgumentList args;
 		float P[3] = { 0.0f, 0.0f, 0.0f };
@@ -94,34 +122,6 @@ void light::create_default_geometry( void ) const
 
 		m_nsi.Create( geo_name, "particles" );
 		m_nsi.SetAttribute( geo_name, args );
-	}
-	else if( type == e_grid || is_spot )
-	{
-		if( is_spot )
-		{
-			x_size = y_size = 0.001f;
-		}
-
-		float P[] = {
-			-x_size, -y_size, 0.0f,  -x_size, y_size, 0.0f,
-			x_size, y_size, 0.0f,   x_size, -y_size, 0.0f };
-		int nvertices[] = { 4 };
-
-		NSI::ArgumentList mesh_attributes;
-		mesh_attributes.Add(
-			NSI::Argument::New( "P" )
-			->SetType( NSITypePoint )
-			->SetCount( 4 )
-			->SetValuePointer( const_cast<float*>(P)) );
-
-		mesh_attributes.Add(
-			NSI::Argument::New( "nvertices" )
-			->SetType( NSITypeInteger )
-			->SetCount( 1 )
-			->SetValuePointer( const_cast<int*>(nvertices)) );
-
-		m_nsi.Create( geo_name, "mesh" );
-		m_nsi.SetAttribute( geo_name, mesh_attributes );
 	}
 	else if( type == e_tube )
 	{
