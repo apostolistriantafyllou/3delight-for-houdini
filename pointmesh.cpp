@@ -24,46 +24,61 @@ void pointmesh::set_attributes( void ) const
 {
 }
 
+NSIType_t gt_to_nsi_type( GT_Type i_type )
+{
+	switch( i_type)
+	{
+	case GT_TYPE_POINT: return  NSITypePoint;
+	case GT_TYPE_COLOR: return  NSITypeColor;
+	case GT_TYPE_VECTOR: return  NSITypeVector;
+	case GT_TYPE_NORMAL: return  NSITypeNormal;
+	case GT_TYPE_NONE: return  NSITypeFloat;
+	default:
+		break;
+	}
+	return NSITypeInvalid;
+}
+
 void pointmesh::set_attributes_at_time( double i_time ) const
 {
 	const GT_PrimPointMesh *pointmesh =
 		static_cast<const GT_PrimPointMesh *>(m_gt_primitive.get());
 
-	const GT_AttributeListHandle &attributes = pointmesh->getPointAttributes() ;
-	const UT_StringArray &names = attributes->getNames();
+	/*
+		NSI doesn't care if it's "vertex" or "uniform". It guess that
+		from how many data its given. So just pass through the attributes
+		as one list.
+	*/
+	const GT_AttributeListHandle all_attributes[2] =
+	{
+		pointmesh->getPointAttributes(),
+		pointmesh->getDetailAttributes()
+	};
 
 	bool width_found = false;
-	for( int i = 0; i<names.entries(); i++ )
+	for( auto &attributes : all_attributes )
 	{
-		const GT_DataArrayHandle &data = attributes->get( names[i] );
-		GT_Type type = data->getTypeInfo();
-		NSIType_t nsi_type = NSITypeInvalid;
-
-		if( !width_found )
+		const UT_StringArray &names = attributes->getNames();
+		for( int i = 0; i<names.entries(); i++ )
 		{
-			width_found = names[i] == "width";
+			width_found = width_found || names[i] == "width";
+
+			const GT_DataArrayHandle &data = attributes->get( names[i] );
+			NSIType_t nsi_type = gt_to_nsi_type( data->getTypeInfo() );
+
+			if( nsi_type == NSITypeInvalid )
+			{
+				std::cout << "unsupported attribute type " << data->getTypeInfo()
+					<< " of name " << names[i] << " on " << m_handle;
+				continue;
+			}
+			GT_DataArrayHandle buffer_in_case_we_need_it;
+			m_nsi.SetAttributeAtTime( m_handle, i_time,
+					*NSI::Argument( names[i].buffer() )
+					.SetType( nsi_type )
+					->SetCount( data->entries() )
+					->SetValuePointer( data->getF32Array(buffer_in_case_we_need_it)));
 		}
-
-		switch( type )
-		{
-			case GT_TYPE_POINT: nsi_type = NSITypePoint; break;
-			case GT_TYPE_COLOR: nsi_type = NSITypeColor; break;
-			case GT_TYPE_VECTOR: nsi_type = NSITypeVector; break;
-			case GT_TYPE_NORMAL: nsi_type = NSITypeNormal; break;
-			case GT_TYPE_NONE: nsi_type = NSITypeFloat; break;
-			default:
-				std::cout << "unsupported attribute type " << type << " of name "
-					<< names[i] << " on " << m_handle;
-			continue;
-		}
-
-		GT_DataArrayHandle buffer_in_case_we_need_it;
-
-		m_nsi.SetAttributeAtTime( m_handle, i_time,
-			*NSI::Argument( names[i].buffer() )
-				.SetType( nsi_type )
-				->SetCount( data->entries() )
-				->SetValuePointer( data->getF32Array(buffer_in_case_we_need_it)));
 	}
 
 	if( !width_found )
