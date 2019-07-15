@@ -59,14 +59,14 @@ void camera::set_attributes_at_time( double i_time ) const
 	m_nsi.SetAttribute(
 		m_handle,
 		(
-			*NSI::Argument::New("shutterrange")
-			->SetType(NSITypeDouble)
-			->SetCount(2)
-			->CopyValue(nsi_shutter, sizeof(nsi_shutter)),
-			*NSI::Argument::New("clippingdistance")
-			->SetType(NSITypeDouble)
-			->SetCount(2)
-			->CopyValue(nsi_clip, sizeof(nsi_clip))
+			*NSI::Argument("shutterrange")
+				.SetType(NSITypeDouble)
+				->SetCount(2)
+				->CopyValue(nsi_shutter, sizeof(nsi_shutter)),
+			*NSI::Argument("clippingdistance")
+				.SetType(NSITypeDouble)
+				->SetCount(2)
+				->CopyValue(nsi_clip, sizeof(nsi_clip))
 		) );
 
 	if(cam->PROJECTION(0.0f) == OBJ_PROJ_PERSPECTIVE)
