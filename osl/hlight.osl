@@ -1,21 +1,31 @@
 surface hlight(
 	color light_color = color(1),
 	float light_intensity = 1,
-	float exposure = 1,
-	int singlesided = 0 )
+	float light_exposure = 1,
+	int normalizearea  = 1,
+	int singlesided = 0,
+	int reverse = 0 )
 {
 	Ci = 0;
 
 	/* So that area light doesn't cast any shadows. */
-	if( singlesided==1 && !raytype("camera") )
+	if( !raytype("camera") )
 	{
 		Ci += transparent();
 	}
 
-	color result = light_color * light_intensity * pow(2,exposure);
+	if( singlesided && backfacing() != reverse )
+	{
+		Ci = transparent();
+		return;
+	}
 
-	/* Houdini light is normalized by its area. */
-	result /= surfacearea();
+	color result = light_color * light_intensity * pow(2,light_exposure);
+
+	if( normalizearea == 1 )
+	{
+		result /= surfacearea();
+	}
 
 	Ci += result * emission();
 }
