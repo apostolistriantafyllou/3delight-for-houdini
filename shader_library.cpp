@@ -81,9 +81,13 @@ std::string shader_library::get_shader_path( const char *vop ) const
 	if( file_exists( dl_shaders_path.c_str()) )
 		return dl_shaders_path;
 
+	std::cout << "cannot find : " << dl_shaders_path << std::endl;
 	return {};
 }
 
+/**
+	FIXME: use regex match.
+*/
 std::string shader_library::vop_to_osl( const char *i_vop )
 {
 	std::string legalized( i_vop );
@@ -103,8 +107,9 @@ std::string shader_library::vop_to_osl( const char *i_vop )
 
 	if( p2 == std::string::npos )
 	{
-		/* only one occurence, no name space */
-		return legalized;
+		/* only one occurence, could be namespace or version */
+		return std::isdigit(legalized[p1+2]) ?
+			legalized : legalized.substr(p1+2);
 	}
 
 	/* two occurences, skip namespace */
