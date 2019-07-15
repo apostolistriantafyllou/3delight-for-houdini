@@ -32,11 +32,17 @@ void pointmesh::set_attributes_at_time( double i_time ) const
 	const GT_AttributeListHandle &attributes = pointmesh->getPointAttributes() ;
 	const UT_StringArray &names = attributes->getNames();
 
+	bool width_found = false;
 	for( int i = 0; i<names.entries(); i++ )
 	{
 		const GT_DataArrayHandle &data = attributes->get( names[i] );
 		GT_Type type = data->getTypeInfo();
 		NSIType_t nsi_type = NSITypeInvalid;
+
+		if( !width_found )
+		{
+			width_found = names[i] == "width";
+		}
 
 		switch( type )
 		{
@@ -60,5 +66,9 @@ void pointmesh::set_attributes_at_time( double i_time ) const
 				->SetValuePointer( data->getF32Array(buffer_in_case_we_need_it)));
 	}
 
-
+	if( !width_found )
+	{
+		m_nsi.SetAttributeAtTime( m_handle, i_time,
+			NSI::FloatArg("width", 0.1f) );
+	}
 }
