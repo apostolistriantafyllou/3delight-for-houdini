@@ -45,7 +45,9 @@ static unsigned GetNumChannels(const DlShaderInfo::TypeDesc& i_osl_type)
 
 		case NSITypeMatrix:
 		case NSITypeDoubleMatrix:
-			return 16;
+			// We don't want to show matrix inputs in the UI
+			assert(false);
+			break;
 
 		case NSITypePointer:
 			// We don't want to show "closure color" inputs in the UI
@@ -95,8 +97,9 @@ static PRM_Type GetPRMType(
 
 		case NSITypeMatrix:
 		case NSITypeDoubleMatrix:
-			// FIXME
-			return PRM_STRING;
+			// We don't want to show matrix inputs in the UI
+			assert(false);
+			break;
 
 		case NSITypePointer:
 			// We don't want to show "closure color" inputs in the UI
@@ -209,16 +212,9 @@ static PRM_Default* NewPRMDefault(
 
 		case NSITypeMatrix:
 		case NSITypeDoubleMatrix:
-			if(i_param.fdefault.size() >= 16)
-			{
-				PRM_Default* def = new PRM_Default[16];
-				for(unsigned i = 0; i < 16; i++)
-				{
-					def[i] = PRM_Default(i_param.fdefault[i]);
-				}
-				return def;
-			}
-			return nullptr;
+			// We don't want to show matrix inputs in the UI
+			assert(false);
+			break;
 
 		case NSITypePointer:
 			// We don't want to show "closure color" inputs in the UI
@@ -482,6 +478,16 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 
 		// Closures can only be read through connections
 		if(param.isclosure)
+		{
+			continue;
+		}
+
+		/*
+			Don't display matrices in the UI for now. They can still be
+			communicated through connections.
+		*/
+		if(param.type.type == NSITypeMatrix ||
+			param.type.type == NSITypeDoubleMatrix)
 		{
 			continue;
 		}
