@@ -228,7 +228,7 @@ static PRM_Default* NewPRMDefault(
 	return nullptr;
 }
 
-// Returns a newly allocated PRM_ChoiceList built from a shader parameter.
+/// Returns a newly allocated PRM_ChoiceList built from a shader parameter.
 PRM_ChoiceList*
 NewPRMChoiceList(
 	const DlShaderInfo::TypeDesc& i_osl_type,
@@ -292,7 +292,7 @@ NewPRMChoiceList(
 	return new PRM_ChoiceList(PRM_CHOICELIST_SINGLE, &(*items)[0]);
 }
 
-// Returns a VOP_Type that corresponds to a DlShaderInfo::TypeDesc
+/// Returns a VOP_Type that corresponds to a DlShaderInfo::TypeDesc
 static VOP_Type GetVOPType(const DlShaderInfo::TypeDesc& i_osl_type)
 {
 	switch(i_osl_type.type)
@@ -425,6 +425,32 @@ GetParameterMetaData(
 	}
 }
 
+/// Adds a PRM_Template to io_templates that matches i_param and its meta-data
+static void
+AddParameterTemplate(
+	std::vector<PRM_Template>& io_templates,
+	const DlShaderInfo::Parameter& i_param,
+	const ParameterMetaData& i_meta)
+{
+	int num_components = i_param.type.arraylen;
+	assert(num_components >= 0);
+	if(num_components == 0)
+	{
+		// Not an array
+		num_components = 1;
+	}
+	num_components *= GetNumChannels(i_param.type);
+
+	PRM_Name* name = LEAKED(new PRM_Name(i_param.name.c_str(), i_meta.m_label));
+	PRM_Type type = GetPRMType(i_param.type, i_meta);
+	PRM_Range* range = LEAKED(NewPRMRange(i_param.type, i_meta));
+	PRM_Default* defau1t = LEAKED(NewPRMDefault(i_param));
+	PRM_ChoiceList* choices = LEAKED(NewPRMChoiceList(i_param.type, i_meta));
+
+	io_templates.push_back(
+		PRM_Template(type, num_components, name, defau1t, choices, range));
+}
+
 
 StructuredShaderInfo::StructuredShaderInfo(const DlShaderInfo* i_info)
 	:	m_dl(*i_info)
@@ -554,30 +580,11 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 	{
 		for(const DlShaderInfo::Parameter* param : *pa.second)
 		{
-			int num_components = param->type.arraylen;
-			assert(num_components >= 0);
-			if(num_components == 0)
-			{
-				// Not an array
-				num_components = 1;
-			}
-
-			num_components *= GetNumChannels(param->type);
-
 			ParameterMetaData meta;
 			meta.m_label = param->name.c_str();
 			GetParameterMetaData(meta, param->metadata);
 
-			PRM_Name* name =
-				LEAKED(new PRM_Name(param->name.c_str(), meta.m_label));
-			PRM_Type type = GetPRMType(param->type, meta);
-			PRM_Range* range = LEAKED(NewPRMRange(param->type, meta));
-			PRM_Default* defau1t = LEAKED(NewPRMDefault(*param));
-			PRM_ChoiceList* choices =
-				LEAKED(NewPRMChoiceList(param->type, meta));
-
-			templates->push_back(
-				PRM_Template(type, num_components, name, defau1t, choices, range));
+			AddParameterTemplate(*templates, *param, meta);
 		}
 
 		// Add the switcher once the main page's parameters have been created
