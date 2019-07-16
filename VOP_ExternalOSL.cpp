@@ -9,7 +9,21 @@
 */
 #define LEAKED(x) (x)
 
-const char* k_main_page = "";
+static const char* k_main_page = "";
+
+static const std::string k_maya_color_ramp = "maya_colorRamp";
+static const std::string k_maya_float_ramp = "maya_floatRamp";
+
+static const std::string k_position_suffix = "_Position";
+static const std::string k_color_value_suffix = "_ColorValue";
+static const std::string k_float_value_suffix = "_FloatValue";
+static const std::string k_interpolation_suffix = "_Interp";
+static const std::string k_index_suffix = "_#_";
+
+static const char* k_position = "Position";
+static const char* k_value = "Value";
+static const char* k_color = "Color";
+static const char* k_interpolation = "Interpolation";
 
 struct ParameterMetaData
 {
@@ -25,6 +39,15 @@ struct ParameterMetaData
 	const float* m_slider_fmin = nullptr;
 	const float* m_slider_fmax = nullptr;
 };
+
+/// Returns true if a widget name is one of the "ramp" types
+static bool
+IsRamp(const char* i_widget)
+{
+	return
+		i_widget &&
+		(i_widget == k_maya_color_ramp || i_widget == k_maya_float_ramp);
+}
 
 /// Returns the number of scalar channels in the specified type
 static unsigned GetNumChannels(const DlShaderInfo::TypeDesc& i_osl_type)
@@ -451,6 +474,63 @@ AddParameterTemplate(
 		PRM_Template(type, num_components, name, defau1t, choices, range));
 }
 
+/**
+	Adds a PRM_Template to io_templates that matches i_param, represented by a
+	float or color ramp.
+*/
+static void
+AddRampParameterTemplate(
+	std::vector<PRM_Template>& io_templates,
+	const DlShaderInfo::Parameter& i_param,
+	const ParameterMetaData& i_meta)
+{
+	// Remove the "_ColorValue" or "_FloatValue" suffix from the variable name
+	std::string root_name = i_param.name.string();
+	PRM_Type type = GetPRMType(i_param.type, i_meta);
+	bool color = i_param.type.type == NSITypeColor;
+	assert(i_meta.m_widget);
+	assert(
+		(color && i_meta.m_widget == k_maya_color_ramp) || 
+		(!color && i_meta.m_widget == k_maya_float_ramp));
+	const std::string& value_suffix =
+		color ? k_color_value_suffix : k_float_value_suffix;
+	int root_length = int(root_name.length()) - int(value_suffix.length());
+	if(root_length > 0 && root_name.substr(root_length) == value_suffix)
+	{
+		root_name = root_name.substr(0, root_length);
+	}
+
+	// Create the names of the other variables controlled by the ramp widget
+	char* pos_string =
+		LEAKED(strdup((root_name + k_position_suffix + k_index_suffix).c_str()));
+	char* value_string =
+		LEAKED(strdup((root_name + value_suffix + k_index_suffix).c_str()));
+	char* inter_string =
+		LEAKED(strdup((root_name + k_interpolation_suffix + k_index_suffix).c_str()));
+	PRM_Name* pos = LEAKED(new PRM_Name(pos_string, k_position));
+	PRM_Name* value = LEAKED(new PRM_Name(value_string, color ? k_color : k_value));
+	PRM_Name* inter = LEAKED(new PRM_Name(inter_string, k_interpolation));
+
+	// Create the templates for a single control point
+	unsigned num_channels = GetNumChannels(i_param.type);
+	std::vector<PRM_Template>* nodes = LEAKED(new std::vector<PRM_Template>);
+	nodes->push_back(
+		PRM_Template(PRM_FLT, 1, pos, PRMzeroDefaults));
+	nodes->push_back(
+		PRM_Template(type, num_channels, value, PRMzeroDefaults));
+	nodes->push_back(
+		PRM_Template(PRM_ORD, 1, inter, PRMoneDefaults, PRMgetRampInterpMenu()));
+	nodes->push_back(
+		PRM_Template());
+
+	// Create the main ramp template
+	PRM_MultiType multi_type =
+		color ? PRM_MULTITYPE_RAMP_RGB : PRM_MULTITYPE_RAMP_FLT;
+	char* name_string = LEAKED(strdup(root_name.c_str()));
+	PRM_Name* name = LEAKED(new PRM_Name(name_string, i_meta.m_label));
+	io_templates.push_back(PRM_Template(multi_type, &(*nodes)[0], 1, name));
+}
+
 
 StructuredShaderInfo::StructuredShaderInfo(const DlShaderInfo* i_info)
 	:	m_dl(*i_info)
@@ -518,15 +598,15 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 			continue;
 		}
 
-		// FIXME : support variable length arrays
-		if(param.type.arraylen < 0)
+		const char* widget = "";
+		FindMetaData(widget, param.metadata, "widget");
+		if(strcmp(widget, "null") == 0)
 		{
 			continue;
 		}
 
-		const char* widget = "";
-		FindMetaData(widget, param.metadata, "widget");
-		if(strcmp(widget, "null") == 0)
+		// FIXME : support variable length arrays
+		if(param.type.arraylen < 0 && !IsRamp(widget))
 		{
 			continue;
 		}
@@ -584,7 +664,14 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 			meta.m_label = param->name.c_str();
 			GetParameterMetaData(meta, param->metadata);
 
-			AddParameterTemplate(*templates, *param, meta);
+			if(IsRamp(meta.m_widget))
+			{
+				AddRampParameterTemplate(*templates, *param, meta);
+			}
+			else
+			{
+				AddParameterTemplate(*templates, *param, meta);
+			}
 		}
 
 		// Add the switcher once the main page's parameters have been created
