@@ -17,6 +17,7 @@
 
 #include <GT/GT_GEODetail.h>
 #include <GT/GT_Refine.h>
+#include <GT/GT_RefineParms.h>
 #include <GT/GT_PrimInstance.h>
 #include <OBJ/OBJ_Camera.h>
 #include <OBJ/OBJ_Node.h>
@@ -108,9 +109,12 @@ struct OBJ_Node_Refiner : public GT_Refine
 				std::cout << "Refining " << m_node->getFullPath() <<
 					" to level " << m_level  << std::endl;
 
+				GT_RefineParms params;
+				params.setAllowSubdivision( true );
+
 				OBJ_Node_Refiner refiner(
 					m_node, m_context, m_result, m_level+1 );
-				i_primitive->refine( refiner, nullptr );
+				i_primitive->refine( refiner, &params );
 			}
 			else
 			{
