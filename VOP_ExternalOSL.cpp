@@ -492,6 +492,12 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 			continue;
 		}
 
+		// FIXME : support variable length arrays
+		if(param.type.arraylen < 0)
+		{
+			continue;
+		}
+
 		const char* widget = "";
 		FindMetaData(widget, param.metadata, "widget");
 		if(strcmp(widget, "null") == 0)
@@ -549,14 +555,11 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 		for(const DlShaderInfo::Parameter* param : *pa.second)
 		{
 			int num_components = param->type.arraylen;
+			assert(num_components >= 0);
 			if(num_components == 0)
 			{
+				// Not an array
 				num_components = 1;
-			}
-			else if(num_components < 0)
-			{
-				// FIXME : support variable length arrays
-				continue;
 			}
 
 			num_components *= GetNumChannels(param->type);
