@@ -19,7 +19,8 @@ public:
 		fpreal i_end_time,
 		fpreal i_shutter_interval,
 		fpreal i_fps,
-		bool i_dof )
+		bool i_dof,
+		bool i_preview)
 	:
 		m_nsi(i_nsi),
 		m_start_time(i_start_time),
@@ -27,7 +28,8 @@ public:
 		m_current_time(i_start_time),
 		m_frame_duration(1.0f / i_fps),
 		m_shutter(i_shutter_interval * m_frame_duration),
-		m_dof(i_dof)
+		m_dof(i_dof),
+		m_preview(i_preview)
 	{
 	}
 
@@ -42,4 +44,5 @@ public:
 	fpreal m_frame_duration;
 	// True if depth-of-field is enabled
 	bool m_dof;
+	bool m_preview;
 };

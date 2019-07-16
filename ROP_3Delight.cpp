@@ -612,13 +612,28 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	}
 
 	fpreal fps = OPgetDirector()->getChannelManager()->getSamplesPerSec();
+
+	/*
+		Unfortunately, getRenderMode() always returns RENDER_RM_PRM, so we have
+		to use a special recipe to detect that the "Render yo MPlay" button has
+		been pressed.
+	*/
+	UT_String output_override;
+	bool output_overriden = getOutputOverride(output_override, tstart);
+	UT_String device_override;
+	bool device_overriden = getDeviceOverride(device_override, tstart);
+	bool preview =
+		output_overriden && output_override == "ip" &&
+		device_overriden && device_override == "";
+
 	context ctx(
 		nsi,
 		tstart,
 		tend,
 		GetShutterInterval(tstart),
 		fps,
-		HasDepthOfField());
+		HasDepthOfField(),
+		preview);
 
 	if(error() < UT_ERROR_ABORT)
 	{
@@ -665,6 +680,12 @@ ROP_3Delight::endRender()
 	}
 
 	return ROP_CONTINUE_RENDER;
+}
+
+bool
+ROP_3Delight::isPreviewAllowed()
+{
+	return true;
 }
 
 void
@@ -718,11 +739,17 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		"default_screen", "",
 		camera::get_nsi_handle(*cam), "screens");
 
+	UT_String driver = "idisplay";
+	if(!i_ctx.m_preview)
+	{
+		evalString(driver, k_default_image_format, 0, 0.0f);
+	}
+
 	i_ctx.m_nsi.Create("default_driver", "outputdriver");
 	i_ctx.m_nsi.SetAttribute(
 		"default_driver",
 		(
-			NSI::CStringPArg("drivername", "idisplay"),
+			NSI::CStringPArg("drivername", driver.c_str()),
 			NSI::CStringPArg("imagefilename", "overlord")
 		) );
 	int nb_aovs = evalInt(k_aov, 0, 0.0f);

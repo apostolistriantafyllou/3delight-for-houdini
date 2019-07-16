@@ -32,6 +32,9 @@ protected:
 	virtual ROP_RENDER_CODE renderFrame(fpreal time, UT_Interrupt* boss);
 	virtual ROP_RENDER_CODE endRender();
 
+	/// Makes the "Render to MPlay" button visible.
+	virtual bool isPreviewAllowed();
+
 private:
 
 	void ExportOutputs(const context& i_ctx)const;
