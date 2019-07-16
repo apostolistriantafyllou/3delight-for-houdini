@@ -13,6 +13,7 @@ add_library( ${library_name} SHARED
 	ROP_3Delight.cpp
 	VOP_ExternalOSL.cpp
 	camera.cpp
+	curvemesh.cpp
 	exporter.cpp
 	instance.cpp
 	light.cpp

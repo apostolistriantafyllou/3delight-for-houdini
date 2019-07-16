@@ -109,3 +109,68 @@ assign_material:
 	m_nsi.Connect( attributes, "", m_handle, "geometryattributes" );
 	m_nsi.Connect( material_path.buffer(), "", attributes, "surfaceshader" );
 }
+
+
+/**
+	Utility to get an NSI type from a GT_Type.
+
+	\returns NSITypeInvalid if we don't know what to do with
+	the type
+*/
+NSIType_t gt_to_nsi_type( GT_Type i_type )
+{
+	switch( i_type)
+	{
+	case GT_TYPE_POINT: return  NSITypePoint;
+	case GT_TYPE_COLOR: return  NSITypeColor;
+	case GT_TYPE_VECTOR: return  NSITypeVector;
+	case GT_TYPE_NORMAL: return  NSITypeNormal;
+	case GT_TYPE_NONE: return  NSITypeFloat;
+	default:
+		break;
+	}
+	return NSITypeInvalid;
+}
+
+void exporter::export_attributes(
+	const GT_AttributeListHandle *i_attributes,
+	int i_n, double i_time,
+	std::vector<const char *> &io_which_ones ) const
+{
+	for( int i=0; i<i_n; i++ )
+	{
+		auto it = io_which_ones.begin();
+		while( it != io_which_ones.end() )
+		{
+			const char *name = *it;
+
+			const GT_DataArrayHandle &data = i_attributes[i]->get( name );
+			if( data.get() == nullptr )
+			{
+				/* Name not part of this attributes list */
+				it ++;
+				continue;
+			}
+
+			NSIType_t nsi_type = gt_to_nsi_type( data->getTypeInfo() );
+			if( nsi_type == NSITypeInvalid )
+			{
+				std::cout << "unsupported attribute type " << data->getTypeInfo()
+					<< " of name " << name << " on " << m_handle;
+				it ++ ;
+				continue;
+			}
+
+			it = io_which_ones.erase( it );
+
+			GT_DataArrayHandle buffer_in_case_we_need_it;
+			m_nsi.SetAttributeAtTime( m_handle, i_time,
+				*NSI::Argument(name)
+					.SetType( nsi_type )
+					->SetCount( data->entries() )
+					->SetValuePointer( data->getF32Array(buffer_in_case_we_need_it)));
+		}
+	}
+
+	return; // so that we don't fall into the void.
+}

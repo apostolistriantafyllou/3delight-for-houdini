@@ -2,6 +2,7 @@
 
 /* exporters { */
 #include "camera.h"
+#include "curvemesh.h"
 #include "exporter.h"
 #include "instance.h"
 #include "light.h"
@@ -66,6 +67,16 @@ struct OBJ_Node_Refiner : public GT_Refine
 		case GT_PRIM_POINT_MESH:
 			m_result.push_back(
 				new pointmesh(m_context, m_node,i_primitive) );
+			break;
+
+		case GT_PRIM_SUBDIVISION_CURVES:
+			m_result.push_back(
+				new curvemesh(m_context, m_node,i_primitive) );
+			break;
+
+		case GT_PRIM_CURVE_MESH:
+			m_result.push_back(
+				new curvemesh(m_context, m_node,i_primitive) );
 			break;
 
 		case GT_PRIM_INSTANCE:
@@ -137,6 +148,9 @@ void scene::process_node(
 
 	OBJ_Node *obj = i_node->castToOBJNode();
 	if( !obj )
+		return;
+
+	if( !obj->isObjectRenderable(i_context.m_start_time) )
 		return;
 
 	/*
