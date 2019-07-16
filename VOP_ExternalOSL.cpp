@@ -13,10 +13,12 @@ static const char* k_main_page = "";
 
 static const std::string k_maya_color_ramp = "maya_colorRamp";
 static const std::string k_maya_float_ramp = "maya_floatRamp";
+static const std::string k_katana_float_ramp = "floatRamp";
 
 static const std::string k_position_suffix = "_Position";
 static const std::string k_color_value_suffix = "_ColorValue";
 static const std::string k_float_value_suffix = "_FloatValue";
+static const std::string k_floats_suffix = "_Floats";
 static const std::string k_interpolation_suffix = "_Interp";
 static const std::string k_index_suffix = "_#_";
 
@@ -46,7 +48,8 @@ IsRamp(const char* i_widget)
 {
 	return
 		i_widget &&
-		(i_widget == k_maya_color_ramp || i_widget == k_maya_float_ramp);
+		(i_widget == k_maya_color_ramp || i_widget == k_maya_float_ramp ||
+		i_widget == k_katana_float_ramp);
 }
 
 /// Returns the number of scalar channels in the specified type
@@ -484,6 +487,9 @@ AddRampParameterTemplate(
 	const DlShaderInfo::Parameter& i_param,
 	const ParameterMetaData& i_meta)
 {
+	assert(i_meta.m_widget);
+	bool katana_ramp = i_meta.m_widget == k_katana_float_ramp;
+
 	// Remove the "_ColorValue" or "_FloatValue" suffix from the variable name
 	std::string root_name = i_param.name.string();
 	PRM_Type type = GetPRMType(i_param.type, i_meta);
@@ -491,9 +497,12 @@ AddRampParameterTemplate(
 	assert(i_meta.m_widget);
 	assert(
 		(color && i_meta.m_widget == k_maya_color_ramp) || 
-		(!color && i_meta.m_widget == k_maya_float_ramp));
+		(!color && i_meta.m_widget == k_maya_float_ramp) ||
+		(!color && i_meta.m_widget == k_katana_float_ramp));
 	const std::string& value_suffix =
-		color ? k_color_value_suffix : k_float_value_suffix;
+		katana_ramp
+		? k_floats_suffix
+		: (color ? k_color_value_suffix : k_float_value_suffix);
 	int root_length = int(root_name.length()) - int(value_suffix.length());
 	if(root_length > 0 && root_name.substr(root_length) == value_suffix)
 	{
