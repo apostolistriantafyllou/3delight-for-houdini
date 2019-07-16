@@ -77,40 +77,44 @@ void polygonmesh::set_attributes( void ) const
 	}
 
 	m_nsi.SetAttribute( m_handle.c_str(), mesh_args );
+
+	/* output the UVs only once */
+	GT_AttributeListHandle attributes[] =
+	{
+		polygon_mesh->getShared(),
+		polygon_mesh->getVertex(),
+		polygon_mesh->getUniform()
+	};
+	std::vector<const char *> to_export{ "uv" };
+	exporter::export_attributes(
+		attributes,
+		sizeof(attributes)/sizeof(attributes[0]),
+		m_context.m_start_time,
+		to_export );
 }
 
 /**
-	\brief output P, N and all the attributes for this polygon mesh.
+	\brief output P, N
 */
-void polygonmesh::set_attributes_at_time( double ) const
+void polygonmesh::set_attributes_at_time( double i_time ) const
 {
-     const GT_PrimPolygonMesh *polygon_mesh =
-	    static_cast<const GT_PrimPolygonMesh *>(m_gt_primitive.get());
+	const GT_PrimPolygonMesh *polygon_mesh =
+		static_cast<const GT_PrimPolygonMesh *>(m_gt_primitive.get());
 
-	 const GT_DataArrayHandle &P = polygon_mesh->getShared()->get( GA_Names::P );
-
-	 NSI::ArgumentList mesh_args;
-
-	 GT_DataArrayHandle buffer_in_case_we_need_it;
-	 mesh_args.Add( NSI::Argument::New( "P" )
-		 ->SetType( NSITypePoint )
-		 ->SetCount( P->entries() )
-		 ->SetValuePointer( P->getF32Array(buffer_in_case_we_need_it) ) );
-
-	std::unique_ptr<UT_Vector3> N;
-	static_assert( sizeof(UT_Vector3) == sizeof(float)*3,
-		"UT_Vector3 is not of the expected size/type" );
-
-	if( !m_is_subdiv )
+	GT_AttributeListHandle attributes[] =
 	{
-		N = std::unique_ptr<UT_Vector3>(new UT_Vector3[P->entries()]);
-		polygon_mesh->pointNormals( N.get(), P->entries() );
+		polygon_mesh->getShared(),
+		polygon_mesh->getVertex(),
+		polygon_mesh->getUniform()
+	};
 
-		mesh_args.Add( NSI::Argument::New( "N" )
-			->SetType( NSITypeNormal )
-			->SetCount( P->entries() )
-			->SetValuePointer(N.get()) );
-	}
+	std::vector<const char *> to_export{ "P" };
+	if( !m_is_subdiv )
+		to_export.push_back( "N" );
 
-	m_nsi.SetAttribute( m_handle.c_str(), mesh_args );
+	exporter::export_attributes(
+		attributes,
+		sizeof(attributes)/sizeof(attributes[0]),
+		i_time,
+		to_export );
 }

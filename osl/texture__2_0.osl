@@ -16,8 +16,8 @@ shader texture__2_0 [[ string tags[1] = {"ignoresubnetworks"} ]] (
 	int interp = 0,
 	output color clr = 0 )
 {
-	float st[2] = {u, v};
+	float st[3] = {u, v, 0};
 	getattribute( "st", st );
 	clr = texture(
-		map, st[0], st[1], "width", width, "blur", blur, "wrap", "periodic");
+		map, st[0], 1-st[1], "width", width, "blur", blur, "wrap", "periodic");
 }

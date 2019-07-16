@@ -124,6 +124,7 @@ NSIType_t gt_to_nsi_type( GT_Type i_type )
 	case GT_TYPE_POINT: return  NSITypePoint;
 	case GT_TYPE_COLOR: return  NSITypeColor;
 	case GT_TYPE_VECTOR: return  NSITypeVector;
+	case GT_TYPE_TEXTURE: return  NSITypeFloat; // it's a float float[3]
 	case GT_TYPE_NORMAL: return  NSITypeNormal;
 	case GT_TYPE_NONE: return  NSITypeFloat;
 	default:
@@ -132,6 +133,13 @@ NSIType_t gt_to_nsi_type( GT_Type i_type )
 	return NSITypeInvalid;
 }
 
+/**
+	gotchas:
+	- When we find a texture coordinate attribute, we output "st".
+	  regardless of the name we find (usually "uv"). This is to be
+	  consistant with other packages.  After the first one we add a
+	  number.
+*/
 void exporter::export_attributes(
 	const GT_AttributeListHandle *i_attributes,
 	int i_n, double i_time,
@@ -162,8 +170,19 @@ void exporter::export_attributes(
 			}
 
 			it = io_which_ones.erase( it );
-
 			GT_DataArrayHandle buffer_in_case_we_need_it;
+
+			if( data->getTypeInfo() == GT_TYPE_TEXTURE )
+			{
+				m_nsi.SetAttributeAtTime( m_handle, i_time,
+					*NSI::Argument("st")
+						.SetArrayType( NSITypeFloat, 3)
+						->SetCount( data->entries() )
+						->SetValuePointer(
+							data->getF32Array(buffer_in_case_we_need_it)));
+				continue;
+			}
+
 			m_nsi.SetAttributeAtTime( m_handle, i_time,
 				*NSI::Argument(name)
 					.SetType( nsi_type )
