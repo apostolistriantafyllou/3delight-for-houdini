@@ -1,5 +1,7 @@
 #include "VOP_ExternalOSL.h"
 
+#include "osl_utilities.h"
+
 #include <PRM/PRM_Include.h>
 
 
@@ -11,46 +13,10 @@
 
 static const char* k_main_page = "";
 
-static const std::string k_maya_color_ramp = "maya_colorRamp";
-static const std::string k_maya_float_ramp = "maya_floatRamp";
-static const std::string k_katana_float_ramp = "floatRamp";
-
-static const std::string k_position_suffix = "_Position";
-static const std::string k_color_value_suffix = "_ColorValue";
-static const std::string k_float_value_suffix = "_FloatValue";
-static const std::string k_floats_suffix = "_Floats";
-static const std::string k_interpolation_suffix = "_Interp";
-static const std::string k_index_suffix = "_#_";
-
 static const char* k_position = "Position";
 static const char* k_value = "Value";
 static const char* k_color = "Color";
 static const char* k_interpolation = "Interpolation";
-
-struct ParameterMetaData
-{
-	const char* m_label = nullptr;
-	const char* m_widget = nullptr;
-	const char* m_options = nullptr;
-	const int* m_imin = nullptr;
-	const int* m_imax = nullptr;
-	const int* m_slider_imin = nullptr;
-	const int* m_slider_imax = nullptr;
-	const float* m_fmin = nullptr;
-	const float* m_fmax = nullptr;
-	const float* m_slider_fmin = nullptr;
-	const float* m_slider_fmax = nullptr;
-};
-
-/// Returns true if a widget name is one of the "ramp" types
-static bool
-IsRamp(const char* i_widget)
-{
-	return
-		i_widget &&
-		(i_widget == k_maya_color_ramp || i_widget == k_maya_float_ramp ||
-		i_widget == k_katana_float_ramp);
-}
 
 /// Returns the number of scalar channels in the specified type
 static unsigned GetNumChannels(const DlShaderInfo::TypeDesc& i_osl_type)
@@ -90,7 +56,7 @@ static unsigned GetNumChannels(const DlShaderInfo::TypeDesc& i_osl_type)
 /// Returns a PRM_Type that corresponds to a DlShaderInfo::TypeDesc
 static PRM_Type GetPRMType(
 	const DlShaderInfo::TypeDesc& i_osl_type,
-	const ParameterMetaData& i_meta)
+	const osl_utilities::ParameterMetaData& i_meta)
 {
 	switch(i_osl_type.type)
 	{
@@ -151,7 +117,7 @@ static PRM_Type GetPRMType(
 static PRM_Range*
 NewPRMRange(
 	const DlShaderInfo::TypeDesc& i_osl_type,
-	const ParameterMetaData& i_meta)
+	const osl_utilities::ParameterMetaData& i_meta)
 {
 	if(i_osl_type.type == NSITypeFloat || i_osl_type.type == NSITypeDouble)
 	{
@@ -258,7 +224,7 @@ static PRM_Default* NewPRMDefault(
 PRM_ChoiceList*
 NewPRMChoiceList(
 	const DlShaderInfo::TypeDesc& i_osl_type,
-	const ParameterMetaData& i_meta)
+	const osl_utilities::ParameterMetaData& i_meta)
 {
 	if(i_osl_type.type != NSITypeInteger || !i_meta.m_options)
 	{
@@ -360,103 +326,12 @@ static VOP_Type GetVOPType(const DlShaderInfo::TypeDesc& i_osl_type)
 	return VOP_TYPE_STRING;
 }
 
-static void
-FindMetaData(
-	const char*& o_value,
-	const DlShaderInfo::constvector<DlShaderInfo::Parameter>& i_metadata,
-	const char* i_name)
-{
-	for(const DlShaderInfo::Parameter& meta : i_metadata)
-	{
-		if(meta.name == i_name)
-		{
-			o_value = meta.sdefault[0].c_str();
-			return;
-		}
-	}
-}
-
-static void
-GetParameterMetaData(
-	ParameterMetaData& o_data,
-	const DlShaderInfo::constvector<DlShaderInfo::Parameter>& i_metadata)
-{
-	for(const DlShaderInfo::Parameter& meta : i_metadata)
-	{
-		if(meta.name == "label")
-		{
-			if(!meta.sdefault.empty())
-			{
-				o_data.m_label = meta.sdefault[0].c_str();
-			}
-		}
-		if(meta.name == "widget")
-		{
-			if(!meta.sdefault.empty())
-			{
-				o_data.m_widget = meta.sdefault[0].c_str();
-			}
-		}
-		if(meta.name == "options")
-		{
-			if(!meta.sdefault.empty())
-			{
-				o_data.m_options = meta.sdefault[0].c_str();
-			}
-		}
-		else if(meta.name == "min")
-		{
-			if(!meta.idefault.empty())
-			{
-				o_data.m_imin = &meta.idefault[0];
-			}
-			if(!meta.fdefault.empty())
-			{
-				o_data.m_fmin = &meta.fdefault[0];
-			}
-		}
-		else if(meta.name == "max")
-		{
-			if(!meta.idefault.empty())
-			{
-				o_data.m_imax = &meta.idefault[0];
-			}
-			if(!meta.fdefault.empty())
-			{
-				o_data.m_fmax = &meta.fdefault[0];
-			}
-		}
-		else if(meta.name == "slidermin")
-		{
-			if(!meta.idefault.empty())
-			{
-				o_data.m_slider_imin = &meta.idefault[0];
-			}
-			if(!meta.fdefault.empty())
-			{
-				o_data.m_slider_fmin = &meta.fdefault[0];
-			}
-		}
-		else if(meta.name == "slidermax")
-		{
-			if(!meta.idefault.empty())
-			{
-				o_data.m_slider_imax = &meta.idefault[0];
-			}
-			if(!meta.fdefault.empty())
-			{
-				o_data.m_slider_fmax = &meta.fdefault[0];
-			}
-		}
-	}
-}
-
 /// Adds a PRM_Template to io_templates that matches i_param and its meta-data
 static void
 AddParameterTemplate(
 	std::vector<PRM_Template>& io_templates,
 	const DlShaderInfo::Parameter& i_param,
-	const ParameterMetaData& i_meta)
+	const osl_utilities::ParameterMetaData& i_meta)
 {
 	int num_components = i_param.type.arraylen;
 	assert(num_components >= 0);
@@ -485,8 +360,10 @@ static void
 AddRampParameterTemplate(
 	std::vector<PRM_Template>& io_templates,
 	const DlShaderInfo::Parameter& i_param,
-	const ParameterMetaData& i_meta)
+	const osl_utilities::ParameterMetaData& i_meta)
 {
+	using namespace osl_utilities;
+
 	assert(i_meta.m_widget);
 	bool katana_ramp = i_meta.m_widget == k_katana_float_ramp;
 
@@ -608,20 +485,20 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 		}
 
 		const char* widget = "";
-		FindMetaData(widget, param.metadata, "widget");
+		osl_utilities::FindMetaData(widget, param.metadata, "widget");
 		if(strcmp(widget, "null") == 0)
 		{
 			continue;
 		}
 
 		// FIXME : support variable length arrays
-		if(param.type.arraylen < 0 && !IsRamp(widget))
+		if(param.type.arraylen < 0 && !osl_utilities::IsRamp(widget))
 		{
 			continue;
 		}
 
 		const char* page_name = "";
-		FindMetaData(page_name, param.metadata, "page");
+		osl_utilities::FindMetaData(page_name, param.metadata, "page");
 
 		// Ensure that the page exists in page_map
 		std::pair<page_map_t::iterator, bool> inserted =
@@ -708,11 +585,11 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 	{
 		for(const DlShaderInfo::Parameter* param : *pa.second)
 		{
-			ParameterMetaData meta;
+			osl_utilities::ParameterMetaData meta;
 			meta.m_label = param->name.c_str();
-			GetParameterMetaData(meta, param->metadata);
+			osl_utilities::GetParameterMetaData(meta, param->metadata);
 
-			if(IsRamp(meta.m_widget))
+			if(osl_utilities::IsRamp(meta.m_widget))
 			{
 				AddRampParameterTemplate(*templates, *param, meta);
 			}
@@ -849,7 +726,7 @@ VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
 		m_shader_info(i_shader_info)
 {
 	const char* name = i_shader_info.m_dl.shadername().c_str();
-	FindMetaData(name, i_shader_info.m_dl.metadata(), "niceName");
+	osl_utilities::FindMetaData(name, i_shader_info.m_dl.metadata(), "niceName");
 	setEnglish(name);
 
 	setOpTabSubMenuPath("3Delight");

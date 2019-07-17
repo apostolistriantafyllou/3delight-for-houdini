@@ -21,6 +21,7 @@ add_library( ${library_name} SHARED
 	polygonmesh.cpp
 	pointmesh.cpp
 	null.cpp
+	osl_utilities.cpp
 	plugin.cpp
 	scene.cpp
     select_layers_dialog.cpp
