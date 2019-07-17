@@ -623,14 +623,53 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 		const char* page_name = "";
 		FindMetaData(page_name, param.metadata, "page");
 
+		// Ensure that the page exists in page_map
 		std::pair<page_map_t::iterator, bool> inserted =
 			page_map.insert(page_map_t::value_type(page_name, page_components()));
-		inserted.first->second.push_back(&param);
+		// Add the parameter to the page
+		page_components& page = inserted.first->second;
+		page.push_back(&param);
 
+		// If it's a new page, also add it to page_list
 		if(inserted.second)
 		{
 			page_list.push_back(
 				page_list_t::value_type(page_name, &inserted.first->second));
+		}
+	}
+
+	// Some pages are actually sub-pages, so we merge them together.
+	for(unsigned p = 0; p < page_list.size(); p++)
+	{
+		page_list_t::value_type& pa = page_list[p];
+		const char* period = strchr(pa.first, '.');
+		if(!period)
+		{
+			continue;
+		}
+
+		page_components& sub_page = *pa.second;
+		std::string actual_page_name(pa.first, period);
+
+		// Ensure that the actual page exists in page_map
+		std::pair<page_map_t::iterator, bool> inserted =
+			page_map.insert(
+				page_map_t::value_type(actual_page_name, page_components()));
+		page_components& page = inserted.first->second;
+
+		// Append the contents of the sub-page
+		page.insert(page.end(), sub_page.begin(), sub_page.end());
+		// Clear the sub-page so it's ignored later
+		sub_page.clear();
+
+		/*
+			If the actual page didn't already exist, add it to page_list at
+			the current position.
+		*/
+		if(inserted.second)
+		{
+			page_list[p].first = LEAKED(strdup(actual_page_name.c_str()));
+			page_list[p].second = &inserted.first->second;
 		}
 	}
 
