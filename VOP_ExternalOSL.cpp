@@ -65,7 +65,7 @@ static PRM_Type GetPRMType(
 			return PRM_FLT;
 
 		case NSITypeInteger:
-			if(i_meta.m_widget && strcmp(i_meta.m_widget, "checkBox") == 0)
+			if(i_meta.m_widget && i_meta.m_widget == osl_utilities::k_check_box)
 			{
 				return PRM_TOGGLE;
 			}
@@ -486,7 +486,7 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 
 		const char* widget = "";
 		osl_utilities::FindMetaData(widget, param.metadata, "widget");
-		if(strcmp(widget, "null") == 0)
+		if(widget == osl_utilities::k_null)
 		{
 			continue;
 		}

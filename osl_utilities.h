@@ -21,6 +21,8 @@ namespace osl_utilities
 	};
 
 	/// Widget types
+	extern const std::string k_null;
+	extern const std::string k_check_box;
 	extern const std::string k_maya_color_ramp;
 	extern const std::string k_maya_float_ramp;
 	extern const std::string k_katana_float_ramp;

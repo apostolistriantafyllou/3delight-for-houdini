@@ -1,5 +1,8 @@
 #include "osl_utilities.h"
 
+const std::string osl_utilities::k_null = "null";
+const std::string osl_utilities::k_check_box = "checkBox";
+
 const std::string osl_utilities::k_maya_color_ramp = "maya_colorRamp";
 const std::string osl_utilities::k_maya_float_ramp = "maya_floatRamp";
 const std::string osl_utilities::k_katana_float_ramp = "floatRamp";
