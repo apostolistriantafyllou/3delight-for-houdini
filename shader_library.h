@@ -4,6 +4,7 @@
 #include <3Delight/ShaderQuery.h>
 
 #include <string>
+#include <unordered_map>
 
 class OP_OperatorTable;
 
@@ -38,9 +39,28 @@ public:
 	*/
 	static std::string vop_to_osl( const char *i_vop );
 
+private:
+	void find_all_shaders( const char *installation_root );
+
 public:
 	std::string m_plugin_path;
 
 	NSI::DynamicAPI m_api;
 	decltype(&DlGetShaderInfo) m_shader_info_ptr = nullptr;
+
+	/**
+		Shader name to shader path lookup table for 3Deligth installation
+		shaders.
+
+		\ref scan_shaders
+	*/
+	std::unordered_map<std::string, std::string> m_3delight_osos;
+
+	/**
+		3dfh installation osos.
+	*/
+	std::unordered_map<std::string, std::string> m_3dfh_osos;
+
+	/** User defined osos */
+	std::unordered_map<std::string, std::string> m_user_osos;
 };

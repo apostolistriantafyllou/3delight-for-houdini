@@ -1,10 +1,12 @@
 #include "shader_library.h"
+#include "delight.h"
 
 #include "VOP_ExternalOSL.h"
 
 #include <VOP/VOP_Operator.h>
 
 #include <vector>
+#include <functional>
 
 #include <assert.h>
 
@@ -15,6 +17,7 @@
 #	include <dlfcn.h>
 #endif
 #include <sys/stat.h>
+#include <string.h>
 
 /* Our only instance */
 static shader_library g_shader_library;
@@ -23,7 +26,10 @@ static shader_library g_shader_library;
 static std::string library_path( void );
 static bool file_exists( const char *name );
 static std::string dir_name( const std::string &i_path );
-
+static const char *get_env( const char* i_var );
+bool scan_dir(
+	const char *i_path,
+	std::function<void(const char*,const char*)> i_userFct );
 
 /**
 	Find the path of the plugin's dso and guess the shader path from there
@@ -37,7 +43,22 @@ shader_library::shader_library()
 
 	m_api.LoadFunction(m_shader_info_ptr, "DlGetShaderInfo");
 
+	decltype( &DlGetInstallRoot) get_install_root = nullptr;
+	m_api.LoadFunction(get_install_root, "DlGetInstallRoot" );
+
+	assert( get_install_root );
 	assert( m_shader_info_ptr );
+
+	if( get_install_root )
+	{
+		find_all_shaders( get_install_root() );
+	}
+
+	if( !m_shader_info_ptr || !get_install_root )
+	{
+		std::cerr <<
+			"3Delight for Houdini : no 3delight installation found, cannot proceede";
+	}
 }
 
 const shader_library &shader_library::get_instance( void )
@@ -70,18 +91,20 @@ std::string shader_library::get_shader_path( const char *vop ) const
 	if( name.size() == 0 )
 		return {};
 
-	std::string installation_path =
-		m_plugin_path + "/../osl/" + name + ".oso";
-	if( file_exists( installation_path.c_str()) )
-		return installation_path;
+	name += ".oso";
 
-// FIXME : wrong, hardcoded path
-	std::string dl_shaders_path =
-		m_plugin_path + "/../external-osl/" + name + ".oso";
-	if( file_exists( dl_shaders_path.c_str()) )
-		return dl_shaders_path;
+	auto it = m_3dfh_osos.find( name );
+	if( it != m_3dfh_osos.end() )
+		return it->second;
 
-	std::cout << "cannot find : " << dl_shaders_path << std::endl;
+	it = m_3delight_osos.find( name );
+	if( it != m_3delight_osos.end() )
+		return it->second;
+
+	it = m_user_osos.find( name );
+	if( it != m_user_osos.end() )
+		return it->second;
+
 	return {};
 }
 
@@ -116,36 +139,142 @@ std::string shader_library::vop_to_osl( const char *i_vop )
 	return legalized.substr(p2 + 2);
 }
 
-static void
-FindExternalShaders(std::vector<std::string>& o_osos)
+void tokenize_path( const char *osl_path, std::vector<std::string> &o_paths )
 {
-	o_osos.push_back("areaLight");
-	o_osos.push_back("dlPrincipled");
-	o_osos.push_back("dlWorleyNoise");
-	o_osos.push_back("remapColor");
-	o_osos.push_back("remapValue");
-	o_osos.push_back("vdbVolume");
+	if( !osl_path )
+		return;
+
+#ifdef _WIN32
+	const char *delimters = ";";
+#else
+	const char *delimters = ":";
+#endif
+
+	/*
+		::strtok will modify the passed string so allocate a
+		a copy.
+	*/
+	osl_path = ::strdup( osl_path );
+	char *token = ::strtok( (char *)osl_path, delimters );
+	do
+	{
+		o_paths.push_back( token );
+		token = ::strtok(nullptr, delimters);
+	} while( token );
+
+	free( (void *)osl_path );
 }
 
 
-/// Registers one VOP for each .oso file found in the shaders path
-void
-shader_library::Register(OP_OperatorTable* io_table)const
+void shader_library::find_all_shaders( const char *i_root)
 {
-	std::vector<std::string> osos;
-	FindExternalShaders(osos);
+	/*
+		Get 3Delight installation shaders.
+	*/
+	std::string root(i_root);
 
-	for(const std::string& oso : osos)
+	std::vector<std::string> to_scan{ root + "/osl/", root + "/maya/osl/" };
+	const char *shaders[] =
 	{
-		const DlShaderInfo* info =
-			get_shader_info(get_shader_path(oso.c_str()).c_str());
+		"dlPrincipled",
+		"dlMetal",
+		"dlSkin",
+		"dlGlass",
+		"dlSubstance",
+		"dlWorleyNoise",
+		"dlBoxNoise",
+		"dlCarPaint",
+		"dlAtmopshere",
+		"dlColorVariation",
+		"dlFlakes",
+		"dlThin",
+		"vdbVolume",
+	};
+
+	for( auto &path : to_scan )
+	{
+		for( const auto &shader : shaders )
+		{
+			std::string oso( shader ); oso += ".oso";
+			std::string path_to_oso = path + oso;
+			if( file_exists(path_to_oso.c_str()) )
+			{
+				m_3delight_osos[oso] = path_to_oso;
+			}
+		}
+	}
+
+	/*
+		Get user specified shaders.
+	*/
+	to_scan.clear();
+	const char *user_osos = get_env( "_3DELIGHT_USER_OSO_PATH" );
+	tokenize_path( user_osos, to_scan );
+
+	std::function<void(const char *, const char *)> F =
+		[&] (const char *path, const char*name)
+		{
+			m_user_osos[name] = path;
+		};
+
+	for( auto &path : to_scan )
+	{
+		scan_dir( path.c_str(), F );
+	}
+
+	/*
+		Get 3delight for houdini shaders.
+	*/
+	F = [&] (const char *path, const char*name)
+		{
+			m_3dfh_osos[name] = path;
+		};
+
+	std::string installation_path = m_plugin_path + "/../osl/";
+	scan_dir( installation_path.c_str(), F );
+
+	std::cout <<
+		"3Delight for Houdini: loaded "
+		<< m_3delight_osos.size() << " 3delight shaders, "
+		<< m_3dfh_osos.size() << " 3delight for houdini shaders and "
+		<< m_user_osos.size() << " user defined shaders" << std::endl;
+
+}
+
+/// Registers one VOP for each .oso file found in the shaders path
+void shader_library::Register(OP_OperatorTable* io_table)const
+{
+	for( auto &oso : m_3delight_osos )
+	{
+		const DlShaderInfo* info = get_shader_info( oso.second.c_str() );
 		if(!info)
 		{
+			std::cerr
+				<< "3Deligth for Houdini: unable to load 3Delight shader "
+				<< oso.first;
 			continue;
 		}
 
 		io_table->addOperator(
 			new VOP_ExternalOSLOperator(StructuredShaderInfo(info)));
+	}
+
+	for( auto &oso : m_user_osos )
+	{
+		const DlShaderInfo* info = get_shader_info( oso.second.c_str() );
+		if(!info)
+		{
+			std::cerr
+				<< "3Deligth for Houdini: unable to load user shader "
+				<< oso.first;
+			continue;
+		}
+
+		io_table->addOperator(
+			new VOP_ExternalOSLOperator(StructuredShaderInfo(info)));
+
+		std::cout << "3Deligth for Houdini: loadad user shader "
+			<< oso.second;
 	}
 }
 
@@ -252,3 +381,103 @@ std::string dir_name( const std::string &i_path )
 	/* Common case: return path up to (but excluding) delimiter. */
 	return i_path.substr( 0, delimiter );
 }
+
+const char *get_env( const char* i_var )
+{
+	char *value = getenv( i_var );
+
+#ifdef _WIN32
+	/*
+		If the variable is not defined in the libc environment, look for it in the
+		win32 environment and copy it to the libc one.
+	*/
+#define ENVVAR_VALUE_MAX_LENGTH 32767
+	if( !value )
+	{
+		char *win32Value = (char*) malloc(ENVVAR_VALUE_MAX_LENGTH);
+		if( GetEnvironmentVariable(
+			i_var,
+			win32Value,
+			ENVVAR_VALUE_MAX_LENGTH ) )
+		{
+			SetEnv( i_var, win32Value );
+			value = getenv( i_var );
+		}
+
+		free(win32Value);
+	}
+#endif
+
+	return value;
+}
+
+bool scan_dir(
+	const char *i_path,
+	std::function<void(const char*,const char*)> i_userFct )
+{
+#ifdef _WIN32
+	bool all_ok = true;
+	if( FileIsDir(i_path) )
+	{
+		char toFind[_MAX_PATH];
+		WIN32_FIND_DATA searchData;
+		HANDLE handle = NULL;
+
+		_snprintf( toFind, _MAX_PATH-1, "%s\\*", i_path );
+
+		handle = FindFirstFile( toFind, &searchData );
+
+		if( handle == INVALID_HANDLE_VALUE )
+		{
+			return false;
+		}
+
+		do
+		{
+			if ( strcmp(searchData.cFileName, "."  ) &&
+			     strcmp(searchData.cFileName, ".." ) )
+			{
+				char filename[ _MAX_PATH ];
+				sprintf( filename,"%s\\%s", i_path, searchData.cFileName );
+				i_userFct( filename, searchData.cFileName, i_userArg );
+			}
+
+		} while( FindNextFile(handle, &searchData) );
+
+		FindClose( handle );
+	}
+	else
+	{
+		i_userFct( i_path, i_path );
+	}
+	return all_ok;
+#else
+	DIR *pDir;
+
+	struct dirent *pDirent;
+	char tmp[4096];
+
+	if ( (pDir = opendir(i_path)) == 0x0 )
+	{
+		return false;
+	}
+
+	bool all_ok = true;
+	while ( (pDirent = readdir(pDir)) )
+	{
+		if( strcmp(pDirent->d_name, "." )  &&
+			strcmp(pDirent->d_name, "..") )
+		{
+			strcpy(tmp, i_path);
+			strcat(tmp, "/");
+			strcat(tmp, pDirent->d_name);
+			i_userFct( tmp, pDirent->d_name );
+		}
+	}
+
+	closedir(pDir);
+	return all_ok;
+#endif
+}
+
+
