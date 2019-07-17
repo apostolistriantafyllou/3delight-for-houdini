@@ -51,6 +51,12 @@ struct OBJ_Node_Refiner : public GT_Refine
 	{
 	}
 
+	/**
+		The only interesting thing here is how we deal with instances. We first
+		addPrimitive() recursively to resolve the instanced geometry since we
+		need it's handle to pass to the actual instancer. All the rest is
+		is 1 to 1 mapping with either one of our expoters.
+	*/
 	void addPrimitive( const GT_PrimitiveHandle &i_primitive )
 	{
 		switch( i_primitive->getPrimitiveType() )
@@ -91,7 +97,9 @@ struct OBJ_Node_Refiner : public GT_Refine
 
 			if( s == m_result.size() )
 			{
-				std::cout << "Unable to create instancer" << std::endl;
+				std::cerr
+					<< "3Delight for Houdini: unable to create instanced geometry for "
+					<< m_node->getFullPath() << std::endl;
 				return;
 			}
 
@@ -104,24 +112,21 @@ struct OBJ_Node_Refiner : public GT_Refine
 		}
 
 		default:
-			if( m_level < 5 )
-			{
-				std::cout << "Refining " << m_node->getFullPath() <<
-					" to level " << m_level  << std::endl;
+#ifdef VERBOSE
+			std::cout << "Refining " << m_node->getFullPath() <<
+				" to level " << m_level  << std::endl;
+#endif
+			GT_RefineParms params;
+			params.setAllowSubdivision( true );
 
-				GT_RefineParms params;
-				params.setAllowSubdivision( true );
-
-				OBJ_Node_Refiner refiner(
-					m_node, m_context, m_result, m_level+1 );
-				i_primitive->refine( refiner, &params );
-			}
-			else
+			OBJ_Node_Refiner refiner( m_node, m_context, m_result, m_level+1 );
+			if(	i_primitive->refine( refiner, &params ) )
 			{
-				std::cout << "Unsupported object " << m_node->getFullPath() <<
-					" of type " << i_primitive->className() << std::endl;
+				std::cerr << "3Delight for Houdini: unsupported object "
+					<< m_node->getFullPath()
+					<< " of class " << i_primitive->className()
+					<< std::endl;
 			}
-			return;
 		}
 	}
 };
@@ -198,8 +203,9 @@ void scene::process_node(
 
 	if( !sop )
 	{
-		std::cout << "3Delight for Houdini: no render SOP for " <<
-			obj->getFullPath() << std::endl;
+		std::cerr
+			<< "3Delight for Houdini: no render SOP for "
+			<< obj->getFullPath() << std::endl;
 		return;
 	}
 
@@ -209,8 +215,9 @@ void scene::process_node(
 
 	if( !detail_handle.isValid() )
 	{
-		std::cout << "3Delight for Houdini: " << obj->getFullPath() <<
-			" has no valud detail" << std::endl;
+		std::cerr
+			<< "3Delight for Houdini: " << obj->getFullPath()
+			<< " has no valid detail" << std::endl;
 		return;
 	}
 
@@ -220,8 +227,10 @@ void scene::process_node(
 	OBJ_Node_Refiner refiner( obj, i_context, gt_primitives );
 	gt->refine( refiner, nullptr );
 
+#ifdef VERBOSE
 	std::cout << obj->getFullPath() << " gave birth to " <<
 		gt_primitives.size() << " primitives." << std::endl;
+#endif
 
 	o_to_export.insert(
 		o_to_export.end(), gt_primitives.begin(), gt_primitives.end() );
