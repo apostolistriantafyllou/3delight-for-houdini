@@ -441,6 +441,38 @@ static VOP_Type GetVOPType(const DlShaderInfo::TypeDesc& i_osl_type)
 	return VOP_TYPE_STRING;
 }
 
+/**
+	Initializes a fake parameter so it indicates the beginning and name of a
+	sub-page.
+*/
+static void
+InitSubPageMarker(DlShaderInfo::Parameter& o_fake_param, const char* i_name)
+{
+	assert(i_name);
+	o_fake_param.type.type = NSITypeInvalid;
+	/*
+		DlShaderInfo::conststring's constructor expects its "end" pointer to
+		point *after* the string's terminating null character, hence the unusual
+		+1 below.
+	*/
+	o_fake_param.name =
+		DlShaderInfo::conststring(i_name, i_name + strlen(i_name) + 1);
+}
+
+/// Adds a title for a page's section to io_templates
+static void
+AddSubPageHeading(
+	std::vector<PRM_Template>& io_templates,
+	const DlShaderInfo::conststring& i_name)
+{
+	std::string identifier = i_name.string() + "_heading";
+	std::replace(identifier.begin(), identifier.end(), ' ', '_');
+	char* label_name = LEAKED(strdup(identifier.c_str()));
+	char* label_string = LEAKED(strdup(i_name.c_str()));
+	PRM_Name* name = LEAKED(new PRM_Name(label_name, label_string));
+	io_templates.push_back(PRM_Template(PRM_HEADING, 0, name));
+}
+
 /// Adds a PRM_Template to io_templates that matches i_param and its meta-data
 static void
 AddParameterTemplate(
@@ -662,7 +694,11 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 		page = GetVolumeParams();
 	}
 
-	// Some pages are actually sub-pages, so we merge them together.
+	/*
+		Some pages are actually sub-pages. We merge them together and insert a
+		fake parameter to mark transitions between sections.
+	*/
+	std::vector<DlShaderInfo::Parameter> fake_shader_parameters(page_list.size());
 	for(unsigned p = 0; p < page_list.size(); p++)
 	{
 		page_list_t::value_type& pa = page_list[p];
@@ -680,6 +716,11 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 			page_map.insert(
 				page_map_t::value_type(actual_page_name, page_components()));
 		page_components& page = inserted.first->second;
+
+		// Mark the beginning of the section
+		DlShaderInfo::Parameter& fake_param = fake_shader_parameters[p];
+		InitSubPageMarker(fake_param, period+1);
+		page.push_back(&fake_param);
 
 		// Append the contents of the sub-page
 		page.insert(page.end(), sub_page.begin(), sub_page.end());
@@ -733,6 +774,12 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 	{
 		for(const DlShaderInfo::Parameter* param : *pa.second)
 		{
+			if(param->type.type == NSITypeInvalid)
+			{
+				AddSubPageHeading(*templates, param->name);
+				continue;
+			}
+
 			osl_utilities::ParameterMetaData meta;
 			meta.m_label = param->name.c_str();
 			osl_utilities::GetParameterMetaData(meta, param->metadata);
