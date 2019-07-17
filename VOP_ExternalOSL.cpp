@@ -568,7 +568,6 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 	// Prepare a tab for each page (except the main one)
 	assert(!page_list.empty());
 	assert(page_list[0].first == k_main_page);
-	PRM_Name* tabs_name = LEAKED(new PRM_Name("tabs"));
 	std::vector<PRM_Default>* tabs = LEAKED(new std::vector<PRM_Default>);
 	for(unsigned p = 1; p < page_list.size(); p++)
 	{
@@ -578,6 +577,8 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 			tabs->push_back(PRM_Default(pa.second->size(), pa.first));
 		}
 	}
+
+	static PRM_Name tabs_name("tabs");
 
 	// Create each page's components
 	bool needs_switcher = tabs->size() > 0;
@@ -603,7 +604,7 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 		if(needs_switcher)
 		{
 			templates->push_back(
-				PRM_Template(PRM_SWITCHER, tabs->size(), tabs_name, &(*tabs)[0]));
+				PRM_Template(PRM_SWITCHER, tabs->size(), &tabs_name, &(*tabs)[0]));
 			needs_switcher = false;
 		}
 	}
