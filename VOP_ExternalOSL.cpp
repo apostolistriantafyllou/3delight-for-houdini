@@ -3,6 +3,7 @@
 #include "osl_utilities.h"
 
 #include <PRM/PRM_Include.h>
+#include <PRM/PRM_SpareData.h>
 
 
 /**
@@ -414,7 +415,15 @@ AddRampParameterTemplate(
 		color ? PRM_MULTITYPE_RAMP_RGB : PRM_MULTITYPE_RAMP_FLT;
 	char* name_string = LEAKED(strdup(root_name.c_str()));
 	PRM_Name* name = LEAKED(new PRM_Name(name_string, i_meta.m_label));
-	io_templates.push_back(PRM_Template(multi_type, &(*nodes)[0], 1, name));
+	io_templates.push_back(
+		PRM_Template(
+			multi_type,
+			&(*nodes)[0],
+			1,
+			name,
+			nullptr,
+			nullptr,
+			&PRM_SpareData::multiStartOffsetZero));
 }
 
 
