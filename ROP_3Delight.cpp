@@ -730,9 +730,6 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	{
 		const PRM_Template* temp = parm.getMultiParmTemplate(i);
 		const PRM_Name* name = temp->getNamePtr();
-		bool aov_enable = evalInt(name->getToken(), 0, 0.0f);
-
-		if (!aov_enable) continue;
 
 		i_ctx.m_nsi.Create(name->getToken(), "outputlayer");
 		i_ctx.m_nsi.SetAttribute(
