@@ -88,7 +88,7 @@ GetTemplates()
 	static PRM_Range volume_samples_r(PRM_RANGE_RESTRICTED, 1, PRM_RANGE_UI, 400);
 
 	static PRM_Name pixel_filter(k_pixel_filter, "Pixel Filter");
-	static PRM_Default pixel_filter_d(0.0f, "blackmann-harris");
+	static PRM_Default pixel_filter_d(0.0f, "blackman-harris");
 	static PRM_Item pixel_filter_i[] =
 	{
 		PRM_Item("blackman-harris", "Blackman-Harris"),
@@ -202,13 +202,13 @@ GetTemplates()
 		PRM_Item("exr", "OpenEXR"),
 		PRM_Item("deepexr", "OpenEXR (deep)"),
 		PRM_Item("jpeg", "JPEG"),
-		PRM_Item("png", "PNGt"),
+		PRM_Item("png", "PNG"),
 		PRM_Item(),
 	};
 	static PRM_ChoiceList default_image_format_c(PRM_CHOICELIST_SINGLE, default_image_format_i);
 
 	static PRM_Name default_image_bits(k_default_image_bits, "Default Image Bits");
-	static PRM_Default default_image_bits_d(0.0f, "float16");
+	static PRM_Default default_image_bits_d(0.0f, "half");
 	static PRM_Item default_image_bits_i[] =
 	{
 		PRM_Item("uint8", "8-bit"),
@@ -225,7 +225,7 @@ GetTemplates()
 	static PRM_Name aovs(k_aovs, "Image Layers");
 	static PRM_Name aov(k_aov, "Image Layer (AOV)");
 	static PRM_Name aov_name(k_aov_name, "Ci");
-	static PRM_Default aov_ci_d(true);
+	static PRM_Default aov_ci_d(false);
 //	static PRM_Name override_image_filename
 //	static PRM_Name override_image_format
 //	static PRM_Name override_image_bits
@@ -726,6 +726,14 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	int nb_aovs = evalInt(k_aov, 0, 0.0f);
 	unsigned sort_key = 0;
 	const PRM_Parm& parm = getParm(k_aov);
+
+	UT_String scalar_format;
+	evalString(scalar_format, k_default_image_bits, 0, 0.0f);
+
+	UT_String filter;
+	evalString(filter, k_pixel_filter, 0, 0.0f);
+	double filter_width = evalFloat(k_filter_width, 0, 0.0f);
+
 	for (int i = 0; i < nb_aovs; i++)
 	{
 		const PRM_Template* temp = parm.getMultiParmTemplate(i);
@@ -737,9 +745,11 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		(
 			NSI::CStringPArg("variablename", name->getLabel()),
 			NSI::CStringPArg("variablesource", "shader"),
-			NSI::CStringPArg("scalarformat", "half"),
+			NSI::CStringPArg("scalarformat", scalar_format.c_str()),
 			NSI::CStringPArg("layertype", "color"),
 			NSI::IntegerArg("withalpha", 1),
+			NSI::CStringPArg("filter", filter.c_str()),
+			NSI::DoubleArg("filterwidth", filter_width),
 			NSI::IntegerArg("sortkey", sort_key++)
 		) );
 		i_ctx.m_nsi.Connect(
@@ -754,11 +764,8 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 FIXME : do the real thing
 
 and the following ROP_3Delight node attributes:
-k_pixel_filter
-k_filter_width
 k_default_image_filename
 k_default_image_format
-k_default_image_bits
 k_save_ids_as_cryptomatte
 k_aovs
 
