@@ -52,6 +52,7 @@ namespace osl_utilities
 		extern const std::string k_katana_float_suffix;
 		extern const std::string k_interpolation_suffix;
 		extern const std::string k_index_suffix;
+		extern const std::string k_index_format;
 
 		/// Describes a ramp widget
 		enum eType

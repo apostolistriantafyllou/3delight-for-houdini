@@ -22,6 +22,7 @@ const std::string osl_utilities::ramp::k_katana_float_suffix = "_Floats";
 const std::string osl_utilities::ramp::k_interpolation_suffix = "_Interp";
 
 const std::string osl_utilities::ramp::k_index_suffix = "_#_";
+const std::string osl_utilities::ramp::k_index_format = "_%u_";
 
 void
 osl_utilities::FindMetaData(

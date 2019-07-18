@@ -1,5 +1,6 @@
 #include "vop.h"
 #include "context.h"
+#include "osl_utilities.h"
 #include "3Delight/ShaderQuery.h"
 #include "shader_library.h"
 
@@ -10,6 +11,99 @@
 #include <nsi.hpp>
 #include <algorithm>
 #include <iostream>
+
+/// Fills a list of NSI arguments from a shader for a ramp-type parameter.
+static void list_ramp_parameters(
+	const OP_Parameters* i_opp,
+	const DlShaderInfo::Parameter& i_param,
+	osl_utilities::ramp::eType i_type,
+	float i_time,
+	NSI::ArgumentList& o_list)
+{
+	using namespace osl_utilities::ramp;
+
+	// Remove the value suffix from the variable name
+	const std::string& value_suffix = GetValueSuffix(i_type);
+	std::string root_name = RemoveSuffix(i_param.name.string(), value_suffix);
+
+	// Create the names of the other shader parameters
+	const std::string& position_suffix = GetPositionSuffix(i_type);
+	std::string pos_string = root_name + position_suffix;
+	std::string value_string = root_name + value_suffix;
+	std::string inter_string = root_name + k_interpolation_suffix;
+
+	/*
+		Re-create arrays of values, since Houdini's "arrays" are actually just
+		numbered parameters.
+	*/
+	bool color = IsColor(i_type);
+	int num_points = i_opp->evalInt(root_name.c_str(), 0, i_time);
+	std::vector<float> positions;
+	std::vector<float> values;
+	std::vector<int> interpolations;
+	char* index_buffer = new char[k_index_format.length() + 10];
+	for(int p = 0; p < num_points; p++)
+	{
+		sprintf(index_buffer, k_index_format.c_str(), p);
+
+		std::string pos_item = pos_string + index_buffer;
+		positions.push_back(i_opp->evalFloat(pos_item.c_str(), 0, i_time));
+
+		std::string value_item = value_string + index_buffer;
+		values.push_back(i_opp->evalFloat(value_item.c_str(), 0, i_time));
+		if(color)
+		{
+			values.push_back(i_opp->evalFloat(value_item.c_str(), 1, i_time));
+			values.push_back(i_opp->evalFloat(value_item.c_str(), 2, i_time));
+		}
+
+		std::string inter_item = inter_string + index_buffer;
+		int inter = i_opp->evalInt(inter_item.c_str(), 0, i_time);
+
+		// Try remapping Houdini's interpolation mode to Maya's
+		switch(inter)
+		{
+			case PRM_RAMP_INTERP_CONSTANT:
+				// None
+				inter = 0;
+				break;
+			case PRM_RAMP_INTERP_LINEAR:
+				// Linear
+				inter = 1;
+				break;
+			case PRM_RAMP_INTERP_MONOTONECUBIC:
+				// Smooth
+				inter = 2;
+				break;
+			case PRM_RAMP_INTERP_CATMULLROM:
+			case PRM_RAMP_INTERP_BEZIER:
+			case PRM_RAMP_INTERP_BSPLINE:
+			case PRM_RAMP_INTERP_HERMITE:
+				// Spline
+				inter = 3;
+				break;
+			default:
+				assert(false);
+				inter = 1;
+		}
+
+		interpolations.push_back(inter);
+	}
+	delete[] index_buffer;
+
+	// Add new arguments to the list
+	o_list.Add(NSI::Argument::New(pos_string)
+		->SetArrayType(NSITypeFloat, num_points)
+		->CopyValue(&positions[0], positions.size()*sizeof(positions[0])));
+	o_list.Add(NSI::Argument::New(value_string)
+		->SetArrayType(color ? NSITypeColor : NSITypeFloat, num_points)
+		->CopyValue(&values[0], values.size()*sizeof(values[0])));
+	o_list.Add(NSI::Argument::New(inter_string)
+		->SetArrayType(NSITypeInteger, num_points)
+		->CopyValue(
+			&interpolations[0],
+			interpolations.size()*sizeof(interpolations[0])));
+}
 
 vop::vop(
 	const context& i_ctx,
@@ -134,6 +228,35 @@ void vop::list_shader_parameters(
 	for( int i=0; i<shader_info->nparams(); i++ )
 	{
 		const DlShaderInfo::Parameter *parameter = shader_info->getparam(i);
+
+		// Skip auxiliary shader parameters
+		const char* related_to_widget = nullptr;
+		osl_utilities::FindMetaData(
+			related_to_widget,
+			parameter->metadata,
+			"related_to_widget");
+		if(related_to_widget)
+		{
+			// This parameter will be exported as part of a group
+			continue;
+		}
+
+		// Process ramp parameters differently
+		const char* widget = "";
+		osl_utilities::FindMetaData(widget, parameter->metadata, "widget");
+		osl_utilities::ramp::eType ramp_type =
+			osl_utilities::ramp::GetType(widget);
+		if(osl_utilities::ramp::IsRamp(ramp_type))
+		{
+			list_ramp_parameters(
+				i_parameters,
+				*parameter,
+				ramp_type,
+				i_time,
+				o_list);
+			continue;
+		}
+
 		int index = i_parameters->getParmIndex( parameter->name.c_str() );
 
 		if( index < 0 )
