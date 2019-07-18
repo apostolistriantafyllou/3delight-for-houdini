@@ -1,0 +1,57 @@
+#define LABEL_WIDTH	2
+
+dlg.gad = DIALOG "AOV Selector"
+{
+    LAYOUT(vertical) STRETCH MARGIN(0.1) SPACING(0.1) LOOK(plain) EXCLUSIVE
+	VALUE(dlg.val) PREF_SIZE(5.5, 4.5)
+
+    ROW
+    {
+        SPACING(0.5)
+
+        LABEL "Shading Components":LABEL_WIDTH;
+        LABEL "Auxiliairy Variables":LABEL_WIDTH;
+        LABEL "Custom Variables":LABEL_WIDTH;
+    }
+    ROW
+    {
+        SPACING(0.5)
+
+        COL
+        {
+            ci.gad = TOGGLE_BUTTON "Ci":LABEL_WIDTH VALUE(ci.val);
+            TOGGLE_BUTTON "Diffuse":LABEL_WIDTH VALUE(diffuse.val);
+            TOGGLE_BUTTON "Subsurface scattering":LABEL_WIDTH VALUE(subsurface.val);
+            TOGGLE_BUTTON "Reflection":LABEL_WIDTH VALUE(reflection.val);
+            TOGGLE_BUTTON "Refraction":LABEL_WIDTH VALUE(refraction.val);
+            TOGGLE_BUTTON "Volume scattering":LABEL_WIDTH VALUE(volume.val);
+            TOGGLE_BUTTON "Incandescence":LABEL_WIDTH VALUE(incandescence.val);
+        }
+        COL
+        {
+            TOGGLE_BUTTON "Z (depth)":LABEL_WIDTH VALUE(zdepth.val);
+            TOGGLE_BUTTON "Camera space position":LABEL_WIDTH VALUE(cam_space_position.val);
+            TOGGLE_BUTTON "Camera space normal":LABEL_WIDTH VALUE(cam_space_normal.val);
+            TOGGLE_BUTTON "UV":LABEL_WIDTH VALUE(uv.val);
+            TOGGLE_BUTTON "Geometry ID":LABEL_WIDTH VALUE(geometry.val);
+        }
+        COL
+        {
+#            custom1.gad VALUE(custom1.val);
+#            custom2.gad VALUE(custom2.val);
+#            custom3.gad VALUE(custom3.val);
+#            custom4.gad VALUE(custom4.val);
+#            custom5.gad VALUE(custom5.val);
+#            custom6.gad VALUE(custom6.val);
+        }
+    }
+
+    SEPARATOR;
+
+    {
+	LAYOUT(horizontal) SPACING(0.1) JUSTIFY(center,center) HSTRETCH
+	ACTION_BUTTON "OK":1 VALUE(ok.val);
+	ACTION_BUTTON "Cancel":1 SENDS(0) VALUE(dlg.val);
+    }
+
+}

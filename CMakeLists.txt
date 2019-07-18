@@ -22,6 +22,7 @@ add_library( ${library_name} SHARED
 	null.cpp
 	plugin.cpp
 	scene.cpp
+    select_layers_dialog.cpp
 	shader_library.cpp
 	vop.cpp
 	utilities.cpp )
@@ -37,6 +38,8 @@ target_link_libraries( ${library_name} Houdini )
 
 configure_file(
 	ROP_3Delight.svg $ENV{HIH}/config/Icons/ROP_3Delight.svg COPYONLY )
+configure_file(
+	select_layers_ui.ui $ENV{HIH}/config/Applications/select_layers_ui.ui COPYONLY )
 
 # Configure several common target properties, such as its output directory.
 houdini_configure_target( ${library_name} )

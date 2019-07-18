@@ -20,6 +20,9 @@ public:
 	/** \brief Returns true if motion blur is enabled. */
 	bool HasMotionBlur()const;
 
+	static int add_layer_cb(void* data, int index, fpreal t,
+                            const PRM_Template* tplate);
+
 protected:
 
 	ROP_3Delight(OP_Network* net, const char* name, OP_Operator* entry);

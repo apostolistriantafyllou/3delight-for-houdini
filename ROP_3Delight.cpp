@@ -3,6 +3,7 @@
 #include "camera.h"
 #include "scene.h"
 #include "context.h"
+#include "select_layers_dialog.h"
 #include "shader_library.h"
 
 #include <OBJ/OBJ_Camera.h>
@@ -40,13 +41,8 @@ static const char* k_default_image_filename = "default_image_filename";
 static const char* k_default_image_format = "default_image_format";
 static const char* k_default_image_bits = "default_image_bits";
 static const char* k_save_ids_as_cryptomatte = "save_ids_as_cryptomatte";
-static const char* k_batch_output_mode = "batch_output_mode";
-static const char* k_interactive_output_mode = "interactive_output_mode";
 static const char* k_aovs = "aovs";
 static const char* k_aov = "aov";
-static const char* k_framebuffer_output = "framebuffer_output_#";
-static const char* k_file_output = "file_output_#";
-static const char* k_jpeg_output = "jpeg_output_#";
 static const char* k_aov_name = "aov_name_#";
 static const char* k_ignore_matte_attribute = "ignore_matte_attribute";
 static const char* k_matte_sets = "matte_sets";
@@ -226,51 +222,21 @@ GetTemplates()
 	static PRM_Name save_ids_as_cryptomatte(k_save_ids_as_cryptomatte, "Save IDs as Cryptomatte");
 	static PRM_Default save_ids_as_cryptomatte_d(false);
 
-	static PRM_Name batch_output_mode(k_batch_output_mode, "Batch Output Mode");
-	static PRM_Default batch_output_mode_d(0);
-	static PRM_Item batch_output_mode_i[] =
-	{
-		PRM_Item("", "Enable file output as selected"),
-		PRM_Item("", "Enable all file output and selected JPEG"),
-		PRM_Item(),
-	};
-	static PRM_ChoiceList batch_output_mode_c(PRM_CHOICELIST_SINGLE, batch_output_mode_i);
-
-	static PRM_Name interactive_output_mode(k_interactive_output_mode, "Interactive Output Mode");
-	static PRM_Default interactive_output_mode_d(0);
-	static PRM_Item interactive_output_mode_i[] =
-	{
-		PRM_Item("", "Enable file output as selected"),
-		PRM_Item("", "Enable file output only for selected layer"),
-		PRM_Item("", "Disable file output"),
-		PRM_Item(),
-	};
-	static PRM_ChoiceList interactive_output_mode_c(PRM_CHOICELIST_SINGLE, interactive_output_mode_i);
-
 	static PRM_Name aovs(k_aovs, "Image Layers");
 	static PRM_Name aov(k_aov, "Image Layer (AOV)");
-	static PRM_Name framebuffer_output(k_framebuffer_output, "FB");
-	static PRM_Default framebuffer_output_d(true);
-	static PRM_Name file_output(k_file_output, "File");
-	static PRM_Default file_output_d(true);
-	static PRM_Name jpeg_output(k_jpeg_output, "JPG");
-	static PRM_Default jpeg_output_d(false);
-	static PRM_Name aov_name(k_aov_name, "AOV");
-	static PRM_Default aov_name_d(0.0f, "Ci");
+	static PRM_Name aov_name(k_aov_name, "Ci");
+	static PRM_Default aov_ci_d(true);
 //	static PRM_Name override_image_filename
 //	static PRM_Name override_image_format
 //	static PRM_Name override_image_bits
 	static PRM_Default nb_aovs(1);
 	static PRM_Template aov_templates[] =
 	{
-		PRM_Template(PRM_TOGGLE|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT, 1, &framebuffer_output, &framebuffer_output_d),
-		PRM_Template(PRM_TOGGLE|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT, 1, &file_output, &file_output_d),
-		PRM_Template(PRM_TOGGLE|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT, 1, &jpeg_output, &jpeg_output_d),
-		PRM_Template(PRM_STRING|PRM_TYPE_LABEL_NONE, 1, &aov_name, &aov_name_d),
+		PRM_Template(PRM_TOGGLE, 1, &aov_name, &aov_ci_d),
 		PRM_Template()
 	};
 
-	static PRM_Name add_layer("add_layer", "Add");
+	static PRM_Name add_layer("add_layer", "Add...");
 	static PRM_Name remove_layer("remove_layer", "Remove");
 	static PRM_Name duplicate_layer("duplicate_layer", "Duplicate");
 	static PRM_Name view_layer("view_layer", "View...");
@@ -281,11 +247,10 @@ GetTemplates()
 		PRM_Template(PRM_STRING|PRM_TYPE_JOIN_NEXT, 1, &default_image_format, &default_image_format_d, &default_image_format_c),
 		PRM_Template(PRM_STRING|PRM_TYPE_LABEL_NONE, 1, &default_image_bits, &default_image_bits_d, &default_image_bits_c),
 		PRM_Template(PRM_TOGGLE, 1, &save_ids_as_cryptomatte, &save_ids_as_cryptomatte_d),
-		PRM_Template(PRM_ORD, 1, &batch_output_mode, &batch_output_mode_d, &batch_output_mode_c),
-		PRM_Template(PRM_ORD, 1, &interactive_output_mode, &interactive_output_mode_d, &interactive_output_mode_c),
 		PRM_Template(PRM_SEPARATOR, 0, &separator4),
-		PRM_Template(PRM_MultiType(PRM_MULTITYPE_SCROLL|PRM_MULTITYPE_NO_CONTROL_UI), aov_templates, k_one_line*4.0f, &aov, &nb_aovs),
-		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &add_layer),
+		PRM_Template(PRM_MultiType(PRM_MULTITYPE_SCROLL|PRM_MULTITYPE_NO_CONTROL_UI), aov_templates, k_one_line*6.0f, &aov, &nb_aovs),
+		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &add_layer, 0, 0, 0,
+					&ROP_3Delight::add_layer_cb),
 		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &remove_layer),
 		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &duplicate_layer),
 		PRM_Template(PRM_CALLBACK, 1, &view_layer),
@@ -519,6 +484,17 @@ ROP_3Delight::alloc(OP_Network* net, const char* name, OP_Operator* op)
 	return new ROP_3Delight(net, name, op);
 }
 
+int
+ROP_3Delight::add_layer_cb(void* data, int index, fpreal t,
+							const PRM_Template* tplate)
+{
+	static SelectLayersDialog dlg;
+	if (!dlg.open(reinterpret_cast<ROP_3Delight*>(data)))
+		fprintf(stderr, "Could not parse select_layers_ui.ui file\n");
+
+	return 1;
+}
+
 bool
 ROP_3Delight::HasMotionBlur()const
 {
@@ -740,20 +716,6 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		"default_screen", "",
 		camera::get_nsi_handle(*cam), "screens");
 
-	i_ctx.m_nsi.Create("default_layer", "outputlayer");
-	i_ctx.m_nsi.SetAttribute(
-		"default_layer",
-		(
-			NSI::CStringPArg("variablename", "Ci"),
-			NSI::CStringPArg("variablesource", "shader"),
-			NSI::CStringPArg("scalarformat", "half"),
-			NSI::CStringPArg("layertype", "color"),
-			NSI::IntegerArg("withalpha", 1)
-		) );
-	i_ctx.m_nsi.Connect(
-		"default_layer", "",
-		"default_screen", "outputlayers");
-
 	i_ctx.m_nsi.Create("default_driver", "outputdriver");
 	i_ctx.m_nsi.SetAttribute(
 		"default_driver",
@@ -761,10 +723,35 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 			NSI::CStringPArg("drivername", "idisplay"),
 			NSI::CStringPArg("imagefilename", "overlord")
 		) );
-	i_ctx.m_nsi.Connect(
-		"default_driver", "",
-		"default_layer", "outputdrivers");
+	int nb_aovs = evalInt(k_aov, 0, 0.0f);
+	unsigned sort_key = 0;
+	const PRM_Parm& parm = getParm(k_aov);
+	for (int i = 0; i < nb_aovs; i++)
+	{
+		const PRM_Template* temp = parm.getMultiParmTemplate(i);
+		const PRM_Name* name = temp->getNamePtr();
+		bool aov_enable = evalInt(name->getToken(), 0, 0.0f);
 
+		if (!aov_enable) continue;
+
+		i_ctx.m_nsi.Create(name->getToken(), "outputlayer");
+		i_ctx.m_nsi.SetAttribute(
+			name->getToken(),
+		(
+			NSI::CStringPArg("variablename", name->getLabel()),
+			NSI::CStringPArg("variablesource", "shader"),
+			NSI::CStringPArg("scalarformat", "half"),
+			NSI::CStringPArg("layertype", "color"),
+			NSI::IntegerArg("withalpha", 1),
+			NSI::IntegerArg("sortkey", sort_key++)
+		) );
+		i_ctx.m_nsi.Connect(
+			name->getToken(), "",
+			"default_screen", "outputlayers");
+		i_ctx.m_nsi.Connect(
+			"default_driver", "",
+			name->getToken(), "outputdrivers");
+	}
 
 /*
 FIXME : do the real thing
@@ -776,14 +763,7 @@ k_default_image_filename
 k_default_image_format
 k_default_image_bits
 k_save_ids_as_cryptomatte
-k_batch_output_mode
-k_interactive_output_mode
 k_aovs
-k_aov
-k_framebuffer_output
-k_file_output
-k_jpeg_output
-k_aov_name
 
 refer to
 https://www.sidefx.com/docs/hdk/_h_d_k__node_intro__working_with_parameters.html
