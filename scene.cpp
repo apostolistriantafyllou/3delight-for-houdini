@@ -167,8 +167,10 @@ void scene::process_node(
 	if( !obj )
 		return;
 
+#if 0
 	if( !obj->isObjectRenderable(i_context.m_start_time) )
 		return;
+#endif
 
 	/*
 		Each object is its own null transform. This could produce useless
