@@ -1,18 +1,27 @@
 #include "osl_utilities.h"
 
+#include <assert.h>
+
+static const std::string k_empty;
+
 const std::string osl_utilities::k_null = "null";
 const std::string osl_utilities::k_check_box = "checkBox";
 
-const std::string osl_utilities::k_maya_color_ramp = "maya_colorRamp";
-const std::string osl_utilities::k_maya_float_ramp = "maya_floatRamp";
-const std::string osl_utilities::k_katana_float_ramp = "floatRamp";
+const std::string osl_utilities::ramp::k_maya_color = "maya_colorRamp";
+const std::string osl_utilities::ramp::k_maya_float = "maya_floatRamp";
+const std::string osl_utilities::ramp::k_katana_color = "colorRamp";
+const std::string osl_utilities::ramp::k_katana_float = "floatRamp";
 
-const std::string osl_utilities::k_position_suffix = "_Position";
-const std::string osl_utilities::k_color_value_suffix = "_ColorValue";
-const std::string osl_utilities::k_float_value_suffix = "_FloatValue";
-const std::string osl_utilities::k_floats_suffix = "_Floats";
-const std::string osl_utilities::k_interpolation_suffix = "_Interp";
-const std::string osl_utilities::k_index_suffix = "_#_";
+const std::string osl_utilities::ramp::k_maya_position_suffix = "_Position";
+const std::string osl_utilities::ramp::k_maya_color_suffix = "_ColorValue";
+const std::string osl_utilities::ramp::k_maya_float_suffix = "_FloatValue";
+const std::string osl_utilities::ramp::k_katana_position_suffix = "_Knots";
+const std::string osl_utilities::ramp::k_katana_color_suffix = "_Colors";
+const std::string osl_utilities::ramp::k_katana_float_suffix = "_Floats";
+
+const std::string osl_utilities::ramp::k_interpolation_suffix = "_Interp";
+
+const std::string osl_utilities::ramp::k_index_suffix = "_#_";
 
 void
 osl_utilities::FindMetaData(
@@ -105,12 +114,77 @@ osl_utilities::GetParameterMetaData(
 	}
 }
 
-bool
-osl_utilities::IsRamp(const char* i_widget)
+osl_utilities::ramp::eType
+osl_utilities::ramp::GetType(const char* i_widget)
 {
-	return
-		i_widget &&
-		(i_widget == k_maya_color_ramp || i_widget == k_maya_float_ramp ||
-		i_widget == k_katana_float_ramp);
+	if(!i_widget)
+	{
+		return kNotRamp;
+	}
+
+	if(i_widget == k_maya_color)
+	{
+		return kMayaColor;
+	}
+
+	if(i_widget == k_maya_float)
+	{
+		return kMayaFloat;
+	}
+
+	if(i_widget == k_katana_color)
+	{
+		return kKatanaColor;
+	}
+
+	if(i_widget == k_katana_float)
+	{
+		return kKatanaFloat;
+	}
+
+	return kNotRamp;
 }
 
+const std::string&
+osl_utilities::ramp::GetPositionSuffix(osl_utilities::ramp::eType i_type)
+{
+	assert(i_type != kNotRamp);
+	return
+		(i_type & kMayaBit) != 0
+		? k_maya_position_suffix
+		: k_katana_position_suffix;
+}
+
+const std::string&
+osl_utilities::ramp::GetValueSuffix(osl_utilities::ramp::eType i_type)
+{
+	assert(i_type != kNotRamp);
+	switch(i_type)
+	{
+		case kMayaColor:
+			return k_maya_color_suffix;
+		case kMayaFloat:
+			return k_maya_float_suffix;
+		case kKatanaColor:
+			return k_katana_color_suffix;
+		case kKatanaFloat:
+			return k_katana_float_suffix;
+		default:
+			assert(false);
+			return k_empty;
+	}
+}
+
+std::string
+osl_utilities::ramp::RemoveSuffix(
+	const std::string& i_name,
+	const std::string& i_suffix)
+{
+	int root_length = int(i_name.length()) - int(i_suffix.length());
+	if(root_length > 0 && i_name.substr(root_length) == i_suffix)
+	{
+		return i_name.substr(0, root_length);
+	}
+
+	return i_name;
+}

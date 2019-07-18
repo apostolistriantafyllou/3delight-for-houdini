@@ -364,41 +364,30 @@ AddRampParameterTemplate(
 	const osl_utilities::ParameterMetaData& i_meta)
 {
 	using namespace osl_utilities;
+	using namespace osl_utilities::ramp;
 
 	assert(i_meta.m_widget);
-	bool katana_ramp = i_meta.m_widget == k_katana_float_ramp;
 
-	// Remove the "_ColorValue" or "_FloatValue" suffix from the variable name
-	std::string root_name = i_param.name.string();
-	PRM_Type type = GetPRMType(i_param.type, i_meta);
-	bool color = i_param.type.type == NSITypeColor;
-	assert(i_meta.m_widget);
-	assert(
-		(color && i_meta.m_widget == k_maya_color_ramp) || 
-		(!color && i_meta.m_widget == k_maya_float_ramp) ||
-		(!color && i_meta.m_widget == k_katana_float_ramp));
-	const std::string& value_suffix =
-		katana_ramp
-		? k_floats_suffix
-		: (color ? k_color_value_suffix : k_float_value_suffix);
-	int root_length = int(root_name.length()) - int(value_suffix.length());
-	if(root_length > 0 && root_name.substr(root_length) == value_suffix)
-	{
-		root_name = root_name.substr(0, root_length);
-	}
+	// Remove the value suffix from the variable name
+	eType ramp_type = GetType(i_meta.m_widget);
+	const std::string& value_suffix = GetValueSuffix(ramp_type);
+	std::string root_name = RemoveSuffix(i_param.name.string(), value_suffix);
 
 	// Create the names of the other variables controlled by the ramp widget
+	const std::string& position_suffix = GetPositionSuffix(ramp_type);
 	char* pos_string =
-		LEAKED(strdup((root_name + k_position_suffix + k_index_suffix).c_str()));
+		LEAKED(strdup((root_name + position_suffix + k_index_suffix).c_str()));
 	char* value_string =
 		LEAKED(strdup((root_name + value_suffix + k_index_suffix).c_str()));
 	char* inter_string =
 		LEAKED(strdup((root_name + k_interpolation_suffix + k_index_suffix).c_str()));
+	bool color = IsColor(ramp_type);
 	PRM_Name* pos = LEAKED(new PRM_Name(pos_string, k_position));
 	PRM_Name* value = LEAKED(new PRM_Name(value_string, color ? k_color : k_value));
 	PRM_Name* inter = LEAKED(new PRM_Name(inter_string, k_interpolation));
 
 	// Create the templates for a single control point
+	PRM_Type type = GetPRMType(i_param.type, i_meta);
 	unsigned num_channels = GetNumChannels(i_param.type);
 	std::vector<PRM_Template>* nodes = LEAKED(new std::vector<PRM_Template>);
 	nodes->push_back(
@@ -501,7 +490,8 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 		}
 
 		// FIXME : support variable length arrays
-		if(param.type.arraylen < 0 && !osl_utilities::IsRamp(widget))
+		if(param.type.arraylen < 0 &&
+			!osl_utilities::ramp::IsRamp(osl_utilities::ramp::GetType(widget)))
 		{
 			continue;
 		}
@@ -599,7 +589,8 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 			meta.m_label = param->name.c_str();
 			osl_utilities::GetParameterMetaData(meta, param->metadata);
 
-			if(osl_utilities::IsRamp(meta.m_widget))
+			if(osl_utilities::ramp::IsRamp(
+				osl_utilities::ramp::GetType(meta.m_widget)))
 			{
 				AddRampParameterTemplate(*templates, *param, meta);
 			}
