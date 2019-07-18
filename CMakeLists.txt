@@ -17,6 +17,7 @@ add_library( ${library_name} SHARED
 	exporter.cpp
 	instance.cpp
 	light.cpp
+	mplay.cpp
 	polygonmesh.cpp
 	pointmesh.cpp
 	null.cpp
