@@ -585,6 +585,17 @@ ROP_3Delight::ROP_3Delight(
 	OP_Operator* entry)
 	:	ROP_Node(net, name, entry)
 {
+	/*
+		Rename the "Render to MPlay" button to avoid referencing a specific
+		framebuffer.
+	*/
+	PRM_Parm* preview_parm = getParmPtr("renderpreview");
+	assert(preview_parm);
+	PRM_Template* preview_tmpl = preview_parm->getTemplatePtr();
+	assert(preview_tmpl);
+	PRM_Name* preview_name = preview_tmpl->getNamePtr();
+	assert(preview_name);
+	preview_name->setLabel("Render Preview");
 }
 
 
