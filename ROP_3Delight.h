@@ -21,7 +21,9 @@ public:
 	bool HasMotionBlur()const;
 
 	static int add_layer_cb(void* data, int index, fpreal t,
-                            const PRM_Template* tplate);
+						   const PRM_Template* tplate);
+	static int remove_layer_cb(void* data, int index, fpreal t,
+								const PRM_Template* tplate);
 
 protected:
 
@@ -31,7 +33,8 @@ protected:
 	virtual int startRender(int nframes, fpreal s, fpreal e);
 	virtual ROP_RENDER_CODE renderFrame(fpreal time, UT_Interrupt* boss);
 	virtual ROP_RENDER_CODE endRender();
-
+	// Used to enable some buttons.
+	virtual bool updateParmsFlags();
 	/// Makes the "Render to MPlay" button visible.
 	virtual bool isPreviewAllowed();
 

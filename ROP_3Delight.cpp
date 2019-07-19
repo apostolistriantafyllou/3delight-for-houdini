@@ -44,6 +44,10 @@ static const char* k_save_ids_as_cryptomatte = "save_ids_as_cryptomatte";
 static const char* k_aovs = "aovs";
 static const char* k_aov = "aov";
 static const char* k_aov_name = "aov_name_#";
+static const char* k_add_layer = "add_layer";
+static const char* k_remove_layer = "remove_layer";
+static const char* k_duplicate_layer = "duplicate_layer";
+static const char* k_view_layer = "view_layer";
 static const char* k_ignore_matte_attribute = "ignore_matte_attribute";
 static const char* k_matte_sets = "matte_sets";
 static const char* k_light_sets = "light_sets";
@@ -236,10 +240,10 @@ GetTemplates()
 		PRM_Template()
 	};
 
-	static PRM_Name add_layer("add_layer", "Add...");
-	static PRM_Name remove_layer("remove_layer", "Remove");
-	static PRM_Name duplicate_layer("duplicate_layer", "Duplicate");
-	static PRM_Name view_layer("view_layer", "View...");
+	static PRM_Name add_layer(k_add_layer, "Add...");
+	static PRM_Name remove_layer(k_remove_layer, "Remove");
+	static PRM_Name duplicate_layer(k_duplicate_layer, "Duplicate");
+	static PRM_Name view_layer(k_view_layer, "View...");
 
 	static std::vector<PRM_Template> image_layers_templates =
 	{
@@ -251,7 +255,8 @@ GetTemplates()
 		PRM_Template(PRM_MultiType(PRM_MULTITYPE_SCROLL|PRM_MULTITYPE_NO_CONTROL_UI), aov_templates, k_one_line*6.0f, &aov, &nb_aovs),
 		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &add_layer, 0, 0, 0,
 					&ROP_3Delight::add_layer_cb),
-		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &remove_layer),
+		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &remove_layer, 0, 0, 0,
+					&ROP_3Delight::remove_layer_cb),
 		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &duplicate_layer),
 		PRM_Template(PRM_CALLBACK, 1, &view_layer),
 		PRM_Template(PRM_SEPARATOR, 0, &separator5)
@@ -495,6 +500,36 @@ ROP_3Delight::add_layer_cb(void* data, int index, fpreal t,
 	return 1;
 }
 
+int
+ROP_3Delight::remove_layer_cb(void* data, int index, fpreal t,
+							const PRM_Template* tplate)
+{
+	ROP_3Delight* node = reinterpret_cast<ROP_3Delight*>(data);
+
+	PRM_Parm& parm = node->getParm(k_aov);
+	int size = parm.getMultiParmNumItems();
+
+	for (int i = size-1; i >= 0; i--)
+	{
+		PRM_Template* temp = parm.getMultiParmTemplate(i);
+		PRM_Name* name = temp->getNamePtr();
+		bool value = node->evalInt(name->getToken(), 0, 0.0f);
+		if (value)
+		{
+			// PATCH: houdini don't update labels correctly, only tokens
+			for (int j = i+1; j < size; j++)
+			{
+				PRM_Template* temp2 = parm.getMultiParmTemplate(j);
+				PRM_Name* name2 = temp2->getNamePtr();
+				name->setLabel(name2->getLabel());
+				name = name2;
+			}
+			parm.removeMultiParmItem(i);
+		}
+	}
+	return 1;
+}
+
 bool
 ROP_3Delight::HasMotionBlur()const
 {
@@ -694,6 +729,32 @@ ROP_3Delight::endRender()
 }
 
 bool
+ROP_3Delight::updateParmsFlags()
+{
+	bool changed = OP_Network::updateParmsFlags();
+
+	PRM_Parm& parm = getParm(k_aov);
+	int size = parm.getMultiParmNumItems();
+
+	int nbSel = 0;
+	for (int i = 0; i < size; i++)
+	{
+		PRM_Template* temp = parm.getMultiParmTemplate(i);
+		PRM_Name* name = temp->getNamePtr();
+		bool value = evalInt(name->getToken(), 0, 0.0f);
+		if (value) nbSel++;
+	}
+
+	bool enableRemove = nbSel > 0 && size > 1;
+	bool enableDuplicate = nbSel > 0;
+
+	changed |= enableParm(k_remove_layer, enableRemove);
+	changed |= enableParm(k_duplicate_layer, enableDuplicate);
+
+	return changed;
+}
+
+bool
 ROP_3Delight::isPreviewAllowed()
 {
 	return true;
@@ -792,6 +853,13 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 			NSI::DoubleArg("filterwidth", filter_width),
 			NSI::IntegerArg("sortkey", sort_key++)
 		) );
+
+		if (scalar_format == "uint8")
+		{
+			i_ctx.m_nsi.SetAttribute(name->getToken(),
+				NSI::StringArg("colorprofile", "srgb"));
+		}
+
 		i_ctx.m_nsi.Connect(
 			name->getToken(), "",
 			"default_screen", "outputlayers");
