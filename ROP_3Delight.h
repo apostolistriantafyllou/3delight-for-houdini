@@ -24,6 +24,8 @@ public:
 						   const PRM_Template* tplate);
 	static int remove_layer_cb(void* data, int index, fpreal t,
 								const PRM_Template* tplate);
+	static int duplicate_layer_cb(void* data, int index, fpreal t,
+								const PRM_Template* tplate);
 
 protected:
 

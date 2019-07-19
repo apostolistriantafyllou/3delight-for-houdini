@@ -257,7 +257,8 @@ GetTemplates()
 					&ROP_3Delight::add_layer_cb),
 		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &remove_layer, 0, 0, 0,
 					&ROP_3Delight::remove_layer_cb),
-		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &duplicate_layer),
+		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &duplicate_layer, 0, 0, 0,
+					&ROP_3Delight::duplicate_layer_cb),
 		PRM_Template(PRM_CALLBACK, 1, &view_layer),
 		PRM_Template(PRM_SEPARATOR, 0, &separator5)
 	};
@@ -525,6 +526,41 @@ ROP_3Delight::remove_layer_cb(void* data, int index, fpreal t,
 				name = name2;
 			}
 			parm.removeMultiParmItem(i);
+		}
+	}
+	return 1;
+}
+
+int
+ROP_3Delight::duplicate_layer_cb(void* data, int index, fpreal t,
+								const PRM_Template* tplate)
+{
+	ROP_3Delight* node = reinterpret_cast<ROP_3Delight*>(data);
+
+	PRM_Parm& parm = node->getParm(k_aov);
+	int size = parm.getMultiParmNumItems();
+
+	for (int i = 0; i < size; i++)
+	{
+		PRM_Template* temp = parm.getMultiParmTemplate(i);
+		PRM_Name* name = temp->getNamePtr();
+		bool value = node->evalInt(name->getToken(), 0, 0.0f);
+		if (value)
+		{
+			parm.insertMultiParmItem(parm.getMultiParmNumItems());
+
+			int lastIndex = parm.getMultiParmNumItems() - 1;
+			PRM_Parm* lastParm = parm.getMultiParm(lastIndex);
+			lastParm->setValue(0.0, 1);
+
+			PRM_Template* lastTemp = parm.getMultiParmTemplate(lastIndex);
+			PRM_Name* oldName = lastTemp->getNamePtr();
+
+			PRM_Name* newName = new PRM_Name(oldName->getToken(), name->getLabel());
+			lastTemp->setNamePtr(newName);
+
+			PRM_Parm* currentParm = parm.getMultiParm(i);
+			currentParm->setValue(0.0, 0);
 		}
 	}
 	return 1;
