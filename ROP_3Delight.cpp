@@ -611,11 +611,13 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		nsi.Begin( NSI::IntegerArg("streamfiledescriptor", 1) );
 	}
 
+	fpreal fps = OPgetDirector()->getChannelManager()->getSamplesPerSec();
 	context ctx(
 		nsi,
 		tstart,
 		tend,
 		GetShutterInterval(tstart),
+		fps,
 		HasDepthOfField());
 
 	if(error() < UT_ERROR_ABORT)

@@ -26,8 +26,7 @@ add_library( ${library_name} SHARED
 	scene.cpp
     select_layers_dialog.cpp
 	shader_library.cpp
-	vop.cpp
-	utilities.cpp )
+	vop.cpp )
 
 add_subdirectory( osl osl )
 

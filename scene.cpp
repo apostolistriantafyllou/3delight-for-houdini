@@ -13,7 +13,6 @@
 /* } */
 
 #include "context.h"
-#include "utilities.h"
 
 #include <GT/GT_GEODetail.h>
 #include <GT/GT_Refine.h>
