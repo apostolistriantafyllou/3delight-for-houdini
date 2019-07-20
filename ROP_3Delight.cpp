@@ -244,6 +244,7 @@ GetTemplates()
 	static PRM_Name remove_layer(k_remove_layer, "Remove");
 	static PRM_Name duplicate_layer(k_duplicate_layer, "Duplicate");
 	static PRM_Name view_layer(k_view_layer, "View...");
+	static PRM_Name dummy("dummy", "");
 
 	static std::vector<PRM_Template> image_layers_templates =
 	{
@@ -259,7 +260,8 @@ GetTemplates()
 					&ROP_3Delight::remove_layer_cb),
 		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &duplicate_layer, 0, 0, 0,
 					&ROP_3Delight::duplicate_layer_cb),
-		PRM_Template(PRM_CALLBACK, 1, &view_layer),
+		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &view_layer),
+		PRM_Template(PRM_LABEL, 1, &dummy),
 		PRM_Template(PRM_SEPARATOR, 0, &separator5)
 	};
 
@@ -786,6 +788,7 @@ ROP_3Delight::updateParmsFlags()
 
 	changed |= enableParm(k_remove_layer, enableRemove);
 	changed |= enableParm(k_duplicate_layer, enableDuplicate);
+	changed |= enableParm(k_view_layer, false);
 
 	return changed;
 }
