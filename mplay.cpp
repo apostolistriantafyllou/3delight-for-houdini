@@ -1,7 +1,7 @@
 #include <TIL/TIL_TileMPlay.h>
 #include <IMG/IMG_TileOptions.h>
 
-#include <ndspy.h>
+#include "mplay.h"
 
 #include <string.h>
 #include <errno.h>
@@ -53,7 +53,8 @@ PtDspyError MPlayDspyImageOpen(
 	{
 		fprintf(
 			stderr,
-			"3Delight for Houdini: mplay driver only support 1, 2, 3 and 4 channel images\n");
+			"3Delight for Houdini: mplay driver only support 1, 2, 3 and " \
+				"4 channel images\n");
 		return PkDspyErrorBadParams;
 	}
 
@@ -73,7 +74,6 @@ PtDspyError MPlayDspyImageOpen(
 		case PkDspySigned16: data_type = IMG_INT16;
 		case PkDspySigned32: data_type = IMG_INT32;
 		default: return PkDspyErrorBadParams;
-
 	};
 
 	TIL_TileMPlay *mplay = new TIL_TileMPlay(1,1);
@@ -172,18 +172,4 @@ PtDspyError MPlayDspyImageClose( PtDspyImageHandle i_hImage )
 	auto mplay = (TIL_TileMPlay*)i_hImage;
 	delete mplay;
 	return PkDspyErrorNone;
-}
-
-void RegisterMPlayRenderView()
-{
-	PtDspyDriverFunctionTable table;
-	memset( &table, 0, sizeof(table) );
-
-	table.Version = k_PtDriverCurrentVersion;
-	table.pOpen = &MPlayDspyImageOpen;
-	table.pQuery = &MPlayDspyImageQuery;
-	table.pWrite = &MPlayDspyImageData;
-	table.pClose = &MPlayDspyImageClose;
-
-	DspyRegisterDriverTable( "mplay", &table );
 }

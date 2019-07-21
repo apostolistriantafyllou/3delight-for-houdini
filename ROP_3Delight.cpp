@@ -5,6 +5,7 @@
 #include "context.h"
 #include "select_layers_dialog.h"
 #include "shader_library.h"
+#include "mplay.h"
 
 #include <OBJ/OBJ_Camera.h>
 #include <OP/OP_Director.h>
@@ -684,6 +685,8 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	NSI::DynamicAPI api;
 	NSI::Context nsi(api);
 
+	register_mplay_driver( api );
+
 	bool render = !evalInt(k_export_nsi, 0, 0.0f);
 
 	if(render)
@@ -1006,4 +1009,21 @@ bool
 ROP_3Delight::HasDepthOfField()const
 {
 	return !(HasSpeedBoost() && evalInt(k_disable_depth_of_field, 0, 0.0f));
+}
+
+void ROP_3Delight::register_mplay_driver( NSI::DynamicAPI &i_api )
+{
+	decltype( &DspyRegisterDriverTable) register_driver = nullptr;
+	i_api.LoadFunction(register_driver, "DspyRegisterDriverTable" );
+
+	PtDspyDriverFunctionTable table;
+	memset( &table, 0, sizeof(table) );
+
+	table.Version = k_PtDriverCurrentVersion;
+	table.pOpen = &MPlayDspyImageOpen;
+	table.pQuery = &MPlayDspyImageQuery;
+	table.pWrite = &MPlayDspyImageData;
+	table.pClose = &MPlayDspyImageClose;
+
+	register_driver( "mplay", &table );
 }

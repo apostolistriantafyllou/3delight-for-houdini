@@ -3,7 +3,7 @@
 
 #include <ROP/ROP_Node.h>
 
-namespace NSI { class Context; }
+namespace NSI { class Context; class DynamicAPI; }
 
 class context;
 class OBJ_Camera;
@@ -41,6 +41,7 @@ protected:
 	virtual bool isPreviewAllowed();
 
 private:
+	static void register_mplay_driver( NSI::DynamicAPI &i_api );
 
 	void ExportOutputs(const context& i_ctx)const;
 	void ExportGlobals(const context& i_ctx)const;
