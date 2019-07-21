@@ -57,7 +57,7 @@ shader_library::shader_library()
 	if( !m_shader_info_ptr || !get_install_root )
 	{
 		std::cerr <<
-			"3Delight for Houdini : no 3delight installation found, cannot proceede";
+			"3Delight for Houdini : no 3delight installation found, cannot proceed";
 	}
 }
 
@@ -83,7 +83,7 @@ DlShaderInfo *shader_library::get_shader_info( const char *path ) const
 
 	Just a quick implementation to get us to the next step:
 	- we check plug-ins installation path + OSO
-	- and some developper path (to be removed later on).
+	- and some developer path (to be removed later on).
 */
 std::string shader_library::get_shader_path( const char *vop ) const
 {
@@ -118,7 +118,7 @@ std::string shader_library::vop_to_osl( const char *i_vop )
 	auto p1 = legalized.find( "::" );
 	if( p1 == std::string::npos )
 	{
-		/* no occurences, nothing to do. */
+		/* no occurrences, nothing to do. */
 		return legalized;
 	}
 
@@ -130,12 +130,12 @@ std::string shader_library::vop_to_osl( const char *i_vop )
 
 	if( p2 == std::string::npos )
 	{
-		/* only one occurence, could be namespace or version */
+		/* only one occurrences, could be namespace or version */
 		return std::isdigit(legalized[p1+2]) ?
 			legalized : legalized.substr(p1+2);
 	}
 
-	/* two occurences, skip namespace */
+	/* two occurrences, skip namespace */
 	return legalized.substr(p2 + 2);
 }
 
@@ -151,8 +151,7 @@ void tokenize_path( const char *osl_path, std::vector<std::string> &o_paths )
 #endif
 
 	/*
-		::strtok will modify the passed string so allocate a
-		a copy.
+		::strtok will modify the passed string so allocate a copy.
 	*/
 	osl_path = ::strdup( osl_path );
 	char *token = ::strtok( (char *)osl_path, delimters );
