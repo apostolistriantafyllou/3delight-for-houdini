@@ -95,11 +95,22 @@ void polygonmesh::set_attributes( void ) const
 
 /**
 	\brief output P, N
+
+	\ref http://www.sidefx.com/docs/hdk/_g_t___prim_polygon_mesh_8h_source.html
 */
 void polygonmesh::set_attributes_at_time( double i_time ) const
 {
 	const GT_PrimPolygonMesh *polygon_mesh =
 		static_cast<const GT_PrimPolygonMesh *>(m_gt_primitive.get());
+
+	const GT_PrimPolygonMesh *with_normals =  nullptr;
+	if( !m_is_subdiv )
+	{
+		with_normals = polygon_mesh->createPointNormalsIfMissing();
+	}
+
+	if( with_normals != nullptr )
+		polygon_mesh = with_normals;
 
 	GT_AttributeListHandle attributes[] =
 	{
@@ -117,4 +128,6 @@ void polygonmesh::set_attributes_at_time( double i_time ) const
 		sizeof(attributes)/sizeof(attributes[0]),
 		i_time,
 		to_export );
+
+	delete with_normals;
 }
