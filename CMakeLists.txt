@@ -37,10 +37,16 @@ target_include_directories( ${library_name} PRIVATE "$ENV{DELIGHT}/include"  )
 # compile definitions.
 target_link_libraries( ${library_name} Houdini )
 
-configure_file(
-	ROP_3Delight.svg $ENV{HIH}/config/Icons/ROP_3Delight.svg COPYONLY )
-configure_file(
-	select_layers_ui.ui $ENV{HIH}/config/Applications/select_layers_ui.ui COPYONLY )
+# This will get the destination directory for the installation.
+houdini_get_default_install_dir( _installdir )
+
+install(
+	FILES ROP_3Delight.svg
+	DESTINATION ${_installdir}/config/Icons )
+
+install(
+	FILES select_layers_ui.ui
+	DESTINATION ${_installdir}/config/Applications )
 
 # Configure several common target properties, such as its output directory.
 houdini_configure_target( ${library_name} )

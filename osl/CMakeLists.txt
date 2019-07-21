@@ -1,6 +1,9 @@
 # Get the list of the files
 file(GLOB OSL_SRCS "*.osl")
 
+# This will get the destination directory for the installation.
+houdini_get_default_install_dir( _installdir )
+
 # Compile and install each file
 foreach(osl_file ${OSL_SRCS})
 
@@ -17,6 +20,8 @@ foreach(osl_file ${OSL_SRCS})
 
 	add_dependencies( 3Delight_for_Houdini ${osl_name} )
 
-	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${osl_name}.oso DESTINATION $ENV{HIH}/osl)
+	install(
+		FILES ${CMAKE_CURRENT_BINARY_DIR}/${osl_name}.oso
+		DESTINATION ${_installdir}/osl)
 
 endforeach(osl_file)
