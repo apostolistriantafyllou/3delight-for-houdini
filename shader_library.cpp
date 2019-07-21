@@ -46,9 +46,6 @@ shader_library::shader_library()
 	decltype( &DlGetInstallRoot) get_install_root = nullptr;
 	m_api.LoadFunction(get_install_root, "DlGetInstallRoot" );
 
-	assert( get_install_root );
-	assert( m_shader_info_ptr );
-
 	if( get_install_root )
 	{
 		find_all_shaders( get_install_root() );
@@ -56,9 +53,27 @@ shader_library::shader_library()
 
 	if( !m_shader_info_ptr || !get_install_root )
 	{
-		std::cerr <<
-			"3Delight for Houdini : no 3delight installation found, cannot proceed";
+		const char *delight = get_env("DELIGHT" );
+		const char *ld = get_env("LD_LIBRARY_PATH" );
+		const char *dyld = get_env("DYLD_LIBRARY_PATH" );
+
+		if( !delight )
+			delight = "null";
+		if( !ld )
+			ld = "null";
+		if( !dyld )
+			dyld = "null";
+
+		std::cerr
+			<< "3Delight for Houdini: no 3delight installation found\n\n"
+			<< "\t$DELIGHT: " << delight << "\n"
+			<< "\t$LD_LIBRARY_PATH: " << ld << "\n"
+			<< "\t$DYLD_LIBRARY_PATH: " << dyld << "\n"
+			<< std::endl;
 	}
+
+	assert( get_install_root );
+	assert( m_shader_info_ptr );
 }
 
 const shader_library &shader_library::get_instance( void )
