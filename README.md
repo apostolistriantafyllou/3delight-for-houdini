@@ -53,7 +53,8 @@ is no reason for the plugin to require TBB and we ware working to resolve this
 issue with SideFx.
 
 In the following patch, we added a path to my local TBB installation and
-added it to the libraries to link with (1 line to add, 1 line to change):
+added it to the libraries to link with (1 line to add, 1 line to change). Note
+that the path to TBB will be different in your case.
 
 ```patch
 diff --git a/CMakeLists.txt b/CMakeLists.txt
