@@ -1,5 +1,5 @@
 #include "select_layers_dialog.h"
-#include "ROP_3Delight.h"
+#include <ROP/ROP_Node.h>
 
 #include <stdio.h>
 // Used to wrap around callback functions responding to UI_Value changes
@@ -75,7 +75,7 @@ SelectLayersDialog::parseDialog()
 }
 
 bool
-SelectLayersDialog::open(ROP_3Delight* io_node)
+SelectLayersDialog::open(ROP_Node* io_node)
 {
 	// Only parse the dialog once
 	if (!m_parsedDialog)

@@ -494,19 +494,25 @@ ROP_3Delight::alloc(OP_Network* net, const char* name, OP_Operator* op)
 }
 
 int
-ROP_3Delight::add_layer_cb(void* data, int index, fpreal t,
-							const PRM_Template* tplate)
+ROP_3Delight::add_layer_cb(
+	void* data, int index, fpreal t,
+	const PRM_Template* tplate)
 {
 	static SelectLayersDialog dlg;
-	if (!dlg.open(reinterpret_cast<ROP_3Delight*>(data)))
-		fprintf(stderr, "Could not parse select_layers_ui.ui file\n");
+	if (!dlg.open(reinterpret_cast<ROP_Node*>(data)))
+	{
+		fprintf(
+			stderr,
+			"3Delight for Houdini: Could not parse select_layers_ui.ui file\n");
+	}
 
 	return 1;
 }
 
 int
-ROP_3Delight::remove_layer_cb(void* data, int index, fpreal t,
-							const PRM_Template* tplate)
+ROP_3Delight::remove_layer_cb(
+	void* data, int index, fpreal t,
+	const PRM_Template* tplate)
 {
 	ROP_3Delight* node = reinterpret_cast<ROP_3Delight*>(data);
 
@@ -535,10 +541,11 @@ ROP_3Delight::remove_layer_cb(void* data, int index, fpreal t,
 }
 
 int
-ROP_3Delight::duplicate_layer_cb(void* data, int index, fpreal t,
-								const PRM_Template* tplate)
+ROP_3Delight::duplicate_layer_cb(
+	void* data, int index, fpreal t,
+	const PRM_Template* tplate)
 {
-	ROP_3Delight* node = reinterpret_cast<ROP_3Delight*>(data);
+	ROP_Node* node = reinterpret_cast<ROP_Node*>(data);
 
 	PRM_Parm& parm = node->getParm(k_aov);
 	int size = parm.getMultiParmNumItems();
