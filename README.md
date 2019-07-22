@@ -21,6 +21,30 @@ cmake ..
 make -j4 install
 ```
 
+You will need to re-start Houdini to see the ROP.
+
+Here is an example output of a successfull build. Note how some shaders and some
+UI elements are being copied into the the same directory where the ROP is
+installed.
+
+```
+[  4%] Built target hlight
+[ 14%] Built target texture__2_0
+[ 14%] Built target principledshader__2_0
+[ 19%] Building CXX object CMakeFiles/3Delight_for_Houdini.dir/shader_library.cpp.o
+[ 23%] Building CXX object CMakeFiles/3Delight_for_Houdini.dir/vop.cpp.o
+[ 28%] Linking CXX shared library /users1/aghiles/houdini17.5/dso/3Delight_for_Houdini.so
+[100%] Built target 3Delight_for_Houdini
+Install the project...
+-- Install configuration: ""
+-- Up-to-date: /users1/aghiles/houdini17.5/config/Icons/ROP_3Delight.svg
+-- Up-to-date: /users1/aghiles/houdini17.5/config/Applications/select_layers_ui.ui
+-- Installing: /users1/aghiles/houdini17.5/osl/hlight.oso
+-- Installing: /users1/aghiles/houdini17.5/osl/principledshader__2_0.oso
+-- Installing: /users1/aghiles/houdini17.5/osl/texture__2_0.oso
+```
+
+
 ### macOS
 
 On macOS, you will need to install TBB and have apply a small patch to CMakeLists.txt.
@@ -76,4 +100,4 @@ The 3Delight installation is used in the following way:
 1. During compilation, we need files such as <nsi.hpp> which come with the 3Delight package.
 2. During compilation, CMake file will execute `oslc` executable included with 3Delight to compile OSL shaders that come with the plug-in.
 3. During installation, the CMake file will copy 3Delight materials alongside the ROP.
-4. During execution, the ROP will do a dynamic link with 3Delight library.  Note that the library is *not* linked during plug-in complilation.
+4. During execution, the ROP will do a dynamic link with 3Delight library. Note that the library is *not* linked during plug-in complilation.
