@@ -102,3 +102,17 @@ The 3Delight installation is used in the following way:
 2. During compilation, CMake file will execute `oslc` executable included with 3Delight to compile OSL shaders that come with the plug-in.
 3. During installation, the CMake file will copy 3Delight materials alongside the ROP.
 4. During execution, the ROP will do a dynamic link with 3Delight library. Note that the library is *not* linked during plug-in complilation.
+
+## Directory Structure and File Names
+
+We keep a simple directory structure that is efficient to work with:
+
+* The source directory of the plug-in contains code responsible of initializing the ROP and connverting the scene to NSI. 
+* The `ui/` subdirectory contains things that are mostly related to UI. 
+
+The file names are lower case and correpond to what they do in the simplest for
+possible, without any perfixes. If you are looking for the exporter of the polygon mesh,
+look for `polygonmesh.cpp` and not `exportpolygonmesh.cpp` (we know are exporting,
+no need to repeat this again and again.
+
+The scene.cpp file contains the high level code for scene conversion to NSI.
