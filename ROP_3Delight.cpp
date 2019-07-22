@@ -3,7 +3,7 @@
 #include "camera.h"
 #include "scene.h"
 #include "context.h"
-#include "select_layers_dialog.h"
+#include "ui/select_layers_dialog.h"
 #include "shader_library.h"
 #include "mplay.h"
 

@@ -24,9 +24,9 @@ add_library( ${library_name} SHARED
 	osl_utilities.cpp
 	plugin.cpp
 	scene.cpp
-    select_layers_dialog.cpp
 	shader_library.cpp
-	vop.cpp )
+	vop.cpp
+	ui/select_layers_dialog.cpp )
 
 add_subdirectory( osl osl )
 
@@ -35,17 +35,17 @@ target_include_directories( ${library_name} PRIVATE "$ENV{DELIGHT}/include"  )
 
 # Link against the Houdini libraries, and add required include directories and
 # compile definitions.
-target_link_libraries( ${library_name} Houdini )
+target_link_libraries( ${library_name} Houdini tbb )
 
 # This will get the destination directory for the installation.
 houdini_get_default_install_dir( _installdir )
 
 install(
-	FILES ROP_3Delight.svg
+	FILES ui/ROP_3Delight.svg
 	DESTINATION ${_installdir}/config/Icons )
 
 install(
-	FILES select_layers_ui.ui
+	FILES ui/select_layers_ui.ui
 	DESTINATION ${_installdir}/config/Applications )
 
 # Configure several common target properties, such as its output directory.
