@@ -19,6 +19,123 @@ static const char* k_value = "Value";
 static const char* k_color = "Color";
 static const char* k_interpolation = "Interpolation";
 
+// Additional parameters for the "vdbVolume" shader
+static const char* k_grids_page = "Grids";
+static const std::vector<const DlShaderInfo::Parameter*> GetVolumeParams()
+{
+	typedef DlShaderInfo::conststring conststring;
+	typedef DlShaderInfo::Parameter Parameter;
+
+	static const unsigned nparams = 5;
+	static const unsigned nstrings = 4;
+	static const char label[] = "label";
+
+	static const char density_name[] = "density_grid_name";
+	static const char temperature_name[] = "temperature_grid_name";
+	static const char emission_name[] = "emission_grid_name";
+	static const char velocity_name[] = "velocity_grid_name";
+	static const char velocity_scale_name[] = "velocity_scale";
+
+	static const conststring name_strings[nparams] =
+	{
+		conststring(
+			density_name, density_name+sizeof(density_name)),
+		conststring(
+			temperature_name, temperature_name+sizeof(temperature_name)),
+		conststring(
+			emission_name, emission_name+sizeof(emission_name)),
+		conststring(
+			velocity_name, velocity_name+sizeof(velocity_name)),
+		conststring(
+			velocity_scale_name, velocity_scale_name+sizeof(velocity_scale_name))
+	};
+
+	static const char density_label[] = "Smoke";
+	static const char temperature_label[] = "Temperature";
+	static const char emission_label[] = "Emission Intensity";
+	static const char velocity_label[] = "Velocity";
+	static const char velocity_scale_label[] = "Velocity Scale";
+
+	static const conststring label_strings[nparams] =
+	{
+		conststring(
+			density_label, density_label+sizeof(density_label)),
+		conststring(
+			temperature_label, temperature_label+sizeof(temperature_label)),
+		conststring(
+			emission_label, emission_label+sizeof(emission_label)),
+		conststring(
+			velocity_label, velocity_label+sizeof(velocity_label)),
+		conststring(
+			velocity_scale_label, velocity_scale_label+sizeof(velocity_scale_label))
+	};
+
+	static const char density_default[] = "density";
+	static const char temperature_default[] = "";
+	static const char emission_default[] = "";
+	static const char velocity_default[] = "";
+	static const float velocity_scale_default = 1.0f;
+
+	static const conststring default_strings[nstrings] =
+	{
+		conststring(
+			density_default, density_default+sizeof(density_default)),
+		conststring(
+			temperature_default, temperature_default+sizeof(temperature_default)),
+		conststring(
+			emission_default, emission_default+sizeof(emission_default)),
+		conststring(
+			velocity_default, velocity_default+sizeof(velocity_default))
+	};
+
+	static Parameter meta[nparams];
+	for(unsigned p = 0; p < nparams; p++)
+	{
+		Parameter& param = meta[p];
+		param.name = conststring(label, label+sizeof(label));
+		param.type.type = NSITypeString;
+		param.type.arraylen = 0;
+		param.validdefault = true;
+		param.sdefault =
+			DlShaderInfo::constvector<conststring>(
+				label_strings+p, label_strings + p+1);
+	}
+
+	static Parameter params[nparams];
+	for(unsigned p = 0; p < nparams; p++)
+	{
+		Parameter& param = params[p];
+		param.name = name_strings[p];
+		param.type.type = p < nstrings ? NSITypeString : NSITypeFloat;
+		param.type.arraylen = 0;
+		param.isoutput = false;
+		param.validdefault = true;
+		param.varlenarray = false;
+		param.isstruct = false;
+		param.isclosure = false;
+		if(p < nstrings)
+		{
+			param.sdefault =
+				DlShaderInfo::constvector<conststring>(
+					default_strings+p, default_strings + p+1);
+		}
+		param.metadata =
+			DlShaderInfo::constvector<Parameter>(meta + p, meta + p+1);
+
+	}
+	params[4].fdefault =
+		DlShaderInfo::constvector<float>(
+			&velocity_scale_default, &velocity_scale_default + 1);
+
+	static std::vector<const Parameter*> out;
+	for(unsigned p = 0; p < nparams; p++)
+	{
+		out.push_back(&params[p]);
+	}
+
+	return out;
+}
+
 /// Returns the number of scalar channels in the specified type
 static unsigned GetNumChannels(const DlShaderInfo::TypeDesc& i_osl_type)
 {
@@ -511,6 +628,19 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 		{
 			page_list.push_back(page_list_t::value_type(page_name, &page));
 		}
+	}
+
+	// FIXME : this has nothing to do here
+	if(i_shader_info.m_dl.shadername() == "vdbVolume")
+	{
+		// Insert a "Grids" page for the "vdbVolume" shader
+		std::pair<page_map_t::iterator, bool> inserted =
+			page_map.insert(
+				page_map_t::value_type(k_grids_page, page_components()));
+		assert(inserted.second);
+		page_components& page = inserted.first->second;
+		page_list.push_back(page_list_t::value_type(k_grids_page, &page));
+		page = GetVolumeParams();
 	}
 
 	// Some pages are actually sub-pages, so we merge them together.
