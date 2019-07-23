@@ -9,6 +9,7 @@
 #include "mplay.h"
 
 #include <OBJ/OBJ_Camera.h>
+#include <OP/OP_Bundle.h>
 #include <OP/OP_Director.h>
 #include <OP/OP_OperatorTable.h>
 #include <PRM/PRM_Include.h>
@@ -39,6 +40,7 @@ static const char* k_max_refraction_depth = "max_refraction_depth";
 static const char* k_max_hair_depth = "max_hair_depth";
 static const char* k_max_distance = "max_distance";
 static const char* k_camera = "camera";
+static const char* k_lights_to_render = "lights_to_render";
 static const char* k_default_image_filename = "default_image_filename";
 static const char* k_default_image_format = "default_image_format";
 static const char* k_default_image_bits = "default_image_bits";
@@ -167,16 +169,19 @@ GetTemplates()
 	static PRM_Name camera(k_camera, "Camera");
 	static PRM_Default camera_d(0.0f, "/obj/cam1");
 
+	static PRM_Name lights_to_render(k_lights_to_render, "Lights to Render");
+	static PRM_Default lights_to_render_d(0.0f, "*");
+
 	static std::vector<PRM_Template> scene_elements_templates =
 	{
-		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &camera, &camera_d, nullptr, nullptr, nullptr, &PRM_SpareData::objCameraPath)
+		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &camera, &camera_d, nullptr, nullptr, nullptr, &PRM_SpareData::objCameraPath),
+		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &lights_to_render, &lights_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objLightPath)
 	};
 
 /*
 	Environment
 	Atmosphere
 	Objects To Render
-	Lights To Render
 
 	//? Frame range
 
@@ -749,7 +754,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		HasDepthOfField(),
 		preview);
 
-	scene::find_lights(ctx.m_lights_to_render);
+	FillSceneElements(ctx);
 
 	if(error() < UT_ERROR_ABORT)
 	{
@@ -1011,6 +1016,33 @@ ROP_3Delight::UpdateLights()
 		std::string light_token = light_prefix + suffix;
 		setVisibleState(use_light_token.c_str(), false);
 		setVisibleState(light_token.c_str(), false);
+	}
+}
+
+void
+ROP_3Delight::FillSceneElements(context& io_ctx)const
+{
+	io_ctx.m_lights_to_render.clear();
+
+	UT_ValArray<OP_Node*> light_nodes;
+	{
+		UT_String lights_pattern;
+		evalString(lights_pattern, k_lights_to_render, 0, 0.0f);
+
+		OP_Bundle lights("", true);
+		lights.setStringPattern(lights_pattern);
+
+		lights.getMembers(light_nodes);
+	}
+
+	for(unsigned i = 0; i < light_nodes.size(); i++)
+	{
+		OP_Node* op = light_nodes[i];
+		OBJ_Node* obj = op->castToOBJNode();
+		if(obj)
+		{
+			io_ctx.m_lights_to_render.insert(obj);
+		}
 	}
 }
 

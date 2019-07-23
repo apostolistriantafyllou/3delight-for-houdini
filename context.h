@@ -50,7 +50,7 @@ public:
 	bool m_dof;
 	bool m_preview;
 
-	std::vector<OBJ_Node*> m_lights_to_render;
+	std::set<OBJ_Node*> m_lights_to_render;
 
 	/*
 		Cache of "lightcategories" expressions that already have a matching NSI

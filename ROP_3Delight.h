@@ -56,6 +56,9 @@ private:
 
 	void UpdateLights();
 
+	/// Sets the lights to render in export context
+	void FillSceneElements(context& i_ctx)const;
+
 	bool HasSpeedBoost()const;
 	float GetResolutionFactor()const;
 	float GetSamplingFactor()const;

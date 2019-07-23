@@ -186,7 +186,11 @@ void scene::process_node(
 
 	if( obj->castToOBJLight() )
 	{
-		o_to_export.push_back( new light(i_context, obj) );
+		if(i_context.m_lights_to_render.find(obj) !=
+			i_context.m_lights_to_render.end())
+		{
+			o_to_export.push_back( new light(i_context, obj) );
+		}
 
 		/*
 			We don't return here because an OBJ_Light is also and OBJ_Camera
