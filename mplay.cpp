@@ -54,7 +54,7 @@ PtDspyError MPlayDspyImageOpen(
 		fprintf(
 			stderr,
 			"3Delight for Houdini: mplay driver only support 1, 2, 3 and " \
-				"4 channel images\n");
+				"4 channel images, not %d\n", i_numFormats );
 		return PkDspyErrorBadParams;
 	}
 
@@ -63,20 +63,24 @@ PtDspyError MPlayDspyImageOpen(
 		i_formats[i].type = i_formats[0].type;
 
 	IMG_DataType data_type;
-	switch( i_formats[0].type )
+	switch( i_formats[0].type & PkDspyMaskType )
 	{
-		case PkDspyFloat16: data_type = IMG_HALF;
-		case PkDspyFloat32: data_type = IMG_FLOAT32;
-		case PkDspyUnsigned8: data_type = IMG_UCHAR;
-		case PkDspyUnsigned16: data_type = IMG_USHORT;
-		case PkDspyUnsigned32: data_type = IMG_UINT;
-		case PkDspySigned8: data_type = IMG_INT8;
-		case PkDspySigned16: data_type = IMG_INT16;
-		case PkDspySigned32: data_type = IMG_INT32;
-		default: return PkDspyErrorBadParams;
+		case PkDspyFloat16: data_type = IMG_HALF; break;
+		case PkDspyFloat32: data_type = IMG_FLOAT32; break;
+		case PkDspyUnsigned8: data_type = IMG_UCHAR; break;
+		case PkDspyUnsigned16: data_type = IMG_USHORT; break;
+		case PkDspyUnsigned32: data_type = IMG_UINT; break;
+		case PkDspySigned8: data_type = IMG_INT8; break;
+		case PkDspySigned16: data_type = IMG_INT16; break;
+		case PkDspySigned32: data_type = IMG_INT32; break;
+		default:
+			fprintf( stderr, "3Delight for Houdini: unknown type %d\n",
+				i_formats[0].type & PkDspyMaskType );
+
+			return PkDspyErrorBadParams;
 	};
 
-	TIL_TileMPlay *mplay = new TIL_TileMPlay(1,1);
+	TIL_TileMPlay *mplay = new TIL_TileMPlay(1, true);
 	*i_phImage = (PtDspyImageHandle)mplay;
 
 	IMG_TileOptions options;
@@ -137,10 +141,14 @@ PtDspyError MPlayDspyImageQuery(
 	case PkStopQuery:
 	{
 		if( mplay && mplay->checkInterrupt() )
-			return PkDspyErrorStop;
+		{
+			/* FIXME: returns true all the time! */
+			//return PkDspyErrorStop;
+		}
 		break;
 	}
-	default : return PkDspyErrorUnsupported;
+	default :
+		return PkDspyErrorUnsupported;
 	}
 
 	return PkDspyErrorNone;
@@ -164,12 +172,18 @@ PtDspyError MPlayDspyImageData(
 	int bucket_w = i_xmax_plusone - i_xmin;
 	int bucket_h = i_ymax_plusone - i_ymin;
 
+	mplay->writeTile(
+		i_cdata,
+		i_xmin, i_xmax_plusone-1,
+		i_ymin, i_ymax_plusone-1 );
+
 	return PkDspyErrorNone;
 }
 
 PtDspyError MPlayDspyImageClose( PtDspyImageHandle i_hImage )
 {
 	auto mplay = (TIL_TileMPlay*)i_hImage;
+	mplay->close( true /* keep alive */ );
 	delete mplay;
 	return PkDspyErrorNone;
 }

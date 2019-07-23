@@ -1028,6 +1028,12 @@ void ROP_3Delight::register_mplay_driver( NSI::DynamicAPI &i_api )
 	decltype( &DspyRegisterDriverTable) register_driver = nullptr;
 	i_api.LoadFunction(register_driver, "DspyRegisterDriverTable" );
 
+	if( !register_driver )
+	{
+		assert( !"Unable to register mplay driver" );
+		return;
+	}
+
 	PtDspyDriverFunctionTable table;
 	memset( &table, 0, sizeof(table) );
 
