@@ -4,10 +4,12 @@
 
 #include <GT/GT_Handles.h>
 #include <OBJ/OBJ_Node.h>
+#include <UT/UT_TagManager.h>
 
 #include <iostream>
 
 GT_PrimitiveHandle exporter::sm_invalid_gt_primitive;
+static const std::string k_light_category_prefix = ".!@category:";
 
 static int s_handle = 0;
 exporter::exporter(
@@ -91,23 +93,38 @@ void exporter::connect( void ) const
 
 
 assign_material:
-	/* Do local material assignment */
-	int index = m_object->getParmIndex( "shop_materialpath" );
-	if( index < 0 )
-		return;
 
-	std::string attributes( m_handle + "|attributes" );
-	UT_String material_path;
-	m_object->evalString( material_path, "shop_materialpath", 0, 0.f );
+	int lightcategories_index = m_object->getParmIndex("lightcategories");
+	int shop_materialpath_index = m_object->getParmIndex( "shop_materialpath" );
 
-	if( material_path.length()==0 )
+	if(lightcategories_index < 0 && shop_materialpath_index < 0)
 	{
 		return;
 	}
 
+	std::string attributes( m_handle + "|attributes" );
 	m_nsi.Create( attributes, "attributes" );
 	m_nsi.Connect( attributes, "", m_handle, "geometryattributes" );
-	m_nsi.Connect( material_path.buffer(), "", attributes, "surfaceshader" );
+
+	// Do light linking
+	if(lightcategories_index >= 0)
+	{
+		UT_String lightcategories;
+		m_object->evalString(lightcategories, lightcategories_index, 0, 0.0f);
+		export_light_categories(lightcategories, attributes);
+	}
+
+	/* Do local material assignment */
+	if( shop_materialpath_index >= 0 )
+	{
+		UT_String material_path;
+		m_object->evalString( material_path, "shop_materialpath", 0, 0.f );
+
+		if( material_path.length() > 0 )
+		{
+			m_nsi.Connect( material_path.buffer(), "", attributes, "surfaceshader" );
+		}
+	}
 }
 
 
@@ -192,4 +209,74 @@ void exporter::export_attributes(
 	}
 
 	return; // so that we don't fall into the void.
+}
+
+void exporter::export_light_categories(
+	const UT_String& i_categories,
+	const std::string& i_attributes_handle)const
+{
+	UT_String categories = i_categories;
+	if(!categories.c_str())
+	{
+		categories = "";
+	}
+
+	UT_TagManager tag_manager;
+	UT_String errors;
+	UT_TagExpressionPtr categories_expr =
+		tag_manager.createExpression(categories, errors);
+
+	// Trivial and (hopefully) most common case
+	if(categories_expr->isTautology())
+	{
+		/*
+			The object sees all lights, which is the default, so no connections
+			are necessary (ie : no lights to turn off).
+		*/
+		return;
+	}
+
+	std::string cat_handle = k_light_category_prefix + categories.toStdString();
+	std::string cat_attr_handle = cat_handle + "|attributes";
+
+	auto insertion = m_context.m_exported_lights_categories.insert(cat_handle);
+	if(insertion.second)
+	{
+		/*
+			This is the first time we use this NSI set, so we have to create it
+			first!
+		*/
+		m_nsi.Create(cat_handle, "set");
+		m_nsi.Create(cat_attr_handle, "attributes");
+		m_nsi.Connect(cat_attr_handle, "", cat_handle, "geometryattributes");
+
+		for(OBJ_Node* light : m_context.m_lights_to_render)
+		{
+			/*
+				Parse the list of categories for the light. This shouldn't be
+				expensive. If it is, we might want to store it in the light
+				exporter and work on a list of those, instead.
+			*/
+			UT_String tags_string;
+			light->evalString(tags_string, "categories", 0, 0.0);
+			UT_TagListPtr tags = tag_manager.createList(tags_string, errors);
+
+			// Add the lights we have to turn off to the set
+			if(!tags->match(*categories_expr))
+			{
+				m_nsi.Connect(
+					light->getFullPath().toStdString(), "",
+					cat_handle, "members");
+			}
+		}
+	}
+
+	// Turn off lights in the set for this object
+	m_nsi.Connect(
+		i_attributes_handle, "",
+		cat_attr_handle, "visibility",
+		(
+			NSI::IntegerArg("value", false),
+			NSI::IntegerArg("priority", 1)
+		) );
 }

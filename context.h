@@ -4,6 +4,10 @@
 
 #include <SYS/SYS_Types.h>
 
+#include <set>
+
+class OBJ_Node;
+
 /**
 	\brief An export context passed around to each exporter. Allows us
 	to be less verbose when passing parameters around.
@@ -45,4 +49,18 @@ public:
 	// True if depth-of-field is enabled
 	bool m_dof;
 	bool m_preview;
+
+	std::vector<OBJ_Node*> m_lights_to_render;
+
+	/*
+		Cache of "lightcategories" expressions that already have a matching NSI
+		"set" node in the scene. All lights are on by default, so light linking
+		is used to turn them off. This requires that the NSI sets we have
+		exported contains the *complement* of their corresponding expression.
+		Without this cache, we would have to test every object's light
+		categories expression against every light's categories list, which would
+		be a waste because those expressions tend be re-used on multiple
+		objects.
+	*/
+	mutable std::set<std::string> m_exported_lights_categories;
 };
