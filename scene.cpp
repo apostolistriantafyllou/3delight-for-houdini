@@ -22,6 +22,7 @@
 #include <OBJ/OBJ_Node.h>
 #include <OP/OP_Director.h>
 #include <SOP/SOP_Node.h>
+#include <UT/UT_String.h>
 
 /**
 	\brief A GT refiner for an OBJ_Node.
@@ -322,4 +323,46 @@ void scene::convert_to_nsi( const context &i_context )
 	}
 }
 
+void scene::find_lights( std::vector<OBJ_Node*>& o_lights )
+{
+	/* A traversal stack to avoid recursion */
+	std::vector< OP_Node * > traversal;
 
+	OP_Node *our_dear_leader = OPgetDirector();
+	traversal.push_back( our_dear_leader->findNode( "/obj") );
+
+	/*
+		After this while loop, to_export will be filled with the OBJs
+		and the VOPs to convert to NSI.
+	*/
+	while( traversal.size() )
+	{
+		OP_Node *network = traversal.back();
+		traversal.pop_back();
+
+		assert( network->isNetwork() );
+
+		int nkids = network->getNchildren();
+		for( int i=0; i< nkids; i++ )
+		{
+			OP_Node *node = network->getChild(i);
+			OBJ_Node *obj = node->castToOBJNode();
+			if( obj )
+			{
+				if( obj->castToOBJLight() )
+				{
+					o_lights.push_back(obj);
+				}
+			}
+
+			if( !node->isNetwork() )
+				continue;
+
+			OP_Network *kidnet = (OP_Network *)node;
+			if( kidnet->getNchildren() )
+			{
+				traversal.push_back( kidnet );
+			}
+		}
+	}
+}

@@ -2,6 +2,7 @@
 
 class context;
 class exporter;
+class OBJ_Node;
 class OP_Node;
 
 #include <vector>
@@ -14,6 +15,7 @@ class scene
 {
 public:
 	static void convert_to_nsi( const context & );
+	static void find_lights( std::vector<OBJ_Node*>& o_lights );
 
 private:
 	static void scan(
