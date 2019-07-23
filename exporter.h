@@ -69,6 +69,7 @@ public:
 	*/
 	void set_as_instanced( void ) { m_instanced = true; }
 
+	OBJ_Node *obj( void ) { return m_object; }
 protected:
 	/**
 		\brief Helper to export attributes lists to NSI.
@@ -95,21 +96,6 @@ protected:
 		int i_n,
 		double i_time,
 		std::vector<const char *> &i_which_ones ) const;
-
-	/**
-		\brief Exports connections to the proper sets to implement light linking.
-
-		The required NSI sets are created along the way.
-
-		\param i_categories
-			The expression that describes the categories of lights that light
-			this object.
-		\param i_attributes_handle
-			The handle of this object's "attributes" NSI node.
-	*/
-	void export_light_categories(
-		const UT_String& i_categories,
-		const std::string& i_attributes_handle)const;
 
 protected:
 	/** Depending on what we are exporting, an OBJ or a VOP node */

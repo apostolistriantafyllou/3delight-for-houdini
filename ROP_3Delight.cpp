@@ -730,8 +730,6 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		HasDepthOfField(),
 		preview);
 
-	scene::find_lights(ctx.m_lights_to_render);
-
 	if(error() < UT_ERROR_ABORT)
 	{
 		executePreRenderScript(tstart);
