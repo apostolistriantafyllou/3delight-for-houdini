@@ -196,10 +196,11 @@ GetTemplates()
 
 	// Image Layers
 
-	static PRM_Name default_image_filename(k_default_image_filename, "Default Image Filename");
-	static PRM_Default default_image_filename_d(0.0f, "3delight/<scene>/image/<scene>_<pass>_#.<ext>");
+	static PRM_Name default_image_filename(k_default_image_filename, "Image Filename");
+	static PRM_Default default_image_filename_d(
+		0.0f, "$HIP/render/$HIPNAME.$OS.$F4.exr");
 
-	static PRM_Name default_image_format(k_default_image_format, "Default Image Format");
+	static PRM_Name default_image_format(k_default_image_format, "Image Format");
 	static PRM_Default default_image_format_d(0.0f, "exr");
 	static PRM_Item default_image_format_i[] =
 	{
@@ -212,7 +213,7 @@ GetTemplates()
 	};
 	static PRM_ChoiceList default_image_format_c(PRM_CHOICELIST_SINGLE, default_image_format_i);
 
-	static PRM_Name default_image_bits(k_default_image_bits, "Default Image Bits");
+	static PRM_Name default_image_bits(k_default_image_bits, "Image Bits");
 	static PRM_Default default_image_bits_d(0.0f, "half");
 	static PRM_Item default_image_bits_i[] =
 	{
@@ -868,12 +869,15 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		evalString(driver, k_default_image_format, 0, 0.0f);
 	}
 
+	UT_String image_file_name;
+	evalString( image_file_name, k_default_image_filename, 0, 0.0f );
+
 	i_ctx.m_nsi.Create("default_driver", "outputdriver");
 	i_ctx.m_nsi.SetAttribute(
 		"default_driver",
 		(
 			NSI::CStringPArg("drivername", driver.c_str()),
-			NSI::CStringPArg("imagefilename", "overlord")
+			NSI::CStringPArg("imagefilename", image_file_name.c_str())
 		) );
 	int nb_aovs = evalInt(k_aov, 0, 0.0f);
 	unsigned sort_key = 0;
@@ -923,7 +927,6 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 FIXME : do the real thing
 
 and the following ROP_3Delight node attributes:
-k_default_image_filename
 k_default_image_format
 k_save_ids_as_cryptomatte
 k_aovs
