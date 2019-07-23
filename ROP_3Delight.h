@@ -54,8 +54,10 @@ private:
 	void ExportGlobals(const context& i_ctx)const;
 	void ExportDefaultMaterial( const context &i_context ) const;
 
+	// Update UI lights from scene lights.
 	void UpdateLights();
-
+	// Gets the light names from the selected one
+	void GetSelectedLights(std::vector<std::string>& o_light_names) const;
 	/// Sets the lights to render in export context
 	void FillSceneElements(context& i_ctx)const;
 

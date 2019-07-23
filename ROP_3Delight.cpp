@@ -922,39 +922,66 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	evalString(filter, k_pixel_filter, 0, 0.0f);
 	double filter_width = evalFloat(k_filter_width, 0, 0.0f);
 
+	std::vector<std::string> light_names;
+	light_names.push_back(""); // no light for the first one
+	GetSelectedLights(light_names);
+
 	for (int i = 0; i < nb_aovs; i++)
 	{
 		const PRM_Template* temp = parm.getMultiParmTemplate(i);
 		const PRM_Name* name = temp->getNamePtr();
 
-		const aovs::desc_aov& desc = aovs::getDescAov(name->getLabel());
+		const aov::description& desc = aov::getDescription(name->getLabel());
 
-		i_ctx.m_nsi.Create(name->getToken(), "outputlayer");
-		i_ctx.m_nsi.SetAttribute(
-			name->getToken(),
-		(
-			NSI::CStringPArg("variablename", desc.m_variable_name.c_str()),
-			NSI::CStringPArg("variablesource", desc.m_variable_source.c_str()),
-			NSI::CStringPArg("scalarformat", scalar_format.c_str()),
-			NSI::CStringPArg("layertype", desc.m_layer_type.c_str()),
-			NSI::IntegerArg("withalpha", (int)desc.m_with_alpha),
-			NSI::CStringPArg("filter", filter.c_str()),
-			NSI::DoubleArg("filterwidth", filter_width),
-			NSI::IntegerArg("sortkey", sort_key++)
-		) );
+		char prefix[12] = "";
+		::sprintf(prefix, "%d", i+1);
 
-		if (scalar_format == "uint8")
+		unsigned nb_light_categories = 1;
+		if (desc.m_support_multilight)
 		{
-			i_ctx.m_nsi.SetAttribute(name->getToken(),
-				NSI::StringArg("colorprofile", "srgb"));
+			nb_light_categories = light_names.size();
 		}
 
-		i_ctx.m_nsi.Connect(
-			name->getToken(), "",
-			"default_screen", "outputlayers");
-		i_ctx.m_nsi.Connect(
-			"default_driver", "",
-			name->getToken(), "outputdrivers");
+		for (unsigned j = 0; j < nb_light_categories; j++)
+		{
+			std::string layer_name = prefix;
+			layer_name += "-";
+			layer_name += desc.m_filename_token;
+			layer_name += "-";
+			layer_name += light_names[j];
+
+			i_ctx.m_nsi.Create(layer_name.c_str(), "outputlayer");
+			i_ctx.m_nsi.SetAttribute(
+				layer_name.c_str(),
+			(
+				NSI::CStringPArg("variablename", desc.m_variable_name.c_str()),
+				NSI::CStringPArg("variablesource", desc.m_variable_source.c_str()),
+				NSI::CStringPArg("scalarformat", scalar_format.c_str()),
+				NSI::CStringPArg("layertype", desc.m_layer_type.c_str()),
+				NSI::IntegerArg("withalpha", (int)desc.m_with_alpha),
+				NSI::CStringPArg("filter", filter.c_str()),
+				NSI::DoubleArg("filterwidth", filter_width),
+				NSI::IntegerArg("sortkey", sort_key++)
+			) );
+
+			if (scalar_format == "uint8")
+			{
+				i_ctx.m_nsi.SetAttribute(layer_name.c_str(),
+					NSI::StringArg("colorprofile", "srgb"));
+			}
+
+			i_ctx.m_nsi.Connect(
+				layer_name.c_str(), "",
+				"default_screen", "outputlayers");
+			if (!light_names[j].empty())
+			{
+				i_ctx.m_nsi.Connect(
+					light_names[j].c_str(), "", layer_name.c_str(), "lightset");
+			}
+			i_ctx.m_nsi.Connect(
+				"default_driver", "",
+				layer_name.c_str(), "outputdrivers");
+		}
 	}
 
 /*
@@ -1016,6 +1043,33 @@ ROP_3Delight::UpdateLights()
 		std::string light_token = light_prefix + suffix;
 		setVisibleState(use_light_token.c_str(), false);
 		setVisibleState(light_token.c_str(), false);
+	}
+}
+
+void
+ROP_3Delight::GetSelectedLights(std::vector<std::string>& o_light_names) const
+{
+	std::string use_light_prefix = k_use_light_set;
+	use_light_prefix.pop_back();
+
+	unsigned nb_lights = evalInt(k_light_sets, 0, 0.0f);
+
+	for (unsigned i = 0; i < nb_lights; i++)
+	{
+		char suffix[12] = "";
+		::sprintf(suffix, "%d", i+1);
+		std::string use_light_token = use_light_prefix + suffix;
+		bool selected = evalInt(use_light_token.c_str(), 0, 0.0f);
+		if (selected)
+		{
+			const PRM_Parm* use_light_parm = getParmPtr(use_light_token.c_str());
+			assert(use_light_parm);
+			const PRM_Template* use_light_tmpl = use_light_parm->getTemplatePtr();
+			assert(use_light_tmpl);
+			const PRM_Name* use_light_name = use_light_tmpl->getNamePtr();
+			assert(use_light_name);
+			o_light_names.push_back(use_light_name->getLabel());
+		}
 	}
 }
 
