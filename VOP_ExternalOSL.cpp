@@ -509,8 +509,7 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 		// If it's a new page, also add it to page_list
 		if(inserted.second)
 		{
-			page_list.push_back(
-				page_list_t::value_type(page_name, &inserted.first->second));
+			page_list.push_back(page_list_t::value_type(page_name, &page));
 		}
 	}
 
