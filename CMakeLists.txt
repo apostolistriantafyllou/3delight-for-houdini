@@ -12,6 +12,7 @@ set( library_name 3Delight_for_Houdini )
 add_library( ${library_name} SHARED
 	ROP_3Delight.cpp
 	VOP_ExternalOSL.cpp
+	aov.cpp
 	camera.cpp
 	curvemesh.cpp
 	exporter.cpp

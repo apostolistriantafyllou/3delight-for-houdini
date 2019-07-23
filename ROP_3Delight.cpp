@@ -1,5 +1,6 @@
 #include "ROP_3Delight.h"
 
+#include "aov.h"
 #include "camera.h"
 #include "scene.h"
 #include "context.h"
@@ -282,14 +283,15 @@ GetTemplates()
 	//// Multi-Light
 
 	static PRM_Name light_sets(k_light_sets, "Light Sets");
-	static PRM_Name use_light_set(k_use_light_set, "Use Light Set");
+	static PRM_Name use_light_set(k_use_light_set, "");
 	static PRM_Default use_light_set_d(false);
 	static PRM_Name light_set(k_light_set, "Light Set");
+	static PRM_Default light_set_d(0.0, "");
 	static PRM_Default nb_lights(10);
 	static PRM_Template light_set_templates[] =
 	{
-		PRM_Template(PRM_TOGGLE|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT, 1, &use_light_set, &use_light_set_d),
-		PRM_Template(PRM_STRING|PRM_TYPE_LABEL_NONE, 1, &light_set),
+		PRM_Template(PRM_TOGGLE|PRM_TYPE_JOIN_NEXT, 1, &use_light_set, &use_light_set_d),
+		PRM_Template(PRM_STRING|PRM_TYPE_LABEL_NONE, 1, &light_set, &light_set_d),
 		PRM_Template()
 	};
 
@@ -301,7 +303,8 @@ GetTemplates()
 	{
 		PRM_Template(PRM_MultiType(PRM_MULTITYPE_SCROLL|PRM_MULTITYPE_NO_CONTROL_UI), light_set_templates, k_one_line*10.0f, &light_sets, &nb_lights),
 		PRM_Template(PRM_TOGGLE, 1, &display_all_lights, &display_all_lights_d),
-		PRM_Template(PRM_CALLBACK, 1, &refresh_lights)
+		PRM_Template(PRM_CALLBACK, 1, &refresh_lights, 0, 0, 0,
+					&ROP_3Delight::refresh_lights_cb)
 	};
 
 	static PRM_Name image_layers_tabs_name("image_layers_tabs");
@@ -494,6 +497,13 @@ ROP_3Delight::alloc(OP_Network* net, const char* name, OP_Operator* op)
 	return new ROP_3Delight(net, name, op);
 }
 
+void
+ROP_3Delight::onCreated()
+{
+	ROP_Node::onCreated();
+	UpdateLights();
+}
+
 int
 ROP_3Delight::add_layer_cb(
 	void* data, int index, fpreal t,
@@ -574,6 +584,15 @@ ROP_3Delight::duplicate_layer_cb(
 			currentParm->setValue(0.0, 0);
 		}
 	}
+	return 1;
+}
+
+int
+ROP_3Delight::refresh_lights_cb(void* data, int index, fpreal t,
+								const PRM_Template* tplate)
+{
+	ROP_3Delight* node = reinterpret_cast<ROP_3Delight*>(data);
+	node->UpdateLights();
 	return 1;
 }
 
@@ -802,6 +821,7 @@ ROP_3Delight::updateParmsFlags()
 	changed |= enableParm(k_remove_layer, enableRemove);
 	changed |= enableParm(k_duplicate_layer, enableDuplicate);
 	changed |= enableParm(k_view_layer, false);
+	changed |= enableParm(k_display_all_lights, false);
 
 	return changed;
 }
@@ -810,6 +830,13 @@ bool
 ROP_3Delight::isPreviewAllowed()
 {
 	return true;
+}
+
+void
+ROP_3Delight::loadFinished()
+{
+	ROP_Node::loadFinished();
+	UpdateLights();
 }
 
 void
@@ -895,15 +922,17 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		const PRM_Template* temp = parm.getMultiParmTemplate(i);
 		const PRM_Name* name = temp->getNamePtr();
 
+		const aovs::desc_aov& desc = aovs::getDescAov(name->getLabel());
+
 		i_ctx.m_nsi.Create(name->getToken(), "outputlayer");
 		i_ctx.m_nsi.SetAttribute(
 			name->getToken(),
 		(
-			NSI::CStringPArg("variablename", name->getLabel()),
-			NSI::CStringPArg("variablesource", "shader"),
+			NSI::CStringPArg("variablename", desc.m_variable_name.c_str()),
+			NSI::CStringPArg("variablesource", desc.m_variable_source.c_str()),
 			NSI::CStringPArg("scalarformat", scalar_format.c_str()),
-			NSI::CStringPArg("layertype", "color"),
-			NSI::IntegerArg("withalpha", 1),
+			NSI::CStringPArg("layertype", desc.m_layer_type.c_str()),
+			NSI::IntegerArg("withalpha", (int)desc.m_with_alpha),
 			NSI::CStringPArg("filter", filter.c_str()),
 			NSI::DoubleArg("filterwidth", filter_width),
 			NSI::IntegerArg("sortkey", sort_key++)
@@ -934,6 +963,55 @@ k_aovs
 refer to
 https://www.sidefx.com/docs/hdk/_h_d_k__node_intro__working_with_parameters.html
 */
+}
+
+void
+ROP_3Delight::UpdateLights()
+{
+	m_lights.clear();
+	scene::find_lights(m_lights);
+
+	std::string use_light_prefix = k_use_light_set;
+	use_light_prefix.pop_back();
+	std::string light_prefix = k_light_set;
+	light_prefix.pop_back();
+
+	PRM_Parm& light_sets_parm = getParm(k_light_sets);
+	unsigned nb_lights = evalInt(k_light_sets, 0, 0.0f);
+
+	for (unsigned i = 0; i < m_lights.size(); i++)
+	{
+		// Create a new item if needed
+		if (i >= nb_lights)
+			light_sets_parm.insertMultiParmItem(light_sets_parm.getMultiParmNumItems());
+		char suffix[12] = "";
+		::sprintf(suffix, "%d", i+1);
+		std::string use_light_token = use_light_prefix + suffix;
+		std::string light_token = light_prefix + suffix;
+
+		setString(m_lights[i]->getFullPath(), CH_STRING_LITERAL,
+					light_token.c_str(), 0, 0.0);
+		setVisibleState(light_token.c_str(), false);
+
+		PRM_Parm* use_light_parm = getParmPtr(use_light_token.c_str());
+		assert(use_light_parm);
+		PRM_Template* use_light_tmpl = use_light_parm->getTemplatePtr();
+		assert(use_light_tmpl);
+		PRM_Name* use_light_name = use_light_tmpl->getNamePtr();
+		assert(use_light_name);
+		use_light_name->setLabel(m_lights[i]->getFullPath().toStdString().c_str());
+	}
+	// All non used items should be invisible
+	nb_lights = evalInt(k_light_sets, 0, 0.0f);
+	for (unsigned i = m_lights.size(); i < nb_lights; i++)
+	{
+		char suffix[12] = "";
+		::sprintf(suffix, "%d", i+1);
+		std::string use_light_token = use_light_prefix + suffix;
+		std::string light_token = light_prefix + suffix;
+		setVisibleState(use_light_token.c_str(), false);
+		setVisibleState(light_token.c_str(), false);
+	}
 }
 
 bool

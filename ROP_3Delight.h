@@ -3,10 +3,13 @@
 
 #include <ROP/ROP_Node.h>
 
+#include <vector>
+
 namespace NSI { class Context; class DynamicAPI; }
 
 class context;
 class OBJ_Camera;
+class OBJ_Node;
 class exporter;
 
 class ROP_3Delight : public ROP_Node
@@ -19,12 +22,15 @@ public:
 
 	/** \brief Returns true if motion blur is enabled. */
 	bool HasMotionBlur()const;
+	virtual void onCreated();
 
 	static int add_layer_cb(void* data, int index, fpreal t,
 						   const PRM_Template* tplate);
 	static int remove_layer_cb(void* data, int index, fpreal t,
 								const PRM_Template* tplate);
 	static int duplicate_layer_cb(void* data, int index, fpreal t,
+								const PRM_Template* tplate);
+	static int refresh_lights_cb(void* data, int index, fpreal t,
 								const PRM_Template* tplate);
 
 protected:
@@ -39,6 +45,7 @@ protected:
 	virtual bool updateParmsFlags();
 	/// Makes the "Render to MPlay" button visible.
 	virtual bool isPreviewAllowed();
+	virtual void loadFinished();
 
 private:
 	static void register_mplay_driver( NSI::DynamicAPI &i_api );
@@ -46,6 +53,8 @@ private:
 	void ExportOutputs(const context& i_ctx)const;
 	void ExportGlobals(const context& i_ctx)const;
 	void ExportDefaultMaterial( const context &i_context ) const;
+
+	void UpdateLights();
 
 	bool HasSpeedBoost()const;
 	float GetResolutionFactor()const;
@@ -56,6 +65,7 @@ private:
 	bool HasDepthOfField()const;
 
 	fpreal m_end_time;
+	std::vector<OBJ_Node*> m_lights;
 };
 
 #endif
