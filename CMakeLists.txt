@@ -35,7 +35,7 @@ target_include_directories( ${library_name} PRIVATE "$ENV{DELIGHT}/include"  )
 
 # Link against the Houdini libraries, and add required include directories and
 # compile definitions.
-target_link_libraries( ${library_name} Houdini tbb )
+target_link_libraries( ${library_name} Houdini)
 
 # This will get the destination directory for the installation.
 houdini_get_default_install_dir( _installdir )
