@@ -40,6 +40,7 @@ static const char* k_max_refraction_depth = "max_refraction_depth";
 static const char* k_max_hair_depth = "max_hair_depth";
 static const char* k_max_distance = "max_distance";
 static const char* k_camera = "camera";
+static const char* k_objects_to_render = "objects_to_render";
 static const char* k_lights_to_render = "lights_to_render";
 static const char* k_default_image_filename = "default_image_filename";
 static const char* k_default_image_format = "default_image_format";
@@ -169,19 +170,22 @@ GetTemplates()
 	static PRM_Name camera(k_camera, "Camera");
 	static PRM_Default camera_d(0.0f, "/obj/cam1");
 
+	static PRM_Name objects_to_render(k_objects_to_render, "Objects to Render");
+	static PRM_Default objects_to_render_d(0.0f, "*");
+
 	static PRM_Name lights_to_render(k_lights_to_render, "Lights to Render");
 	static PRM_Default lights_to_render_d(0.0f, "*");
 
 	static std::vector<PRM_Template> scene_elements_templates =
 	{
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &camera, &camera_d, nullptr, nullptr, nullptr, &PRM_SpareData::objCameraPath),
+		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &objects_to_render, &objects_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objGeometryPath),
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &lights_to_render, &lights_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objLightPath)
 	};
 
 /*
 	Environment
 	Atmosphere
-	Objects To Render
 
 	//? Frame range
 
@@ -753,6 +757,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		fps,
 		HasDepthOfField(),
 		preview,
+		OP_BundlePattern::allocPattern(GetObjectsToRender()),
 		OP_BundlePattern::allocPattern(GetLightsToRender()));
 
 	FillLightsToRender(ctx);
@@ -778,6 +783,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	nsi.End();
 
 	OP_BundlePattern::freePattern(ctx.m_lights_to_render_pattern);
+	OP_BundlePattern::freePattern(ctx.m_objects_to_render_pattern);
 
 	return 1;
 }
@@ -1186,6 +1192,14 @@ bool
 ROP_3Delight::HasDepthOfField()const
 {
 	return !(HasSpeedBoost() && evalInt(k_disable_depth_of_field, 0, 0.0f));
+}
+
+UT_String
+ROP_3Delight::GetObjectsToRender()const
+{
+	UT_String objects_pattern;
+	evalString(objects_pattern, k_objects_to_render, 0, 0.0f);
+	return objects_pattern;
 }
 
 UT_String

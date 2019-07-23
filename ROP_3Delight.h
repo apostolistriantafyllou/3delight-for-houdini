@@ -68,6 +68,7 @@ private:
 	OBJ_Camera* GetCamera()const;
 	float GetShutterInterval(float i_time)const;
 	bool HasDepthOfField()const;
+	UT_String GetObjectsToRender()const;
 	UT_String GetLightsToRender()const;
 
 	fpreal m_end_time;

@@ -205,6 +205,11 @@ void scene::process_node(
 		return;
 	}
 
+	if(!i_context.m_objects_to_render_pattern->match(obj, nullptr, true))
+	{
+		return;
+	}
+
 	SOP_Node *sop = obj->getRenderSopPtr();
 
 	if( !sop )

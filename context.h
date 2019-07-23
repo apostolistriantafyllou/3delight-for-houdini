@@ -26,6 +26,7 @@ public:
 		fpreal i_fps,
 		bool i_dof,
 		bool i_preview,
+		OP_BundlePattern* i_objects_to_render_pattern,
 		OP_BundlePattern* i_lights_to_render_pattern)
 	:
 		m_nsi(i_nsi),
@@ -36,6 +37,7 @@ public:
 		m_shutter(i_shutter_interval * m_frame_duration),
 		m_dof(i_dof),
 		m_preview(i_preview),
+		m_objects_to_render_pattern(i_objects_to_render_pattern),
 		m_lights_to_render_pattern(i_lights_to_render_pattern)
 	{
 	}
@@ -53,6 +55,7 @@ public:
 	bool m_dof;
 	bool m_preview;
 
+	OP_BundlePattern* m_objects_to_render_pattern;
 	OP_BundlePattern* m_lights_to_render_pattern;
 	std::vector<OBJ_Node*> m_lights_to_render;
 
