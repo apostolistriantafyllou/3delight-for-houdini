@@ -335,21 +335,20 @@ void scene::convert_to_nsi( const context &i_context )
 	}
 
 	/*
-		Scene export done with the exception of light linking.
+		Scene export is done, with the exception of light linking.
 
-		Cache of "lightcategories" expressions that already have a matching NSI
+		Remember "lightcategories" expressions that already have a matching NSI
 		"set" node in the scene. All lights are on by default, so light linking
 		is used to turn them off. This requires that the NSI sets we have
 		exported contains the *complement* of their corresponding expression.
-		Without this cache, we would have to test every object's light
-		categories expression against every light's categories list, which would
-		be a waste because those expressions tend be re-used on multiple
-		objects.
+		Without this set, we would have to test every object's light categories
+		expression against every light's categories list, which would be a
+		waste because those expressions tend be re-used on multiple objects.
 	*/
 	std::set<std::string> exported_lights_categories;
 
 	std::vector<OBJ_Node*> lights_to_render;
-	find_lights( lights_to_render );
+	find_lights( *i_context.m_lights_to_render_pattern, lights_to_render );
 
 	for( auto &exporter : to_export )
 	{
@@ -361,7 +360,9 @@ void scene::convert_to_nsi( const context &i_context )
 	}
 }
 
-void scene::find_lights( std::vector<OBJ_Node*>& o_lights )
+void scene::find_lights(
+	const OP_BundlePattern &i_light_pattern,
+	std::vector<OBJ_Node*>& o_lights )
 {
 	/* A traversal stack to avoid recursion */
 	std::vector< OP_Node * > traversal;
@@ -369,10 +370,6 @@ void scene::find_lights( std::vector<OBJ_Node*>& o_lights )
 	OP_Node *our_dear_leader = OPgetDirector();
 	traversal.push_back( our_dear_leader->findNode( "/obj") );
 
-	/*
-		After this while loop, to_export will be filled with the OBJs
-		and the VOPs to convert to NSI.
-	*/
 	while( traversal.size() )
 	{
 		OP_Node *network = traversal.back();
@@ -385,9 +382,9 @@ void scene::find_lights( std::vector<OBJ_Node*>& o_lights )
 		{
 			OP_Node *node = network->getChild(i);
 			OBJ_Node *obj = node->castToOBJNode();
-			if( obj )
+			if( obj && obj->castToOBJLight() )
 			{
-				if( obj->castToOBJLight() )
+				if( i_light_pattern.match(obj, nullptr, true))
 				{
 					o_lights.push_back(obj);
 				}

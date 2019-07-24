@@ -58,8 +58,6 @@ private:
 	void UpdateLights();
 	// Gets the light names from the selected one
 	void GetSelectedLights(std::vector<std::string>& o_light_names) const;
-	/// Sets the lights to render in export context
-	void FillLightsToRender(context& i_ctx)const;
 
 	bool HasSpeedBoost()const;
 	float GetResolutionFactor()const;

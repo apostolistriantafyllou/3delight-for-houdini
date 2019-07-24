@@ -5,6 +5,7 @@ class exporter;
 class OBJ_Node;
 class OP_Node;
 class UT_String;
+class OP_BundlePattern;
 
 namespace NSI { class Context; }
 
@@ -19,7 +20,9 @@ class scene
 {
 public:
 	static void convert_to_nsi( const context & );
-	static void find_lights( std::vector<OBJ_Node*>& o_lights );
+	static void find_lights(
+		const OP_BundlePattern &i_pattern,
+		std::vector<OBJ_Node*>& o_lights );
 
 private:
 	static void scan(

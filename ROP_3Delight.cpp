@@ -765,8 +765,6 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		OP_BundlePattern::allocPattern(GetObjectsToRender()),
 		OP_BundlePattern::allocPattern(GetLightsToRender()));
 
-	FillLightsToRender(ctx);
-
 	if(error() < UT_ERROR_ABORT)
 	{
 		executePreRenderScript(tstart);
@@ -1015,7 +1013,12 @@ void
 ROP_3Delight::UpdateLights()
 {
 	m_lights.clear();
-	scene::find_lights(m_lights);
+
+	auto pattern = OP_BundlePattern::allocPattern(GetObjectsToRender());
+
+	scene::find_lights(*pattern, m_lights);
+
+	OP_BundlePattern::freePattern( pattern );
 
 	std::string use_light_prefix = k_use_light_set;
 	use_light_prefix.pop_back();
@@ -1083,31 +1086,6 @@ ROP_3Delight::GetSelectedLights(std::vector<std::string>& o_light_names) const
 			const PRM_Name* use_light_name = use_light_tmpl->getNamePtr();
 			assert(use_light_name);
 			o_light_names.push_back(use_light_name->getLabel());
-		}
-	}
-}
-
-void
-ROP_3Delight::FillLightsToRender(context& io_ctx)const
-{
-	io_ctx.m_lights_to_render.clear();
-	if(io_ctx.m_lights_to_render_pattern->isNullPattern())
-	{
-		return;
-	}
-
-	scene::find_lights(io_ctx.m_lights_to_render);
-	if(io_ctx.m_lights_to_render_pattern->isAllPattern())
-	{
-		return;
-	}
-
-	for(OBJ_Node*& light : io_ctx.m_lights_to_render)
-	{
-		if(!io_ctx.m_lights_to_render_pattern->match(light, nullptr, true))
-		{
-			light = io_ctx.m_lights_to_render.back();
-			io_ctx.m_lights_to_render.pop_back();
 		}
 	}
 }
@@ -1202,7 +1180,7 @@ ROP_3Delight::HasDepthOfField()const
 UT_String
 ROP_3Delight::GetObjectsToRender()const
 {
-	UT_String objects_pattern;
+	UT_String objects_pattern("*");
 	evalString(objects_pattern, k_objects_to_render, 0, 0.0f);
 	return objects_pattern;
 }
@@ -1210,7 +1188,7 @@ ROP_3Delight::GetObjectsToRender()const
 UT_String
 ROP_3Delight::GetLightsToRender()const
 {
-	UT_String lights_pattern;
+	UT_String lights_pattern("*");
 	evalString(lights_pattern, k_lights_to_render, 0, 0.0f);
 	return lights_pattern;
 }
