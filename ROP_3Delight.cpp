@@ -238,6 +238,9 @@ GetTemplates()
 	static PRM_Name save_ids_as_cryptomatte(k_save_ids_as_cryptomatte, "Save IDs as Cryptomatte");
 	static PRM_Default save_ids_as_cryptomatte_d(false);
 
+//	static PRM_Name aovs_titles1("aovs_titles1", "D   F   J                                  \t");
+//	static PRM_Name aovs_titles2("aovs_titles2", "Layer Name                 ");
+
 	static PRM_Name aovs(k_aovs, "Image Layers");
 	static PRM_Name aov(k_aov, "Image Layer (AOV)");
 	static PRM_Name aov_name(k_aov_name, "Ci");
@@ -265,6 +268,8 @@ GetTemplates()
 		PRM_Template(PRM_STRING|PRM_TYPE_LABEL_NONE, 1, &default_image_bits, &default_image_bits_d, &default_image_bits_c),
 		PRM_Template(PRM_TOGGLE, 1, &save_ids_as_cryptomatte, &save_ids_as_cryptomatte_d),
 		PRM_Template(PRM_SEPARATOR, 0, &separator4),
+//		PRM_Template(PRM_LABEL|PRM_TYPE_JOIN_NEXT, 1, &aovs_titles1),
+//		PRM_Template(PRM_LABEL, 1, &aovs_titles2),
 		PRM_Template(PRM_MultiType(PRM_MULTITYPE_SCROLL|PRM_MULTITYPE_NO_CONTROL_UI), aov_templates, k_one_line*6.0f, &aov, &nb_aovs),
 		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &add_layer, 0, 0, 0,
 					&ROP_3Delight::add_layer_cb),
