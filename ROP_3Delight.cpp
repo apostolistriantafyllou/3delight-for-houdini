@@ -9,7 +9,7 @@
 #include "mplay.h"
 
 #include <OBJ/OBJ_Camera.h>
-#include <OP/OP_Bundle.h>
+#include <OP/OP_BundlePattern.h>
 #include <OP/OP_Director.h>
 #include <OP/OP_OperatorTable.h>
 #include <PRM/PRM_Include.h>
@@ -752,9 +752,10 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		GetShutterInterval(tstart),
 		fps,
 		HasDepthOfField(),
-		preview);
+		preview,
+		OP_BundlePattern::allocPattern(GetLightsToRender()));
 
-	FillSceneElements(ctx);
+	FillLightsToRender(ctx);
 
 	if(error() < UT_ERROR_ABORT)
 	{
@@ -775,6 +776,8 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	}
 
 	nsi.End();
+
+	OP_BundlePattern::freePattern(ctx.m_lights_to_render_pattern);
 
 	return 1;
 }
@@ -1074,28 +1077,26 @@ ROP_3Delight::GetSelectedLights(std::vector<std::string>& o_light_names) const
 }
 
 void
-ROP_3Delight::FillSceneElements(context& io_ctx)const
+ROP_3Delight::FillLightsToRender(context& io_ctx)const
 {
 	io_ctx.m_lights_to_render.clear();
-
-	UT_ValArray<OP_Node*> light_nodes;
+	if(io_ctx.m_lights_to_render_pattern->isNullPattern())
 	{
-		UT_String lights_pattern;
-		evalString(lights_pattern, k_lights_to_render, 0, 0.0f);
-
-		OP_Bundle lights("", true);
-		lights.setStringPattern(lights_pattern);
-
-		lights.getMembers(light_nodes);
+		return;
 	}
 
-	for(unsigned i = 0; i < light_nodes.size(); i++)
+	scene::find_lights(io_ctx.m_lights_to_render);
+	if(io_ctx.m_lights_to_render_pattern->isAllPattern())
 	{
-		OP_Node* op = light_nodes[i];
-		OBJ_Node* obj = op->castToOBJNode();
-		if(obj)
+		return;
+	}
+
+	for(OBJ_Node*& light : io_ctx.m_lights_to_render)
+	{
+		if(!io_ctx.m_lights_to_render_pattern->match(light, nullptr, true))
 		{
-			io_ctx.m_lights_to_render.insert(obj);
+			light = io_ctx.m_lights_to_render.back();
+			io_ctx.m_lights_to_render.pop_back();
 		}
 	}
 }
@@ -1185,6 +1186,14 @@ bool
 ROP_3Delight::HasDepthOfField()const
 {
 	return !(HasSpeedBoost() && evalInt(k_disable_depth_of_field, 0, 0.0f));
+}
+
+UT_String
+ROP_3Delight::GetLightsToRender()const
+{
+	UT_String lights_pattern;
+	evalString(lights_pattern, k_lights_to_render, 0, 0.0f);
+	return lights_pattern;
 }
 
 void ROP_3Delight::register_mplay_driver( NSI::DynamicAPI &i_api )

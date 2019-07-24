@@ -20,6 +20,7 @@
 #include <GT/GT_PrimInstance.h>
 #include <OBJ/OBJ_Camera.h>
 #include <OBJ/OBJ_Node.h>
+#include <OP/OP_BundlePattern.h>
 #include <OP/OP_Director.h>
 #include <SOP/SOP_Node.h>
 #include <UT/UT_String.h>
@@ -186,8 +187,7 @@ void scene::process_node(
 
 	if( obj->castToOBJLight() )
 	{
-		if(i_context.m_lights_to_render.find(obj) !=
-			i_context.m_lights_to_render.end())
+		if(i_context.m_lights_to_render_pattern->match(obj, nullptr, true))
 		{
 			o_to_export.push_back( new light(i_context, obj) );
 		}

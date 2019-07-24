@@ -7,6 +7,7 @@
 #include <set>
 
 class OBJ_Node;
+class OP_BundlePattern;
 
 /**
 	\brief An export context passed around to each exporter. Allows us
@@ -24,7 +25,8 @@ public:
 		fpreal i_shutter_interval,
 		fpreal i_fps,
 		bool i_dof,
-		bool i_preview)
+		bool i_preview,
+		OP_BundlePattern* i_lights_to_render_pattern)
 	:
 		m_nsi(i_nsi),
 		m_start_time(i_start_time),
@@ -33,7 +35,8 @@ public:
 		m_frame_duration(1.0f / i_fps),
 		m_shutter(i_shutter_interval * m_frame_duration),
 		m_dof(i_dof),
-		m_preview(i_preview)
+		m_preview(i_preview),
+		m_lights_to_render_pattern(i_lights_to_render_pattern)
 	{
 	}
 
@@ -50,7 +53,8 @@ public:
 	bool m_dof;
 	bool m_preview;
 
-	std::set<OBJ_Node*> m_lights_to_render;
+	OP_BundlePattern* m_lights_to_render_pattern;
+	std::vector<OBJ_Node*> m_lights_to_render;
 
 	/*
 		Cache of "lightcategories" expressions that already have a matching NSI

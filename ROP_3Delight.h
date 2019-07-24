@@ -59,7 +59,7 @@ private:
 	// Gets the light names from the selected one
 	void GetSelectedLights(std::vector<std::string>& o_light_names) const;
 	/// Sets the lights to render in export context
-	void FillSceneElements(context& i_ctx)const;
+	void FillLightsToRender(context& i_ctx)const;
 
 	bool HasSpeedBoost()const;
 	float GetResolutionFactor()const;
@@ -68,6 +68,7 @@ private:
 	OBJ_Camera* GetCamera()const;
 	float GetShutterInterval(float i_time)const;
 	bool HasDepthOfField()const;
+	UT_String GetLightsToRender()const;
 
 	fpreal m_end_time;
 	std::vector<OBJ_Node*> m_lights;
