@@ -5,6 +5,7 @@
 #include <SYS/SYS_Types.h>
 
 class OBJ_Node;
+class OP_BundlePattern;
 
 /**
 	\brief An export context passed around to each exporter. Allows us
@@ -22,7 +23,9 @@ public:
 		fpreal i_shutter_interval,
 		fpreal i_fps,
 		bool i_dof,
-		bool i_preview)
+		bool i_preview,
+		OP_BundlePattern* i_objects_to_render_pattern,
+		OP_BundlePattern* i_lights_to_render_pattern)
 	:
 		m_nsi(i_nsi),
 		m_start_time(i_start_time),
@@ -31,7 +34,9 @@ public:
 		m_frame_duration(1.0f / i_fps),
 		m_shutter(i_shutter_interval * m_frame_duration),
 		m_dof(i_dof),
-		m_preview(i_preview)
+		m_preview(i_preview),
+		m_objects_to_render_pattern(i_objects_to_render_pattern),
+		m_lights_to_render_pattern(i_lights_to_render_pattern)
 	{
 	}
 
@@ -47,4 +52,8 @@ public:
 	// True if depth-of-field is enabled
 	bool m_dof;
 	bool m_preview;
+
+	OP_BundlePattern* m_objects_to_render_pattern;
+	OP_BundlePattern* m_lights_to_render_pattern;
+	std::vector<OBJ_Node*> m_lights_to_render;
 };

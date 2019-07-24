@@ -1,5 +1,6 @@
 #include "ROP_3Delight.h"
 
+#include "aov.h"
 #include "camera.h"
 #include "scene.h"
 #include "context.h"
@@ -8,6 +9,7 @@
 #include "mplay.h"
 
 #include <OBJ/OBJ_Camera.h>
+#include <OP/OP_BundlePattern.h>
 #include <OP/OP_Director.h>
 #include <OP/OP_OperatorTable.h>
 #include <PRM/PRM_Include.h>
@@ -38,6 +40,8 @@ static const char* k_max_refraction_depth = "max_refraction_depth";
 static const char* k_max_hair_depth = "max_hair_depth";
 static const char* k_max_distance = "max_distance";
 static const char* k_camera = "camera";
+static const char* k_objects_to_render = "objects_to_render";
+static const char* k_lights_to_render = "lights_to_render";
 static const char* k_default_image_filename = "default_image_filename";
 static const char* k_default_image_format = "default_image_format";
 static const char* k_default_image_bits = "default_image_bits";
@@ -166,16 +170,22 @@ GetTemplates()
 	static PRM_Name camera(k_camera, "Camera");
 	static PRM_Default camera_d(0.0f, "/obj/cam1");
 
+	static PRM_Name objects_to_render(k_objects_to_render, "Objects to Render");
+	static PRM_Default objects_to_render_d(0.0f, "*");
+
+	static PRM_Name lights_to_render(k_lights_to_render, "Lights to Render");
+	static PRM_Default lights_to_render_d(0.0f, "*");
+
 	static std::vector<PRM_Template> scene_elements_templates =
 	{
-		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &camera, &camera_d, nullptr, nullptr, nullptr, &PRM_SpareData::objCameraPath)
+		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &camera, &camera_d, nullptr, nullptr, nullptr, &PRM_SpareData::objCameraPath),
+		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &objects_to_render, &objects_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objGeometryPath),
+		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &lights_to_render, &lights_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objLightPath)
 	};
 
 /*
 	Environment
 	Atmosphere
-	Objects To Render
-	Lights To Render
 
 	//? Frame range
 
@@ -228,6 +238,9 @@ GetTemplates()
 	static PRM_Name save_ids_as_cryptomatte(k_save_ids_as_cryptomatte, "Save IDs as Cryptomatte");
 	static PRM_Default save_ids_as_cryptomatte_d(false);
 
+//	static PRM_Name aovs_titles1("aovs_titles1", "D   F   J                                  \t");
+//	static PRM_Name aovs_titles2("aovs_titles2", "Layer Name                 ");
+
 	static PRM_Name aovs(k_aovs, "Image Layers");
 	static PRM_Name aov(k_aov, "Image Layer (AOV)");
 	static PRM_Name aov_name(k_aov_name, "Ci");
@@ -255,6 +268,8 @@ GetTemplates()
 		PRM_Template(PRM_STRING|PRM_TYPE_LABEL_NONE, 1, &default_image_bits, &default_image_bits_d, &default_image_bits_c),
 		PRM_Template(PRM_TOGGLE, 1, &save_ids_as_cryptomatte, &save_ids_as_cryptomatte_d),
 		PRM_Template(PRM_SEPARATOR, 0, &separator4),
+//		PRM_Template(PRM_LABEL|PRM_TYPE_JOIN_NEXT, 1, &aovs_titles1),
+//		PRM_Template(PRM_LABEL, 1, &aovs_titles2),
 		PRM_Template(PRM_MultiType(PRM_MULTITYPE_SCROLL|PRM_MULTITYPE_NO_CONTROL_UI), aov_templates, k_one_line*6.0f, &aov, &nb_aovs),
 		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &add_layer, 0, 0, 0,
 					&ROP_3Delight::add_layer_cb),
@@ -282,14 +297,15 @@ GetTemplates()
 	//// Multi-Light
 
 	static PRM_Name light_sets(k_light_sets, "Light Sets");
-	static PRM_Name use_light_set(k_use_light_set, "Use Light Set");
+	static PRM_Name use_light_set(k_use_light_set, "");
 	static PRM_Default use_light_set_d(false);
 	static PRM_Name light_set(k_light_set, "Light Set");
+	static PRM_Default light_set_d(0.0, "");
 	static PRM_Default nb_lights(10);
 	static PRM_Template light_set_templates[] =
 	{
-		PRM_Template(PRM_TOGGLE|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT, 1, &use_light_set, &use_light_set_d),
-		PRM_Template(PRM_STRING|PRM_TYPE_LABEL_NONE, 1, &light_set),
+		PRM_Template(PRM_TOGGLE|PRM_TYPE_JOIN_NEXT, 1, &use_light_set, &use_light_set_d),
+		PRM_Template(PRM_STRING|PRM_TYPE_LABEL_NONE, 1, &light_set, &light_set_d),
 		PRM_Template()
 	};
 
@@ -301,7 +317,8 @@ GetTemplates()
 	{
 		PRM_Template(PRM_MultiType(PRM_MULTITYPE_SCROLL|PRM_MULTITYPE_NO_CONTROL_UI), light_set_templates, k_one_line*10.0f, &light_sets, &nb_lights),
 		PRM_Template(PRM_TOGGLE, 1, &display_all_lights, &display_all_lights_d),
-		PRM_Template(PRM_CALLBACK, 1, &refresh_lights)
+		PRM_Template(PRM_CALLBACK, 1, &refresh_lights, 0, 0, 0,
+					&ROP_3Delight::refresh_lights_cb)
 	};
 
 	static PRM_Name image_layers_tabs_name("image_layers_tabs");
@@ -494,6 +511,13 @@ ROP_3Delight::alloc(OP_Network* net, const char* name, OP_Operator* op)
 	return new ROP_3Delight(net, name, op);
 }
 
+void
+ROP_3Delight::onCreated()
+{
+	ROP_Node::onCreated();
+	UpdateLights();
+}
+
 int
 ROP_3Delight::add_layer_cb(
 	void* data, int index, fpreal t,
@@ -574,6 +598,15 @@ ROP_3Delight::duplicate_layer_cb(
 			currentParm->setValue(0.0, 0);
 		}
 	}
+	return 1;
+}
+
+int
+ROP_3Delight::refresh_lights_cb(void* data, int index, fpreal t,
+								const PRM_Template* tplate)
+{
+	ROP_3Delight* node = reinterpret_cast<ROP_3Delight*>(data);
+	node->UpdateLights();
 	return 1;
 }
 
@@ -728,7 +761,11 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		GetShutterInterval(tstart),
 		fps,
 		HasDepthOfField(),
-		preview);
+		preview,
+		OP_BundlePattern::allocPattern(GetObjectsToRender()),
+		OP_BundlePattern::allocPattern(GetLightsToRender()));
+
+	FillLightsToRender(ctx);
 
 	if(error() < UT_ERROR_ABORT)
 	{
@@ -749,6 +786,9 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	}
 
 	nsi.End();
+
+	OP_BundlePattern::freePattern(ctx.m_lights_to_render_pattern);
+	OP_BundlePattern::freePattern(ctx.m_objects_to_render_pattern);
 
 	return 1;
 }
@@ -800,6 +840,7 @@ ROP_3Delight::updateParmsFlags()
 	changed |= enableParm(k_remove_layer, enableRemove);
 	changed |= enableParm(k_duplicate_layer, enableDuplicate);
 	changed |= enableParm(k_view_layer, false);
+	changed |= enableParm(k_display_all_lights, false);
 
 	return changed;
 }
@@ -808,6 +849,13 @@ bool
 ROP_3Delight::isPreviewAllowed()
 {
 	return true;
+}
+
+void
+ROP_3Delight::loadFinished()
+{
+	ROP_Node::loadFinished();
+	UpdateLights();
 }
 
 void
@@ -888,37 +936,66 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	evalString(filter, k_pixel_filter, 0, 0.0f);
 	double filter_width = evalFloat(k_filter_width, 0, 0.0f);
 
+	std::vector<std::string> light_names;
+	light_names.push_back(""); // no light for the first one
+	GetSelectedLights(light_names);
+
 	for (int i = 0; i < nb_aovs; i++)
 	{
 		const PRM_Template* temp = parm.getMultiParmTemplate(i);
 		const PRM_Name* name = temp->getNamePtr();
 
-		i_ctx.m_nsi.Create(name->getToken(), "outputlayer");
-		i_ctx.m_nsi.SetAttribute(
-			name->getToken(),
-		(
-			NSI::CStringPArg("variablename", name->getLabel()),
-			NSI::CStringPArg("variablesource", "shader"),
-			NSI::CStringPArg("scalarformat", scalar_format.c_str()),
-			NSI::CStringPArg("layertype", "color"),
-			NSI::IntegerArg("withalpha", 1),
-			NSI::CStringPArg("filter", filter.c_str()),
-			NSI::DoubleArg("filterwidth", filter_width),
-			NSI::IntegerArg("sortkey", sort_key++)
-		) );
+		const aov::description& desc = aov::getDescription(name->getLabel());
 
-		if (scalar_format == "uint8")
+		char prefix[12] = "";
+		::sprintf(prefix, "%d", i+1);
+
+		unsigned nb_light_categories = 1;
+		if (desc.m_support_multilight)
 		{
-			i_ctx.m_nsi.SetAttribute(name->getToken(),
-				NSI::StringArg("colorprofile", "srgb"));
+			nb_light_categories = light_names.size();
 		}
 
-		i_ctx.m_nsi.Connect(
-			name->getToken(), "",
-			"default_screen", "outputlayers");
-		i_ctx.m_nsi.Connect(
-			"default_driver", "",
-			name->getToken(), "outputdrivers");
+		for (unsigned j = 0; j < nb_light_categories; j++)
+		{
+			std::string layer_name = prefix;
+			layer_name += "-";
+			layer_name += desc.m_filename_token;
+			layer_name += "-";
+			layer_name += light_names[j];
+
+			i_ctx.m_nsi.Create(layer_name.c_str(), "outputlayer");
+			i_ctx.m_nsi.SetAttribute(
+				layer_name.c_str(),
+			(
+				NSI::CStringPArg("variablename", desc.m_variable_name.c_str()),
+				NSI::CStringPArg("variablesource", desc.m_variable_source.c_str()),
+				NSI::CStringPArg("scalarformat", scalar_format.c_str()),
+				NSI::CStringPArg("layertype", desc.m_layer_type.c_str()),
+				NSI::IntegerArg("withalpha", (int)desc.m_with_alpha),
+				NSI::CStringPArg("filter", filter.c_str()),
+				NSI::DoubleArg("filterwidth", filter_width),
+				NSI::IntegerArg("sortkey", sort_key++)
+			) );
+
+			if (scalar_format == "uint8")
+			{
+				i_ctx.m_nsi.SetAttribute(layer_name.c_str(),
+					NSI::StringArg("colorprofile", "srgb"));
+			}
+
+			i_ctx.m_nsi.Connect(
+				layer_name.c_str(), "",
+				"default_screen", "outputlayers");
+			if (!light_names[j].empty())
+			{
+				i_ctx.m_nsi.Connect(
+					light_names[j].c_str(), "", layer_name.c_str(), "lightset");
+			}
+			i_ctx.m_nsi.Connect(
+				"default_driver", "",
+				layer_name.c_str(), "outputdrivers");
+		}
 	}
 
 /*
@@ -932,6 +1009,107 @@ k_aovs
 refer to
 https://www.sidefx.com/docs/hdk/_h_d_k__node_intro__working_with_parameters.html
 */
+}
+
+void
+ROP_3Delight::UpdateLights()
+{
+	m_lights.clear();
+	scene::find_lights(m_lights);
+
+	std::string use_light_prefix = k_use_light_set;
+	use_light_prefix.pop_back();
+	std::string light_prefix = k_light_set;
+	light_prefix.pop_back();
+
+	PRM_Parm& light_sets_parm = getParm(k_light_sets);
+	unsigned nb_lights = evalInt(k_light_sets, 0, 0.0f);
+
+	for (unsigned i = 0; i < m_lights.size(); i++)
+	{
+		// Create a new item if needed
+		if (i >= nb_lights)
+			light_sets_parm.insertMultiParmItem(light_sets_parm.getMultiParmNumItems());
+		char suffix[12] = "";
+		::sprintf(suffix, "%d", i+1);
+		std::string use_light_token = use_light_prefix + suffix;
+		std::string light_token = light_prefix + suffix;
+
+		setString(m_lights[i]->getFullPath(), CH_STRING_LITERAL,
+					light_token.c_str(), 0, 0.0);
+		setVisibleState(light_token.c_str(), false);
+
+		PRM_Parm* use_light_parm = getParmPtr(use_light_token.c_str());
+		assert(use_light_parm);
+		PRM_Template* use_light_tmpl = use_light_parm->getTemplatePtr();
+		assert(use_light_tmpl);
+		PRM_Name* use_light_name = use_light_tmpl->getNamePtr();
+		assert(use_light_name);
+		use_light_name->setLabel(m_lights[i]->getFullPath().toStdString().c_str());
+	}
+	// All non used items should be invisible
+	nb_lights = evalInt(k_light_sets, 0, 0.0f);
+	for (unsigned i = m_lights.size(); i < nb_lights; i++)
+	{
+		char suffix[12] = "";
+		::sprintf(suffix, "%d", i+1);
+		std::string use_light_token = use_light_prefix + suffix;
+		std::string light_token = light_prefix + suffix;
+		setVisibleState(use_light_token.c_str(), false);
+		setVisibleState(light_token.c_str(), false);
+	}
+}
+
+void
+ROP_3Delight::GetSelectedLights(std::vector<std::string>& o_light_names) const
+{
+	std::string use_light_prefix = k_use_light_set;
+	use_light_prefix.pop_back();
+
+	unsigned nb_lights = evalInt(k_light_sets, 0, 0.0f);
+
+	for (unsigned i = 0; i < nb_lights; i++)
+	{
+		char suffix[12] = "";
+		::sprintf(suffix, "%d", i+1);
+		std::string use_light_token = use_light_prefix + suffix;
+		bool selected = evalInt(use_light_token.c_str(), 0, 0.0f);
+		if (selected)
+		{
+			const PRM_Parm* use_light_parm = getParmPtr(use_light_token.c_str());
+			assert(use_light_parm);
+			const PRM_Template* use_light_tmpl = use_light_parm->getTemplatePtr();
+			assert(use_light_tmpl);
+			const PRM_Name* use_light_name = use_light_tmpl->getNamePtr();
+			assert(use_light_name);
+			o_light_names.push_back(use_light_name->getLabel());
+		}
+	}
+}
+
+void
+ROP_3Delight::FillLightsToRender(context& io_ctx)const
+{
+	io_ctx.m_lights_to_render.clear();
+	if(io_ctx.m_lights_to_render_pattern->isNullPattern())
+	{
+		return;
+	}
+
+	scene::find_lights(io_ctx.m_lights_to_render);
+	if(io_ctx.m_lights_to_render_pattern->isAllPattern())
+	{
+		return;
+	}
+
+	for(OBJ_Node*& light : io_ctx.m_lights_to_render)
+	{
+		if(!io_ctx.m_lights_to_render_pattern->match(light, nullptr, true))
+		{
+			light = io_ctx.m_lights_to_render.back();
+			io_ctx.m_lights_to_render.pop_back();
+		}
+	}
 }
 
 bool
@@ -1019,6 +1197,22 @@ bool
 ROP_3Delight::HasDepthOfField()const
 {
 	return !(HasSpeedBoost() && evalInt(k_disable_depth_of_field, 0, 0.0f));
+}
+
+UT_String
+ROP_3Delight::GetObjectsToRender()const
+{
+	UT_String objects_pattern;
+	evalString(objects_pattern, k_objects_to_render, 0, 0.0f);
+	return objects_pattern;
+}
+
+UT_String
+ROP_3Delight::GetLightsToRender()const
+{
+	UT_String lights_pattern;
+	evalString(lights_pattern, k_lights_to_render, 0, 0.0f);
+	return lights_pattern;
 }
 
 void ROP_3Delight::register_mplay_driver( NSI::DynamicAPI &i_api )
