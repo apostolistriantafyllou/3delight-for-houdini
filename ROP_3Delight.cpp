@@ -1,12 +1,12 @@
 #include "ROP_3Delight.h"
 
-#include "aov.h"
 #include "camera.h"
-#include "scene.h"
 #include "context.h"
-#include "ui/select_layers_dialog.h"
-#include "shader_library.h"
 #include "mplay.h"
+#include "scene.h"
+#include "shader_library.h"
+#include "ui/aov.h"
+#include "ui/select_layers_dialog.h"
 
 #include <OBJ/OBJ_Camera.h>
 #include <OP/OP_BundlePattern.h>
