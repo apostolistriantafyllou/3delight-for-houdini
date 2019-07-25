@@ -8,8 +8,8 @@ class PRM_Parm;
 class ROP_Node;
 
 /**
-	This dialogue appears when the user clicks "Add" in the image
-	Layers dialoggue.
+	This dialog appears when the user clicks "Add" in the image
+	Layers tab.
 */
 class SelectLayersDialog: public AP_Interface
 {
@@ -25,11 +25,10 @@ private:
 	bool parseDialog();
 	/// Callback for OK button
 	void handleOK(UI_Event* i_event);
-	void updateToggle(const std::string& i_aov_name);
+	void updateToggle(int index, const std::string& i_aov_name);
 	void updateValue(UI_Value& o_value);
 	void addMultiParmItem(PRM_Parm& io_parm, const std::string& i_label);
-	void removeMultiParmItem(
-		PRM_Parm& io_parm, const std::string& i_label, unsigned i_nbItems);
+	void removeMultiParmItem(PRM_Parm& io_parm, const std::string& i_label);
 
 	/// Bound to value for dialog open/close
 	UI_Value m_openValue;
@@ -43,7 +42,7 @@ private:
 	std::vector<UI_Value*> m_values;
 	std::vector<std::string> m_labels;
 	std::vector<std::string> m_symbols;
-	std::vector<unsigned> m_nbItems;
+	std::vector<bool> m_foundItems;
 
 	ROP_Node* m_node;
 };

@@ -46,12 +46,17 @@ static const char* k_default_image_filename = "default_image_filename";
 static const char* k_default_image_format = "default_image_format";
 static const char* k_default_image_bits = "default_image_bits";
 static const char* k_save_ids_as_cryptomatte = "save_ids_as_cryptomatte";
+static const char* k_batch_output_mode = "batch_output_mode";
+static const char* k_interactive_output_mode = "interactive_output_mode";
 static const char* k_aovs = "aovs";
 static const char* k_aov = "aov";
+static const char* k_framebuffer_output = "framebuffer_output_#";
+static const char* k_file_output = "file_output_#";
+static const char* k_jpeg_output = "jpeg_output_#";
+static const char* k_aov_label = "aov_label_#";
 static const char* k_aov_name = "aov_name_#";
+static const char* k_aov_clear = "aov_clear_#";
 static const char* k_add_layer = "add_layer";
-static const char* k_remove_layer = "remove_layer";
-static const char* k_duplicate_layer = "duplicate_layer";
 static const char* k_view_layer = "view_layer";
 static const char* k_ignore_matte_attribute = "ignore_matte_attribute";
 static const char* k_matte_sets = "matte_sets";
@@ -235,29 +240,63 @@ GetTemplates()
 	};
 	static PRM_ChoiceList default_image_bits_c(PRM_CHOICELIST_SINGLE, default_image_bits_i);
 
+	static PRM_Name batch_output_mode(k_batch_output_mode, "Batch Output Mode");
+	static PRM_Default batch_output_mode_d(0);
+	static PRM_Item batch_output_mode_i[] =
+	{
+		PRM_Item("", "Enable file output as selected"),
+		PRM_Item("", "Enable all file output and selected JPEG"),
+		PRM_Item(),
+	};
+	static PRM_ChoiceList batch_output_mode_c(PRM_CHOICELIST_SINGLE, batch_output_mode_i);
+
+	static PRM_Name interactive_output_mode(k_interactive_output_mode, "Interactive Output Mode");
+	static PRM_Default interactive_output_mode_d(0);
+	static PRM_Item interactive_output_mode_i[] =
+	{
+		PRM_Item("", "Enable file output as selected"),
+		PRM_Item("", "Enable file output only for selected layer"),
+		PRM_Item("", "Disable file output"),
+		PRM_Item(),
+	};
+	static PRM_ChoiceList interactive_output_mode_c(PRM_CHOICELIST_SINGLE, interactive_output_mode_i);
+
 	static PRM_Name save_ids_as_cryptomatte(k_save_ids_as_cryptomatte, "Save IDs as Cryptomatte");
 	static PRM_Default save_ids_as_cryptomatte_d(false);
 
-//	static PRM_Name aovs_titles1("aovs_titles1", "D   F   J                                  \t");
-//	static PRM_Name aovs_titles2("aovs_titles2", "Layer Name                 ");
+	static PRM_Name aovs_titles1("aovs_titles1", "D   F   J                                  \t");
+	static PRM_Name aovs_titles2("aovs_titles2", "Layer Name                 ");
 
 	static PRM_Name aovs(k_aovs, "Image Layers");
 	static PRM_Name aov(k_aov, "Image Layer (AOV)");
+	static PRM_Name framebuffer_output(k_framebuffer_output, "Preview");
+	static PRM_Default framebuffer_output_d(true);
+	static PRM_Name file_output(k_file_output, "File");
+	static PRM_Default file_output_d(true);
+	static PRM_Name jpeg_output(k_jpeg_output, " ");
+	static PRM_Default jpeg_output_d(false);
+	static PRM_Name aov_label(k_aov_label, "Ci");
 	static PRM_Name aov_name(k_aov_name, "Ci");
-	static PRM_Default aov_ci_d(false);
+	static PRM_Default aov_name_d(0.0f, "Ci");
+	static PRM_Name aov_clear(k_aov_clear, "Clear");
 //	static PRM_Name override_image_filename
 //	static PRM_Name override_image_format
 //	static PRM_Name override_image_bits
 	static PRM_Default nb_aovs(1);
 	static PRM_Template aov_templates[] =
 	{
-		PRM_Template(PRM_TOGGLE, 1, &aov_name, &aov_ci_d),
+		PRM_Template(PRM_TOGGLE|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT, 1, &framebuffer_output, &framebuffer_output_d),
+		PRM_Template(PRM_TOGGLE|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT, 1, &file_output, &file_output_d),
+		PRM_Template(PRM_TOGGLE|PRM_TYPE_JOIN_NEXT, 1, &jpeg_output, &jpeg_output_d),
+//		PRM_Template(PRM_LABEL|PRM_TYPE_JOIN_NEXT, 1, &aov_label),
+//		PRM_Template(PRM_STRING|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT|PRM_TYPE_INVISIBLE, 1, &aov_name, &aov_name_d),
+		PRM_Template(PRM_STRING|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT, 1, &aov_name, &aov_name_d),
+		PRM_Template(PRM_CALLBACK, 1, &aov_clear, 0, 0, 0,
+					&ROP_3Delight::aov_clear_cb),
 		PRM_Template()
 	};
 
 	static PRM_Name add_layer(k_add_layer, "Add...");
-	static PRM_Name remove_layer(k_remove_layer, "Remove");
-	static PRM_Name duplicate_layer(k_duplicate_layer, "Duplicate");
 	static PRM_Name view_layer(k_view_layer, "View...");
 	static PRM_Name dummy("dummy", "");
 
@@ -267,16 +306,14 @@ GetTemplates()
 		PRM_Template(PRM_STRING|PRM_TYPE_JOIN_NEXT, 1, &default_image_format, &default_image_format_d, &default_image_format_c),
 		PRM_Template(PRM_STRING|PRM_TYPE_LABEL_NONE, 1, &default_image_bits, &default_image_bits_d, &default_image_bits_c),
 		PRM_Template(PRM_TOGGLE, 1, &save_ids_as_cryptomatte, &save_ids_as_cryptomatte_d),
+		PRM_Template(PRM_ORD, 1, &batch_output_mode, &batch_output_mode_d, &batch_output_mode_c),
+		PRM_Template(PRM_ORD, 1, &interactive_output_mode, &interactive_output_mode_d, &interactive_output_mode_c),
 		PRM_Template(PRM_SEPARATOR, 0, &separator4),
-//		PRM_Template(PRM_LABEL|PRM_TYPE_JOIN_NEXT, 1, &aovs_titles1),
-//		PRM_Template(PRM_LABEL, 1, &aovs_titles2),
+		PRM_Template(PRM_LABEL|PRM_TYPE_JOIN_NEXT, 1, &aovs_titles1),
+		PRM_Template(PRM_LABEL, 1, &aovs_titles2),
 		PRM_Template(PRM_MultiType(PRM_MULTITYPE_SCROLL|PRM_MULTITYPE_NO_CONTROL_UI), aov_templates, k_one_line*6.0f, &aov, &nb_aovs),
 		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &add_layer, 0, 0, 0,
 					&ROP_3Delight::add_layer_cb),
-		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &remove_layer, 0, 0, 0,
-					&ROP_3Delight::remove_layer_cb),
-		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &duplicate_layer, 0, 0, 0,
-					&ROP_3Delight::duplicate_layer_cb),
 		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &view_layer),
 		PRM_Template(PRM_LABEL, 1, &dummy),
 		PRM_Template(PRM_SEPARATOR, 0, &separator5)
@@ -516,6 +553,61 @@ ROP_3Delight::onCreated()
 {
 	ROP_Node::onCreated();
 	UpdateLights();
+	enableParm(k_batch_output_mode, false);
+	enableParm(k_interactive_output_mode, false);
+}
+
+int
+ROP_3Delight::aov_clear_cb(void* data, int index, fpreal t,
+							const PRM_Template* tplate)
+{
+	const PRM_Name* name = tplate->getNamePtr();
+
+	std::string token = name->getToken();
+	size_t pos = token.find_last_of('_');
+	UT_String token_number =
+		token.assign(token.begin()+pos+1, token.end()).c_str();
+	int number = token_number.toInt();
+
+	ROP_3Delight* node = reinterpret_cast<ROP_3Delight*>(data);
+
+	PRM_Parm& parm = node->getParm(k_aov);
+#if 0
+	int size = parm.getMultiParmNumItems();
+
+	PRM_Parm* currParm = parm.getMultiParm(i-1);
+	assert(currParm);
+	PRM_ParmList* pList = currParm->getOwner();
+	assert(pList);
+
+	PRM_Parm* label = pList->getParmPtr(aov::getAovLabelToken(i-1));
+	assert(label);
+	PRM_Template* labelTemp = label->getTemplatePtr();
+	assert(labelTemp);
+	PRM_Name* labelName = labelTemp->getNamePtr();
+	assert(labelName);
+	// PATCH: houdini don't update labels correctly, only tokens/values
+	for (int j = number; j < size; j++)
+	{
+		PRM_Parm* currParm2 = parm.getMultiParm(j);
+		assert(currParm2);
+		PRM_ParmList* pList2 = currParm2->getOwner();
+		assert(pList2);
+
+		PRM_Parm* label2 = pList2->getParmPtr(aov::getAovLabelToken(j));
+		assert(label2);
+		PRM_Template* labelTemp2 = label2->getTemplatePtr();
+		assert(labelTemp2);
+		PRM_Name* labelName2 = labelTemp2->getNamePtr();
+		assert(labelName2);
+
+		labelName->setLabel(labelName2->getLabel());
+		labelName = labelName2;
+	}
+#endif
+	parm.removeMultiParmItem(number-1);
+	
+	return 1;
 }
 
 int
@@ -531,73 +623,6 @@ ROP_3Delight::add_layer_cb(
 			"3Delight for Houdini: Could not parse select_layers_ui.ui file\n");
 	}
 
-	return 1;
-}
-
-int
-ROP_3Delight::remove_layer_cb(
-	void* data, int index, fpreal t,
-	const PRM_Template* tplate)
-{
-	ROP_3Delight* node = reinterpret_cast<ROP_3Delight*>(data);
-
-	PRM_Parm& parm = node->getParm(k_aov);
-	int size = parm.getMultiParmNumItems();
-
-	for (int i = size-1; i >= 0; i--)
-	{
-		PRM_Template* temp = parm.getMultiParmTemplate(i);
-		PRM_Name* name = temp->getNamePtr();
-		bool value = node->evalInt(name->getToken(), 0, 0.0f);
-		if (value)
-		{
-			// PATCH: houdini don't update labels correctly, only tokens
-			for (int j = i+1; j < size; j++)
-			{
-				PRM_Template* temp2 = parm.getMultiParmTemplate(j);
-				PRM_Name* name2 = temp2->getNamePtr();
-				name->setLabel(name2->getLabel());
-				name = name2;
-			}
-			parm.removeMultiParmItem(i);
-		}
-	}
-	return 1;
-}
-
-int
-ROP_3Delight::duplicate_layer_cb(
-	void* data, int index, fpreal t,
-	const PRM_Template* tplate)
-{
-	ROP_Node* node = reinterpret_cast<ROP_Node*>(data);
-
-	PRM_Parm& parm = node->getParm(k_aov);
-	int size = parm.getMultiParmNumItems();
-
-	for (int i = 0; i < size; i++)
-	{
-		PRM_Template* temp = parm.getMultiParmTemplate(i);
-		PRM_Name* name = temp->getNamePtr();
-		bool value = node->evalInt(name->getToken(), 0, 0.0f);
-		if (value)
-		{
-			parm.insertMultiParmItem(parm.getMultiParmNumItems());
-
-			int lastIndex = parm.getMultiParmNumItems() - 1;
-			PRM_Parm* lastParm = parm.getMultiParm(lastIndex);
-			lastParm->setValue(0.0, 1);
-
-			PRM_Template* lastTemp = parm.getMultiParmTemplate(lastIndex);
-			PRM_Name* oldName = lastTemp->getNamePtr();
-
-			PRM_Name* newName = new PRM_Name(oldName->getToken(), name->getLabel());
-			lastTemp->setNamePtr(newName);
-
-			PRM_Parm* currentParm = parm.getMultiParm(i);
-			currentParm->setValue(0.0, 0);
-		}
-	}
 	return 1;
 }
 
@@ -823,20 +848,13 @@ ROP_3Delight::updateParmsFlags()
 	PRM_Parm& parm = getParm(k_aov);
 	int size = parm.getMultiParmNumItems();
 
-	int nbSel = 0;
+	if (size > 0) changed |= enableParm("aov_clear_1", size > 1);
+
 	for (int i = 0; i < size; i++)
 	{
-		PRM_Template* temp = parm.getMultiParmTemplate(i);
-		PRM_Name* name = temp->getNamePtr();
-		bool value = evalInt(name->getToken(), 0, 0.0f);
-		if (value) nbSel++;
+		changed |= enableParm(aov::getAovStrToken(i), false);
 	}
 
-	bool enableRemove = nbSel > 0 && size > 1;
-	bool enableDuplicate = nbSel > 0;
-
-	changed |= enableParm(k_remove_layer, enableRemove);
-	changed |= enableParm(k_duplicate_layer, enableDuplicate);
 	changed |= enableParm(k_view_layer, false);
 	changed |= enableParm(k_display_all_lights, false);
 
@@ -925,7 +943,6 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		) );
 	int nb_aovs = evalInt(k_aov, 0, 0.0f);
 	unsigned sort_key = 0;
-	const PRM_Parm& parm = getParm(k_aov);
 
 	UT_String scalar_format;
 	evalString(scalar_format, k_default_image_bits, 0, 0.0f);
@@ -940,10 +957,10 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 	for (int i = 0; i < nb_aovs; i++)
 	{
-		const PRM_Template* temp = parm.getMultiParmTemplate(i);
-		const PRM_Name* name = temp->getNamePtr();
+		UT_String label;
+		evalString(label, aov::getAovStrToken(i), 0, 0.0f);
 
-		const aov::description& desc = aov::getDescription(name->getLabel());
+		const aov::description& desc = aov::getDescription(label.toStdString());
 
 		char prefix[12] = "";
 		::sprintf(prefix, "%d", i+1);

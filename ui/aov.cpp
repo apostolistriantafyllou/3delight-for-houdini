@@ -34,3 +34,29 @@ aov::getDescription(const std::string& i_ui_name)
 	static aov::description dummy;
 	return dummy;
 }
+
+const char*
+aov::getAovLabelToken(int index)
+{
+	static std::string label_token;
+	label_token = "aov_label_";
+
+	char suffix[12] = "";
+	::sprintf(suffix, "%d", index+1);
+	label_token += suffix;
+
+	return label_token.c_str();
+}
+
+const char*
+aov::getAovStrToken(int index)
+{
+	static std::string str_token;
+	str_token = "aov_name_";
+
+	char suffix[12] = "";
+	::sprintf(suffix, "%d", index+1);
+	str_token += suffix;
+
+	return str_token.c_str();
+}

@@ -25,4 +25,8 @@ namespace aov
 
 	// Returns the aov's description from the specified ui name
 	const description& getDescription(const std::string& i_ui_name);
+	// Returns the aov's label token for the specified index
+	const char* getAovLabelToken(int index);
+	// Returns the aov's string token for the specified index
+	const char* getAovStrToken(int index);
 }
