@@ -11,6 +11,7 @@ namespace NSI { class Context; }
 
 #include <vector>
 #include <set>
+#include <string>
 
 /**
 	\brief Converts the scene (geo, shaders, light, cameras) into its
