@@ -66,6 +66,12 @@ private:
 	void ExportGlobals(const context& i_ctx)const;
 	void ExportDefaultMaterial( const context &i_context ) const;
 
+	void BuildImageJpegName(
+		const UT_String& i_image_file_name,
+		const std::string& i_light_name,
+		const std::string& i_aov_token,
+		UT_String& o_image_jpeg_name) const;
+
 	// Update UI lights from scene lights.
 	void UpdateLights();
 	// Gets the light names from the selected one
