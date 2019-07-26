@@ -1,6 +1,8 @@
 #ifndef __ROP_3Delight_h__
 #define __ROP_3Delight_h__
 
+#include "ui/aov.h"
+
 #include <ROP/ROP_Node.h>
 
 #include <vector>
@@ -10,6 +12,7 @@ namespace NSI { class Context; class DynamicAPI; }
 class context;
 class OBJ_Camera;
 class OBJ_Node;
+class UT_String;
 class exporter;
 
 class ROP_3Delight : public ROP_Node
@@ -49,6 +52,17 @@ private:
 	static void register_mplay_driver( NSI::DynamicAPI &i_api );
 
 	void ExportOutputs(const context& i_ctx)const;
+	void ExportOneOutputLayer(
+		const context& i_ctx,
+		const std::string& i_layer_handle,
+		const aov::description& i_desc,
+		const UT_String& i_scalar_format,
+		const UT_String& i_filter,
+		double i_filter_width,
+		const std::string& i_screen_handle,
+		const std::string& i_light_handle,
+		const std::string& i_driver_handle,
+		unsigned& io_sort_key) const;
 	void ExportGlobals(const context& i_ctx)const;
 	void ExportDefaultMaterial( const context &i_context ) const;
 

@@ -5,7 +5,6 @@
 #include "mplay.h"
 #include "scene.h"
 #include "shader_library.h"
-#include "ui/aov.h"
 #include "ui/select_layers_dialog.h"
 
 #include <OBJ/OBJ_Camera.h>
@@ -981,37 +980,9 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 			layer_name += "-";
 			layer_name += light_names[j];
 
-			i_ctx.m_nsi.Create(layer_name.c_str(), "outputlayer");
-			i_ctx.m_nsi.SetAttribute(
-				layer_name.c_str(),
-			(
-				NSI::CStringPArg("variablename", desc.m_variable_name.c_str()),
-				NSI::CStringPArg("variablesource", desc.m_variable_source.c_str()),
-				NSI::CStringPArg("scalarformat", scalar_format.c_str()),
-				NSI::CStringPArg("layertype", desc.m_layer_type.c_str()),
-				NSI::IntegerArg("withalpha", (int)desc.m_with_alpha),
-				NSI::CStringPArg("filter", filter.c_str()),
-				NSI::DoubleArg("filterwidth", filter_width),
-				NSI::IntegerArg("sortkey", sort_key++)
-			) );
-
-			if (scalar_format == "uint8")
-			{
-				i_ctx.m_nsi.SetAttribute(layer_name.c_str(),
-					NSI::StringArg("colorprofile", "srgb"));
-			}
-
-			i_ctx.m_nsi.Connect(
-				layer_name.c_str(), "",
-				"default_screen", "outputlayers");
-			if (!light_names[j].empty())
-			{
-				i_ctx.m_nsi.Connect(
-					light_names[j].c_str(), "", layer_name.c_str(), "lightset");
-			}
-			i_ctx.m_nsi.Connect(
-				"default_driver", "",
-				layer_name.c_str(), "outputdrivers");
+			ExportOneOutputLayer(
+				i_ctx, layer_name, desc, scalar_format, filter, filter_width,
+				"default_screen", light_names[j], "default_driver", sort_key);
 		}
 	}
 
@@ -1026,6 +997,54 @@ k_aovs
 refer to
 https://www.sidefx.com/docs/hdk/_h_d_k__node_intro__working_with_parameters.html
 */
+}
+
+void
+ROP_3Delight::ExportOneOutputLayer(
+	const context& i_ctx,
+	const std::string& i_layer_handle,
+	const aov::description& i_desc,
+	const UT_String& i_scalar_format,
+	const UT_String& i_filter,
+	double i_filter_width,
+	const std::string& i_screen_handle,
+	const std::string& i_light_handle,
+	const std::string& i_driver_handle,
+	unsigned& io_sort_key) const
+{
+	i_ctx.m_nsi.Create(i_layer_handle.c_str(), "outputlayer");
+	i_ctx.m_nsi.SetAttribute(
+		i_layer_handle.c_str(),
+	(
+		NSI::CStringPArg("variablename", i_desc.m_variable_name.c_str()),
+		NSI::CStringPArg("variablesource", i_desc.m_variable_source.c_str()),
+		NSI::CStringPArg("scalarformat", i_scalar_format.c_str()),
+		NSI::CStringPArg("layertype", i_desc.m_layer_type.c_str()),
+		NSI::IntegerArg("withalpha", (int)i_desc.m_with_alpha),
+		NSI::CStringPArg("filter", i_filter.c_str()),
+		NSI::DoubleArg("filterwidth", i_filter_width),
+		NSI::IntegerArg("sortkey", io_sort_key++)
+	) );
+
+	if (i_scalar_format == "uint8")
+	{
+		i_ctx.m_nsi.SetAttribute(i_layer_handle.c_str(),
+			NSI::StringArg("colorprofile", "srgb"));
+	}
+
+	i_ctx.m_nsi.Connect(
+		i_layer_handle.c_str(), "",
+		i_screen_handle.c_str(), "outputlayers");
+
+	if (!i_light_handle.empty())
+	{
+		i_ctx.m_nsi.Connect(
+			i_light_handle.c_str(), "", i_layer_handle.c_str(), "lightset");
+	}
+
+	i_ctx.m_nsi.Connect(
+		i_driver_handle.c_str(), "",
+		i_layer_handle.c_str(), "outputdrivers");
 }
 
 void
