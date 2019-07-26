@@ -50,11 +50,6 @@ static const char* k_batch_output_mode = "batch_output_mode";
 static const char* k_interactive_output_mode = "interactive_output_mode";
 static const char* k_aovs = "aovs";
 static const char* k_aov = "aov";
-static const char* k_framebuffer_output = "framebuffer_output_#";
-static const char* k_file_output = "file_output_#";
-static const char* k_jpeg_output = "jpeg_output_#";
-static const char* k_aov_label = "aov_label_#";
-static const char* k_aov_name = "aov_name_#";
 static const char* k_aov_clear = "aov_clear_#";
 static const char* k_add_layer = "add_layer";
 static const char* k_view_layer = "view_layer";
@@ -269,14 +264,14 @@ GetTemplates()
 
 	static PRM_Name aovs(k_aovs, "Image Layers");
 	static PRM_Name aov(k_aov, "Image Layer (AOV)");
-	static PRM_Name framebuffer_output(k_framebuffer_output, "Preview");
+	static PRM_Name framebuffer_output(aov::getAovFrameBufferOutputStr(), "Preview");
 	static PRM_Default framebuffer_output_d(true);
-	static PRM_Name file_output(k_file_output, "File");
+	static PRM_Name file_output(aov::getAovFileOutputStr(), "File");
 	static PRM_Default file_output_d(true);
-	static PRM_Name jpeg_output(k_jpeg_output, " ");
+	static PRM_Name jpeg_output(aov::getAovJpegOutputStr(), " ");
 	static PRM_Default jpeg_output_d(false);
-	static PRM_Name aov_label(k_aov_label, "Ci");
-	static PRM_Name aov_name(k_aov_name, "Ci");
+	static PRM_Name aov_label(aov::getAovLabelStr(), "Ci");
+	static PRM_Name aov_name(aov::getAovStrStr(), "Ci");
 	static PRM_Default aov_name_d(0.0f, "Ci");
 	static PRM_Name aov_clear(k_aov_clear, "Clear");
 //	static PRM_Name override_image_filename
@@ -961,6 +956,13 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		evalString(label, aov::getAovStrToken(i), 0, 0.0f);
 
 		const aov::description& desc = aov::getDescription(label.toStdString());
+
+		bool idisplay_output = evalInt(aov::getAovFrameBufferOutputToken(i), 0, 0.0f);
+		bool file_output = evalInt(aov::getAovFileOutputToken(i), 0, 0.0f);
+		bool jpeg_output = evalInt(aov::getAovJpegOutputToken(i), 0, 0.0f);
+
+//		fprintf(stderr, "idisplay_output: %d, file_output: %d, jpeg_output: %d\n",
+//				(int)idisplay_output, (int)file_output, (int)jpeg_output);
 
 		char prefix[12] = "";
 		::sprintf(prefix, "%d", i+1);
