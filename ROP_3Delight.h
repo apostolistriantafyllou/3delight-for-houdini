@@ -19,6 +19,17 @@ class ROP_3Delight : public ROP_Node
 {
 public:
 
+	/**
+		Image layer (convoluted) file output modes.
+	*/
+	enum e_fileOutputMode
+	{
+		e_disabled,
+		e_useToggleStates,
+		e_allFilesAndSelectedJpeg,
+		e_useToggleAndFramebufferStates
+	};
+
 	/// Registers the 3Delight ROP
 	static void Register(OP_OperatorTable* io_table);
 	static OP_Node* alloc(OP_Network* net, const char* name, OP_Operator* op);

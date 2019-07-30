@@ -548,8 +548,6 @@ ROP_3Delight::onCreated()
 	ROP_Node::onCreated();
 	UpdateLights();
 	enableParm(k_save_ids_as_cryptomatte, false);
-	enableParm(k_batch_output_mode, false);
-	enableParm(k_interactive_output_mode, false);
 }
 
 int
@@ -841,6 +839,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		fps,
 		HasDepthOfField(),
 		preview,
+		!render,
 		OP_BundlePattern::allocPattern(GetObjectsToRender()),
 		OP_BundlePattern::allocPattern(GetLightsToRender()));
 
@@ -1000,6 +999,21 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	std::string png_driver_name;
 	std::string jpeg_driver_name;
 
+	e_fileOutputMode output_mode = e_disabled;
+
+	if (i_ctx.m_export_nsi || !i_ctx.m_preview)
+	{
+		int mode = evalInt(k_batch_output_mode, 0, 0.0f);
+		if (mode == 0) output_mode = e_useToggleStates;
+		else output_mode = e_allFilesAndSelectedJpeg;
+	}
+	else
+	{
+		int mode = evalInt(k_interactive_output_mode, 0, 0.0f);
+		if (mode == 0) output_mode = e_useToggleStates;
+		else if (mode == 1) output_mode = e_useToggleAndFramebufferStates;
+	}
+		
 	int nb_aovs = evalInt(k_aov, 0, 0.0f);
 	unsigned sort_key = 0;
 
@@ -1028,6 +1042,26 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		png_output = png_output && file_driver.toStdString() == "png";
 		bool jpeg_output = evalInt(aov::getAovJpegOutputToken(i), 0, 0.0f);
 		idisplay_output = idisplay_output && i_ctx.m_preview;
+
+		if (output_mode == e_disabled)
+		{
+			file_output = false;
+			png_output = false;
+			jpeg_output = false;
+		}
+		else if (output_mode == e_allFilesAndSelectedJpeg)
+		{
+			// Ignore toggle state for file_output/png_output
+			file_output = file_driver.toStdString() != "png";
+			png_output = file_driver.toStdString() == "png";
+		}
+		else if (output_mode == e_useToggleAndFramebufferStates)
+		{
+			// Files output depends of toggle state idisplay_output
+			file_output = file_output && idisplay_output;
+			png_output = png_output && idisplay_output;
+			jpeg_output = jpeg_output && idisplay_output;
+		}
 
 		if (!idisplay_output && !file_output && !png_output && !jpeg_output)
 		{
