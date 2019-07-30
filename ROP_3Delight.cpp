@@ -594,7 +594,6 @@ ROP_3Delight::image_format_cb(void* data, int index, fpreal t,
 
 	if (image_format == "tiff")
 	{
-		fprintf(stderr, "case tiff\n");
 		node->setString("uint8", CH_STRING_LITERAL, k_default_image_bits, 0, 0.0f);
 		parmTemp->setChoiceListPtr(&default_image_bits_c_tiff);
 	}
