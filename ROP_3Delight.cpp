@@ -226,8 +226,8 @@ GetTemplates()
 	static PRM_Default default_image_bits_d(0.0f, "half");
 	static PRM_Item default_image_bits_i[] =
 	{
-		PRM_Item("uint8", "8-bit"),
-		PRM_Item("uint16", "16-bit"),
+//		PRM_Item("uint8", "8-bit"),
+//		PRM_Item("uint16", "16-bit"),
 		PRM_Item("half", "16-bit float"),
 		PRM_Item("float", "32-bit float"),
 		PRM_Item(),
@@ -297,7 +297,7 @@ GetTemplates()
 	static std::vector<PRM_Template> image_layers_templates =
 	{
 		PRM_Template(PRM_FILE, 1, &default_image_filename, &default_image_filename_d),
-		PRM_Template(PRM_STRING|PRM_TYPE_JOIN_NEXT, 1, &default_image_format, &default_image_format_d, &default_image_format_c),
+		PRM_Template(PRM_STRING|PRM_TYPE_JOIN_NEXT, 1, &default_image_format, &default_image_format_d, &default_image_format_c, 0, &ROP_3Delight::image_format_cb),
 		PRM_Template(PRM_STRING|PRM_TYPE_LABEL_NONE, 1, &default_image_bits, &default_image_bits_d, &default_image_bits_c),
 		PRM_Template(PRM_TOGGLE, 1, &save_ids_as_cryptomatte, &save_ids_as_cryptomatte_d),
 		PRM_Template(PRM_ORD, 1, &batch_output_mode, &batch_output_mode_d, &batch_output_mode_c),
@@ -550,6 +550,66 @@ ROP_3Delight::onCreated()
 	enableParm(k_save_ids_as_cryptomatte, false);
 	enableParm(k_batch_output_mode, false);
 	enableParm(k_interactive_output_mode, false);
+}
+
+int
+ROP_3Delight::image_format_cb(void* data, int index, fpreal t,
+							const PRM_Template* tplate)
+{
+	static PRM_Item default_image_bits_i_tiff[] =
+	{
+		PRM_Item("uint8", "8-bit"),
+		PRM_Item("uint16", "16-bit"),
+		PRM_Item("float", "32-bit float"),
+		PRM_Item(),
+	};
+	static PRM_ChoiceList default_image_bits_c_tiff(
+		PRM_CHOICELIST_SINGLE, default_image_bits_i_tiff);
+
+	static PRM_Item default_image_bits_i_exr[] =
+	{
+		PRM_Item("half", "16-bit float"),
+		PRM_Item("float", "32-bit float"),
+		PRM_Item(),
+	};
+	static PRM_ChoiceList default_image_bits_c_exr(
+		PRM_CHOICELIST_SINGLE, default_image_bits_i_exr);
+
+	static PRM_Item default_image_bits_i_png[] =
+	{
+		PRM_Item("uint8", "8-bit"),
+		PRM_Item(),
+	};
+	static PRM_ChoiceList default_image_bits_c_png(
+		PRM_CHOICELIST_SINGLE, default_image_bits_i_png);
+
+	ROP_3Delight* node = reinterpret_cast<ROP_3Delight*>(data);
+
+	UT_String image_format;
+	node->evalString(image_format, k_default_image_format, 0, 0.0f);
+
+	PRM_Parm& parm = node->getParm(k_default_image_bits);
+	PRM_Template* parmTemp = parm.getTemplatePtr();
+	assert(parmTemp);
+
+	if (image_format == "tiff")
+	{
+		fprintf(stderr, "case tiff\n");
+		node->setString("uint8", CH_STRING_LITERAL, k_default_image_bits, 0, 0.0f);
+		parmTemp->setChoiceListPtr(&default_image_bits_c_tiff);
+	}
+	else if (image_format == "exr" || image_format == "deepexr")
+	{
+		node->setString("half", CH_STRING_LITERAL, k_default_image_bits, 0, 0.0f);
+		parmTemp->setChoiceListPtr(&default_image_bits_c_exr);
+	}
+	else if (image_format == "jpeg" || image_format == "png")
+	{
+		node->setString("uint8", CH_STRING_LITERAL, k_default_image_bits, 0, 0.0f);
+		parmTemp->setChoiceListPtr(&default_image_bits_c_png);
+	}
+
+	return 1;
 }
 
 int

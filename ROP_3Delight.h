@@ -27,6 +27,8 @@ public:
 	bool HasMotionBlur()const;
 	virtual void onCreated();
 
+	static int image_format_cb(void* data, int index, fpreal t,
+								const PRM_Template* tplate);
 	static int aov_clear_cb(void* data, int index, fpreal t,
 							const PRM_Template* tplate);
 	static int add_layer_cb(void* data, int index, fpreal t,
