@@ -985,6 +985,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	UT_String idisplay_driver = "idisplay";
 	UT_String file_driver;
 	evalString(file_driver, k_default_image_format, 0, 0.0f);
+	UT_String png_driver = "png";
 	UT_String jpeg_driver = "jpeg";
 
 	UT_String image_file_name;
@@ -996,6 +997,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 	std::string idisplay_driver_name;
 	std::string file_driver_name;
+	std::string png_driver_name;
 	std::string jpeg_driver_name;
 
 	int nb_aovs = evalInt(k_aov, 0, 0.0f);
@@ -1021,10 +1023,13 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 		bool idisplay_output = evalInt(aov::getAovFrameBufferOutputToken(i), 0, 0.0f);
 		bool file_output = evalInt(aov::getAovFileOutputToken(i), 0, 0.0f);
+		bool png_output = file_output;
+		file_output = file_output && file_driver.toStdString() != "png";
+		png_output = png_output && file_driver.toStdString() == "png";
 		bool jpeg_output = evalInt(aov::getAovJpegOutputToken(i), 0, 0.0f);
 		idisplay_output = idisplay_output && i_ctx.m_preview;
 
-		if (!idisplay_output && !file_output && !jpeg_output)
+		if (!idisplay_output && !file_output && !png_output && !jpeg_output)
 		{
 			continue;
 		}
@@ -1092,6 +1097,36 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					file_driver_name, sort_key);
 			}
 
+			if (png_output)
+			{
+				std::string png_layer_name = layer_name + "_png";
+
+				char suffix[12] = "";
+				::sprintf(suffix, "%u", i*nb_light_categories+j+1);
+				png_driver_name = "png_driver_";
+				png_driver_name += suffix;
+
+				UT_String image_png_name;
+				BuildImageUniqueName(
+					image_file_name, light_names[j],
+					desc.m_filename_token, ".png", image_png_name);
+
+				i_ctx.m_nsi.Create(
+					png_driver_name.c_str(), "outputdriver");
+				i_ctx.m_nsi.SetAttribute(
+					png_driver_name.c_str(),
+				(
+					NSI::CStringPArg("drivername", png_driver.c_str()),
+					NSI::CStringPArg("imagefilename", image_png_name.c_str())
+				) );
+
+				ExportOneOutputLayer(
+					i_ctx, png_layer_name, desc, "uint8",
+					filter, filter_width,
+					screen_name, light_names[j],
+					png_driver_name, sort_key);
+			}
+
 			if (jpeg_output)
 			{
 				std::string jpeg_layer_name = layer_name + "_jpeg";
@@ -1102,9 +1137,9 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 				jpeg_driver_name += suffix;
 
 				UT_String image_jpeg_name;
-				BuildImageJpegName(
+				BuildImageUniqueName(
 					image_file_name, light_names[j],
-					desc.m_filename_token, image_jpeg_name);
+					desc.m_filename_token, ".jpg", image_jpeg_name);
 
 				i_ctx.m_nsi.Create(
 					jpeg_driver_name.c_str(), "outputdriver");
@@ -1185,42 +1220,42 @@ ROP_3Delight::ExportOneOutputLayer(
 		i_layer_handle.c_str(), "outputdrivers");
 }
 
-
 void
-ROP_3Delight::BuildImageJpegName(
+ROP_3Delight::BuildImageUniqueName(
 	const UT_String& i_image_file_name,
 	const std::string& i_light_name,
 	const std::string& i_aov_token,
-	UT_String& o_image_jpeg_name) const
+	const char* i_extension,
+	UT_String& o_image_unique_name) const
 {
-	o_image_jpeg_name = i_image_file_name.pathUpToExtension();
+	o_image_unique_name = i_image_file_name.pathUpToExtension();
 
-	std::string fn = o_image_jpeg_name.toStdString();
+	std::string fn = o_image_unique_name.toStdString();
 	size_t pos = fn.find_last_of('_');
 	UT_String frame_number = fn.assign(fn.begin()+pos+1, fn.end()).c_str();
 
-	o_image_jpeg_name.removeTrailingDigits();
+	o_image_unique_name.removeTrailingDigits();
 
 	UT_String light = i_light_name.c_str();
 	UT_String dir_name, light_name;
 	light.splitPath(dir_name, light_name);
 
-	if (o_image_jpeg_name.toStdString().back() != '_')
+	if (o_image_unique_name.toStdString().back() != '_')
 	{
-		o_image_jpeg_name += "_";
+		o_image_unique_name += "_";
 	}
-	o_image_jpeg_name += i_aov_token;
+	o_image_unique_name += i_aov_token;
 	if (light_name.isstring())
 	{
-		o_image_jpeg_name += "_";
-		o_image_jpeg_name += light_name;
+		o_image_unique_name += "_";
+		o_image_unique_name += light_name;
 	}
 	if (frame_number.isInteger())
 	{
-		o_image_jpeg_name += "_";
-		o_image_jpeg_name += frame_number;
+		o_image_unique_name += "_";
+		o_image_unique_name += frame_number;
 	}
-	o_image_jpeg_name += ".jpg";
+	o_image_unique_name += i_extension;
 }
 
 void

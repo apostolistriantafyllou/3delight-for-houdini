@@ -68,11 +68,14 @@ private:
 	void ExportGlobals(const context& i_ctx)const;
 	void ExportDefaultMaterial( const context &i_context ) const;
 
-	void BuildImageJpegName(
+	// Builds a unique image name for image format which don't support
+	// multi-layers (png and jpeg)
+	void BuildImageUniqueName(
 		const UT_String& i_image_file_name,
 		const std::string& i_light_name,
 		const std::string& i_aov_token,
-		UT_String& o_image_jpeg_name) const;
+		const char* i_extension,
+		UT_String& o_image_unique_name) const;
 
 	// Update UI lights from scene lights.
 	void UpdateLights();
