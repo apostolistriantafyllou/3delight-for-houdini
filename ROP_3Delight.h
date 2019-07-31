@@ -92,6 +92,10 @@ private:
 	void UpdateLights();
 	// Gets the light names from the selected one
 	void GetSelectedLights(std::vector<std::string>& o_light_names) const;
+	// Returns the light's token for the specified index
+	const char* GetLightToken(int index) const;
+	// Returns the use light's token for the specified index
+	const char* GetUseLightToken(int index) const;
 
 	bool HasSpeedBoost()const;
 	float GetResolutionFactor()const;

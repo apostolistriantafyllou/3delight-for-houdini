@@ -332,7 +332,7 @@ GetTemplates()
 	static PRM_Default use_light_set_d(false);
 	static PRM_Name light_set(k_light_set, "Light Set");
 	static PRM_Default light_set_d(0.0, "");
-	static PRM_Default nb_lights(10);
+	static PRM_Default nb_lights(1);
 	static PRM_Template light_set_templates[] =
 	{
 		PRM_Template(PRM_TOGGLE|PRM_TYPE_JOIN_NEXT, 1, &use_light_set, &use_light_set_d),
@@ -1303,74 +1303,107 @@ ROP_3Delight::UpdateLights()
 
 	OP_BundlePattern::freePattern( pattern );
 
-	std::string use_light_prefix = k_use_light_set;
-	use_light_prefix.pop_back();
-	std::string light_prefix = k_light_set;
-	light_prefix.pop_back();
-
 	PRM_Parm& light_sets_parm = getParm(k_light_sets);
 	unsigned nb_lights = evalInt(k_light_sets, 0, 0.0f);
 
+	// The only way I know to modify the label of a specific toggle is to
+	// remove the multi item and rebuilds it! Using setLabel of an existing
+	// PRM_Name change the label but not what you see on the screen!
+	UT_Map<std::string, bool> selectedLights;
+	for (int i = nb_lights-1; i >= 0; i--)
+	{
+		const char* use_light_token = GetUseLightToken(i);
+		bool selected = evalInt(use_light_token, 0, 0.0f);
+		PRM_Parm* use_light_parm = getParmPtr(use_light_token);
+		assert(use_light_parm);
+
+		selectedLights[use_light_parm->getLabel()] = selected;
+		light_sets_parm.removeMultiParmItem(i);
+	}
+
 	for (unsigned i = 0; i < m_lights.size(); i++)
 	{
-		// Create a new item if needed
-		if (i >= nb_lights)
-			light_sets_parm.insertMultiParmItem(light_sets_parm.getMultiParmNumItems());
-		char suffix[12] = "";
-		::sprintf(suffix, "%d", i+1);
-		std::string use_light_token = use_light_prefix + suffix;
-		std::string light_token = light_prefix + suffix;
+		// Create a new item
+		light_sets_parm.insertMultiParmItem(light_sets_parm.getMultiParmNumItems());
+		const char* light_token = GetLightToken(i);
 
-		setString(m_lights[i]->getFullPath(), CH_STRING_LITERAL,
-					light_token.c_str(), 0, 0.0);
-		setVisibleState(light_token.c_str(), false);
+		setString(
+			m_lights[i]->getFullPath(), CH_STRING_LITERAL, light_token, 0, 0.0);
+		setVisibleState(light_token, false);
 
-		PRM_Parm* use_light_parm = getParmPtr(use_light_token.c_str());
+		std::string light_name = m_lights[i]->getFullPath().toStdString();
+		bool selected = false;
+		UT_Map<std::string, bool>::iterator sel_item =
+			selectedLights.find(light_name);
+		if (sel_item != selectedLights.end())
+		{
+			selected = sel_item->second;
+			selectedLights.erase(light_name);
+		}
+
+		const char* use_light_token = GetUseLightToken(i);
+		setInt(use_light_token, 0, 0.0f, (exint)selected);
+
+		PRM_Parm* use_light_parm = getParmPtr(use_light_token);
 		assert(use_light_parm);
 		PRM_Template* use_light_tmpl = use_light_parm->getTemplatePtr();
 		assert(use_light_tmpl);
 		PRM_Name* use_light_name = use_light_tmpl->getNamePtr();
 		assert(use_light_name);
-		use_light_name->setLabel(m_lights[i]->getFullPath().toStdString().c_str());
+		use_light_name->setLabel(light_name.c_str());
 	}
-	// All non used items should be invisible
-	nb_lights = evalInt(k_light_sets, 0, 0.0f);
-	for (unsigned i = m_lights.size(); i < nb_lights; i++)
-	{
-		char suffix[12] = "";
-		::sprintf(suffix, "%d", i+1);
-		std::string use_light_token = use_light_prefix + suffix;
-		std::string light_token = light_prefix + suffix;
-		setVisibleState(use_light_token.c_str(), false);
-		setVisibleState(light_token.c_str(), false);
-	}
+	selectedLights.clear();
 }
 
 void
 ROP_3Delight::GetSelectedLights(std::vector<std::string>& o_light_names) const
 {
-	std::string use_light_prefix = k_use_light_set;
-	use_light_prefix.pop_back();
-
 	unsigned nb_lights = evalInt(k_light_sets, 0, 0.0f);
 
 	for (unsigned i = 0; i < nb_lights; i++)
 	{
-		char suffix[12] = "";
-		::sprintf(suffix, "%d", i+1);
-		std::string use_light_token = use_light_prefix + suffix;
-		bool selected = evalInt(use_light_token.c_str(), 0, 0.0f);
+		const char* use_light_token = GetUseLightToken(i);
+		bool selected = evalInt(use_light_token, 0, 0.0f);
 		if (selected)
 		{
-			const PRM_Parm* use_light_parm = getParmPtr(use_light_token.c_str());
+			const PRM_Parm* use_light_parm = getParmPtr(use_light_token);
 			assert(use_light_parm);
-			const PRM_Template* use_light_tmpl = use_light_parm->getTemplatePtr();
+			const PRM_Template* use_light_tmpl =
+				use_light_parm->getTemplatePtr();
 			assert(use_light_tmpl);
 			const PRM_Name* use_light_name = use_light_tmpl->getNamePtr();
 			assert(use_light_name);
 			o_light_names.push_back(use_light_name->getLabel());
 		}
 	}
+}
+
+const char*
+ROP_3Delight::GetLightToken(int index) const
+{
+	static std::string light_token;
+	light_token = k_light_set;
+	light_token.pop_back();
+
+	char suffix[12] = "";
+	::sprintf(suffix, "%d", index+1);
+	light_token += suffix;
+
+	return light_token.c_str();
+}
+
+const char*
+ROP_3Delight::GetUseLightToken(int index) const
+{
+	static std::string use_light_token;
+	use_light_token = k_use_light_set;
+	use_light_token.pop_back();
+
+	char suffix[12] = "";
+	::sprintf(suffix, "%d", index+1);
+	use_light_token += suffix;
+
+	return use_light_token.c_str();
 }
 
 bool
