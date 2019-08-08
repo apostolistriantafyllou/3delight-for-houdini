@@ -669,7 +669,7 @@ void settings::UpdateLights()
 {
 	m_lights.clear();
 
-	auto pattern = OP_BundlePattern::allocPattern(GetObjectsToRender());
+	auto pattern = OP_BundlePattern::allocPattern(GetLightsToRender());
 
 	scene::find_lights(*pattern, m_lights);
 
