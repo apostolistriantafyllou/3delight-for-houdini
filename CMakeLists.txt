@@ -26,6 +26,7 @@ add_library( ${library_name} SHARED
 	scene.cpp
 	shader_library.cpp
 	vop.cpp
+	ui/settings.cpp
 	ui/aov.cpp
 	ui/select_layers_dialog.cpp )
 

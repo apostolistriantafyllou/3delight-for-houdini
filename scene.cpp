@@ -248,7 +248,6 @@ void scene::process_node(
 
 	o_to_export.insert(
 		o_to_export.end(), gt_primitives.begin(), gt_primitives.end() );
-
 }
 
 /**

@@ -2,6 +2,7 @@
 #define __ROP_3Delight_h__
 
 #include "ui/aov.h"
+#include "ui/settings.h"
 
 #include <ROP/ROP_Node.h>
 
@@ -17,6 +18,7 @@ class exporter;
 
 class ROP_3Delight : public ROP_Node
 {
+	friend class settings; // UI related.
 public:
 
 	/**
@@ -38,15 +40,6 @@ public:
 	bool HasMotionBlur()const;
 	virtual void onCreated();
 
-	static int image_format_cb(void* data, int index, fpreal t,
-								const PRM_Template* tplate);
-	static int aov_clear_cb(void* data, int index, fpreal t,
-							const PRM_Template* tplate);
-	static int add_layer_cb(void* data, int index, fpreal t,
-						   const PRM_Template* tplate);
-	static int refresh_lights_cb(void* data, int index, fpreal t,
-								const PRM_Template* tplate);
-
 protected:
 
 	ROP_3Delight(OP_Network* net, const char* name, OP_Operator* entry);
@@ -55,8 +48,10 @@ protected:
 	virtual int startRender(int nframes, fpreal s, fpreal e);
 	virtual ROP_RENDER_CODE renderFrame(fpreal time, UT_Interrupt* boss);
 	virtual ROP_RENDER_CODE endRender();
+
 	// Used to enable some buttons.
 	virtual bool updateParmsFlags();
+
 	/// Makes the "Render to MPlay" button visible.
 	virtual bool isPreviewAllowed();
 	virtual void loadFinished();
@@ -76,11 +71,14 @@ private:
 		const std::string& i_light_handle,
 		const std::string& i_driver_handle,
 		unsigned& io_sort_key) const;
+
 	void ExportGlobals(const context& i_ctx)const;
 	void ExportDefaultMaterial( const context &i_context ) const;
 
-	// Builds a unique image name for image format which don't support
-	// multi-layers (png and jpeg)
+	/**
+		\brief Builds a unique image name for image format which don't support
+		multi-layers (png and jpeg)
+	*/
 	void BuildImageUniqueName(
 		const UT_String& i_image_file_name,
 		const std::string& i_light_name,
@@ -88,13 +86,11 @@ private:
 		const char* i_extension,
 		UT_String& o_image_unique_name) const;
 
-	// Update UI lights from scene lights.
-	void UpdateLights();
-	// Gets the light names from the selected one
-	void GetSelectedLights(std::vector<std::string>& o_light_names) const;
-	// Returns the light's token for the specified index
+	/**
+		\brief Returns the light's token for the specified index
+	*/
 	const char* GetLightToken(int index) const;
-	// Returns the use light's token for the specified index
+
 	const char* GetUseLightToken(int index) const;
 
 	bool HasSpeedBoost()const;
@@ -109,6 +105,10 @@ private:
 
 	fpreal m_end_time;
 	std::vector<OBJ_Node*> m_lights;
+
+protected:
+	/* The UI part of the ROP */
+	settings m_settings;
 };
 
 #endif
