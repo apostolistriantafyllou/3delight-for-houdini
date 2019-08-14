@@ -19,6 +19,19 @@
 
 #include <iostream>
 
+
+namespace
+{
+
+	NSI::DynamicAPI&
+	GetNSIAPI()
+	{
+		static NSI::DynamicAPI api;
+		return api;
+	}
+
+}
+
 void
 ROP_3Delight::Register(OP_OperatorTable* io_table)
 {
@@ -164,10 +177,9 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 {
 	m_end_time = tend; // \ref endRender
 
-	NSI::DynamicAPI api;
-	NSI::Context nsi(api);
+	NSI::Context nsi(GetNSIAPI());
 
-	register_mplay_driver( api );
+	register_mplay_driver( GetNSIAPI() );
 
 	bool render = !evalInt(settings::k_export_nsi, 0, 0.0f);
 
