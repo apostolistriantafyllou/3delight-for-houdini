@@ -52,8 +52,6 @@ protected:
 	// Used to enable some buttons.
 	virtual bool updateParmsFlags();
 
-	/// Makes the "Render to MPlay" button visible.
-	virtual bool isPreviewAllowed();
 	virtual void loadFinished();
 
 private:

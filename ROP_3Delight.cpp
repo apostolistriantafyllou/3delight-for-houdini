@@ -50,16 +50,17 @@ ROP_3Delight::ROP_3Delight(
 	:	ROP_Node(net, name, entry), m_settings(*this)
 {
 	/*
-		Rename the "Render to MPlay" button to avoid referencing a specific
-		framebuffer.
+		Rename the "Render to Disk" button to better match our rendering
+		options, which allow rendering to disk and to a framebuffer
+		simultaneously.
 	*/
-	PRM_Parm* preview_parm = getParmPtr("renderpreview");
+	PRM_Parm* preview_parm = getParmPtr("execute");
 	assert(preview_parm);
 	PRM_Template* preview_tmpl = preview_parm->getTemplatePtr();
 	assert(preview_tmpl);
 	PRM_Name* preview_name = preview_tmpl->getNamePtr();
 	assert(preview_name);
-	preview_name->setLabel("Render Preview");
+	preview_name->setLabel("Render");
 }
 
 
@@ -181,18 +182,6 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 
 	fpreal fps = OPgetDirector()->getChannelManager()->getSamplesPerSec();
 
-	/*
-		Unfortunately, getRenderMode() always returns RENDER_RM_PRM, so we have
-		to use a special recipe to detect that the "Render yo MPlay" button has
-		been pressed.
-	*/
-	UT_String output_override;
-	bool output_overriden = getOutputOverride(output_override, tstart);
-	UT_String device_override;
-	bool device_overriden = getDeviceOverride(device_override, tstart);
-	bool preview =
-		output_overriden && output_override == "ip" &&
-		device_overriden && device_override == "";
 	bool batch = !UTisUIAvailable();
 	context ctx(
 		nsi,
@@ -275,12 +264,6 @@ ROP_3Delight::updateParmsFlags()
 	changed |= enableParm(settings::k_display_all_lights, false);
 
 	return changed;
-}
-
-bool
-ROP_3Delight::isPreviewAllowed()
-{
-	return true;
 }
 
 void
