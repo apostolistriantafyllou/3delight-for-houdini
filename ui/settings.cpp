@@ -234,7 +234,7 @@ PRM_Template* settings::GetTemplates()
 	static PRM_ChoiceList batch_output_mode_c(PRM_CHOICELIST_SINGLE, batch_output_mode_i);
 
 	static PRM_Name interactive_output_mode(k_interactive_output_mode, "Interactive Output Mode");
-	static PRM_Default interactive_output_mode_d(0);
+	static PRM_Default interactive_output_mode_d(2);
 	static PRM_Item interactive_output_mode_i[] =
 	{
 		PRM_Item("", "Enable file output as selected"),
