@@ -30,6 +30,14 @@ namespace
 		return api;
 	}
 
+	void
+	RenderStoppedCB(void* i_data, NSIContext_t i_ctx, int i_status)
+	{
+		NSI::Context* nsi = (NSI::Context*)i_data;
+		nsi->End();
+		delete nsi;
+	}
+
 }
 
 void
@@ -179,57 +187,75 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 {
 	m_end_time = tend; // \ref endRender
 
-	NSI::Context nsi(GetNSIAPI());
+	NSI::Context* nsi = new NSI::Context(GetNSIAPI());
 
 	bool render = !evalInt(settings::k_export_nsi, 0, 0.0f);
 
 	if(render)
 	{
-		nsi.Begin();
+		nsi->Begin();
 	}
 	else
 	{
-		nsi.Begin( NSI::IntegerArg("streamfiledescriptor", 1) );
+		nsi->Begin( NSI::IntegerArg("streamfiledescriptor", 1) );
 	}
 
 	fpreal fps = OPgetDirector()->getChannelManager()->getSamplesPerSec();
 
 	bool batch = !UTisUIAvailable();
-	context ctx(
-		nsi,
-		tstart,
-		tend,
-		GetShutterInterval(tstart),
-		fps,
-		HasDepthOfField(),
-		batch,
-		!render,
-		OP_BundlePattern::allocPattern(m_settings.GetObjectsToRender()),
-		OP_BundlePattern::allocPattern(m_settings.GetLightsToRender()));
 
-	if(error() < UT_ERROR_ABORT)
 	{
-		executePreRenderScript(tstart);
+		context ctx(
+			*nsi,
+			tstart,
+			tend,
+			GetShutterInterval(tstart),
+			fps,
+			HasDepthOfField(),
+			batch,
+			!render,
+			OP_BundlePattern::allocPattern(m_settings.GetObjectsToRender()),
+			OP_BundlePattern::allocPattern(m_settings.GetLightsToRender()));
 
-		scene::convert_to_nsi( ctx );
+		if(error() < UT_ERROR_ABORT)
+		{
+			executePreRenderScript(tstart);
+
+			scene::convert_to_nsi( ctx );
+		}
+
+		ExportOutputs(ctx);
+
+		ExportGlobals(ctx);
+		ExportDefaultMaterial(ctx);
+
+		OP_BundlePattern::freePattern(ctx.m_lights_to_render_pattern);
+		OP_BundlePattern::freePattern(ctx.m_objects_to_render_pattern);
 	}
 
-	ExportOutputs(ctx);
-
-	ExportGlobals(ctx);
-	ExportDefaultMaterial(ctx);
-
-	nsi.RenderControl(NSI::CStringPArg("action", "start"));
-
-	if(render)
+	if(render && !batch)
 	{
-		nsi.RenderControl(NSI::CStringPArg("action", "wait"));
+		nsi->RenderControl(
+		(
+			NSI::CStringPArg("action", "start"),
+			NSI::PointerArg("stoppedcallback", (const void*)&RenderStoppedCB),
+			NSI::PointerArg("stoppedcallbackdata", nsi)
+		) );
+
+		// In that case, the "nsi" NSI::Context is deleted by RenderStoppedCB
 	}
+	else
+	{
+		nsi->RenderControl(NSI::CStringPArg("action", "start"));
 
-	nsi.End();
+		if(batch)
+		{
+			nsi->RenderControl(NSI::CStringPArg("action", "wait"));
+		}
 
-	OP_BundlePattern::freePattern(ctx.m_lights_to_render_pattern);
-	OP_BundlePattern::freePattern(ctx.m_objects_to_render_pattern);
+		nsi->End();
+		delete nsi; nsi = nullptr;
+	}
 
 	return 1;
 }
