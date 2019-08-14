@@ -207,9 +207,10 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	ExportGlobals(ctx);
 	ExportDefaultMaterial(ctx);
 
+	nsi.RenderControl(NSI::CStringPArg("action", "start"));
+
 	if(render)
 	{
-		nsi.RenderControl(NSI::CStringPArg("action", "start"));
 		nsi.RenderControl(NSI::CStringPArg("action", "wait"));
 	}
 
