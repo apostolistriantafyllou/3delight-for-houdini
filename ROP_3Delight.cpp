@@ -48,6 +48,8 @@ ROP_3Delight::Register(OP_OperatorTable* io_table)
 			nullptr,
 			0,
 			"Render"));
+
+	register_mplay_driver( GetNSIAPI() );
 }
 
 OP_Node*
@@ -178,8 +180,6 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	m_end_time = tend; // \ref endRender
 
 	NSI::Context nsi(GetNSIAPI());
-
-	register_mplay_driver( GetNSIAPI() );
 
 	bool render = !evalInt(settings::k_export_nsi, 0, 0.0f);
 
