@@ -70,7 +70,9 @@ ROP_3Delight::ROP_3Delight(
 	OP_Network* net,
 	const char* name,
 	OP_Operator* entry)
-	:	ROP_Node(net, name, entry), m_settings(*this)
+	:	ROP_Node(net, name, entry),
+		m_current_render(nullptr),
+		m_settings(*this)
 {
 	/*
 		Rename the "Render to Disk" button to better match our rendering
@@ -185,55 +187,66 @@ ROP_3Delight::ExportGlobals(const context& i_ctx)const
 
 int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 {
-	m_end_time = tend; // \ref endRender
+	if(m_current_render)
+	{
+		return 0;
+	}
 
 	NSI::Context* nsi = new NSI::Context(GetNSIAPI());
 
 	bool render = !evalInt(settings::k_export_nsi, 0, 0.0f);
 
-	if(render)
-	{
-		nsi->Begin();
-	}
-	else
-	{
-		nsi->Begin( NSI::IntegerArg("streamfiledescriptor", 1) );
-	}
-
 	fpreal fps = OPgetDirector()->getChannelManager()->getSamplesPerSec();
 
 	bool batch = !UTisUIAvailable();
 
+	m_current_render = new context(
+		*nsi,
+		tstart,
+		tend,
+		GetShutterInterval(tstart),
+		fps,
+		HasDepthOfField(),
+		batch,
+		!render,
+		OP_BundlePattern::allocPattern(m_settings.GetObjectsToRender()),
+		OP_BundlePattern::allocPattern(m_settings.GetLightsToRender()));
+
+	if(error() < UT_ERROR_ABORT)
 	{
-		context ctx(
-			*nsi,
-			tstart,
-			tend,
-			GetShutterInterval(tstart),
-			fps,
-			HasDepthOfField(),
-			batch,
-			!render,
-			OP_BundlePattern::allocPattern(m_settings.GetObjectsToRender()),
-			OP_BundlePattern::allocPattern(m_settings.GetLightsToRender()));
-
-		if(error() < UT_ERROR_ABORT)
-		{
-			executePreRenderScript(tstart);
-
-			scene::convert_to_nsi( ctx );
-		}
-
-		ExportOutputs(ctx);
-
-		ExportGlobals(ctx);
-		ExportDefaultMaterial(ctx);
-
-		OP_BundlePattern::freePattern(ctx.m_lights_to_render_pattern);
-		OP_BundlePattern::freePattern(ctx.m_objects_to_render_pattern);
+		executePreRenderScript(tstart);
 	}
 
-	if(render && !batch)
+	return 1;
+}
+
+ROP_RENDER_CODE
+ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
+{
+	assert(m_current_render);
+
+	m_current_render->m_current_time = time;
+
+	NSI::Context* nsi = &m_current_render->m_nsi;
+	if(m_current_render->m_export_nsi)
+	{
+		nsi->Begin( NSI::IntegerArg("streamfiledescriptor", 1) );
+	}
+	else
+	{
+		nsi->Begin();
+	}
+
+	executePreFrameScript(time);
+
+	scene::convert_to_nsi( *m_current_render );
+
+	ExportOutputs(*m_current_render);
+
+	ExportGlobals(*m_current_render);
+	ExportDefaultMaterial(*m_current_render);
+
+	if(m_current_render->BackgroundRendering())
 	{
 		nsi->RenderControl(
 		(
@@ -248,22 +261,13 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	{
 		nsi->RenderControl(NSI::CStringPArg("action", "start"));
 
-		if(batch)
+		if(m_current_render->m_batch)
 		{
 			nsi->RenderControl(NSI::CStringPArg("action", "wait"));
 		}
 
 		nsi->End();
-		delete nsi; nsi = nullptr;
 	}
-
-	return 1;
-}
-
-ROP_RENDER_CODE
-ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
-{
-	executePreFrameScript(time);
 
 	if(error() < UT_ERROR_ABORT)
 	{
@@ -276,10 +280,21 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 ROP_RENDER_CODE
 ROP_3Delight::endRender()
 {
+	assert(m_current_render);
+
 	if(error() < UT_ERROR_ABORT)
 	{
-		executePostRenderScript(m_end_time);
+		executePostRenderScript(m_current_render->m_end_time);
 	}
+
+	OP_BundlePattern::freePattern(m_current_render->m_lights_to_render_pattern);
+	OP_BundlePattern::freePattern(m_current_render->m_objects_to_render_pattern);
+
+	if(!m_current_render->BackgroundRendering())
+	{
+		delete &m_current_render->m_nsi;
+	}
+	delete m_current_render; m_current_render = nullptr;
 
 	return ROP_CONTINUE_RENDER;
 }

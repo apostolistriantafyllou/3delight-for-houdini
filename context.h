@@ -45,6 +45,15 @@ public:
 	float ShutterOpen()const { return m_current_time - m_shutter/2.0f; }
 	float ShutterClose()const { return m_current_time + m_shutter/2.0f; }
 
+	/// Returns true if a single frame is to be rendered
+	bool SingleFrame()const { return m_start_time == m_end_time; }
+
+	/// Returns true if rendering should be done in a background thread
+	bool BackgroundRendering()const
+	{
+		return SingleFrame() && !m_export_nsi && !m_batch;
+	}
+
 public:
 	NSI::Context &m_nsi;
 	fpreal m_start_time, m_end_time;

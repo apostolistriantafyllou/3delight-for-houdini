@@ -101,8 +101,9 @@ private:
 	UT_String GetObjectsToRender()const;
 	UT_String GetLightsToRender()const;
 
-	fpreal m_end_time;
 	std::vector<OBJ_Node*> m_lights;
+
+	context* m_current_render;
 
 	/* The UI part of the ROP */
 	settings m_settings;
