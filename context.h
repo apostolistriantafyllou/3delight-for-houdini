@@ -23,7 +23,7 @@ public:
 		fpreal i_shutter_interval,
 		fpreal i_fps,
 		bool i_dof,
-		bool i_preview,
+		bool i_batch,
 		bool i_export_nsi,
 		OP_BundlePattern* i_objects_to_render_pattern,
 		OP_BundlePattern* i_lights_to_render_pattern)
@@ -35,7 +35,7 @@ public:
 		m_frame_duration(1.0f / i_fps),
 		m_shutter(i_shutter_interval * m_frame_duration),
 		m_dof(i_dof),
-		m_preview(i_preview),
+		m_batch(i_batch),
 		m_export_nsi(i_export_nsi),
 		m_objects_to_render_pattern(i_objects_to_render_pattern),
 		m_lights_to_render_pattern(i_lights_to_render_pattern)
@@ -53,7 +53,7 @@ public:
 	fpreal m_frame_duration;
 	// True if depth-of-field is enabled
 	bool m_dof;
-	bool m_preview;
+	bool m_batch;
 	bool m_export_nsi;
 
 	OP_BundlePattern* m_objects_to_render_pattern;

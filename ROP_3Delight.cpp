@@ -12,6 +12,7 @@
 #include <OP/OP_Director.h>
 #include <OP/OP_OperatorTable.h>
 #include <ROP/ROP_Templates.h>
+#include <UT/UT_UI.h>
 
 #include <nsi.hpp>
 #include <nsi_dynamic.hpp>
@@ -192,7 +193,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	bool preview =
 		output_overriden && output_override == "ip" &&
 		device_overriden && device_override == "";
-
+	bool batch = !UTisUIAvailable();
 	context ctx(
 		nsi,
 		tstart,
@@ -200,7 +201,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		GetShutterInterval(tstart),
 		fps,
 		HasDepthOfField(),
-		preview,
+		batch,
 		!render,
 		OP_BundlePattern::allocPattern(m_settings.GetObjectsToRender()),
 		OP_BundlePattern::allocPattern(m_settings.GetLightsToRender()));
@@ -363,7 +364,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 	e_fileOutputMode output_mode = e_disabled;
 
-	if (i_ctx.m_export_nsi || !i_ctx.m_preview)
+	if (i_ctx.m_export_nsi || i_ctx.m_batch)
 	{
 		int mode = evalInt(settings::k_batch_output_mode, 0, 0.0f);
 		if (mode == 0) output_mode = e_useToggleStates;
@@ -403,7 +404,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		file_output = file_output && file_driver.toStdString() != "png";
 		png_output = png_output && file_driver.toStdString() == "png";
 		bool jpeg_output = evalInt(aov::getAovJpegOutputToken(i), 0, 0.0f);
-		idisplay_output = idisplay_output && i_ctx.m_preview;
+		idisplay_output = idisplay_output && !i_ctx.m_batch;
 
 		if (output_mode == e_disabled)
 		{
