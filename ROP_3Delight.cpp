@@ -577,18 +577,6 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 			}
 		}
 	}
-
-/*
-FIXME : do the real thing
-
-and the following ROP_3Delight node attributes:
-k_default_image_format
-k_save_ids_as_cryptomatte
-k_aovs
-
-refer to
-https://www.sidefx.com/docs/hdk/_h_d_k__node_intro__working_with_parameters.html
-*/
 }
 
 void
