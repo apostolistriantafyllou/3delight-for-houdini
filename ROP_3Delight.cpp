@@ -640,6 +640,12 @@ ROP_3Delight::BuildImageUniqueName(
 bool
 ROP_3Delight::HasSpeedBoost()const
 {
+	bool batch = !UTisUIAvailable();
+	if(batch)
+	{
+		return false;
+	}
+
 	int speed_boost = evalInt(settings::k_speed_boost, 0, 0.0f);
 	return speed_boost;
 }
