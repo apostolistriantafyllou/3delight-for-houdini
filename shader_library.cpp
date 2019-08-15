@@ -81,7 +81,7 @@ shader_library::shader_library()
 			dyld = "null";
 
 		std::cerr
-			<< "3Delight for Houdini: no 3delight installation found\n\n"
+			<< "3Delight for Houdini: no 3Delight installation found\n\n"
 			<< "\t$DELIGHT: " << delight << "\n"
 			<< "\t$LD_LIBRARY_PATH: " << ld << "\n"
 			<< "\t$DYLD_LIBRARY_PATH: " << dyld << "\n"
@@ -266,8 +266,8 @@ void shader_library::find_all_shaders( const char *i_root)
 	std::cout <<
 		"3Delight for Houdini: loaded "
 		<< m_3delight_osos.size() << " 3delight shaders, "
-		<< m_3dfh_osos.size() << " 3delight for houdini shaders and "
-		<< m_user_osos.size() << " user defined shaders" << std::endl;
+		<< m_3dfh_osos.size() << " 3Delight for Houdini shaders and "
+		<< m_user_osos.size() << " user-defined shaders" << std::endl;
 
 }
 
@@ -280,7 +280,7 @@ void shader_library::Register(OP_OperatorTable* io_table)const
 		if(!info)
 		{
 			std::cerr
-				<< "3Deligth for Houdini: unable to load 3Delight shader "
+				<< "3Delight for Houdini: unable to load 3Delight shader "
 				<< oso.first;
 			continue;
 		}
@@ -295,7 +295,7 @@ void shader_library::Register(OP_OperatorTable* io_table)const
 		if(!info)
 		{
 			std::cerr
-				<< "3Deligth for Houdini: unable to load user shader "
+				<< "3Delight for Houdini: unable to load user shader "
 				<< oso.first;
 			continue;
 		}
@@ -303,7 +303,7 @@ void shader_library::Register(OP_OperatorTable* io_table)const
 		io_table->addOperator(
 			new VOP_ExternalOSLOperator(StructuredShaderInfo(info)));
 
-		std::cout << "3Deligth for Houdini: loadad user shader "
+		std::cout << "3Delight for Houdini: loaded user shader "
 			<< oso.second;
 	}
 }
