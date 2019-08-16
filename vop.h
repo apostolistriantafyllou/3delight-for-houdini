@@ -1,6 +1,8 @@
 #pragma once
 
 #include "exporter.h"
+#include "3Delight/ShaderQuery.h"
+#include "osl_utilities.h"
 
 class OP_Parameters;
 
@@ -65,4 +67,15 @@ private:
 		OSL counterpart for this shader.
 	*/
 	bool unsupported( void ) const;
+
+	/**
+		\brief Fills a list of NSI arguments from a shader for a ramp-type
+		parameter.
+	*/
+	static void list_ramp_parameters(
+		const OP_Parameters* i_opp,
+		const DlShaderInfo::Parameter& i_param,
+		osl_utilities::ramp::eType i_type,
+		float i_time,
+		NSI::ArgumentList& o_list );
 };
