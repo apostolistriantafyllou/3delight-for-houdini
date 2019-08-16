@@ -25,6 +25,7 @@ public:
 		bool i_dof,
 		bool i_batch,
 		bool i_export_nsi,
+		bool i_cloud,
 		OP_BundlePattern* i_objects_to_render_pattern,
 		OP_BundlePattern* i_lights_to_render_pattern)
 	:
@@ -37,6 +38,7 @@ public:
 		m_dof(i_dof),
 		m_batch(i_batch),
 		m_export_nsi(i_export_nsi),
+		m_cloud(i_cloud),
 		m_objects_to_render_pattern(i_objects_to_render_pattern),
 		m_lights_to_render_pattern(i_lights_to_render_pattern)
 	{
@@ -51,7 +53,7 @@ public:
 	/// Returns true if rendering should be done in a background thread
 	bool BackgroundThreadRendering()const
 	{
-		return SingleFrame() && !m_export_nsi && !m_batch;
+		return SingleFrame() && !m_cloud && !m_export_nsi && !m_batch;
 	}
 
 	/**
@@ -62,7 +64,7 @@ public:
 	*/
 	bool BackgroundProcessRendering()const
 	{
-		return !SingleFrame() && !m_export_nsi;
+		return (!SingleFrame() || m_cloud) && !m_export_nsi;
 	}
 
 public:
@@ -75,6 +77,7 @@ public:
 	bool m_dof;
 	bool m_batch;
 	bool m_export_nsi;
+	bool m_cloud;
 
 	OP_BundlePattern* m_objects_to_render_pattern;
 	OP_BundlePattern* m_lights_to_render_pattern;

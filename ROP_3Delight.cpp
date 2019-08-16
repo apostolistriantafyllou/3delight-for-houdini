@@ -58,6 +58,19 @@ ROP_3Delight::Register(OP_OperatorTable* io_table)
 			nullptr,
 			0,
 			"Render"));
+	io_table->addOperator(
+		new OP_Operator(
+			"3DelightCloud",
+			"3Delight Cloud",
+			ROP_3Delight::cloud_alloc,
+			settings::GetTemplatePair(),
+			0,
+			0,
+			settings::GetVariablePair(),
+			0u,
+			nullptr,
+			0,
+			"Render"));
 
 	register_mplay_driver( GetNSIAPI() );
 }
@@ -65,14 +78,22 @@ ROP_3Delight::Register(OP_OperatorTable* io_table)
 OP_Node*
 ROP_3Delight::alloc(OP_Network* net, const char* name, OP_Operator* op)
 {
-	return new ROP_3Delight(net, name, op);
+	return new ROP_3Delight(net, name, op, false);
+}
+
+OP_Node*
+ROP_3Delight::cloud_alloc(OP_Network* net, const char* name, OP_Operator* op)
+{
+	return new ROP_3Delight(net, name, op, true);
 }
 
 ROP_3Delight::ROP_3Delight(
 	OP_Network* net,
 	const char* name,
-	OP_Operator* entry)
+	OP_Operator* entry,
+	bool i_cloud)
 	:	ROP_Node(net, name, entry),
+		m_cloud(i_cloud),
 		m_current_render(nullptr),
 		m_renderdl(nullptr),
 		m_settings(*this)
@@ -215,6 +236,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		HasDepthOfField(),
 		batch,
 		!render,
+		m_cloud,
 		OP_BundlePattern::allocPattern(m_settings.GetObjectsToRender()),
 		OP_BundlePattern::allocPattern(m_settings.GetLightsToRender()));
 
@@ -225,7 +247,18 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 			have exported the first frame of the sequence.
 		*/
 		m_renderdl = new UT_ReadWritePipe;
-		if(!m_renderdl->open("renderdl -stdinfiles"))
+		std::string renderdl_command = "renderdl -stdinfiles";
+
+		if(m_cloud)
+		{
+			renderdl_command += " -cloud -cloudtag HOUDINI";
+			if(batch)
+			{
+				renderdl_command += "_BATCH";
+			}
+		}
+
+		if(!m_renderdl->open(renderdl_command.c_str()))
 		{
 			delete m_renderdl;
 			return 0;

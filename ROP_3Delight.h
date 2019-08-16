@@ -36,6 +36,7 @@ public:
 	/// Registers the 3Delight ROP
 	static void Register(OP_OperatorTable* io_table);
 	static OP_Node* alloc(OP_Network* net, const char* name, OP_Operator* op);
+	static OP_Node* cloud_alloc(OP_Network* net, const char* name, OP_Operator* op);
 
 	/** \brief Returns true if motion blur is enabled. */
 	bool HasMotionBlur()const;
@@ -43,7 +44,11 @@ public:
 
 protected:
 
-	ROP_3Delight(OP_Network* net, const char* name, OP_Operator* entry);
+	ROP_3Delight(
+		OP_Network* net,
+		const char* name,
+		OP_Operator* entry,
+		bool i_cloud);
 	virtual ~ROP_3Delight();
 
 	virtual int startRender(int nframes, fpreal s, fpreal e);
@@ -103,6 +108,7 @@ private:
 	UT_String GetLightsToRender()const;
 
 	std::vector<OBJ_Node*> m_lights;
+	bool m_cloud;
 
 	context* m_current_render;
 	// renderdl process rendering a list of NSI files being read from stdin

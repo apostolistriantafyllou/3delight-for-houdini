@@ -51,6 +51,11 @@ install(
 	DESTINATION ${_installdir}/config/Icons )
 
 install(
+	FILES ui/ROP_3Delight.svg
+	RENAME ROP_3DelightCloud.svg
+	DESTINATION ${_installdir}/config/Icons )
+
+install(
 	FILES ui/select_layers_ui.ui
 	DESTINATION ${_installdir}/config/Applications )
 
