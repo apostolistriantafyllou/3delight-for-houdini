@@ -104,7 +104,6 @@ private:
 	fpreal m_end_time;
 	std::vector<OBJ_Node*> m_lights;
 
-protected:
 	/* The UI part of the ROP */
 	settings m_settings;
 };
