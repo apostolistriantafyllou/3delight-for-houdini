@@ -150,14 +150,6 @@ void scene::process_node(
 	if( i_node->castToVOPNode() )
 	{
 		/*
-			Do not include any vop outside of the /mat realm as these
-			do not concern us.
-		*/
-		std::string full( i_node->getFullPath() );
-		if( full.find("/mat") != 0 )
-			return;
-
-		/*
 		   Our material network connections is done :) The connection
 		   between nodes is done in \ref vop::copnnect
 		   Read vop.cpp if you are bewildered by this simplicity.
