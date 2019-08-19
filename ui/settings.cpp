@@ -15,8 +15,6 @@
 
 static const float k_one_line = 0.267;
 
-#define EXPORT_NSI_CHECKBOX
-
 const char* settings::k_export_nsi = "export_nsi";
 const char* settings::k_shading_samples = "shading_samples";
 const char* settings::k_pixel_samples = "pixel_samples";
@@ -65,11 +63,6 @@ PRM_Template* settings::GetTemplates()
 	static PRM_Name separator4("separator4", "");
 	static PRM_Name separator5("separator5", "");
 	static PRM_Name separator6("separator6", "");
-
-#ifdef EXPORT_NSI_CHECKBOX
-	static PRM_Name export_nsi(k_export_nsi, "Export NSI");
-	static PRM_Default export_nsi_d(true);
-#endif
 
 	// Quality
 	static PRM_Name shading_samples(k_shading_samples, "Shading Samples");
@@ -409,6 +402,16 @@ PRM_Template* settings::GetTemplates()
 		PRM_Template(PRM_LABEL, 0, &overrides_note)
 	};
 
+	// Debug
+
+	static PRM_Name export_nsi(k_export_nsi, "Export NSI to stdout");
+	static PRM_Default export_nsi_d(false);
+
+	static std::vector<PRM_Template> debug_templates =
+	{
+		PRM_Template(PRM_TOGGLE, 1, &export_nsi, &export_nsi_d)
+	};
+
 	// Put everything together
 
 	static PRM_Name main_tabs_name("main_tabs");
@@ -417,17 +420,13 @@ PRM_Template* settings::GetTemplates()
 		PRM_Default(quality_templates.size(), "Quality"),
 		PRM_Default(scene_elements_templates.size(), "Scene Elements"),
 		PRM_Default(image_layers_templates.size() + 1, "Image Layers"),
-		PRM_Default(overrides_templates.size(), "Overrides")
+		PRM_Default(overrides_templates.size(), "Overrides"),
+		PRM_Default(debug_templates.size(), "Debug")
 	};
 
 	static std::vector<PRM_Template> templates;
 	if(templates.size() == 0)
 	{
-#ifdef EXPORT_NSI_CHECKBOX
-		templates.push_back(
-			PRM_Template(PRM_TOGGLE, 1, &export_nsi, &export_nsi_d));
-#endif
-
 		templates.push_back(
 			PRM_Template(
 				PRM_SWITCHER,
@@ -473,6 +472,12 @@ PRM_Template* settings::GetTemplates()
 				templates.end(),
 				overrides_templates.begin(),
 				overrides_templates.end());
+
+			// Debug
+			templates.insert(
+				templates.end(),
+				debug_templates.begin(),
+				debug_templates.end());
 
 		templates.push_back(PRM_Template());
 	}
