@@ -407,14 +407,17 @@ void scene::export_light_categories(
 
 	UT_String categories;
 	int lightcategories_index = i_object->getParmIndex("lightcategories");
-	if(lightcategories_index >= 0)
+	if(lightcategories_index < 0)
 	{
-		i_object->evalString(categories, lightcategories_index, 0, 0.0f);
+		// Light linking is not available for this object
+		return;
 	}
 
+	i_object->evalString(categories, lightcategories_index, 0, 0.0f);
 	if(!categories.c_str())
 	{
-		categories = "";
+		// Light linking is not available for this object
+		return;
 	}
 
 	UT_TagManager tag_manager;
