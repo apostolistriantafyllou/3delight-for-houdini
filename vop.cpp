@@ -212,12 +212,14 @@ void vop::list_shader_parameters(
 			o_list.Add(
 				new NSI::StringArg( parameter->name.c_str(), str.buffer()) );
 
-			if( color_space.length() != 0 )
+			if( color_space.length() == 0 )
 			{
-				std::string param( parameter->name.c_str() );
-				param += ".meta.colorspace";
-				o_list.Add( new NSI::StringArg(param, color_space.buffer()) );
+				color_space = "auto";
 			}
+
+			std::string param( parameter->name.c_str() );
+			param += ".meta.colorspace";
+			o_list.Add( new NSI::StringArg(param, color_space.buffer()) );
 			break;
 		}
 		}
