@@ -208,10 +208,11 @@ void vop::list_shader_parameters(
 		{
 			UT_String str;
 			i_parameters->evalString( str, parameter->name.c_str(), 0, i_time);
+
 			o_list.Add(
 				new NSI::StringArg( parameter->name.c_str(), str.buffer()) );
 
-			if( color_space != "" )
+			if( color_space.length() != 0 )
 			{
 				std::string param( parameter->name.c_str() );
 				param += ".meta.colorspace";
