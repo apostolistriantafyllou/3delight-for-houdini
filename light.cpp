@@ -19,6 +19,8 @@ light::light( const context& i_ctx, OBJ_Node *i_object )
 {
 	m_handle = i_object->getFullPath();
 	m_handle += "|light";
+
+	m_is_env_light = i_object->getParmPtr("env_map") != nullptr;
 }
 
 void light::create( void ) const
@@ -41,7 +43,9 @@ void light::create( void ) const
 	m_nsi.Create( shader, "shader" );
 
 	const shader_library& library = shader_library::get_instance();
-	std::string path_to_hlight = library.get_shader_path( "hlight" );
+	std::string path_to_hlight = library.get_shader_path(
+			m_is_env_light ? "environmentlight" : "hlight" );
+
 	m_nsi.SetAttribute(
 		shader, NSI::StringArg("shaderfilename", path_to_hlight) );
 
@@ -51,8 +55,20 @@ void light::create( void ) const
 
 void light::create_default_geometry( void ) const
 {
-	if( !m_object->evalInt("light_enable", 0, 0) )
+	std::string geo_name = m_handle + "|geometry";
+
+	if( m_is_env_light )
+	{
+		/**
+			Envlight is a bit different as it won't have the "light_type" and
+			other things defined. So we are making a shortcut here so not
+			have evalInt() warnings because of the accesses below.
+		*/
+		m_nsi.Create( geo_name, "environment" );
+		m_nsi.SetAttribute( geo_name, NSI::DoubleArg("angle", 360) );
+		m_nsi.Connect( geo_name, "", m_handle, "objects" );
 		return;
+	}
 
 	int type = m_object->evalInt( "light_type", 0, 0 );
 	int is_spot = m_object->evalInt( "coneenable", 0, 0 );
@@ -60,11 +76,6 @@ void light::create_default_geometry( void ) const
 	// for area lights.
 	float x_size = m_object->evalFloat( "areasize", 0, 0 ) * 0.5f;
 	float y_size = m_object->evalFloat( "areasize", 1, 0 ) * 0.5f;
-
-	std::cout << "light type for " << m_object->getFullPath() <<
-		" is " << type << std::endl;
-
-	std::string geo_name = m_handle + "|geometry";
 
 	if( type == e_grid || is_spot )
 	{
@@ -208,7 +219,10 @@ void light::set_attributes( void ) const
 void light::set_attributes_at_time( double i_time ) const
 {
 	NSI::ArgumentList list;
-	vop::list_shader_parameters( m_vop, "hlight", i_time, list );
+	vop::list_shader_parameters(
+		m_vop,
+		m_is_env_light ? "environmentlight" : "hlight",
+		i_time, list );
 
 	std::string shader(m_handle); shader += "|shader";
 	m_nsi.SetAttributeAtTime( shader, i_time, list );

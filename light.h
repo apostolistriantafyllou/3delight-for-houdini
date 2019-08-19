@@ -35,4 +35,7 @@ private:
 		\brief Creates the geometry for Houdini's "light_type".
 	*/
 	void create_default_geometry( void ) const;
+
+	/** = true if this is an environment light */
+	bool m_is_env_light{false};
 };
