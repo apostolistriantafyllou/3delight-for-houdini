@@ -47,7 +47,7 @@ void instance::set_attributes_at_time( double ) const
 	double *matrices = new double[ transforms->entries() * 16 ];
 	double *it = matrices;
 
-	static_assert( sizeof(UT_Matrix4D) == 16*sizeof(double) );
+	static_assert( sizeof(UT_Matrix4D) == 16*sizeof(double), "check 4D matrix" );
 
 	for( int i=0; i<transforms->entries(); i++ )
 	{
