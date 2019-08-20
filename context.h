@@ -58,5 +58,4 @@ public:
 
 	OP_BundlePattern* m_objects_to_render_pattern;
 	OP_BundlePattern* m_lights_to_render_pattern;
-	std::vector<OBJ_Node*> m_lights_to_render;
 };
