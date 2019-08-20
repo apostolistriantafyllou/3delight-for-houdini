@@ -47,40 +47,9 @@ Install the project...
 
 ### macOS
 
-On macOS, you will need to install TBB and have apply a small patch to CMakeLists.txt.
-After that the same instructions as for Linux will do the job. Note that there
-is no reason for the plugin to require TBB and we ware working to resolve this
-issue with SideFx.
+On macOS, you will need to install TBB first. After, the same instructions as for Linux will do the job.
 
-In the following patch, we added a path to my local TBB installation and
-added it to the libraries to link with (1 line to add, 1 line to change). Note
-that the path to TBB will be different in your case.
-
-```patch
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 8ab3989..82e1f5e 100644
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
-@@ -7,6 +7,9 @@ project( 3Delight_for_Houdini )
- list( APPEND CMAKE_PREFIX_PATH "$ENV{HFS}/toolkit/cmake" )
- find_package( Houdini REQUIRED )
-
-+link_directories($ENV{DELIGHT_ROOT}/external-build/darwin-x86_64-libc++/tbb/lib)
-+
-+
- # Add a library
- set( library_name 3Delight_for_Houdini )
- add_library( ${library_name} SHARED
-@@ -35,7 +38,7 @@ target_include_directories( ${library_name} PRIVATE "$ENV{DELIGHT}/include"  )
-
- # Link against the Houdini libraries, and add required include directories and
- # compile definitions.
--target_link_libraries( ${library_name} Houdini )
-+target_link_libraries( ${library_name} Houdini tbb )
-
- # This will get the destination directory for the installation.
- houdini_get_default_install_dir( _installdir )
-```
+Note that we are taking special care for TBB in the `CMakeLists.txt` file, but there is no reason for the plugin to require TBB and we ware working to resolve this issue with SideFx.
 
 ### Windows
 

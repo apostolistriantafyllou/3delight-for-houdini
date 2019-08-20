@@ -36,8 +36,12 @@ add_subdirectory( osl osl )
 target_include_directories( ${library_name} PRIVATE "$ENV{DELIGHT}/include"  )
 
 # Link against the Houdini libraries, and add required include directories and
-# compile definitions.
-target_link_libraries( ${library_name} Houdini)
+# compile definitions. Special handling needed for tbb on macOS.
+IF(APPLE)
+	target_link_libraries( ${library_name} Houdini tbb)
+ELSE()
+    target_link_libraries( ${library_name} Houdini)
+ENDIF()
 
 # This will get the destination directory for the installation.
 houdini_get_default_install_dir( _installdir )
