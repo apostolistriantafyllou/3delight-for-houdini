@@ -12,6 +12,8 @@
 #include <OP/OP_Director.h>
 #include <OP/OP_OperatorTable.h>
 #include <ROP/ROP_Templates.h>
+#include <UT/UT_ReadWritePipe.h>
+#include <UT/UT_TempFileManager.h>
 #include <UT/UT_UI.h>
 
 #include <nsi.hpp>
@@ -72,6 +74,7 @@ ROP_3Delight::ROP_3Delight(
 	OP_Operator* entry)
 	:	ROP_Node(net, name, entry),
 		m_current_render(nullptr),
+		m_renderdl(nullptr),
 		m_settings(*this)
 {
 	/*
@@ -192,6 +195,9 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		return 0;
 	}
 
+	// This should have been done earlier
+	delete m_renderdl; m_renderdl = nullptr;
+
 	NSI::Context* nsi = new NSI::Context(GetNSIAPI());
 
 	bool render = !evalInt(settings::k_export_nsi, 0, 0.0f);
@@ -212,6 +218,20 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		OP_BundlePattern::allocPattern(m_settings.GetObjectsToRender()),
 		OP_BundlePattern::allocPattern(m_settings.GetLightsToRender()));
 
+	if(m_current_render->BackgroundProcessRendering())
+	{
+		/*
+			Start a renderdl process that will start rendering as soon as we
+			have exported the first frame of the sequence.
+		*/
+		m_renderdl = new UT_ReadWritePipe;
+		if(!m_renderdl->open("renderdl -stdinfiles"))
+		{
+			delete m_renderdl;
+			return 0;
+		}
+	}
+
 	if(error() < UT_ERROR_ABORT)
 	{
 		executePreRenderScript(tstart);
@@ -228,9 +248,21 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	m_current_render->m_current_time = time;
 
 	NSI::Context* nsi = &m_current_render->m_nsi;
+
+	std::string frame_nsi_file;
+
 	if(m_current_render->m_export_nsi)
 	{
 		nsi->Begin( NSI::IntegerArg("streamfiledescriptor", 1) );
+	}
+	else if(m_renderdl)
+	{
+		frame_nsi_file = UT_TempFileManager::getTempFilename();
+		nsi->Begin(
+		(
+			NSI::StringArg("streamfilename", frame_nsi_file),
+			NSI::CStringPArg("streamformat", "binarynsi")
+		) );
 	}
 	else
 	{
@@ -246,7 +278,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	ExportGlobals(*m_current_render);
 	ExportDefaultMaterial(*m_current_render);
 
-	if(m_current_render->BackgroundRendering())
+	if(m_current_render->BackgroundThreadRendering())
 	{
 		nsi->RenderControl(
 		(
@@ -261,12 +293,18 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	{
 		nsi->RenderControl(NSI::CStringPArg("action", "start"));
 
-		if(m_current_render->m_batch)
+		if(m_current_render->m_batch && !m_renderdl)
 		{
 			nsi->RenderControl(NSI::CStringPArg("action", "wait"));
 		}
 
 		nsi->End();
+	}
+
+	if(m_renderdl)
+	{
+		fprintf(m_renderdl->getWriteFile(), "%s\n", frame_nsi_file.c_str());
+		fflush(m_renderdl->getWriteFile());
 	}
 
 	if(error() < UT_ERROR_ABORT)
@@ -287,10 +325,19 @@ ROP_3Delight::endRender()
 		executePostRenderScript(m_current_render->m_end_time);
 	}
 
+/*
+	This should be done once renderdl has exited
+	if(m_renderdl)
+	{
+		m_renderdl->close();
+		delete m_renderdl; m_renderdl = nullptr;
+	}
+*/
+
 	OP_BundlePattern::freePattern(m_current_render->m_lights_to_render_pattern);
 	OP_BundlePattern::freePattern(m_current_render->m_objects_to_render_pattern);
 
-	if(!m_current_render->BackgroundRendering())
+	if(!m_current_render->BackgroundThreadRendering())
 	{
 		delete &m_current_render->m_nsi;
 	}

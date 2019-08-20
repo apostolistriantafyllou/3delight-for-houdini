@@ -13,6 +13,7 @@ namespace NSI { class Context; class DynamicAPI; }
 class context;
 class OBJ_Camera;
 class OBJ_Node;
+class UT_ReadWritePipe;
 class UT_String;
 class exporter;
 
@@ -104,6 +105,8 @@ private:
 	std::vector<OBJ_Node*> m_lights;
 
 	context* m_current_render;
+	// renderdl process rendering a list of NSI files being read from stdin
+	UT_ReadWritePipe* m_renderdl;
 
 	/* The UI part of the ROP */
 	settings m_settings;

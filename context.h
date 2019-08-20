@@ -49,9 +49,20 @@ public:
 	bool SingleFrame()const { return m_start_time == m_end_time; }
 
 	/// Returns true if rendering should be done in a background thread
-	bool BackgroundRendering()const
+	bool BackgroundThreadRendering()const
 	{
 		return SingleFrame() && !m_export_nsi && !m_batch;
+	}
+
+	/**
+		\brief Returns true if rendering should be done in a background process.
+
+		We use a renderdl process in order to start rendering as soon as the
+		first frame is exported.
+	*/
+	bool BackgroundProcessRendering()const
+	{
+		return !SingleFrame() && !m_export_nsi;
 	}
 
 public:
