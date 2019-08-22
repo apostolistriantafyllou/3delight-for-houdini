@@ -47,9 +47,9 @@ Install the project...
 
 ### macOS
 
-On macOS, you will need to install TBB first. After, the same instructions as for Linux will do the job.
+On macOS, the same instructions as for Linux will do the job.
 
-Note that we are taking special care for TBB in the `CMakeLists.txt` file, but there is no reason for the plugin to require TBB and we ware working to resolve this issue with SideFx.
+> Note that we are taking some special care for TBB in the `CMakeLists.txt` file, but there is no reason for the plugin to require TBB and we are working to resolve this issue with SideFx.
 
 ### Windows
 
