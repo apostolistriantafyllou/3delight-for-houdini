@@ -7,6 +7,13 @@ project( 3Delight_for_Houdini )
 list( APPEND CMAKE_PREFIX_PATH "$ENV{HFS}/toolkit/cmake" )
 find_package( Houdini REQUIRED )
 
+# Find TBB in HFS
+IF(APPLE)
+	string(REGEX REPLACE "/Resources$" "" HRES "$ENV{HFS}")
+	link_directories(${HRES}/Libraries)
+	MESSAGE(STATUS "Dynamically linking to Houdini's TBB")
+ENDIF()
+
 # Add a library
 set( library_name 3Delight_for_Houdini )
 add_library( ${library_name} SHARED
