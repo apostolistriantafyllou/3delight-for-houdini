@@ -16,7 +16,6 @@
 #include <UT/UT_TempFileManager.h>
 #include <UT/UT_UI.h>
 
-#include <nsi.hpp>
 #include <nsi_dynamic.hpp>
 
 #include <iostream>
@@ -37,7 +36,6 @@ namespace
 	{
 		NSI::Context* nsi = (NSI::Context*)i_data;
 		nsi->End();
-		delete nsi;
 	}
 
 }
@@ -95,6 +93,7 @@ ROP_3Delight::ROP_3Delight(
 	:	ROP_Node(net, name, entry),
 		m_cloud(i_cloud),
 		m_current_render(nullptr),
+		m_nsi(GetNSIAPI()),
 		m_renderdl(nullptr),
 		m_settings(*this)
 {
@@ -219,16 +218,13 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	// This should have been done earlier
 	delete m_renderdl; m_renderdl = nullptr;
 
-	NSI::Context* nsi = new NSI::Context(GetNSIAPI());
 
 	bool render = !evalInt(settings::k_export_nsi, 0, 0.0f);
-
 	fpreal fps = OPgetDirector()->getChannelManager()->getSamplesPerSec();
-
 	bool batch = !UTisUIAvailable();
 
 	m_current_render = new context(
-		*nsi,
+		m_nsi,
 		tstart,
 		tend,
 		GetShutterInterval(tstart),
@@ -277,21 +273,25 @@ ROP_RENDER_CODE
 ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 {
 	assert(m_current_render);
+	assert(m_nsi.Handle() == NSI_BAD_CONTEXT);
 
 	m_current_render->m_current_time = time;
-
-	NSI::Context* nsi = &m_current_render->m_nsi;
 
 	std::string frame_nsi_file;
 
 	if(m_current_render->m_export_nsi)
 	{
-		nsi->Begin( NSI::IntegerArg("streamfiledescriptor", 1) );
+		// Output NSI commands to the standard output
+		m_nsi.Begin( NSI::IntegerArg("streamfiledescriptor", 1) );
 	}
 	else if(m_renderdl)
 	{
+		/*
+			Output NSI commands to a temporary file that will be rendered by a
+			separate renderdl process.
+		*/
 		frame_nsi_file = UT_TempFileManager::getTempFilename();
-		nsi->Begin(
+		m_nsi.Begin(
 		(
 			NSI::StringArg("streamfilename", frame_nsi_file),
 			NSI::CStringPArg("streamformat", "binarynsi")
@@ -299,7 +299,8 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	}
 	else
 	{
-		nsi->Begin();
+		// Render directly from the current process
+		m_nsi.Begin();
 	}
 
 	executePreFrameScript(time);
@@ -313,29 +314,40 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 
 	if(m_current_render->BackgroundThreadRendering())
 	{
-		nsi->RenderControl(
+		/*
+			Start rendering in a background thread of the current process.
+			NSIEnd will be called once rendering is finished.
+		*/
+		m_nsi.RenderControl(
 		(
 			NSI::CStringPArg("action", "start"),
 			NSI::PointerArg("stoppedcallback", (const void*)&RenderStoppedCB),
-			NSI::PointerArg("stoppedcallbackdata", nsi)
+			NSI::PointerArg("stoppedcallbackdata", &m_nsi)
 		) );
-
-		// In that case, the "nsi" NSI::Context is deleted by RenderStoppedCB
+		// In that case, the "m_nsi" NSI::Context is closed by RenderStoppedCB
 	}
 	else
 	{
-		nsi->RenderControl(NSI::CStringPArg("action", "start"));
+		// Export an NSIRenderControl "start" command at the end of the frame
+		m_nsi.RenderControl(NSI::CStringPArg("action", "start"));
 
+		/*
+			If we're rendering in batch mode from the current process, then we	
+			must wait for the render to finish (as if we were rendering "in
+			foreground", from the current thread).
+		*/
 		if(m_current_render->m_batch && !m_renderdl)
 		{
-			nsi->RenderControl(NSI::CStringPArg("action", "wait"));
+			m_nsi.RenderControl(NSI::CStringPArg("action", "wait"));
 		}
 
-		nsi->End();
+		// The frame has finished exporting or rendering
+		m_nsi.End();
 	}
 
 	if(m_renderdl)
 	{
+		// Communicate the name of the exported NSI file to the renderdl process
 		fprintf(m_renderdl->getWriteFile(), "%s\n", frame_nsi_file.c_str());
 		fflush(m_renderdl->getWriteFile());
 	}
@@ -370,10 +382,6 @@ ROP_3Delight::endRender()
 	OP_BundlePattern::freePattern(m_current_render->m_lights_to_render_pattern);
 	OP_BundlePattern::freePattern(m_current_render->m_objects_to_render_pattern);
 
-	if(!m_current_render->BackgroundThreadRendering())
-	{
-		delete &m_current_render->m_nsi;
-	}
 	delete m_current_render; m_current_render = nullptr;
 
 	return ROP_CONTINUE_RENDER;

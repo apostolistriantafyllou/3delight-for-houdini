@@ -6,6 +6,8 @@
 
 #include <ROP/ROP_Node.h>
 
+#include <nsi.hpp>
+
 #include <vector>
 
 namespace NSI { class Context; class DynamicAPI; }
@@ -111,6 +113,12 @@ private:
 	bool m_cloud;
 
 	context* m_current_render;
+	/*
+		NSI context used to export NSI scenes (and render single frames in a
+		background thread).
+	*/
+	NSI::Context m_nsi;
+
 	// renderdl process rendering a list of NSI files being read from stdin
 	UT_ReadWritePipe* m_renderdl;
 
