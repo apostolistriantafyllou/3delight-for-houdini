@@ -13,6 +13,7 @@
 #include <OP/OP_OperatorTable.h>
 #include <ROP/ROP_Templates.h>
 #include <UT/UT_ReadWritePipe.h>
+#include <UT/UT_Spawn.h>
 #include <UT/UT_TempFileManager.h>
 #include <UT/UT_UI.h>
 
@@ -29,13 +30,6 @@ namespace
 	{
 		static NSI::DynamicAPI api;
 		return api;
-	}
-
-	void
-	RenderStoppedCB(void* i_data, NSIContext_t i_ctx, int i_status)
-	{
-		NSI::Context* nsi = (NSI::Context*)i_data;
-		nsi->End();
 	}
 
 }
@@ -95,6 +89,7 @@ ROP_3Delight::ROP_3Delight(
 		m_current_render(nullptr),
 		m_nsi(GetNSIAPI()),
 		m_renderdl(nullptr),
+		m_rendering(false),
 		m_settings(*this)
 {
 	/*
@@ -114,6 +109,15 @@ ROP_3Delight::ROP_3Delight(
 
 ROP_3Delight::~ROP_3Delight()
 {
+	if(m_renderdl)
+	{
+		UTterminate(m_renderdl->getChildPid());
+	}
+
+	if(m_renderdl_waiter.joinable())
+	{
+		m_renderdl_waiter.join();
+	}
 }
 
 
@@ -210,14 +214,61 @@ ROP_3Delight::ExportGlobals(const context& i_ctx)const
 
 int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 {
-	if(m_current_render)
+	m_render_end_mutex.lock();
+
+	// We still have a render going on. Kill it first.
+	if(m_rendering)
 	{
-		return 0;
+		/*
+			Mark the render as over so the stopped callback doesn't call NSIEnd,
+			which would make m_nsi invalid, possibly preventing a successful
+			call to NSIRenderControl "stop".
+		*/
+		m_rendering = false;
+
+		if(m_renderdl)
+		{
+			// Terminate the renderdl process
+			UTterminate(m_renderdl->getChildPid());
+
+			// Let the m_renderdl_waiter thread finish
+			m_render_end_mutex.unlock();
+		}
+		else
+		{
+			assert(m_nsi.Handle() != NSI_BAD_CONTEXT);
+
+			// Unlock the mutex so the stopper callback can do its job.
+			m_render_end_mutex.unlock();
+
+			/*
+				Notify the background rendering thread that it should stop (and,
+				implicitly, wait for it to be finished, including the call to
+				the stopper callback).
+			*/
+			m_nsi.RenderControl(NSI::CStringPArg("action", "stop"));
+
+			// It's now safe to call NSIEnd
+			m_nsi.End();
+		}
+	}
+	else
+	{
+		m_render_end_mutex.unlock();
 	}
 
-	// This should have been done earlier
-	delete m_renderdl; m_renderdl = nullptr;
+	/*
+		Wait for m_renderdl_waiter to finish. This has to be done even if we
+		didn't explicitly terminate the renderdl process (ie : if it has
+		finished on its own), because we don't want	the thread hanging loose.
+	*/
+	if(m_renderdl_waiter.joinable())
+	{
+		m_renderdl_waiter.join();
+		assert(!m_renderdl);
+	}
 
+	m_rendering = true;
 
 	bool render = !evalInt(settings::k_export_nsi, 0, 0.0f);
 	fpreal fps = OPgetDirector()->getChannelManager()->getSamplesPerSec();
@@ -259,6 +310,24 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 			delete m_renderdl;
 			return 0;
 		}
+
+		/*
+			Start a thread that will wait for the renderdl process to finish and
+			then delete the m_renderdl pipe object.
+		*/
+		m_renderdl_waiter =
+			std::thread(
+				[this]()
+				{
+					UTwait(m_renderdl->getChildPid());
+
+					m_render_end_mutex.lock();
+
+					m_rendering = false;
+					delete m_renderdl; m_renderdl = nullptr;
+
+					m_render_end_mutex.unlock();
+				} );
 	}
 
 	if(error() < UT_ERROR_ABORT)
@@ -314,6 +383,30 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 
 	if(m_current_render->BackgroundThreadRendering())
 	{
+		// Define a callback to be called when the rendering thread is finished
+		void (*render_stopped)(void*, NSIContext_t, int) =
+			[](void* i_data, NSIContext_t i_ctx, int i_status)
+			{
+				ROP_3Delight* rop = (ROP_3Delight*)i_data;
+
+				rop->m_render_end_mutex.lock();
+
+				/*
+					If m_rendering is still true, it means that the render
+					wasn't stopped from ROP_3Delight::startRender, so it's safe
+					to (and we have to) close the context. Otherwise, we leave
+					the context intact so it can be used by startRender to wait
+					for the end of the render.
+				*/
+				if(rop->m_rendering)
+				{
+					rop->m_rendering = false;
+					rop->m_nsi.End();
+				}
+
+				rop->m_render_end_mutex.unlock();
+			};
+
 		/*
 			Start rendering in a background thread of the current process.
 			NSIEnd will be called once rendering is finished.
@@ -321,8 +414,8 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 		m_nsi.RenderControl(
 		(
 			NSI::CStringPArg("action", "start"),
-			NSI::PointerArg("stoppedcallback", (const void*)&RenderStoppedCB),
-			NSI::PointerArg("stoppedcallbackdata", &m_nsi)
+			NSI::PointerArg("stoppedcallback", (const void*)render_stopped),
+			NSI::PointerArg("stoppedcallbackdata", this)
 		) );
 		// In that case, the "m_nsi" NSI::Context is closed by RenderStoppedCB
 	}
@@ -341,7 +434,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 			m_nsi.RenderControl(NSI::CStringPArg("action", "wait"));
 		}
 
-		// The frame has finished exporting or rendering
+		// The frame has finished exporting or rendering, close the context
 		m_nsi.End();
 	}
 
@@ -371,11 +464,15 @@ ROP_3Delight::endRender()
 	}
 
 /*
-	This should be done once renderdl has exited
+	Ideally, we should close the pipe's input in order for renderdl to quit once
+	all files have been rendered.  However, calling UT_ReadWritePipe::close
+	simply kills the process, which we don't want to do right now, as all frames
+	might not have been rendered yet.
+	Not closing the pipe delays the termination of the renderdl process to the
+	next call to startRender or ~ROP_3Delight.
 	if(m_renderdl)
 	{
 		m_renderdl->close();
-		delete m_renderdl; m_renderdl = nullptr;
 	}
 */
 

@@ -8,6 +8,8 @@
 
 #include <nsi.hpp>
 
+#include <mutex>
+#include <thread>
 #include <vector>
 
 namespace NSI { class Context; class DynamicAPI; }
@@ -121,6 +123,24 @@ private:
 
 	// renderdl process rendering a list of NSI files being read from stdin
 	UT_ReadWritePipe* m_renderdl;
+	/*
+		A thread that waits for the m_renderdl process to finish so we could be
+		notified of it.
+	*/
+	std::thread m_renderdl_waiter;
+
+	/*
+		True while rendering is in progress.
+		When a render is interrupted explicitly, it's set to false immediately
+		in order to prevent m_nsi to be invalidated by the stopper callback.
+	*/
+	bool m_rendering;
+
+	/*
+		Mutex controlling access to m_rendering and m_renderdl, specifically
+		when handling various end-of-render situations.
+	*/
+	std::mutex m_render_end_mutex;
 
 	/* The UI part of the ROP */
 	settings m_settings;
