@@ -14,6 +14,11 @@ IF(APPLE)
 	MESSAGE(STATUS "Dynamically linking to Houdini's TBB")
 ENDIF()
 
+# Set the 3Delight path
+if(NOT DEFINED DELIGHT)
+	set(DELIGHT $ENV{DELIGHT})
+ENDIF()
+
 # Add a library
 set( library_name 3Delight_for_Houdini )
 add_library( ${library_name} SHARED
@@ -40,7 +45,7 @@ add_library( ${library_name} SHARED
 add_subdirectory( osl osl )
 
 # 3Delight includes
-target_include_directories( ${library_name} PRIVATE "$ENV{DELIGHT}/include"  )
+target_include_directories( ${library_name} PRIVATE "${DELIGHT}/include" )
 
 # Link against the Houdini libraries, and add required include directories and
 # compile definitions. Special handling needed for tbb on macOS.
