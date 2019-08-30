@@ -3,6 +3,8 @@
 
 #include "VOP_ExternalOSL.h"
 
+#include <FS/FS_Info.h>
+#include <FS/UT_Directory.h>
 #include <VOP/VOP_Operator.h>
 
 #include <vector>
@@ -265,7 +267,7 @@ void shader_library::find_all_shaders( const char *i_root)
 
 	std::cout <<
 		"3Delight for Houdini: loaded "
-		<< m_3delight_osos.size() << " 3delight shaders, "
+		<< m_3delight_osos.size() << " 3Delight shaders, "
 		<< m_3dfh_osos.size() << " 3Delight for Houdini shaders and "
 		<< m_user_osos.size() << " user-defined shaders" << std::endl;
 
@@ -445,69 +447,33 @@ bool scan_dir(
 	const char *i_path,
 	std::function<void(const char*,const char*)> i_userFct )
 {
+	FS_Info info(i_path);
+	if(!info.getIsDirectory())
+	{
+		i_userFct(i_path, i_path);
+		return true;
+	}
+
+	UT_Directory dir(i_path, nullptr, 0);
+	UT_StringArray files;
+	dir.getFiles("*", files);
+
+	const std::string separator = 
 #ifdef _WIN32
-	bool all_ok = true;
-	if( FileIsDir(i_path) )
-	{
-		char toFind[_MAX_PATH];
-		WIN32_FIND_DATA searchData;
-		HANDLE handle = NULL;
-
-		_snprintf( toFind, _MAX_PATH-1, "%s\\*", i_path );
-
-		handle = FindFirstFile( toFind, &searchData );
-
-		if( handle == INVALID_HANDLE_VALUE )
-		{
-			return false;
-		}
-
-		do
-		{
-			if ( strcmp(searchData.cFileName, "."  ) &&
-			     strcmp(searchData.cFileName, ".." ) )
-			{
-				char filename[ _MAX_PATH ];
-				sprintf( filename,"%s\\%s", i_path, searchData.cFileName );
-				i_userFct( filename, searchData.cFileName, i_userArg );
-			}
-
-		} while( FindNextFile(handle, &searchData) );
-
-		FindClose( handle );
-	}
-	else
-	{
-		i_userFct( i_path, i_path );
-	}
-	return all_ok;
+		"\\";
 #else
-	DIR *pDir;
-
-	struct dirent *pDirent;
-	char tmp[4096];
-
-	if ( (pDir = opendir(i_path)) == 0x0 )
-	{
-		return false;
-	}
-
-	bool all_ok = true;
-	while ( (pDirent = readdir(pDir)) )
-	{
-		if( strcmp(pDirent->d_name, "." )  &&
-			strcmp(pDirent->d_name, "..") )
-		{
-			strcpy(tmp, i_path);
-			strcat(tmp, "/");
-			strcat(tmp, pDirent->d_name);
-			i_userFct( tmp, pDirent->d_name );
-		}
-	}
-
-	closedir(pDir);
-	return all_ok;
+		"/";
 #endif
+
+	std::string dir_path = i_path;
+	for(int f = 0; f < files.size(); f++)
+	{
+		UT_StringRef file = files[f];
+		std::string full_path = dir_path + separator + file.toStdString();
+		i_userFct(full_path.c_str(), file.c_str());
+	}
+
+	return true;
 }
 
 
