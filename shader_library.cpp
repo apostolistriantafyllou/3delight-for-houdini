@@ -432,7 +432,11 @@ const char *get_env( const char* i_var )
 			win32Value,
 			ENVVAR_VALUE_MAX_LENGTH ) )
 		{
-			SetEnv( i_var, win32Value );
+			char* var_val =
+				(char*)malloc( strlen(i_var) + strlen(win32Value) + 2 );
+			sprintf( var_val, "%s=%s", i_var, win32Value );
+			_putenv( var_val );
+			free( var_val );
 			value = getenv( i_var );
 		}
 
