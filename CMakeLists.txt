@@ -56,20 +56,22 @@ ELSE()
 ENDIF()
 
 # This will get the destination directory for the installation.
-houdini_get_default_install_dir( _installdir )
+if(NOT DEFINED INSTALL_DIR)
+	houdini_get_default_install_dir( INSTALL_DIR )
+ENDIF()
 
 install(
 	FILES ui/ROP_3Delight.svg
-	DESTINATION ${_installdir}/config/Icons )
+	DESTINATION ${INSTALL_DIR}/config/Icons )
 
 install(
 	FILES ui/ROP_3Delight.svg
 	RENAME ROP_3DelightCloud.svg
-	DESTINATION ${_installdir}/config/Icons )
+	DESTINATION ${INSTALL_DIR}/config/Icons )
 
 install(
 	FILES ui/select_layers_ui.ui
-	DESTINATION ${_installdir}/config/Applications )
+	DESTINATION ${INSTALL_DIR}/config/Applications )
 
 # Configure several common target properties, such as its output directory.
-houdini_configure_target( ${library_name} )
+houdini_configure_target( ${library_name} "INSTDIR" "${INSTALL_DIR}/dso" )

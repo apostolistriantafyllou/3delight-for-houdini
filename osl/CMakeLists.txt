@@ -2,7 +2,9 @@
 file(GLOB OSL_SRCS "*.osl")
 
 # This will get the destination directory for the installation.
-houdini_get_default_install_dir( _installdir )
+if(NOT DEFINED INSTALL_DIR)
+	houdini_get_default_install_dir( INSTALL_DIR )
+ENDIF()
 
 # Compile and install each file
 foreach(osl_file ${OSL_SRCS})
@@ -22,6 +24,6 @@ foreach(osl_file ${OSL_SRCS})
 
 	install(
 		FILES ${CMAKE_CURRENT_BINARY_DIR}/${osl_name}.oso
-		DESTINATION ${_installdir}/osl)
+		DESTINATION ${INSTALL_DIR}/osl)
 
 endforeach(osl_file)
