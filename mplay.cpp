@@ -169,9 +169,6 @@ PtDspyError MPlayDspyImageData(
 	const unsigned char* i_cdata )
 {
 	auto mplay = (TIL_TileMPlay*)i_hImage;
-	int bucket_w = i_xmax_plusone - i_xmin;
-	int bucket_h = i_ymax_plusone - i_ymin;
-
 	mplay->writeTile(
 		i_cdata,
 		i_xmin, i_xmax_plusone-1,
