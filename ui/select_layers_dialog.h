@@ -36,9 +36,6 @@ private:
 	/// Flag to keep track if we've been parsed
 	bool m_parsedDialog;
 
-	/// Keep track if we're open
-	bool m_isOpen;
-
 	std::vector<UI_Value*> m_values;
 	std::vector<std::string> m_labels;
 	std::vector<std::string> m_symbols;
