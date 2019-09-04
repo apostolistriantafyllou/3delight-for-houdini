@@ -108,7 +108,7 @@ void DlNetError::Record()
 	m_error = errno;
 #endif
 }
-
+#if 0
 const char* DlNetError::Message()
 {
 	if( m_message )
@@ -154,7 +154,7 @@ const char* DlNetError::Message()
 
 	return m_message;
 }
-
+#endif
 void DlNetError::FreeMessage()
 {
 #ifdef _WIN32

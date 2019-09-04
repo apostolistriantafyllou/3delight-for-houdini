@@ -53,7 +53,7 @@ public:
 	void Record();
 	void RecordIf( bool b ) { if ( b ) Record(); }
 
-	const char* Message();
+//	const char* Message();
 
 private:
 	void FreeMessage();
