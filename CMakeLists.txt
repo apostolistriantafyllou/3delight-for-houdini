@@ -28,6 +28,7 @@ add_library( ${library_name} SHARED
 	curvemesh.cpp
 	exporter.cpp
 	instance.cpp
+	jsonServer.cpp
 	light.cpp
 	mplay.cpp
 	polygonmesh.cpp
