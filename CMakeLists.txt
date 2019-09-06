@@ -56,6 +56,10 @@ ELSE()
     target_link_libraries( ${library_name} Houdini)
 ENDIF()
 
+if (MSVC)
+	target_link_libraries( ${library_name} "$ENV{HFS}/custom/houdini/dsolib/libpxr_usd_ms.lib" Ws2_32 )
+endif ()
+
 # This will get the destination directory for the installation.
 if(NOT DEFINED INSTALL_DIR)
 	houdini_get_default_install_dir( INSTALL_DIR )
