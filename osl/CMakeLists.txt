@@ -14,7 +14,7 @@ foreach(osl_file ${OSL_SRCS})
 
     # Compile command
     add_custom_command( OUTPUT ${osl_name}.oso
-        COMMAND oslc -I${OSL_SHADERS_DIR} -D_3DFH=1 -q ${osl_file}
+        COMMAND ${DELIGHT}/bin/oslc -I${OSL_SHADERS_DIR} -D_3DFH=1 -q ${osl_file}
         DEPENDS ${osl_file}
         COMMENT "Compiling ${osl_name}.osl" )
 
