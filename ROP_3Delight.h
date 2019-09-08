@@ -80,6 +80,11 @@ private:
 		const std::string& i_driver_handle,
 		unsigned& io_sort_key) const;
 
+	void ExportLayerFeedbackData(
+		const context& i_ctx,
+		const std::string& i_layer_handle,
+		const std::string& i_light_handle) const;
+
 	void ExportGlobals(const context& i_ctx)const;
 	void ExportDefaultMaterial( const context &i_context ) const;
 

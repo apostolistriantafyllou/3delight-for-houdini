@@ -2,15 +2,18 @@
 
 #include "camera.h"
 #include "context.h"
+#include "jsonServer.h"
 #include "mplay.h"
 #include "scene.h"
 #include "shader_library.h"
 #include "ui/select_layers_dialog.h"
 
 #include <OBJ/OBJ_Camera.h>
+#include <OBJ/OBJ_Light.h>
 #include <OP/OP_BundlePattern.h>
 #include <OP/OP_Director.h>
 #include <OP/OP_OperatorTable.h>
+#include <RE/RE_Light.h>
 #include <ROP/ROP_Templates.h>
 #include <UT/UT_ReadWritePipe.h>
 #include <UT/UT_Spawn.h>
@@ -690,6 +693,9 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					filter, filter_width,
 					screen_name, light_names[j],
 					idisplay_driver_name, sort_key);
+
+				ExportLayerFeedbackData(
+					i_ctx, layer_name, light_names[j] );
 			}
 
 			if (file_output)
@@ -825,6 +831,146 @@ ROP_3Delight::ExportOneOutputLayer(
 	i_ctx.m_nsi.Connect(
 		i_driver_handle.c_str(), "",
 		i_layer_handle.c_str(), "outputdrivers");
+}
+
+void
+ROP_3Delight::ExportLayerFeedbackData(
+	const context& i_ctx,
+	const std::string& i_layer_handle,
+	const std::string& i_light_handle) const
+{
+	std::string host = jsonServer::GetServerHost();
+	int port = jsonServer::GetServerPort();
+
+	if( i_light_handle.empty() )
+	{
+		i_ctx.m_nsi.SetAttribute( i_layer_handle.c_str(),
+			(
+				NSI::StringArg( "sourceapp", "Houdini" ),
+				NSI::StringArg( "feedbackhost", host.c_str() ),
+				NSI::IntegerArg( "feedbackport", port )
+			));
+		return;
+	}
+
+	OBJ_Node* obj_node = OPgetDirector()->findOBJNode(i_light_handle.c_str());
+	assert(obj_node);
+
+	fpreal r, g, b;
+	fpreal dimmer;
+	RE_Light* re_light = 0;
+	OBJ_Light* obj_light = obj_node->castToOBJLight();
+	if (obj_light)
+	{
+		dimmer = obj_light->DIMMER(0);
+		r = obj_light->CR(0);
+		g = obj_light->CG(0);
+		b = obj_light->CB(0);
+		re_light = obj_light->getLightValue();
+		assert(re_light);
+	}
+	else
+	{
+		OBJ_Ambient* obj_ambient = obj_node->castToOBJAmbient();
+		if (obj_ambient)
+		{
+			dimmer = obj_ambient->DIMMER(0);
+			r = obj_ambient->CR(0);
+			g = obj_ambient->CG(0);
+			b = obj_ambient->CB(0);
+			re_light = obj_light->getLightValue();
+			assert(re_light);
+		}
+	}
+
+	if( re_light == 0 )
+	{
+		i_ctx.m_nsi.SetAttribute( i_layer_handle.c_str(),
+			(
+				NSI::StringArg( "sourceapp", "Houdini" ),
+				NSI::StringArg( "feedbackhost", host.c_str() ),
+				NSI::IntegerArg( "feedbackport", port )
+			));
+		return;
+	}
+
+	std::string values;
+	std::stringstream ss1;
+	ss1 << dimmer;
+	values = ss1.str();
+
+	std::string color_values;
+	std::stringstream ss2;
+	ss2 << r;
+	ss2 << ",";
+	ss2 << g;
+	ss2 << ",";
+	ss2 << b;
+	color_values = ss2.str();
+
+	RE_Light::RE_HQLightType enum_type = re_light->hqLightType();
+	std::string light_type;
+	switch (enum_type)
+	{
+		case RE_Light::HQLIGHT_AMBIENT:
+			light_type = "ambient";
+			break;
+		case RE_Light::HQLIGHT_DIR:
+			light_type = "directional";
+			break;
+		case RE_Light::HQLIGHT_ENV:
+			light_type = "environment";
+			break;
+		case RE_Light::HQLIGHT_POINT:
+			light_type = "point";
+			break;
+		case RE_Light::HQLIGHT_SPOT:
+			light_type = "spot";
+			break;
+		case RE_Light::HQLIGHT_AREA:
+			light_type = "area";
+			break;
+		case RE_Light::HQLIGHT_AREA_SPOT:
+			light_type = "area spot";
+			break;
+		case RE_Light::NUM_HQLIGHT_TYPES:
+			light_type = "unknown";
+			break;
+		default:
+			light_type = "unknown";
+			break;
+	}
+
+	std::string feedback_data;
+
+	/* Make the feedback message */
+	/* Name */
+	feedback_data = "{\"name\":\"";
+	feedback_data += i_light_handle;
+	feedback_data += "\",";
+
+	/* Type */
+	feedback_data += "\"type\":\"";
+	feedback_data += light_type;
+	feedback_data += "\",";
+
+	/* Value */
+	feedback_data += "\"values\":[";
+	feedback_data += values;
+	feedback_data += "],";
+
+	/* Color values */
+	feedback_data += "\"color_values\":[";
+	feedback_data += color_values;
+	feedback_data += "]}";
+
+	i_ctx.m_nsi.SetAttribute( i_layer_handle.c_str(),
+		(
+			NSI::StringArg( "sourceapp", "Houdini" ),
+			NSI::StringArg( "feedbackhost", host.c_str() ),
+			NSI::IntegerArg( "feedbackport", port ),
+			NSI::StringArg( "feedbackdata", feedback_data.c_str() )
+		));
 }
 
 void

@@ -11,7 +11,6 @@ static const char* k_aov = "aov";
 
 SelectLayersDialog::SelectLayersDialog()
 	: m_parsedDialog(false)
-	, m_isOpen(false)
 {
 	m_values.push_back(new UI_Value()); // ci.val
 	m_values.push_back(new UI_Value()); // diffuse.val
