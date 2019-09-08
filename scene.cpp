@@ -173,7 +173,7 @@ void scene::process_node(
 		return;
 
 #if 0
-	if( !obj->isObjectRenderable(i_context.m_start_time) )
+	if( !obj->isObjectRenderable(i_context.m_current_time) )
 		return;
 #endif
 
@@ -232,7 +232,7 @@ void scene::process_node(
 	}
 
 	/* FIXME: motion blur */
-	OP_Context context( i_context.m_start_time );
+	OP_Context context( i_context.m_current_time );
 	const GU_ConstDetailHandle detail_handle( sop->getCookedGeoHandle(context) );
 
 	if( !detail_handle.isValid() )
@@ -338,7 +338,7 @@ void scene::convert_to_nsi( const context &i_context )
 	for( auto &exporter : to_export )
 	{
 		exporter->set_attributes();
-		exporter->set_attributes_at_time( i_context.m_start_time );
+		exporter->set_attributes_at_time( i_context.m_current_time );
 	}
 
 	/*

@@ -89,7 +89,7 @@ void polygonmesh::set_attributes( void ) const
 	exporter::export_attributes(
 		attributes,
 		sizeof(attributes)/sizeof(attributes[0]),
-		m_context.m_start_time,
+		m_context.m_current_time,
 		to_export );
 }
 
