@@ -37,6 +37,7 @@ add_library( ${library_name} SHARED
 	plugin.cpp
 	scene.cpp
 	shader_library.cpp
+	vdb.cpp
 	vop.cpp
 	ui/settings.cpp
 	ui/aov.cpp

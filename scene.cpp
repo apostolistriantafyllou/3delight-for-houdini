@@ -9,6 +9,7 @@
 #include "polygonmesh.h"
 #include "null.h"
 #include "pointmesh.h"
+#include "vdb.h"
 #include "vop.h"
 /* } */
 
@@ -115,6 +116,14 @@ struct OBJ_Node_Refiner : public GT_Refine
 			break;
 		}
 
+		case GT_PRIM_VOXEL_VOLUME:
+		case GT_PRIM_VDB_VOLUME:
+		{
+			fprintf( stderr, "3Delight for Houdni: unupported VDB/Volume "
+				"workflow for %s\n", m_node->getName().c_str() );
+			break;
+		}
+
 		default:
 #ifdef VERBOSE
 			std::cout << "Refining " << m_node->getFullPath() <<
@@ -202,6 +211,13 @@ void scene::process_node(
 
 	if(!i_context.m_objects_to_render_pattern->match(obj, nullptr, true))
 	{
+		return;
+	}
+
+	std::string vdb_path = node_is_vdb_loader(obj, i_context.m_current_time );
+	if( vdb_path.size() != 0 )
+	{
+		o_to_export.push_back( new vdb(i_context, obj, vdb_path ) );
 		return;
 	}
 
@@ -484,4 +500,41 @@ void scene::export_light_categories(
 			NSI::IntegerArg("value", false),
 			NSI::IntegerArg("priority", 1)
 		) );
+}
+
+std::string scene::node_is_vdb_loader( OBJ_Node *i_node, double i_time )
+{
+	/*
+		We don't support the general case VDB as we go through the file
+		SOP. For now we just skip this until we can find a more elegant
+		way to handle both file-loaded VDBs and general Houdini volumes.
+	*/
+	int nkids = i_node->getNchildren();
+	if( nkids != 1 )
+	{
+		return {};
+	}
+
+	SOP_Node *file_sop = i_node->getChild(0)->castToSOPNode();
+
+	if( file_sop == nullptr )
+	{
+		return {};
+	}
+
+	int index = file_sop->getParmIndex( "file" );
+	if( index < 0 )
+	{
+		return {};
+	}
+
+	UT_String file;
+	file_sop->evalString( file, "file", 0, i_time );
+
+	if( !file.fileExtension() || ::strcmp(file.fileExtension(),".vdb") )
+	{
+		return {};
+	}
+
+	return std::string( file.c_str() );
 }

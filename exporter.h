@@ -14,6 +14,7 @@
 #include <vector>
 
 class OBJ_Node;
+class SOP_Node;
 class VOP_Node;
 namespace NSI { class Context; }
 
@@ -97,6 +98,7 @@ protected:
 		double i_time,
 		std::vector<const char *> &i_which_ones ) const;
 
+
 protected:
 	/** Depending on what we are exporting, an OBJ or a VOP node */
 	union
@@ -107,7 +109,8 @@ protected:
 
 	/**
 		Will be invalid if GT primitives are not requried. Such as for the
-		null node and VOP nodes.
+		null node and VOP nodes. This also happens when we deal with the
+		file node when loading a VDB file (\ref vdb).
 	*/
 	GT_PrimitiveHandle m_gt_primitive;
 

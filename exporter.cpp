@@ -107,9 +107,22 @@ assign_material:
 
 	m_nsi.Create( attributes, "attributes" );
 	m_nsi.Connect( attributes, "", m_handle, "geometryattributes" );
-	m_nsi.Connect( material_path.buffer(), "", attributes, "surfaceshader" );
-}
 
+	/*
+		FIXME: this is a poor way to know if we have a volume or not.
+		Since we lost track of the original SOP_node at this moment.
+		We could re-implement this method in `vdb.cpp` but that might
+		be uglier.
+	*/
+	if( m_gt_primitive != sm_invalid_gt_primitive )
+	{
+		m_nsi.Connect( material_path.buffer(), "", attributes, "surfaceshader" );
+	}
+	else
+	{
+		m_nsi.Connect( material_path.buffer(), "", attributes, "volumeshader" );
+	}
+}
 
 /**
 	Utility to get an NSI type from a GT_Type.
@@ -193,4 +206,3 @@ void exporter::export_attributes(
 
 	return; // so that we don't fall into the void.
 }
-

@@ -4,6 +4,7 @@ class context;
 class exporter;
 class OBJ_Node;
 class OP_Node;
+class SOP_Node;
 class UT_String;
 class OP_BundlePattern;
 
@@ -53,4 +54,18 @@ private:
 		exporter *,
 		std::set<std::string> &io_exported_lights_categories,
 		const std::vector<OBJ_Node*> &i_lights_to_render );
+
+	/**
+		\brief Returns the path of a VDB file if this node is a "VDB loader".
+
+		\param i_cobj
+			The obj node to analyse.
+
+		\param i_time
+			The time to use for the parameter eval operation.
+
+		\returns path to VDB file if the file SOP indeed loads a VDB file;
+	*/
+	static std::string node_is_vdb_loader(
+		OBJ_Node *i_obj, double i_time );
 };

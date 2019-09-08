@@ -425,7 +425,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 		m_nsi.RenderControl(NSI::CStringPArg("action", "start"));
 
 		/*
-			If we're rendering in batch mode from the current process, then we	
+			If we're rendering in batch mode from the current process, then we
 			must wait for the render to finish (as if we were rendering "in
 			foreground", from the current thread).
 		*/
