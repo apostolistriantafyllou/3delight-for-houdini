@@ -3,6 +3,8 @@
 #include <HOM/HOM_Module.h>
 #include <OBJ/OBJ_Light.h>
 #include <OP/OP_Director.h>
+#include <UT/UT_JSONParser.h>
+#include <UT/UT_JSONValue.h>
 #include <UT/UT_NetSocket.h>
 #include <UT/UT_PackageUtils.h>
 #include <UT/UT_WorkBuffer.h>
@@ -44,7 +46,7 @@ std::string JSonServer::getServerHost() const
 	return host;
 }
 
-void JSonServer::ExecuteJSonCommand(const PXR_NS::JsObject& i_object)
+void JSonServer::ExecuteJSonCommand(const UT_JSONValue& i_object)
 {
 	assert(false);
 }
@@ -93,20 +95,21 @@ void JSonServer::onSocketEvent(int event_types)
 			int res2 = m_client->read(wb);
 
 			if (res2 != 0 || wb.isEmpty()) return;
+
 			// Skip the number of bytes at the beginning
 			wb.eraseHead(sizeof(unsigned));
+			if (wb.isEmpty()) return;
+
 			assert(wb.buffer()[0] == '{');
 			assert(wb.isNullTerminated());
 
-			std::string jsonString = wb.buffer();
-			if (jsonString.empty()) return;
-
-			PXR_NS::JsValue js_val = PXR_NS::JsParseString(jsonString);
-
-			if( js_val.IsObject() )
+			UT_IStream in(wb);
+			UT_JSONParser parser;
+			UT_JSONValue js;
+			if( js.parseValue(parser, &in) &&
+				js.getType() == UT_JSONValue::JSON_MAP )
 			{
-				const PXR_NS::JsObject& js_obj = js_val.GetJsObject();
-				ExecuteJSonCommand(js_obj);
+				ExecuteJSonCommand(js);
 			}
 			else
 			{
@@ -155,138 +158,131 @@ jsonServer::GetServerHost()
 }
 
 void
-jsonServer::ExecuteJSonCommand(const PXR_NS::JsObject& i_object)
+jsonServer::ExecuteJSonCommand(const UT_JSONValue& i_object)
 {
-	auto opObj = i_object.find("operation");
-	if (opObj == i_object.end())
+	UT_JSONValueMap* object_map = i_object.getMap();
+
+	UT_JSONValue* opObj = object_map->get("operation");
+	if (!opObj)
 	{
 		LogString(JSonServer::e_debug, "Key operation not found\n");
 		return;
 	}
-	PXR_NS::JsValue js_val = opObj->second;
-	if (!js_val.IsString())
+	if (opObj->getType() != UT_JSONValue::JSON_STRING)
 	{
-		LogString(JSonServer::e_debug, "Bad key operation\n");
+		LogString(JSonServer::e_debug, "Bad type for operation\n");
 		return;
 	}
 
-	std::string op = js_val.GetString();
+	std::string op = opObj->getS();
 	if (op == "select layer")
 	{
-		auto layerObj = i_object.find("layer");
-		if (layerObj == i_object.end())
+		UT_JSONValue* layerObj = object_map->get("layer");
+		if (!layerObj)
 		{
 			LogString(JSonServer::e_debug, "Key layer not found\n");
 			return;
 		}
-		PXR_NS::JsValue layerVal = layerObj->second;
-		if (!layerVal.IsObject())
+		if (layerObj->getType() != UT_JSONValue::JSON_MAP)
 		{
-			LogString(JSonServer::e_debug, "Bad key layer\n");
+			LogString(JSonServer::e_debug, "Bad type for layer\n");
 			return;
 		}
 
-		const PXR_NS::JsObject fbObj = layerVal.GetJsObject();
-		auto nameObj = fbObj.find("name");
-		if (nameObj == fbObj.end())
+		UT_JSONValueMap* layer_map = layerObj->getMap();
+		UT_JSONValue* nameObj = layer_map->get("name");
+		if (!nameObj)
 		{
 			LogString(JSonServer::e_debug, "Key name not found\n");
 			return;
 		}
-		PXR_NS::JsValue nameVal = nameObj->second;
-		if (!nameVal.IsString())
+		if (nameObj->getType() != UT_JSONValue::JSON_STRING)
 		{
-			LogString(JSonServer::e_debug, "Bad key name\n");
+			LogString(JSonServer::e_debug, "Bad type for name\n");
 			return;
 		}
 		
-		OBJ_Node* obj_node =
-			OPgetDirector()->findOBJNode(nameVal.GetString().c_str());
+		OBJ_Node* obj_node = OPgetDirector()->findOBJNode(nameObj->getS());
 		assert(obj_node);
 
 		obj_node->setEditPicked(1);
 	}
 	else if (op == "scale layer intensity")
 	{
-		auto layerObj = i_object.find("layer");
-		if (layerObj == i_object.end())
+		UT_JSONValue* layerObj = object_map->get("layer");
+		if (!layerObj)
 		{
 			LogString(JSonServer::e_debug, "Key layer not found\n");
 			return;
 		}
-		PXR_NS::JsValue layerVal = layerObj->second;
-		if (!layerVal.IsObject())
+		if (layerObj->getType() != UT_JSONValue::JSON_MAP)
 		{
-			LogString(JSonServer::e_debug, "Bad key layer\n");
+			LogString(JSonServer::e_debug, "Bad type for layer\n");
 			return;
 		}
 
-		auto factorObj = i_object.find("scale factor");
-		if (factorObj == i_object.end())
+		UT_JSONValue* factorObj = object_map->get("scale factor");
+		if (!factorObj)
 		{
 			LogString(JSonServer::e_debug, "Key scale factor not found\n");
 			return;
 		}
-		PXR_NS::JsValue factorVal = factorObj->second;
-		if (!factorVal.IsInt() && !factorVal.IsReal())
+		if (factorObj->getType() != UT_JSONValue::JSON_INT &&
+			factorObj->getType() != UT_JSONValue::JSON_REAL)
 		{
-			LogString(JSonServer::e_debug, "Bad key scale factor\n");
+			LogString(JSonServer::e_debug, "Bad type for scale factor\n");
 			return;
 		}
-		fpreal factor;
-		if (factorVal.IsInt()) factor = factorVal.GetInt();
-		else factor = factorVal.GetReal();
+		fpreal factor =
+			factorObj->getType() == UT_JSONValue::JSON_INT
+			? factorObj->getI()
+			: factorObj->getF();
 
-		const PXR_NS::JsObject fbObj = layerVal.GetJsObject();
-		auto valuesObj = fbObj.find("values");
-		if (valuesObj == fbObj.end())
+		UT_JSONValueMap* layer_map = layerObj->getMap();
+		UT_JSONValue* valuesObj = layer_map->get("values");
+		if (!valuesObj)
 		{
 			LogString(JSonServer::e_debug, "Key values not found\n");
 			return;
 		}
-		PXR_NS::JsValue valuesVal = valuesObj->second;
-		if (!valuesVal.IsArray())
+		if (valuesObj->getType() != UT_JSONValue::JSON_ARRAY)
 		{
-			LogString(JSonServer::e_debug, "Bad key values\n");
+			LogString(JSonServer::e_debug, "Bad type for values\n");
 			return;
 		}
-		PXR_NS::JsArray values = valuesVal.GetJsArray();
+		UT_JSONValueArray* values = valuesObj->getArray();
+		assert(values);
 
 		fpreal newValue;
-		for (unsigned i = 0; i < values.size(); i++)
+		for (unsigned i = 0; i < values->size(); i++)
 		{
-			PXR_NS::JsValue value = values[i];
-			assert(!value.IsNull());
-			if (!value.IsInt() && !value.IsReal())
+			UT_JSONValue* value = (*values)[i];
+			assert(value);
+			if (value->getType() != UT_JSONValue::JSON_INT &&
+				value->getType() != UT_JSONValue::JSON_REAL)
 			{
 				LogString(JSonServer::e_debug, "Bad value in values\n");
 				return;
 			}
-			if (value.IsInt())
-			{
-				newValue = value.GetInt() * factor;
-			}
-			else
-			{
-				newValue = value.GetReal() * factor;
-			}
+			newValue =
+				value->getType() == UT_JSONValue::JSON_INT
+				? value->getI() * factor
+				: value->getF() * factor;
 		}
 
-		auto nameObj = fbObj.find("name");
-		if (nameObj == fbObj.end())
+		UT_JSONValue* nameObj = layer_map->get("name");
+		if (!nameObj)
 		{
 			LogString(JSonServer::e_debug, "Key name not found\n");
 			return;
 		}
-		PXR_NS::JsValue nameVal = nameObj->second;
-		if (!nameVal.IsString())
+		if (nameObj->getType() != UT_JSONValue::JSON_STRING)
 		{
-			LogString(JSonServer::e_debug, "Bad key name\n");
+			LogString(JSonServer::e_debug, "Bad type for name\n");
 			return;
 		}
-		
-		OBJ_Node* obj_node =
-			OPgetDirector()->findOBJNode(nameVal.GetString().c_str());
+
+		OBJ_Node* obj_node = OPgetDirector()->findOBJNode(nameObj->getS());
 		assert(obj_node);
 
 		HOM_AutoLock hom_lock;
@@ -294,103 +290,93 @@ jsonServer::ExecuteJSonCommand(const PXR_NS::JsObject& i_object)
 	}
 	else if (op == "update layer filter")
 	{
-		auto layerObj = i_object.find("layer");
-		if (layerObj == i_object.end())
+		UT_JSONValue* layerObj = object_map->get("layer");
+		if (!layerObj)
 		{
 			LogString(JSonServer::e_debug, "Key layer not found\n");
 			return;
 		}
-		PXR_NS::JsValue layerVal = layerObj->second;
-		if (!layerVal.IsObject())
+		if (layerObj->getType() != UT_JSONValue::JSON_MAP)
 		{
-			LogString(JSonServer::e_debug, "Bad key layer\n");
+			LogString(JSonServer::e_debug, "Bad type for layer\n");
 			return;
 		}
 
-		auto colorMultObj = i_object.find("color multiplier");
-		if (colorMultObj == i_object.end())
+		UT_JSONValue* colorMultObj = object_map->get("color multiplier");
+		if (!colorMultObj)
 		{
 			LogString(JSonServer::e_debug, "Key color multiplier not found\n");
 			return;
 		}
-		PXR_NS::JsValue colorMultVal = colorMultObj->second;
-		if (!colorMultVal.IsArray())
+		if (colorMultObj->getType() != UT_JSONValue::JSON_ARRAY)
 		{
-			LogString(JSonServer::e_debug, "Bad key color multiplier\n");
+			LogString(JSonServer::e_debug, "Bad type for color multiplier\n");
 			return;
 		}
-		PXR_NS::JsArray colMult = colorMultVal.GetJsArray();
+		UT_JSONValueArray* colMult = colorMultObj->getArray();
+		assert(colMult);
 
 		fpreal mult[3];
-		for (unsigned i = 0; i < colMult.size(); i++)
+		for (unsigned i = 0; i < colMult->size(); i++)
 		{
-			PXR_NS::JsValue value = colMult[i];
-			assert(!value.IsNull());
-			if (!value.IsInt() && !value.IsReal())
+			UT_JSONValue* value = (*colMult)[i];
+			assert(value);
+			if (value->getType() != UT_JSONValue::JSON_INT &&
+				value->getType() != UT_JSONValue::JSON_REAL)
 			{
 				LogString(JSonServer::e_debug, "Bad value in color multiplier\n");
 				return;
 			}
-			if (value.IsInt())
-			{
-				mult[i] = value.GetInt();
-			}
-			else
-			{
-				mult[i] = value.GetReal();
-			}
+			mult[i] =
+				value->getType() == UT_JSONValue::JSON_INT
+				? value->getI()
+				: value->getF();
 		}
 
-		const PXR_NS::JsObject fbObj = layerVal.GetJsObject();
-		auto colorValuesObj = fbObj.find("color_values");
-		if (colorValuesObj == fbObj.end())
+		UT_JSONValueMap* layer_map = layerObj->getMap();
+		UT_JSONValue* colorValuesObj = layer_map->get("color_values");
+		if (!colorValuesObj)
 		{
 			LogString(JSonServer::e_debug, "Key color_values not found\n");
 			return;
 		}
-		PXR_NS::JsValue colorValuesVal = colorValuesObj->second;
-		if (!colorValuesVal.IsArray())
+		if (colorValuesObj->getType() != UT_JSONValue::JSON_ARRAY)
 		{
-			LogString(JSonServer::e_debug, "Bad key color_values\n");
+			LogString(JSonServer::e_debug, "Bad type for color_values\n");
 			return;
 		}
-		PXR_NS::JsArray colorValues = colorValuesVal.GetJsArray();
+		UT_JSONValueArray* colorValues = colorValuesObj->getArray();
 
 		fpreal newValues[3];
-		for (unsigned i = 0; i < colorValues.size(); i++)
+		for (unsigned i = 0; i < colorValues->size(); i++)
 		{
-			PXR_NS::JsValue value = colorValues[i];
-			assert(!value.IsNull());
-			if (!value.IsInt() && !value.IsReal())
+			UT_JSONValue* value = (*colorValues)[i];
+			assert(value);
+			if (value->getType() != UT_JSONValue::JSON_INT &&
+				value->getType() != UT_JSONValue::JSON_REAL)
 			{
 				LogString(JSonServer::e_debug, "Bad value in color_values\n");
 				return;
 			}
-			if (value.IsInt())
-			{
-				newValues[i] = value.GetInt() * mult[i];
-			}
-			else
-			{
-				newValues[i] = value.GetReal() * mult[i];
-			}
+			newValues[i] =
+				value->getType() == UT_JSONValue::JSON_INT
+				? value->getI() * mult[i]
+				: value->getF() * mult[i];
 		}
 
-		auto nameObj = fbObj.find("name");
-		if (nameObj == fbObj.end())
+		UT_JSONValue* nameObj = layer_map->get("name");
+		if (!nameObj)
 		{
 			LogString(JSonServer::e_debug, "Key name not found\n");
 			return;
 		}
-		PXR_NS::JsValue nameVal = nameObj->second;
-		if (!nameVal.IsString())
+		if (nameObj->getType() != UT_JSONValue::JSON_STRING)
 		{
-			LogString(JSonServer::e_debug, "Bad key name\n");
+			LogString(JSonServer::e_debug, "Bad type for name\n");
 			return;
 		}
 		
-		OBJ_Node* obj_node =
-			OPgetDirector()->findOBJNode(nameVal.GetString().c_str());
+		OBJ_Node* obj_node = OPgetDirector()->findOBJNode(nameObj->getS());
 		assert(obj_node);
 
 		HOM_AutoLock hom_lock;

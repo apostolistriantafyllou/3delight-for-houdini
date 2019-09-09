@@ -1,11 +1,12 @@
 #ifndef __jsonServer_h__
 #define __jsonServer_h__
 
-#include "pxr/base/js/json.h"
-
 #include <UT/UT_SocketListener.h>
 
-class UT_NetSocket;
+#include <string>
+
+class UT_JSONValue;
+
 
 class JSonServer: public UT_SocketListener
 {
@@ -29,7 +30,7 @@ public:
 	/*
 		The parent class has to implement this.
 	*/
-    virtual void ExecuteJSonCommand(const PXR_NS::JsObject& i_object) = 0;
+    virtual void ExecuteJSonCommand(const UT_JSONValue& i_object) = 0;
 
 	virtual void Log( LogType i_type, const char *i_msg, ... ) const;
 	/*
@@ -45,8 +46,6 @@ private:
 };
 
 
-#include <string>
-
 class jsonServer: public JSonServer
 {
 public:
@@ -61,7 +60,7 @@ public:
 	// Returns the server's host name.  Start the server if necessary.
 	static std::string GetServerHost();
 
-    virtual void ExecuteJSonCommand(const PXR_NS::JsObject& i_object);
+    virtual void ExecuteJSonCommand(const UT_JSONValue& i_object);
 	virtual void LogString( LogType i_type, const char *i_msg ) const;
 
 private:

@@ -52,14 +52,10 @@ target_include_directories( ${library_name} PRIVATE "${DELIGHT}/include" )
 # Link against the Houdini libraries, and add required include directories and
 # compile definitions. Special handling needed for tbb on macOS.
 IF(APPLE)
-	target_link_libraries( ${library_name} Houdini tbb pxr_usd_ms hboost_thread)
+	target_link_libraries( ${library_name} Houdini tbb hboost_thread)
 ELSE()
     target_link_libraries( ${library_name} Houdini)
 ENDIF()
-
-if (MSVC)
-	target_link_libraries( ${library_name} "$ENV{HFS}/custom/houdini/dsolib/libpxr_usd_ms.lib" )
-endif ()
 
 # This will get the destination directory for the installation.
 if(NOT DEFINED INSTALL_DIR)
