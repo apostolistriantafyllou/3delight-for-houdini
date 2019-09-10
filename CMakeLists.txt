@@ -58,7 +58,7 @@ ELSE()
 ENDIF()
 
 if (MSVC)
-	target_link_libraries( ${library_name} "$ENV{HFS}/custom/houdini/dsolib/libpxr_usd_ms.lib" Ws2_32 )
+	target_link_libraries( ${library_name} "$ENV{HFS}/custom/houdini/dsolib/libpxr_usd_ms.lib" )
 endif ()
 
 # This will get the destination directory for the installation.
