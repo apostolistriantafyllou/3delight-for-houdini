@@ -34,8 +34,12 @@ std::string JSonServer::getServerHost() const
 {
 	enum { kHostSize = 1025 };
 	char host[kHostSize];
-	if( 0 != gethostname( host, sizeof(host) ) )
-		return "";
+
+	UT_NetSocket* server = getSocket();
+	assert(server);
+	assert(server->isValid());
+
+	server->getHostName(host, kHostSize);
 
 	return host;
 }
