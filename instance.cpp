@@ -1,12 +1,7 @@
 #include "instance.h"
-#include "context.h"
 
-#include <GA/GA_Names.h>
 #include <GT/GT_PrimInstance.h>
-#include <OBJ/OBJ_Node.h>
-#include <nsi.hpp>
 
-#include <type_traits>
 
 instance::instance(
 	const context& i_ctx,

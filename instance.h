@@ -1,7 +1,6 @@
 #pragma once
 
 #include "exporter.h"
-#include <string>
 
 /**
 	\brief exports Houdini's instance as an NSI instances node.
