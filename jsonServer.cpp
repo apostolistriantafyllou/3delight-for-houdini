@@ -202,8 +202,14 @@ jsonServer::ExecuteJSonCommand(const UT_JSONValue& i_object)
 			return;
 		}
 		
+		HOM_AutoLock hom_lock;
+
 		OBJ_Node* obj_node = OPgetDirector()->findOBJNode(nameObj->getS());
-		assert(obj_node);
+		if(!obj_node)
+		{
+			LogString(JSonServer::e_debug, "Node not found\n");
+			return;
+		}
 
 		obj_node->setEditPicked(1);
 	}
@@ -282,10 +288,15 @@ jsonServer::ExecuteJSonCommand(const UT_JSONValue& i_object)
 			return;
 		}
 
-		OBJ_Node* obj_node = OPgetDirector()->findOBJNode(nameObj->getS());
-		assert(obj_node);
-
 		HOM_AutoLock hom_lock;
+
+		OBJ_Node* obj_node = OPgetDirector()->findOBJNode(nameObj->getS());
+		if(!obj_node)
+		{
+			LogString(JSonServer::e_debug, "Node not found\n");
+			return;
+		}
+
 		obj_node->setParameterOrProperty("light_intensity", 0, 0, newValue);
 	}
 	else if (op == "update layer filter")
@@ -376,10 +387,15 @@ jsonServer::ExecuteJSonCommand(const UT_JSONValue& i_object)
 			return;
 		}
 		
-		OBJ_Node* obj_node = OPgetDirector()->findOBJNode(nameObj->getS());
-		assert(obj_node);
-
 		HOM_AutoLock hom_lock;
+
+		OBJ_Node* obj_node = OPgetDirector()->findOBJNode(nameObj->getS());
+		if(!obj_node)
+		{
+			LogString(JSonServer::e_debug, "Node not found\n");
+			return;
+		}
+
 		obj_node->setParameterOrProperty("light_color", 0, 0, newValues[0]);
 		obj_node->setParameterOrProperty("light_color", 1, 0, newValues[1]);
 		obj_node->setParameterOrProperty("light_color", 2, 0, newValues[2]);
