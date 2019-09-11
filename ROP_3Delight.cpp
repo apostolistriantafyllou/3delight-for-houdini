@@ -2,7 +2,7 @@
 
 #include "camera.h"
 #include "context.h"
-#include "jsonServer.h"
+#include "idisplay_port.h"
 #include "mplay.h"
 #include "scene.h"
 #include "shader_library.h"
@@ -839,8 +839,10 @@ ROP_3Delight::ExportLayerFeedbackData(
 	const std::string& i_layer_handle,
 	const std::string& i_light_handle) const
 {
-	std::string host = jsonServer::GetServerHost();
-	int port = jsonServer::GetServerPort();
+	idisplay_port *idp = idisplay_port::get_instance();
+
+	std::string host = idp->GetServerHost();
+	int port = idp->GetServerPort();
 
 	if( i_light_handle.empty() )
 	{

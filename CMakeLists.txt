@@ -27,8 +27,8 @@ add_library( ${library_name} SHARED
 	camera.cpp
 	curvemesh.cpp
 	exporter.cpp
+	idisplay_port.cpp
 	instance.cpp
-	jsonServer.cpp
 	light.cpp
 	mplay.cpp
 	polygonmesh.cpp
