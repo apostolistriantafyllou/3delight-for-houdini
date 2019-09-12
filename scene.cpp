@@ -117,10 +117,26 @@ struct OBJ_Node_Refiner : public GT_Refine
 		}
 
 		case GT_PRIM_VOXEL_VOLUME:
+			fprintf(
+				stderr, "3Delight for Houdni: unsupported VDB/Volume "
+					"workflow for %s\n", m_node->getName().c_str() );
+			break;
+
 		case GT_PRIM_VDB_VOLUME:
 		{
-			fprintf( stderr, "3Delight for Houdni: unupported VDB/Volume "
-				"workflow for %s\n", m_node->getName().c_str() );
+			std::string vdb_path =
+				scene::node_is_vdb_loader(m_node, m_context.m_current_time );
+
+			if( vdb_path.size() != 0 )
+			{
+				m_result.push_back( new vdb(m_context, m_node, vdb_path ) );
+				return;
+			}
+			else
+			{
+				fprintf( stderr, "3Delight for Houdni: unsupported VDB/Volume "
+					"workflow for %s\n", m_node->getName().c_str() );
+			}
 			break;
 		}
 
@@ -211,13 +227,6 @@ void scene::process_node(
 
 	if(!i_context.m_objects_to_render_pattern->match(obj, nullptr, true))
 	{
-		return;
-	}
-
-	std::string vdb_path = node_is_vdb_loader(obj, i_context.m_current_time );
-	if( vdb_path.size() != 0 )
-	{
-		o_to_export.push_back( new vdb(i_context, obj, vdb_path ) );
 		return;
 	}
 
@@ -502,26 +511,52 @@ void scene::export_light_categories(
 		) );
 }
 
+/**
+	Just try to find any FILE SOP that has a VDB.
+
+	We don't support the general case VDB as we go through the file
+	SOP. For now we just skip this until we can find a more elegant
+	way to handle both file-loaded VDBs and general Houdini volumes.
+*/
 std::string scene::node_is_vdb_loader( OBJ_Node *i_node, double i_time )
 {
-	/*
-		We don't support the general case VDB as we go through the file
-		SOP. For now we just skip this until we can find a more elegant
-		way to handle both file-loaded VDBs and general Houdini volumes.
-	*/
-	int nkids = i_node->getNchildren();
-	if( nkids != 1 )
+	std::vector< SOP_Node *> files;
+	std::vector< OP_Node * > traversal; traversal.push_back( i_node );
+	while( traversal.size() )
 	{
+		OP_Node *network = traversal.back();
+		traversal.pop_back();
+		int nkids = network->getNchildren();
+		for( int i=0; i< nkids; i++ )
+		{
+			OP_Node *node = network->getChild(i);
+			SOP_Node *sop = node->castToSOPNode();
+			if( sop )
+			{
+				const UT_StringRef &SOP_name = node->getOperator()->getName();
+				if( SOP_name == "file" )
+					files.push_back( sop );
+			}
+
+			if( !node->isNetwork() )
+				continue;
+
+			OP_Network *kidnet = (OP_Network *)node;
+			if( kidnet->getNchildren() )
+			{
+				traversal.push_back( kidnet );
+			}
+		}
+	}
+
+	if( files.size() != 1 )
+	{
+		fprintf( stderr,
+			"3Delight for Houdini: we support only one VDB file per file obj" );
 		return {};
 	}
 
-	SOP_Node *file_sop = i_node->getChild(0)->castToSOPNode();
-
-	if( file_sop == nullptr )
-	{
-		return {};
-	}
-
+	SOP_Node *file_sop = files.back();
 	int index = file_sop->getParmIndex( "file" );
 	if( index < 0 )
 	{
