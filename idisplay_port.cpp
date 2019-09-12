@@ -320,7 +320,7 @@ void idisplay_port::ExecuteJSonCommand(const UT_JSONValue& i_object)
 			return;
 		}
 
-		obj_node->setParameterOrProperty("light_ncolor", 0, 0, newValues[0]);
+		obj_node->setParameterOrProperty("light_color", 0, 0, newValues[0]);
 		obj_node->setParameterOrProperty("light_color", 1, 0, newValues[1]);
 		obj_node->setParameterOrProperty("light_color", 2, 0, newValues[2]);
 	}
