@@ -37,12 +37,47 @@ idisplay_port::~idisplay_port()
 	stop();
 }
 
+/**
+	Keep reading until socket is closed from 3Delight Display.
+*/
+void clientConnection(UT_NetSocket* client, idisplay_port* dp)
+{
+	while (1)
+	{
+		UT_WorkBuffer wb;
+		int res2 = client->read(wb);
+
+		if (res2 != 0 || wb.isEmpty())
+			break;
+
+		// Skip the number of bytes at the beginning
+		wb.eraseHead(sizeof(unsigned));
+
+		if (wb.isEmpty())
+			break;
+
+		assert(wb.buffer()[0] == '{');
+		assert(wb.isNullTerminated());
+
+		UT_IStream in(wb);
+		UT_JSONParser parser;
+		UT_JSONValue js;
+
+		if( js.parseValue(parser, &in) &&
+			js.getType() == UT_JSONValue::JSON_MAP )
+		{
+			dp->ExecuteJSonCommand(js);
+		}
+		else
+		{
+			dp->Log( "invalid read operation from socket" );
+		}
+	}
+}
 
 /**
-	As soon as we accept a read socket, we keep reading until socket
-	is closed from 3Delight Display.
-
-	FIXME: cleanup should also make this exit.
+	As soon as we accept a read socket, we start a thread for reading.
+	This is needed to be able to accept other client connection.
 */
 void idisplay_port::onSocketEvent(int event_types)
 {
@@ -71,44 +106,24 @@ void idisplay_port::onSocketEvent(int event_types)
 	if( !client || !client->isConnected() )
 		return;
 
-	while (1)
-	{
-		UT_WorkBuffer wb;
-		int res2 = client->read(wb);
-
-		if (res2 != 0 || wb.isEmpty())
-			break;
-
-		// Skip the number of bytes at the beginning
-		wb.eraseHead(sizeof(unsigned));
-
-		if (wb.isEmpty())
-			break;
-
-		assert(wb.buffer()[0] == '{');
-		assert(wb.isNullTerminated());
-
-		UT_IStream in(wb);
-		UT_JSONParser parser;
-		UT_JSONValue js;
-
-		if( js.parseValue(parser, &in) &&
-			js.getType() == UT_JSONValue::JSON_MAP )
-		{
-			ExecuteJSonCommand(js);
-		}
-		else
-		{
-			Log( "invalid read operation from socket" );
-		}
-	}
-
-	delete client;
+	m_clients.push_back(client);	
+	m_threads.push_back(std::thread(clientConnection, client, this));
+	// To avoid "terminate called without an active exception"
+	m_threads.back().detach();
 }
 
 
 void idisplay_port::CleanUp()
 {
+	idisplay_port *idp = idisplay_port::get_instance();
+	// Terminate all client threads
+	while (!idp->m_threads.empty()) idp->m_threads.pop_back();
+	// Delete all client sockets
+	while (!idp->m_clients.empty())
+	{
+		delete idp->m_clients.back();
+		idp->m_clients.pop_back();
+	}
 }
 
 int idisplay_port::GetServerPort()

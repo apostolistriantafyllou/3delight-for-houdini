@@ -112,6 +112,8 @@ ROP_3Delight::ROP_3Delight(
 
 ROP_3Delight::~ROP_3Delight()
 {
+	idisplay_port::CleanUp();
+
 	if(m_renderdl)
 	{
 		UTterminate(m_renderdl->getChildPid());

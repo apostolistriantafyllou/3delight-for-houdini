@@ -3,8 +3,11 @@
 #include <UT/UT_SocketListener.h>
 
 #include <string>
+#include <vector>
+#include <thread>
 
 class UT_JSONValue;
+class UT_NetSocket;
 
 /**
 	\brief This class is a TCP/IP communication port to receive
@@ -26,13 +29,16 @@ public:
 	/** Stops the server and destroys its resources */
 	static void CleanUp();
 
-	/** Returns the server's port number.  Start the server if necessary. */
+	/** Returns the server's port number. */
 	int GetServerPort();
 
-	/** Returns the server's host name.  Start the server if necessary. */
+	/** Returns the server's host name. */
 	std::string GetServerHost();
 
     void ExecuteJSonCommand( const UT_JSONValue & );
+
+	/** A simple logging utility for varying args */
+	void Log( const char *i_msg, ... ) const;
 
 protected:
 	virtual void onSocketEvent(int event_types);
@@ -40,6 +46,6 @@ protected:
 private:
 	static bool StartServer();
 
-	/** A simple logging utility for varying args */
-	void Log( const char *i_msg, ... ) const;
+	std::vector<UT_NetSocket*> m_clients;
+	std::vector<std::thread> m_threads;
 };
