@@ -3,6 +3,7 @@
 #include <HOM/HOM_Module.h>
 #include <OBJ/OBJ_Light.h>
 #include <OP/OP_Director.h>
+#include <ROP/ROP_Node.h>
 #include <UT/UT_JSONParser.h>
 #include <UT/UT_JSONValue.h>
 #include <UT/UT_NetSocket.h>
@@ -151,7 +152,44 @@ void idisplay_port::ExecuteJSonCommand(const UT_JSONValue& i_object)
 	}
 
 	std::string op = opObj->getS();
-	if (op == "select layer")
+	if (op == "start render")
+	{
+		UT_JSONValue* liveObj = object_map->get("live");
+
+		if( !liveObj || liveObj->getType() != UT_JSONValue::JSON_INT )
+		{
+			Log( "unsufficient data to start render" );
+			return;
+		}
+
+		// true means we start a live render, otherwise an interactive one
+		// ignore from the moment...
+//		bool live = liveObj->getI();
+
+		UT_JSONValue* fromObj = object_map->get("from");
+
+		if( !fromObj )
+		{
+			Log( "unsufficient data to select render node" );
+			return;
+		}
+
+		const char *render = fromObj->getS();
+		if( !render )
+			render = "";
+
+		HOM_AutoLock hom_lock;
+		ROP_Node* rop_node = OPgetDirector()->findROPNode( render );
+		if(!rop_node)
+		{
+			Log( "render node `%s` hasn't been found, render impossible",
+				render );
+			return;
+		}
+
+		rop_node->execute(0);
+	}
+	else if (op == "select layer")
 	{
 		UT_JSONValue* layerObj = object_map->get("layer");
 
@@ -162,7 +200,7 @@ void idisplay_port::ExecuteJSonCommand(const UT_JSONValue& i_object)
 		}
 
 		UT_JSONValueMap* layer_map = layerObj->getMap();
-		UT_JSONValue* nameObj = layerObj ? layer_map->get("name") : nullptr;
+		UT_JSONValue* nameObj = layer_map ? layer_map->get("name") : nullptr;
 
 		if( !nameObj )
 		{

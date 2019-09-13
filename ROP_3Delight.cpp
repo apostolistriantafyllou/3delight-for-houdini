@@ -684,7 +684,8 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 						idisplay_driver_name.c_str(),
 					(
 						NSI::CStringPArg("drivername", idisplay_driver.c_str()),
-						NSI::CStringPArg("imagefilename", image_display_name.c_str())
+						NSI::CStringPArg("imagefilename", image_display_name.c_str()),
+						NSI::CStringPArg("ropname", getFullPath().c_str())
 					) );
 				}
 
