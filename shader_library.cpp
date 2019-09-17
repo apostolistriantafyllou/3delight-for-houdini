@@ -39,27 +39,12 @@ bool scan_dir(
 */
 shader_library::shader_library()
 {
-#ifdef __APPLE__
-	/*
-		Houdini will nuque [DY]LD_LIBRARY_PATH on macOS. This is a bit insane
-		but reality is more insane so that's fine. We will try to get the the
-		library path manually, something we usaully try to avoid for robustness
-		reasons.
-	*/
-	const char *macos_delight = get_env("DELIGHT" );
-	if( macos_delight )
-	{
-		std::string path_to_lib(macos_delight);
-		path_to_lib += "/lib/lib3delight.dylib";
-		m_api = NSI::DynamicAPI( path_to_lib.c_str() );
-	}
-#endif
-
 	m_plugin_path = dir_name( library_path() );
 
 	assert( m_plugin_path.size() != 0 );
 
 	m_api.LoadFunction(m_shader_info_ptr, "DlGetShaderInfo");
+	assert( m_shader_info_ptr );
 
 	decltype( &DlGetInstallRoot) get_install_root = nullptr;
 	m_api.LoadFunction(get_install_root, "DlGetInstallRoot" );
