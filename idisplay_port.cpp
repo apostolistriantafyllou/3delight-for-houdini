@@ -140,8 +140,8 @@ int idisplay_port::GetServerPort()
 
 std::string idisplay_port::GetServerHost()
 {
-	enum { kHostSize = 1025 };
-	char host[kHostSize]; host[kHostSize-1] = 0;
+	unsigned char hostAddress[4];
+	char hostName[4*3+4];
 
 	UT_NetSocket* server = getSocket();
 	if( !server || !server->isValid() )
@@ -150,8 +150,21 @@ std::string idisplay_port::GetServerHost()
 		return {};
 	}
 
-	server->getHostName(host, kHostSize-1);
-	return host;
+	// First try with host name (in server->getAddress)
+	int res = UT_NetSocket::getHostAddress(hostAddress, server->getAddress());
+	if (res == 0)
+	{
+		// If fails, try with the name localhost
+		res = UT_NetSocket::getHostAddress(hostAddress, "localhost");
+		// Last resort, return local host address
+		if (res == 0) return "127.0.0.1";
+	}
+	assert(res == 1);
+	int nc = sprintf(hostName, "%hhu.%hhu.%hhu.%hhu",
+					hostAddress[0], hostAddress[1],
+					hostAddress[2], hostAddress[3]);
+	hostName[nc] = '\0';
+	return hostName;
 }
 
 void idisplay_port::ExecuteJSonCommand(const UT_JSONValue& i_object)
