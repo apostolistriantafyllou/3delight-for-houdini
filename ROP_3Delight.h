@@ -67,6 +67,8 @@ protected:
 private:
 	static void register_mplay_driver( NSI::DynamicAPI &i_api );
 
+	std::string AtmosphereAttributesHandle() const;
+	void ExportAtmosphere(const context& i_ctx)const;
 	void ExportOutputs(const context& i_ctx)const;
 	void ExportOneOutputLayer(
 		const context& i_ctx,

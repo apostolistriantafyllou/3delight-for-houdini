@@ -381,6 +381,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 
 	scene::convert_to_nsi( *m_current_render );
 
+	ExportAtmosphere(*m_current_render);
 	ExportOutputs(*m_current_render);
 
 	ExportGlobals(*m_current_render);
@@ -515,6 +516,43 @@ ROP_3Delight::loadFinished()
 {
 	ROP_Node::loadFinished();
 	m_settings.UpdateLights();
+}
+
+std::string
+ROP_3Delight::AtmosphereAttributesHandle() const
+{
+	return "3delight_render_pass_atmosphere_attributes";
+}
+
+void
+ROP_3Delight::ExportAtmosphere(const context& i_ctx)const
+{
+	UT_String atmHandle = m_settings.GetAtmosphere();
+
+	if (atmHandle.length() == 0) return;
+
+	// This is the shader handle which has been created elsewhere
+	std::string shaderHandle = atmHandle.toStdString();
+
+	// Test if the node still exist
+	OP_Node* op_node = OPgetDirector()->findNode(shaderHandle.c_str());
+	if (!op_node)
+		return;
+
+	atmHandle += "_environment";
+
+	i_ctx.m_nsi.Create( atmHandle.c_str(), "environment" );
+	i_ctx.m_nsi.Connect( atmHandle.c_str(), "", NSI_SCENE_ROOT, "objects" );
+
+	i_ctx.m_nsi.Create( AtmosphereAttributesHandle().c_str(), "attributes" );
+
+	i_ctx.m_nsi.Connect(
+		shaderHandle.c_str(), "",
+		AtmosphereAttributesHandle().c_str(), "volumeshader" );
+
+	i_ctx.m_nsi.Connect(
+		AtmosphereAttributesHandle().c_str(), "",
+		atmHandle.c_str(), "geometryattributes" );
 }
 
 void

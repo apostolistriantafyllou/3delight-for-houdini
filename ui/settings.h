@@ -57,6 +57,7 @@ public:
 	static const char* k_max_hair_depth;
 	static const char* k_max_distance;
 	static const char* k_camera;
+	static const char* k_atmosphere;
 	static const char* k_objects_to_render;
 	static const char* k_lights_to_render;
 	static const char* k_default_image_filename;
@@ -98,6 +99,7 @@ protected:
 	static const char* GetUseLightToken(int index);
 	static const char* GetLightToken(int index);
 
+	UT_String GetAtmosphere() const;
 	UT_String GetObjectsToRender() const;
 	UT_String GetLightsToRender() const;
 

@@ -28,6 +28,7 @@ const char* settings::k_max_refraction_depth = "max_refraction_depth";
 const char* settings::k_max_hair_depth = "max_hair_depth";
 const char* settings::k_max_distance = "max_distance";
 const char* settings::k_camera = "camera";
+const char* settings::k_atmosphere = "atmosphere";
 const char* settings::k_objects_to_render = "objects_to_render";
 const char* settings::k_lights_to_render = "lights_to_render";
 const char* settings::k_default_image_filename = "default_image_filename";
@@ -151,6 +152,9 @@ PRM_Template* settings::GetTemplates()
 	static PRM_Name camera(k_camera, "Camera");
 	static PRM_Default camera_d(0.0f, "/obj/cam1");
 
+	static PRM_Name atmosphere(k_atmosphere, "Atmosphere");
+	static PRM_Default atmosphere_d(0.0f, "");
+
 	static PRM_Name objects_to_render(k_objects_to_render, "Objects to Render");
 	static PRM_Default objects_to_render_d(0.0f, "*");
 
@@ -160,13 +164,13 @@ PRM_Template* settings::GetTemplates()
 	static std::vector<PRM_Template> scene_elements_templates =
 	{
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &camera, &camera_d, nullptr, nullptr, nullptr, &PRM_SpareData::objCameraPath),
+		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &atmosphere, &atmosphere_d, nullptr, nullptr, nullptr),
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &objects_to_render, &objects_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objGeometryPath),
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &lights_to_render, &lights_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objLightPath)
 	};
 
 /*
 	Environment
-	Atmosphere
 
 	//? Frame range
 
@@ -756,6 +760,13 @@ const char* settings::GetLightToken(int index)
 	light_token += suffix;
 
 	return light_token.c_str();
+}
+
+UT_String settings::GetAtmosphere() const
+{
+	UT_String atmosphere;
+	m_parameters.evalString(atmosphere, settings::k_atmosphere, 0, 0.0f);
+	return atmosphere;
 }
 
 UT_String settings::GetObjectsToRender() const
