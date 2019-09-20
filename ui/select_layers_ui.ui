@@ -10,7 +10,7 @@ dlg.gad = DIALOG "AOV Selector"
         SPACING(0.5)
 
         LABEL "Shading Components":LABEL_WIDTH;
-        LABEL "Auxiliairy Variables":LABEL_WIDTH;
+        LABEL "Auxiliary Variables":LABEL_WIDTH;
         LABEL "Custom Variables":LABEL_WIDTH;
     }
     ROW
