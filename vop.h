@@ -71,7 +71,7 @@ private:
 	/**
 		\returns true if i_param_name indicates used of a texture path.
 	*/
-	static bool isTexturePath( const char* i_param_name );
+	static bool is_texture_path( const char* i_param_name );
 
 	/**
 		\brief Fills a list of NSI arguments from a shader for a ramp-type

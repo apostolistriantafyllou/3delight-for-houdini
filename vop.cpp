@@ -249,7 +249,7 @@ void vop::list_shader_parameters(
 			o_list.Add(
 				new NSI::StringArg( parameter->name.c_str(), str.buffer()) );
 
-			if( isTextureNode || isTexturePath( parameter->name.c_str() ) )
+			if( isTextureNode || is_texture_path( parameter->name.c_str() ) )
 			{
 				std::string param( parameter->name.c_str() );
 				param += ".meta.colorspace";
@@ -302,7 +302,7 @@ bool vop::unsupported( void ) const
 	return path.size() == 0;
 }
 
-bool vop::isTexturePath( const char* i_param_name )
+bool vop::is_texture_path( const char* i_param_name )
 {
 	UT_String name = i_param_name;
 	name.toLower();
