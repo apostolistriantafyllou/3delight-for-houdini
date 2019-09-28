@@ -104,10 +104,12 @@ void vop::connect( void ) const
 /**
 	\brief Fill a list of NSI arguments from an OP_Parameters node.
 
-	The only gotcha here is regarding texture parameteres: we detect
-	them by checking for the srccolorspace attribute. Which means
-	it's a "Texture" node. I think we need something better here but
-	for now this will do.
+	The only gotcha here is regarding texture parameters: we detect
+	them by checking for the srccolorspace or texcolorspace attribute.
+	Which means	it's a "Texture" node. If these attributes are not found,
+	we check if "texture" or "file" is in the operator's name. Also we
+	check if "texture" or "map" appears in parameter's name. I think we
+	need something better here but for now this will do.
 */
 void vop::list_shader_parameters(
 	const OP_Parameters *i_parameters,
@@ -128,11 +130,46 @@ void vop::list_shader_parameters(
 	DlShaderInfo *shader_info = library.get_shader_info( path.c_str() );
 
 	const char *k_srccolorspace = "srccolorspace";
+	const char *k_texcolorspace = "texcolorspace";
 	UT_String color_space;
-	int srccolorspace_index = i_parameters->getParmIndex( k_srccolorspace );
-	if( srccolorspace_index >= 0 )
+	int colorspace_index = i_parameters->getParmIndex( k_srccolorspace );
+	if( colorspace_index >= 0 )
 	{
 		i_parameters->evalString( color_space, k_srccolorspace, 0, i_time );
+	}
+	else
+	{
+		colorspace_index = i_parameters->getParmIndex( k_texcolorspace );
+		if( colorspace_index >= 0 )
+		{
+			i_parameters->evalString( color_space, k_texcolorspace, 0, i_time );
+		}
+		else
+		{
+			color_space = "auto";
+		}
+	}
+
+	bool isTextureNode = colorspace_index >= 0;
+	if (!isTextureNode)
+	{
+		// Check if the operator's name contains "texture"
+		OP_Operator* op = i_parameters->getOperator();
+		assert(op);
+		const UT_StringHolder& sh = op->getName();
+
+		UT_String name = sh.c_str();
+		name.toLower();
+
+		std::string::size_type pos = name.toStdString().find("texture");
+		isTextureNode = pos != std::string::npos;
+
+		// Check if the operator's name contains "file"
+		if (!isTextureNode)
+		{
+			pos = name.toStdString().find("file");
+			isTextureNode = pos != std::string::npos;
+		}
 	}
 
 	for( int i=0; i<shader_info->nparams(); i++ )
@@ -212,14 +249,13 @@ void vop::list_shader_parameters(
 			o_list.Add(
 				new NSI::StringArg( parameter->name.c_str(), str.buffer()) );
 
-			if( color_space.length() == 0 )
+			if( isTextureNode || isTexturePath( parameter->name.c_str() ) )
 			{
-				color_space = "auto";
+				std::string param( parameter->name.c_str() );
+				param += ".meta.colorspace";
+				o_list.Add( new NSI::StringArg(param, color_space.buffer()) );
 			}
 
-			std::string param( parameter->name.c_str() );
-			param += ".meta.colorspace";
-			o_list.Add( new NSI::StringArg(param, color_space.buffer()) );
 			break;
 		}
 		}
@@ -264,6 +300,17 @@ bool vop::unsupported( void ) const
 	const shader_library &library = shader_library::get_instance();
 	std::string path = library.get_shader_path( vop_name().c_str() );
 	return path.size() == 0;
+}
+
+bool vop::isTexturePath( const char* i_param_name )
+{
+	UT_String name = i_param_name;
+	name.toLower();
+
+	std::string str = name.toStdString();
+	return
+		str.find("texture") != std::string::npos ||
+		str.find("map") != std::string::npos;
 }
 
 void vop::list_ramp_parameters(
