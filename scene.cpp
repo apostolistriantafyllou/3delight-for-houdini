@@ -129,7 +129,8 @@ struct OBJ_Node_Refiner : public GT_Refine
 
 			if( vdb_path.size() != 0 )
 			{
-				m_result.push_back( new vdb(m_context, m_node, vdb_path ) );
+				m_result.push_back(
+					new vdb( m_context, m_node, vdb_path, i_primitive) );
 				return;
 			}
 			else

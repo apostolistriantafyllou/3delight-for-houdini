@@ -10,16 +10,22 @@
 #include <nsi.hpp>
 #include <iostream>
 
-vdb::vdb( const context& i_ctx, OBJ_Node *i_obj, const std::string &i_vdb_file )
+vdb::vdb(
+	const context& i_ctx, OBJ_Node *i_obj, const std::string &i_vdb_file,
+	const GT_PrimitiveHandle &i_gt_primitive )
 :
-	exporter( i_ctx, i_obj ),
+	exporter( i_ctx, i_obj, i_gt_primitive),
 	m_vdb_file(i_vdb_file)
 {
 }
 
 void vdb::create( void ) const
 {
-	m_nsi.Create( m_handle.c_str(), "volume" );
+	m_nsi.Create( m_handle, "transform" );
+	std::string volume = m_handle + "|volume";
+	m_nsi.Create( volume, "volume" );
+
+	m_nsi.Connect( volume, "", m_handle, "objects" );
 }
 
 void vdb::set_attributes( void ) const
@@ -95,13 +101,24 @@ void vdb::set_attributes( void ) const
 	arguments.Add( new NSI::DoubleArg( "velocityscale", doubleValue ) );
 #endif
 
-	m_nsi.SetAttribute( m_handle.c_str(), arguments );
+	m_nsi.SetAttribute( m_handle + "|volume", arguments );
 }
 
 /**
-	There is no motion blur parameters to set here as the volume contains
-	a velocity field that is supported by 3Delight.
+	There is no motion blur parameters to set here on the volumes itself as the
+	volume contains a velocity field that is supported by 3Delight. BUT,
+	the actual volume container might be moving, so we need to set the
+	right matrix.
 */
 void vdb::set_attributes_at_time( double i_time ) const
 {
+	const GT_TransformHandle &handle = m_gt_primitive->getPrimitiveTransform();
+	UT_Matrix4D local;
+	handle->getMatrix( local );
+
+	/* The stars are aligned for Houdini and NSI */
+	m_nsi.SetAttributeAtTime(
+		m_handle,
+		i_time,
+		NSI::DoubleMatrixArg( "transformationmatrix", local.data() ) );
 }
