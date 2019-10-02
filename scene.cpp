@@ -26,6 +26,7 @@
 #include <SOP/SOP_Node.h>
 #include <UT/UT_String.h>
 #include <UT/UT_TagManager.h>
+#include <VOP/VOP_Node.h>
 
 #include <set>
 
@@ -404,6 +405,47 @@ void scene::find_lights(
 				if( i_light_pattern.match(obj, nullptr, true))
 				{
 					o_lights.push_back(obj);
+				}
+			}
+
+			if( !node->isNetwork() )
+				continue;
+
+			OP_Network *kidnet = (OP_Network *)node;
+			if( kidnet->getNchildren() )
+			{
+				traversal.push_back( kidnet );
+			}
+		}
+	}
+}
+
+void scene::find_custom_aovs( std::vector<VOP_Node*>& o_custom_aovs )
+{
+	/* A traversal stack to avoid recursion */
+	std::vector< OP_Node * > traversal;
+
+	OP_Node *our_dear_leader = OPgetDirector();
+	traversal.push_back( our_dear_leader->findNode( "/mat") );
+
+	while( traversal.size() )
+	{
+		OP_Node *network = traversal.back();
+		traversal.pop_back();
+
+		assert( network->isNetwork() );
+
+		int nkids = network->getNchildren();
+		for( int i=0; i< nkids; i++ )
+		{
+			OP_Node *node = network->getChild(i);
+			VOP_Node *vop = node->castToVOPNode();
+			if( vop )
+			{
+				OP_Operator* op = vop->getOperator();
+				if (op && op->getName().toStdString() == "bind")
+				{
+					o_custom_aovs.push_back(vop);
 				}
 			}
 

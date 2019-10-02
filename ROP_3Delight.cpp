@@ -131,6 +131,9 @@ void ROP_3Delight::onCreated()
 	ROP_Node::onCreated();
 	m_settings.UpdateLights();
 	enableParm(settings::k_save_ids_as_cryptomatte, false);
+	std::vector<VOP_Node*> custom_aovs;
+	scene::find_custom_aovs(custom_aovs);
+	aov::updateCustomVariables(custom_aovs);
 }
 
 bool ROP_3Delight::HasMotionBlur() const

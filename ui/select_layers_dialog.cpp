@@ -1,5 +1,8 @@
 #include "select_layers_dialog.h"
 #include <ROP/ROP_Node.h>
+#include <VOP/VOP_Node.h>
+#include <FS/UT_PathFile.h>
+#include <UT/UT_TempFileManager.h>
 
 #include "aov.h"
 
@@ -56,8 +59,23 @@ SelectLayersDialog::SelectLayersDialog()
 }
 
 bool
-SelectLayersDialog::parseDialog()
+SelectLayersDialog::parseDialog(const std::vector<VOP_Node*>& i_custom_aovs)
 {
+	// Builds dialog last column with custom aovs
+	std::vector<std::string> aov_names;
+	for (unsigned i = 0; i < i_custom_aovs.size(); i++)
+	{
+		UT_String aov_name;
+		i_custom_aovs[i]->evalString(aov_name, "parmname", 0, 0.0f);
+		// Ignore duplicate
+		if (!findAovName(aov_names, aov_name.c_str()))
+		{
+			aov_names.push_back(aov_name.toStdString());
+			m_values.push_back(new UI_Value());
+			m_labels.push_back(aov_names.back());
+			m_symbols.push_back(aov_names.back()+".val");
+		}
+	}
 	// These bind the named UI values with the given objects.
 	// It's not strictly necessary but is more readable than using
 	// getValueSymbol() after calling parseUI().
@@ -66,9 +84,66 @@ SelectLayersDialog::parseDialog()
 	{
 		setValueSymbol(m_symbols[i].c_str(), m_values[i]);
 	}
-	// The search path used will be defined by HOUDINI_UI_APP_PATH environment
-	// variable. The default is $HFS/houdini/config/Applications
-	if (!readUIFile("select_layers_ui.ui"))
+	// Builds the default search path $HOME/houdiniX.Y/config/Applications
+	UT_String pathName;
+	UT_PathSearch::getHomeHoudini(pathName);
+
+	const std::string separator = 
+#ifdef _WIN32
+		"\\";
+#else
+		"/";
+#endif
+
+	const UT_PathSearch* spath1 =
+		UT_PathSearch::getInstance(UT_HOUDINI_UI_PATH);
+	UT_String defPath = spath1->getDefaultPath();
+	UT_String dirName1, dirName2;
+	defPath.splitPath(dirName1, dirName2);
+	pathName += separator;
+	pathName += dirName2;
+
+	const UT_PathSearch* spath2 =
+		UT_PathSearch::getInstance(UT_HOUDINI_UI_APP_PATH);
+	pathName += separator;
+	pathName += spath2->getCaratExpand();
+	pathName += separator;
+	pathName += "select_layers_ui.ui";
+
+	// Builds a temp name for temp file "select_layers_ui.ui"
+	UT_String temp(UT_TempFileManager::getTempFilename());
+	UT_String tempName, fileName;
+	temp.splitPath(tempName, fileName);
+	tempName += separator;
+	tempName += "select_layers_ui.ui";
+
+	// Builds the temp file "select_layers_ui.ui" from the existing one
+	FILE* input = fopen(pathName.c_str(), "r");
+	assert(input);
+	FILE* output = fopen(tempName.c_str(), "w");
+	assert(output);
+
+	// Make a copy until the insertion mark
+	int c;
+	while ((c = fgetc(input)) != '>') fputc(c, output);
+	fputc(c, output);
+	fputc('\n', output);
+	// Insert our custom variables
+	for (unsigned i = 0; i < aov_names.size(); i++)
+	{
+		fprintf(output, "TOGGLE_BUTTON ");
+		fprintf(output, "\"%s\"", aov_names[i].c_str());
+		fprintf(output, ":LABEL_WIDTH VALUE(");
+		fprintf(output, "%s);\n", (aov_names[i]+".val").c_str());
+	}
+
+	// Finish the copy
+	while ((c = fgetc(input)) != EOF) fputc(c, output);
+	fclose(output);
+	fclose(input);
+
+	// Parse the temp file
+	if (!readUIFile(tempName.c_str()))
 		return false;   // error parsing
 	// We can also directly add interest on an unbound but named UI_Value
 	getValueSymbol("ok.val")->addInterest(this, MYDIALOG_CB(handleOK));
@@ -76,12 +151,30 @@ SelectLayersDialog::parseDialog()
 }
 
 bool
-SelectLayersDialog::open(ROP_Node* io_node)
+SelectLayersDialog::findAovName(
+	const std::vector<std::string>& i_aov_names,
+	const std::string& i_aov_name) const
+{
+	for (unsigned i = 0; i < i_aov_names.size(); i++)
+	{
+		if (i_aov_names[i] == i_aov_name)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool
+SelectLayersDialog::open(
+	ROP_Node* io_node,
+	const std::vector<VOP_Node*>& i_custom_aovs)
 {
 	// Only parse the dialog once
 	if (!m_parsedDialog)
 	{
-		if (!parseDialog())
+		if (!parseDialog(i_custom_aovs))
 			return false;
 		m_parsedDialog = true;
 	}

@@ -10,6 +10,7 @@ class OP_VariablePair;
 class OP_TemplatePair;
 class PRM_Template;
 class OBJ_Node;
+class SelectLayersDialog;
 
 class settings
 {
@@ -22,6 +23,8 @@ public:
 		m_parameters(i_parameters)
 	{
 	}
+
+	~settings();
 
 	static PRM_Template* GetTemplates();
 	static OP_TemplatePair* GetTemplatePair();
@@ -107,4 +110,5 @@ protected:
 	OP_Parameters &m_parameters;
 
 	std::vector<OBJ_Node*> m_lights;
+	static SelectLayersDialog* sm_dialog;
 };

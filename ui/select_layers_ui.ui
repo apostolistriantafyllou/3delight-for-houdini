@@ -37,12 +37,8 @@ dlg.gad = DIALOG "AOV Selector"
         }
         COL
         {
-#            custom1.gad VALUE(custom1.val);
-#            custom2.gad VALUE(custom2.val);
-#            custom3.gad VALUE(custom3.val);
-#            custom4.gad VALUE(custom4.val);
-#            custom5.gad VALUE(custom5.val);
-#            custom6.gad VALUE(custom6.val);
+# The following mark indicates where to insert stuff for Custom Variables column
+#>
         }
     }
 
@@ -53,5 +49,4 @@ dlg.gad = DIALOG "AOV Selector"
 	ACTION_BUTTON "OK":1 VALUE(ok.val);
 	ACTION_BUTTON "Cancel":1 SENDS(0) VALUE(dlg.val);
     }
-
 }

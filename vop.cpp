@@ -95,10 +95,25 @@ void vop::connect( void ) const
 		output->getOutputName(output_name, output_index);
 		m_vop->getInputName(input_name, i);
 
-		m_nsi.Connect(
-			output->getFullPath().buffer(), output_name.buffer(),
-			m_handle, input_name.buffer() );
+		if (output->getOperator()->getName().toStdString() == "bind")
+		{
+			// Special case for 'bind' export node: if we use output_name, this
+			// will be unrecognized by nsi since output_name is modify each
+			// time user specify a new name for its export (custom) name
+			m_nsi.Connect(
+				output->getFullPath().buffer(), "outColor",
+				m_handle, input_name.buffer() );
+		}
+		else
+		{
+			m_nsi.Connect(
+				output->getFullPath().buffer(), output_name.buffer(),
+				m_handle, input_name.buffer() );
+		}
 	}
+
+	// If needed, add and connect our aov group to our material
+	add_and_connect_aov_group();
 }
 
 /**
@@ -311,6 +326,125 @@ bool vop::is_texture_path( const char* i_param_name )
 	return
 		str.find("texture") != std::string::npos ||
 		str.find("map") != std::string::npos;
+}
+
+void vop::add_and_connect_aov_group() const
+{
+	// First, check if this node represents our material
+
+	const shader_library &library = shader_library::get_instance();
+	std::string path = library.get_shader_path( vop_name().c_str() );
+	if( path.size() == 0 )
+	{
+		return;
+	}
+
+	DlShaderInfo *shader_info = library.get_shader_info( path.c_str() );
+	bool ourMaterial = false;
+	for( int i=0; i<shader_info->nparams(); i++ )
+	{
+		const DlShaderInfo::Parameter *parameter = shader_info->getparam(i);
+		if ( strcmp( parameter->name.c_str(), "aovGroup" ) == 0 )
+		{
+			ourMaterial = true;
+			break;
+		}
+	}
+
+	if ( !ourMaterial )
+		return;
+
+	// Second, check if any 'bind' node is connected to our material
+
+	std::vector<VOP_Node*> bind_nodes;
+	/* A traversal stack to avoid recursion */
+	std::vector<OP_Node*> traversal;
+
+	traversal.push_back( m_vop );
+
+	while( traversal.size() )
+	{
+		OP_Node* node = traversal.back();
+		traversal.pop_back();
+
+		int ninputs = node->nInputs();
+		for( int i = 0; i < ninputs; i++ )
+		{
+			OP_Input *input_ref = node->getInputReferenceConst(i);
+			if( !input_ref )
+			{
+				continue;
+			}
+
+			VOP_Node *output = CAST_VOPNODE( node->getInput(i) );
+			if( !output )
+			{
+				continue;
+			}
+
+			OP_Operator* op = output->getOperator();
+			if (op && op->getName().toStdString() == "bind")
+			{
+				bind_nodes.push_back( output );
+			}
+			else
+			{
+				traversal.push_back( output );
+			}
+		}
+	}
+
+	// Third, add and connect our aov group to deal with bind export
+	if (bind_nodes.size() > 0)
+	{
+		std::string handle = m_handle;
+		handle += "|dlAOVGroup|shader";
+
+		const shader_library& library = shader_library::get_instance();
+		std::string path = library.get_shader_path("dlAOVGroup");
+		assert( path.length() > 0 );
+
+		m_nsi.Create( handle, "shader" );
+		m_nsi.SetAttribute( handle,
+			NSI::CStringPArg( "shaderfilename", path.c_str()) );
+		
+		m_nsi.Connect( handle, "outColor", m_handle, "aovGroup" );
+
+		std::vector<std::string> aov_names;
+		std::vector<float> aov_values;
+
+		for ( unsigned i = 0; i < bind_nodes.size(); i++ )
+		{
+			UT_String aov_name;
+			bind_nodes[i]->evalString( aov_name, "parmname", 0, 0.0f );
+			aov_names.push_back( aov_name.toStdString() );
+			// Arbitrary values since the connection overrides it
+			aov_values.push_back( 0.0f );
+			aov_values.push_back( 0.0f );
+			aov_values.push_back( 0.0f );
+		}
+
+		NSI::ArgumentList list;
+
+		list.Add( NSI::Argument::New( "colorAOVNames" )
+			->SetArrayType( NSITypeString, aov_names.size() )
+			->CopyValue(&aov_names[0], aov_names.size()*sizeof(aov_names[0])));
+
+		list.Add( NSI::Argument::New( "colorAOVValues" )
+			->SetArrayType( NSITypeColor, aov_values.size() / 3 )
+			->CopyValue(&aov_values[0], aov_values.size()*sizeof(aov_values[0])));
+
+		m_nsi.SetAttributeAtTime( handle, 0, list );
+
+		for ( unsigned i = 0; i < bind_nodes.size(); i++ )
+		{
+			UT_String aov_value;
+			aov_value.sprintf("colorAOVValues[%u]", i);
+			m_nsi.Connect(
+				bind_nodes[i]->getFullPath().c_str(), "outColor",
+				handle, aov_value.c_str() );
+		}
+	}
 }
 
 void vop::list_ramp_parameters(

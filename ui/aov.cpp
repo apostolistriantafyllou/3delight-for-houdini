@@ -1,6 +1,6 @@
 #include "aov.h"
 
-#include <vector>
+#include <VOP/VOP_Node.h>
 
 std::vector<aov::description> descriptions =
 {
@@ -19,6 +19,77 @@ std::vector<aov::description> descriptions =
 	{ aov::e_auxiliary, "Scene Path ID", "scenepathid", "id.scenepath", "builtin", "scalar", false, false },
 	{ aov::e_auxiliary, "Surface Shader ID", "surfaceid", "id.surfaceshader", "builtin", "scalar", false, false }
 };
+
+void
+aov::updateCustomVariables(const std::vector<VOP_Node*>& i_custom_aovs)
+{
+	removeAllCustomVariables();
+	for (unsigned i = 0; i < i_custom_aovs.size(); i++)
+	{
+		UT_String aov_name;
+		i_custom_aovs[i]->evalString(aov_name, "parmname", 0, 0.0f);
+		if (!findCustomVariable(aov_name.c_str()))
+		{
+			addCustomVariable(
+				aov_name.toStdString(),
+				aov_name.toStdString(),
+				aov_name.toStdString(),
+				"shader", "color");
+		}
+	}
+}
+
+void
+aov::removeAllCustomVariables()
+{
+	while (!descriptions.empty())
+	{
+		if (descriptions.back().m_type != aov::e_custom) break;
+
+		descriptions.pop_back();
+	}
+}
+
+void
+aov::addCustomVariable(
+	const std::string& i_ui_name,
+	const std::string& i_filename_token,
+	const std::string& i_variable_name,
+	const std::string& i_variable_source,
+	const std::string& i_layer_type)
+{
+	aov::description desc =
+	{
+		aov::e_custom,
+		i_ui_name,
+		i_filename_token,
+		i_variable_name,
+		i_variable_source,
+		i_layer_type,
+		false,
+		false
+	};
+	descriptions.push_back(desc);
+}
+
+bool
+aov::findCustomVariable(const std::string& i_aov_name)
+{
+	for (int i = descriptions.size()-1 ; i >= 0; i--)
+	{
+		if (descriptions[i].m_type != aov::e_custom)
+		{
+			break;
+		}
+
+		if (descriptions[i].m_ui_name == i_aov_name)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
 
 const aov::description&
 aov::getDescription(const std::string& i_ui_name)

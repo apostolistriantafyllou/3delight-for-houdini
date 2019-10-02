@@ -6,6 +6,7 @@ class OBJ_Node;
 class OP_Node;
 class SOP_Node;
 class UT_String;
+class VOP_Node;
 class OP_BundlePattern;
 
 namespace NSI { class Context; }
@@ -25,6 +26,7 @@ public:
 	static void find_lights(
 		const OP_BundlePattern &i_pattern,
 		std::vector<OBJ_Node*>& o_lights );
+	static void find_custom_aovs( std::vector<VOP_Node*>& o_custom_aovs );
 
 	/**
 		\brief Returns the path of a VDB file if this node is a "VDB loader".

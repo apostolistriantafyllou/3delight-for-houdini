@@ -1,6 +1,9 @@
 #pragma once
 
 #include <string>
+#include <vector>
+
+class VOP_Node;
 
 namespace aov
 {
@@ -22,6 +25,24 @@ namespace aov
 		bool m_with_alpha;
 		bool m_support_multilight;
 	};
+
+	// Update custom variables of the aov's description
+	void updateCustomVariables(const std::vector<VOP_Node*>& i_custom_aovs);
+
+	// Removes all custom variables from the aov's description
+	void removeAllCustomVariables();
+
+	// Adds custom variable into the aov's description
+	void addCustomVariable(
+		const std::string& i_ui_name,
+		const std::string& i_filename_token,
+		const std::string& i_variable_name,
+		const std::string& i_variable_source,
+		const std::string& i_layer_type);
+
+	// Returns true if i_aov_name is found in the custom variables of
+	// the aov's description
+	bool findCustomVariable(const std::string& i_aov_name);
 
 	// Returns the aov's description from the specified ui name
 	const description& getDescription(const std::string& i_ui_name);

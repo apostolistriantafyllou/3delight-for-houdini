@@ -69,6 +69,12 @@ private:
 	bool unsupported( void ) const;
 
 	/**
+		\brief If vop is our material and have some bind node connected, add
+		and connect our aov group
+	*/
+	void add_and_connect_aov_group() const;
+
+	/**
 		\returns true if i_param_name indicates used of a texture path.
 	*/
 	static bool is_texture_path( const char* i_param_name );

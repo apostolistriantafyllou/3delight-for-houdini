@@ -56,6 +56,13 @@ const char* settings::k_disable_subsurface = "disable_subsurface";
 const char* settings::k_resolution_factor = "resolution_factor";
 const char* settings::k_sampling_factor = "sampling_factor";
 
+SelectLayersDialog* settings::sm_dialog = 0;
+
+settings::~settings()
+{
+	delete sm_dialog;
+}
+
 PRM_Template* settings::GetTemplates()
 {
 	static PRM_Name separator1("separator1", "");
@@ -631,8 +638,13 @@ int settings::add_layer_cb(
 	void* data, int index, fpreal t,
 	const PRM_Template* tplate)
 {
-	static SelectLayersDialog dlg;
-	if (!dlg.open(reinterpret_cast<ROP_Node*>(data)))
+	std::vector<VOP_Node*> custom_aovs;
+	scene::find_custom_aovs(custom_aovs);
+	aov::updateCustomVariables(custom_aovs);
+
+	delete sm_dialog;
+	sm_dialog = new SelectLayersDialog();
+	if (!sm_dialog->open(reinterpret_cast<ROP_Node*>(data), custom_aovs))
 	{
 		fprintf(
 			stderr,
