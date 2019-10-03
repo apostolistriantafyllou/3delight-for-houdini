@@ -443,9 +443,15 @@ void scene::find_custom_aovs( std::vector<VOP_Node*>& o_custom_aovs )
 			if( vop )
 			{
 				OP_Operator* op = vop->getOperator();
-				if (op && op->getName().toStdString() == "bind")
+				if ( op && op->getName().toStdString() == "bind" )
 				{
-					o_custom_aovs.push_back(vop);
+					bool use_export = vop->evalInt("useasparmdefiner", 0, 0.0f);
+					int export_mode = vop->evalInt("exportparm", 0, 0.0f);
+					// 0 means "Never" for export_mode
+					if ( use_export && export_mode != 0 )
+					{
+						o_custom_aovs.push_back(vop);
+					}
 				}
 			}
 
