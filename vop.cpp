@@ -97,9 +97,11 @@ void vop::connect( void ) const
 
 		if (output->getOperator()->getName().toStdString() == "bind")
 		{
-			// Special case for 'bind' export node: if we use output_name, this
-			// will be unrecognized by nsi since output_name is modify each
-			// time user specify a new name for its export (custom) name
+			/*
+				Special case for 'bind' export node: if we use output_name,
+				this will be unrecognized by nsi since output_name is modifued
+				each time user specify a new name for its export (custom) name
+			*/
 			m_nsi.Connect(
 				output->getFullPath().buffer(), "outColor",
 				m_handle, input_name.buffer() );
