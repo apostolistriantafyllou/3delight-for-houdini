@@ -95,16 +95,7 @@ void vop::connect( void ) const
 		output->getOutputName(output_name, output_index);
 		m_vop->getInputName(input_name, i);
 
-		bool patch_bind = false;
-		if ( output->getOperator()->getName().toStdString() == "bind" )
-		{
-			bool use_export = output->evalInt("useasparmdefiner", 0, 0.0f);
-			int export_mode = output->evalInt("exportparm", 0, 0.0f);
-			// 0 means "Never" for export_mode
-			patch_bind = use_export && export_mode != 0;
-		}
-
-		if ( patch_bind )
+		if ( is_aov_definition(output) )
 		{
 			/*
 				Special case for 'bind' export node: if we use output_name,
@@ -393,16 +384,9 @@ void vop::add_and_connect_aov_group() const
 				continue;
 			}
 
-			OP_Operator* op = output->getOperator();
-			if ( op && op->getName().toStdString() == "bind" )
+			if( is_aov_definition(output) )
 			{
-				bool use_export = output->evalInt("useasparmdefiner", 0, 0.0f);
-				int export_mode = output->evalInt("exportparm", 0, 0.0f);
-				// 0 means "Never" for export_mode
-				if ( use_export && export_mode != 0 )
-				{
-					bind_nodes.push_back( output );
-				}	
+				bind_nodes.push_back( output );
 			}
 			else
 			{
@@ -554,4 +538,29 @@ void vop::list_ramp_parameters(
 		->CopyValue(
 			&interpolations[0],
 			interpolations.size()*sizeof(interpolations[0])));
+}
+
+/**
+	\brief returns true if a given vop defines an AOV.
+
+	For now, wee recogznie Mantra's "bind export" node as a valid
+	AOV definition but we should really support dlAOVColor too
+	(FIXME)
+*/
+bool vop::is_aov_definition( VOP_Node *i_vop )
+{
+	if( !i_vop )
+		return false;
+
+	OP_Operator* op = i_vop->getOperator();
+
+	if( op && op->getName().toStdString() == "bind" )
+	{
+		bool use_export = i_vop->evalInt("useasparmdefiner", 0, 0.0f);
+		int export_mode = i_vop->evalInt("exportparm", 0, 0.0f);
+		// 0 means "Never" for export_mode
+		return use_export && export_mode != 0;
+	}
+
+	return false;
 }

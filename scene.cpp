@@ -440,20 +440,10 @@ void scene::find_custom_aovs( std::vector<VOP_Node*>& o_custom_aovs )
 		for( int i=0; i< nkids; i++ )
 		{
 			OP_Node *node = network->getChild(i);
-			VOP_Node *vop = node->castToVOPNode();
-			if( vop )
+			VOP_Node *vop_node = node->castToVOPNode();
+			if( vop_node && vop::is_aov_definition(vop_node) )
 			{
-				OP_Operator* op = vop->getOperator();
-				if ( op && op->getName().toStdString() == "bind" )
-				{
-					bool use_export = vop->evalInt("useasparmdefiner", 0, 0.0f);
-					int export_mode = vop->evalInt("exportparm", 0, 0.0f);
-					// 0 means "Never" for export_mode
-					if ( use_export && export_mode != 0 )
-					{
-						o_custom_aovs.push_back(vop);
-					}
-				}
+				o_custom_aovs.push_back(vop_node);
 			}
 
 			if( !node->isNetwork() )

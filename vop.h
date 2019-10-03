@@ -21,6 +21,14 @@ class vop : public exporter
 	*/
 	friend class light;
 
+	/**
+		The scene needs to find out if a certain vop is an AOV
+		defifinition.
+
+		\ref scene::find_custom_aovs
+	*/
+	friend class scene;
+
 public:
 	vop( const context&, VOP_Node *);
 
@@ -89,4 +97,6 @@ private:
 		osl_utilities::ramp::eType i_type,
 		float i_time,
 		NSI::ArgumentList& o_list );
+
+	static bool is_aov_definition( VOP_Node *i_vop );
 };
