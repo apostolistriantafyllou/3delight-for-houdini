@@ -11,7 +11,7 @@ source houdini_setup_csh
 popd
 ```
 
-### Linux
+### Linux and Windows
 
 ```cmake
 cd 3delight-for-houdini
@@ -51,9 +51,6 @@ On macOS, the same instructions as for Linux will do the job.
 
 > Note that we are taking some special care for TBB in the `CMakeLists.txt` file, but there is no reason for the plugin to require TBB and we are working to resolve this issue with SideFx.
 
-### Windows
-
-Untested.
 
 ## More Detailed Explanation About What is What
 

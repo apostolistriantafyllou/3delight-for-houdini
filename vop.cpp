@@ -95,7 +95,16 @@ void vop::connect( void ) const
 		output->getOutputName(output_name, output_index);
 		m_vop->getInputName(input_name, i);
 
-		if (output->getOperator()->getName().toStdString() == "bind")
+		bool patch_bind = false;
+		if ( output->getOperator()->getName().toStdString() == "bind" )
+		{
+			bool use_export = output->evalInt("useasparmdefiner", 0, 0.0f);
+			int export_mode = output->evalInt("exportparm", 0, 0.0f);
+			// 0 means "Never" for export_mode
+			patch_bind = use_export && export_mode != 0;
+		}
+
+		if ( patch_bind )
 		{
 			/*
 				Special case for 'bind' export node: if we use output_name,
@@ -385,9 +394,15 @@ void vop::add_and_connect_aov_group() const
 			}
 
 			OP_Operator* op = output->getOperator();
-			if (op && op->getName().toStdString() == "bind")
+			if ( op && op->getName().toStdString() == "bind" )
 			{
-				bind_nodes.push_back( output );
+				bool use_export = output->evalInt("useasparmdefiner", 0, 0.0f);
+				int export_mode = output->evalInt("exportparm", 0, 0.0f);
+				// 0 means "Never" for export_mode
+				if ( use_export && export_mode != 0 )
+				{
+					bind_nodes.push_back( output );
+				}	
 			}
 			else
 			{
