@@ -427,6 +427,7 @@ void scene::find_custom_aovs( std::vector<VOP_Node*>& o_custom_aovs )
 
 	OP_Node *our_dear_leader = OPgetDirector();
 	traversal.push_back( our_dear_leader->findNode( "/mat") );
+	traversal.push_back( our_dear_leader->findNode( "/obj") );
 
 	while( traversal.size() )
 	{
