@@ -80,6 +80,11 @@ public:
 	/// Returns the number of ordered (ie : non-indexed) inputs
 	virtual unsigned orderedInputs()const;
 
+	/// From VOP_Node
+	virtual UT_StringHolder getShaderName(
+		VOP_ShaderNameStyle style,
+		VOP_Type shader_type) const override;
+
 protected:
 
 	/**

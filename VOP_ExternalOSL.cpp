@@ -784,6 +784,18 @@ VOP_ExternalOSL::orderedInputs() const
 	return m_shader_info.NumInputs();
 }
 
+UT_StringHolder VOP_ExternalOSL::getShaderName(
+	VOP_ShaderNameStyle style,
+	VOP_Type shader_type) const
+{
+	/* This name is what becomes the shader id in USD land. Our Hydra plugin
+	   will use it to find the correct shader. */
+	if( style == VOP_ShaderNameStyle::PLAIN )
+		return m_shader_info.m_dl.shadername().c_str();
+
+	return VOP_Node::getShaderName(style, shader_type);
+}
+
 void
 VOP_ExternalOSL::getInputNameSubclass(UT_String &in, int i_idx) const
 {
@@ -860,4 +872,11 @@ VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
 	setEnglish(name);
 
 	setOpTabSubMenuPath("3Delight");
+	/*
+		The RenderMask is what ends up being the MaterialNetworkSelector in
+		Hydra. If we don't set it the default translator will not provide
+		networks at all. And if it does not match the Hydra plugin, we won't
+		see the networks there.
+	*/
+	static_cast<VOP_OperatorInfo*>(getOpSpecificData())->setRenderMask("nsi");
 }
