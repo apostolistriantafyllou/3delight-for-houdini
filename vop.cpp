@@ -79,19 +79,18 @@ void vop::connect( void ) const
 	for( int i = 0, n = m_vop->nInputs(); i<n; ++i )
 	{
 		OP_Input *input_ref = m_vop->getInputReferenceConst(i);
+
 		if( !input_ref )
 			continue;
 
-		int output_index = input_ref->getNodeOutputIndex();
 		VOP_Node *output = CAST_VOPNODE( m_vop->getInput(i) );
 
 		if( !output )
-		{
 			continue;
-		}
 
 		UT_String input_name, output_name;
 
+		int output_index = input_ref->getNodeOutputIndex();
 		output->getOutputName(output_name, output_index);
 		m_vop->getInputName(input_name, i);
 
@@ -332,8 +331,11 @@ bool vop::is_texture_path( const char* i_param_name )
 
 void vop::add_and_connect_aov_group() const
 {
-	// First, check if this node represents our material
-
+	/*
+		First, check if this node represents a final surface such
+		as DllPrincipled or DlMetal. These surface has a special
+		aovGroup to which we can connect AOV nodes.
+	*/
 	const shader_library &library = shader_library::get_instance();
 	std::string path = library.get_shader_path( vop_name().c_str() );
 	if( path.size() == 0 )
@@ -356,14 +358,13 @@ void vop::add_and_connect_aov_group() const
 	if ( !ourMaterial )
 		return;
 
-	// Second, check if any 'bind' node is connected to our material
+	/*
+		Second, check if any aov node is connected to this material
+		and accumulate it into a list.
+	*/
+	std::vector<VOP_Node*> aov_export_nodes;
 
-	std::vector<VOP_Node*> bind_nodes;
-	/* A traversal stack to avoid recursion */
-	std::vector<OP_Node*> traversal;
-
-	traversal.push_back( m_vop );
-
+	std::vector<OP_Node*> traversal; traversal.push_back( m_vop );
 	while( traversal.size() )
 	{
 		OP_Node* node = traversal.back();
@@ -386,7 +387,7 @@ void vop::add_and_connect_aov_group() const
 
 			if( is_aov_definition(output) )
 			{
-				bind_nodes.push_back( output );
+				aov_export_nodes.push_back( output );
 			}
 			else
 			{
@@ -395,8 +396,11 @@ void vop::add_and_connect_aov_group() const
 		}
 	}
 
-	// Third, add and connect our aov group to deal with bind export
-	if (bind_nodes.size() > 0)
+	/*
+		Last, add and connect our aov group to the material and connect the
+		aov export nodes to it.
+	*/
+	if (aov_export_nodes.size() > 0)
 	{
 		std::string handle = m_handle;
 		handle += "|dlAOVGroup|shader";
@@ -408,17 +412,17 @@ void vop::add_and_connect_aov_group() const
 		m_nsi.Create( handle, "shader" );
 		m_nsi.SetAttribute( handle,
 			NSI::CStringPArg( "shaderfilename", path.c_str()) );
-		
+
 		m_nsi.Connect( handle, "outColor", m_handle, "aovGroup" );
 
 		std::vector<std::string> aov_names_storage;
 		std::vector<const char *> aov_names;
 		std::vector<float> aov_values;
 
-		for ( unsigned i = 0; i < bind_nodes.size(); i++ )
+		for ( unsigned i = 0; i < aov_export_nodes.size(); i++ )
 		{
 			UT_String aov_name;
-			bind_nodes[i]->evalString( aov_name, "parmname", 0, 0.0f );
+			aov_export_nodes[i]->evalString( aov_name, "parmname", 0, 0.0f );
 			aov_names_storage.push_back( aov_name.toStdString() );
 			aov_names.push_back( aov_names_storage.back().c_str() );
 
@@ -440,12 +444,12 @@ void vop::add_and_connect_aov_group() const
 
 		m_nsi.SetAttribute( handle, list );
 
-		for ( unsigned i = 0; i < bind_nodes.size(); i++ )
+		for ( unsigned i = 0; i < aov_export_nodes.size(); i++ )
 		{
 			UT_String aov_value;
 			aov_value.sprintf("colorAOVValues[%u]", i);
 			m_nsi.Connect(
-				bind_nodes[i]->getFullPath().c_str(), "outColor",
+				aov_export_nodes[i]->getFullPath().c_str(), "outColor",
 				handle, aov_value.c_str() );
 		}
 	}
