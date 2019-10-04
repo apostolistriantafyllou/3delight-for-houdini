@@ -411,14 +411,17 @@ void vop::add_and_connect_aov_group() const
 		
 		m_nsi.Connect( handle, "outColor", m_handle, "aovGroup" );
 
-		std::vector<std::string> aov_names;
+		std::vector<std::string> aov_names_storage;
+		std::vector<const char *> aov_names;
 		std::vector<float> aov_values;
 
 		for ( unsigned i = 0; i < bind_nodes.size(); i++ )
 		{
 			UT_String aov_name;
 			bind_nodes[i]->evalString( aov_name, "parmname", 0, 0.0f );
-			aov_names.push_back( aov_name.toStdString() );
+			aov_names_storage.push_back( aov_name.toStdString() );
+			aov_names.push_back( aov_names_storage.back().c_str() );
+
 			// Arbitrary values since the connection overrides it
 			aov_values.push_back( 0.0f );
 			aov_values.push_back( 0.0f );
@@ -435,7 +438,7 @@ void vop::add_and_connect_aov_group() const
 			->SetArrayType( NSITypeColor, aov_values.size() / 3 )
 			->CopyValue(&aov_values[0], aov_values.size()*sizeof(aov_values[0])));
 
-		m_nsi.SetAttributeAtTime( handle, 0, list );
+		m_nsi.SetAttribute( handle, list );
 
 		for ( unsigned i = 0; i < bind_nodes.size(); i++ )
 		{
