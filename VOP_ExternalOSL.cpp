@@ -784,6 +784,7 @@ VOP_ExternalOSL::orderedInputs() const
 	return m_shader_info.NumInputs();
 }
 
+#if HDK_API_VERSION >= 18000000
 UT_StringHolder VOP_ExternalOSL::getShaderName(
 	VOP_ShaderNameStyle style,
 	VOP_Type shader_type) const
@@ -795,6 +796,7 @@ UT_StringHolder VOP_ExternalOSL::getShaderName(
 
 	return VOP_Node::getShaderName(style, shader_type);
 }
+#endif
 
 void
 VOP_ExternalOSL::getInputNameSubclass(UT_String &in, int i_idx) const
@@ -874,7 +876,7 @@ VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
 	setOpTabSubMenuPath("3Delight");
 	/*
 		The RenderMask is what ends up being the MaterialNetworkSelector in
-		Hydra. If we don't set it the default translator will not provide
+		Hydra. If we don't set it, the default translator will not provide
 		networks at all. And if it does not match the Hydra plugin, we won't
 		see the networks there.
 	*/

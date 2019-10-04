@@ -2,6 +2,7 @@
 
 #include <3Delight/ShaderQuery.h>
 
+#include <UT/UT_HDKVersion.h>
 #include <VOP/VOP_Node.h>
 #include <VOP/VOP_Operator.h>
 
@@ -80,10 +81,12 @@ public:
 	/// Returns the number of ordered (ie : non-indexed) inputs
 	virtual unsigned orderedInputs()const;
 
+#if HDK_API_VERSION >= 18000000
 	/// From VOP_Node
 	virtual UT_StringHolder getShaderName(
 		VOP_ShaderNameStyle style,
 		VOP_Type shader_type) const override;
+#endif
 
 protected:
 
