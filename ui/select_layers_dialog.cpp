@@ -84,9 +84,15 @@ SelectLayersDialog::parseDialog(const std::vector<VOP_Node*>& i_custom_aovs)
 	{
 		setValueSymbol(m_symbols[i].c_str(), m_values[i]);
 	}
-	// Builds the default search path $HOME/houdiniX.Y/config/Applications
+
+	// Find our dialog description file
 	UT_String pathName;
-	UT_PathSearch::getHomeHoudini(pathName);
+	if(!UT_PathSearch::getInstance(UT_HOUDINI_UI_APP_PATH)->
+		findFile(pathName, "select_layers_ui.ui"))
+	{
+		assert(false);
+		return false;
+	}
 
 	const std::string separator = 
 #ifdef _WIN32
@@ -94,21 +100,6 @@ SelectLayersDialog::parseDialog(const std::vector<VOP_Node*>& i_custom_aovs)
 #else
 		"/";
 #endif
-
-	const UT_PathSearch* spath1 =
-		UT_PathSearch::getInstance(UT_HOUDINI_UI_PATH);
-	UT_String defPath = spath1->getDefaultPath();
-	UT_String dirName1, dirName2;
-	defPath.splitPath(dirName1, dirName2);
-	pathName += separator;
-	pathName += dirName2;
-
-	const UT_PathSearch* spath2 =
-		UT_PathSearch::getInstance(UT_HOUDINI_UI_APP_PATH);
-	pathName += separator;
-	pathName += spath2->getCaratExpand();
-	pathName += separator;
-	pathName += "select_layers_ui.ui";
 
 	// Builds a temp name for temp file "select_layers_ui.ui"
 	UT_String temp(UT_TempFileManager::getTempFilename());
