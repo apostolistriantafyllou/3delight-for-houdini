@@ -71,15 +71,15 @@ public:
 	static PRM_Template* GetTemplates(const StructuredShaderInfo& i_shader_info);
 
 	/// Returns the label for input port at index i_idx
-	virtual const char* inputLabel(unsigned i_idx)const;
+	virtual const char* inputLabel(unsigned i_idx)const override;
 	/// Returns the label for output port at index i_idx
-	virtual const char* outputLabel(unsigned i_idx)const;
+	virtual const char* outputLabel(unsigned i_idx)const override;
 
 	/// Returns the number input ports that should be visible
-	virtual unsigned getNumVisibleInputs()const;
+	virtual unsigned getNumVisibleInputs()const override;
 
 	/// Returns the number of ordered (ie : non-indexed) inputs
-	virtual unsigned orderedInputs()const;
+	virtual unsigned orderedInputs()const override;
 
 #if HDK_API_VERSION >= 18000000
 	/// From VOP_Node
@@ -103,27 +103,27 @@ protected:
 	virtual ~VOP_ExternalOSL();
 
 	/// Returns the internal name of an input parameter.
-	virtual void getInputNameSubclass(UT_String &in, int i_idx)const;
+	virtual void getInputNameSubclass(UT_String &in, int i_idx)const override;
 	/// Returns the index of the named input
-	virtual int getInputFromNameSubclass(const UT_String &in)const;
+	virtual int getInputFromNameSubclass(const UT_String &in)const override;
 	/// Fills the info about the source of an input parameter
 	virtual void getInputTypeInfoSubclass(
 		VOP_TypeInfo &o_type_info, 
-		int i_idx);
+		int i_idx) override;
 	/**
 		Fills the info about the acceptable types for the source of an input
 		parameter.
 	*/
 	virtual void getAllowedInputTypeInfosSubclass(
 		unsigned i_idx,
-		VOP_VopTypeInfoArray &o_type_infos);
+		VOP_VopTypeInfoArray &o_type_infos) override;
 
 	/// Returns the internal name of an output parameter.
-	virtual void getOutputNameSubclass(UT_String &out, int i_idx)const;
+	virtual void getOutputNameSubclass(UT_String &out, int i_idx)const override;
 	/// Fills the info about an output parameter
 	virtual void getOutputTypeInfoSubclass(
 		VOP_TypeInfo &o_type_info, 
-		int i_idx);
+		int i_idx) override;
 
 private:
 
