@@ -4,6 +4,8 @@
 
 #include <SYS/SYS_Types.h>
 
+#include <assert.h>
+
 class OBJ_Node;
 class OP_BundlePattern;
 
@@ -24,6 +26,7 @@ public:
 		fpreal i_fps,
 		bool i_dof,
 		bool i_batch,
+		bool i_ipr,
 		bool i_export_nsi,
 		bool i_cloud,
 		const std::string& i_rop_path,
@@ -38,12 +41,14 @@ public:
 		m_shutter(i_shutter_interval * m_frame_duration),
 		m_dof(i_dof),
 		m_batch(i_batch),
+		m_ipr(i_ipr),
 		m_export_nsi(i_export_nsi),
 		m_cloud(i_cloud),
 		m_rop_path(i_rop_path),
 		m_objects_to_render_pattern(i_objects_to_render_pattern),
 		m_lights_to_render_pattern(i_lights_to_render_pattern)
 	{
+		assert(!m_ipr || !m_export_nsi);
 	}
 
 	float ShutterOpen()const { return m_current_time - m_shutter/2.0f; }
@@ -78,6 +83,7 @@ public:
 	// True if depth-of-field is enabled
 	bool m_dof;
 	bool m_batch;
+	bool m_ipr;
 	bool m_export_nsi;
 	bool m_cloud;
 

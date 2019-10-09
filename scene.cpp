@@ -9,6 +9,7 @@
 #include "polygonmesh.h"
 #include "null.h"
 #include "pointmesh.h"
+#include "safe_interest.h"
 #include "vdb.h"
 #include "vop.h"
 /* } */
@@ -61,7 +62,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 		The only interesting thing here is how we deal with instances. We first
 		addPrimitive() recursively to resolve the instanced geometry since we
 		need it's handle to pass to the actual instancer. All the rest is
-		is 1 to 1 mapping with either one of our expoters.
+		is 1 to 1 mapping with either one of our exporters.
 	*/
 	void addPrimitive( const GT_PrimitiveHandle &i_primitive )
 	{
@@ -119,7 +120,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 
 		case GT_PRIM_VOXEL_VOLUME:
 			fprintf(
-				stderr, "3Delight for Houdni: unsupported VDB/Volume "
+				stderr, "3Delight for Houdini: unsupported VDB/Volume "
 					"workflow for %s\n", m_node->getName().c_str() );
 			break;
 
@@ -136,7 +137,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 			}
 			else
 			{
-				fprintf( stderr, "3Delight for Houdni: unsupported VDB/Volume "
+				fprintf( stderr, "3Delight for Houdini: unsupported VDB/Volume "
 					"workflow for %s\n", m_node->getName().c_str() );
 			}
 			break;
@@ -172,17 +173,25 @@ struct OBJ_Node_Refiner : public GT_Refine
 void scene::process_node(
 	const context &i_context,
 	OP_Node *i_node,
-	std::vector<exporter *> &o_to_export )
+	std::vector<exporter *> &o_to_export,
+	std::deque<safe_interest>& io_interests )
 {
 	if( i_node->castToVOPNode() )
 	{
 		/*
 		   Our material network connections is done :) The connection
-		   between nodes is done in \ref vop::copnnect
+		   between nodes is done in \ref vop::connect
 		   Read vop.cpp if you are bewildered by this simplicity.
 		*/
 		o_to_export.push_back(
 			new vop(i_context, i_node->castToVOPNode()) );
+		if(i_context.m_ipr)
+		{
+			io_interests.emplace_back(
+				i_node,
+				const_cast<context*>(&i_context),
+				&vop::changed_cb);
+		}
 		return;
 	}
 
@@ -201,6 +210,13 @@ void scene::process_node(
 		aiming for code simplicity here.
 	*/
 	o_to_export.push_back( new null(i_context, obj) );
+	if(i_context.m_ipr)
+	{
+		io_interests.emplace_back(
+			i_node,
+			const_cast<context*>(&i_context),
+			&null::changed_cb);
+	}
 
 	if( obj->getObjectType() & OBJ_NULL )
 	{
@@ -217,7 +233,7 @@ void scene::process_node(
 		}
 
 		/*
-			We don't return here because an OBJ_Light is also and OBJ_Camera
+			We don't return here because an OBJ_Light is also an OBJ_Camera
 			and we want to export both. This will allow to render the scene
 			from the point of view of a light source.
 		*/
@@ -279,7 +295,8 @@ void scene::process_node(
 */
 void scene::scan(
 	const context &i_context,
-	std::vector<exporter *> &o_to_export )
+	std::vector<exporter *> &o_to_export,
+	std::deque<safe_interest>& io_interests )
 {
 	/* A traversal stack to avoid recursion */
 	std::vector< OP_Node * > traversal;
@@ -303,7 +320,7 @@ void scene::scan(
 		for( int i=0; i< nkids; i++ )
 		{
 			OP_Node *node = network->getChild(i);
-			process_node( i_context, node, o_to_export );
+			process_node( i_context, node, o_to_export, io_interests );
 
 			if( !node->isNetwork() )
 				continue;
@@ -323,11 +340,13 @@ void scene::scan(
 
 	\see process_node
 */
-void scene::convert_to_nsi( const context &i_context )
+void scene::convert_to_nsi(
+	const context &i_context,
+	std::deque<safe_interest>& io_interests )
 {
 	/* Start be getting the list of exporter for the scene */
 	std::vector<exporter *> to_export;
-	scan( i_context, to_export );
+	scan( i_context, to_export, io_interests );
 
 	/*
 		Create phase. This will create all the NSI nodes from the Houdini

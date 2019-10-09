@@ -36,6 +36,7 @@ add_library( ${library_name} SHARED
 	null.cpp
 	osl_utilities.cpp
 	plugin.cpp
+	safe_interest.cpp
 	scene.cpp
 	shader_library.cpp
 	vdb.cpp

@@ -45,6 +45,7 @@ void vop::set_attributes_at_time( double i_time ) const
 		m_vop,
 		m_vop->getOperator()->getName(),
 		i_time,
+		-1,
 		list );
 
 	if( !list.empty() )
@@ -118,6 +119,29 @@ void vop::connect( void ) const
 }
 
 /**
+	\brief Callback that should be connected to an OP_Node that has an
+	associated vop exporter.
+*/
+void vop::changed_cb(
+	OP_Node* i_caller,
+	void* i_callee,
+	OP_EventType i_type,
+	void* i_data)
+{
+	context* ctx = (context*)i_callee;
+	if(i_type == OP_PARM_CHANGED)
+	{
+		intptr_t parm_index = reinterpret_cast<intptr_t>(i_data);
+
+		NSI::ArgumentList list;
+		if(vop(*ctx, i_caller->castToVOPNode()).set_single_attribute(parm_index))
+		{
+			ctx->m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
+		}
+	}
+}
+
+/**
 	\brief Fill a list of NSI arguments from an OP_Parameters node.
 
 	The only gotcha here is regarding texture parameters: we detect
@@ -131,6 +155,7 @@ void vop::list_shader_parameters(
 	const OP_Parameters *i_parameters,
 	const char *i_shader,
 	float i_time,
+	int i_parm_index,
 	NSI::ArgumentList &o_list )
 {
 	assert( i_shader );
@@ -222,7 +247,7 @@ void vop::list_shader_parameters(
 
 		int index = i_parameters->getParmIndex( parameter->name.c_str() );
 
-		if( index < 0 )
+		if( index < 0 || (i_parm_index >= 0 && index != i_parm_index))
 			continue;
 
 		switch( parameter->type.type )
@@ -453,6 +478,27 @@ void vop::add_and_connect_aov_group() const
 				handle, aov_value.c_str() );
 		}
 	}
+}
+
+bool vop::set_single_attribute(int i_parm_index)const
+{
+	NSI::ArgumentList list;
+
+	list_shader_parameters(
+		m_vop,
+		m_vop->getOperator()->getName(),
+		0.0f,
+		i_parm_index,
+		list);
+
+	if(list.empty())
+	{
+		return false;
+	}
+
+	m_nsi.SetAttribute( m_handle, list );
+
+	return true;
 }
 
 void vop::list_ramp_parameters(

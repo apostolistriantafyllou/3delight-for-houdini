@@ -48,6 +48,7 @@ public:
 
 public:
 	static const char* k_export_nsi;
+	static const char* k_ipr;
 	static const char* k_shading_samples;
 	static const char* k_pixel_samples;
 	static const char* k_volume_samples;

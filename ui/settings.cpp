@@ -16,6 +16,7 @@
 static const float k_one_line = 0.267;
 
 const char* settings::k_export_nsi = "export_nsi";
+const char* settings::k_ipr = "ipr";
 const char* settings::k_shading_samples = "shading_samples";
 const char* settings::k_pixel_samples = "pixel_samples";
 const char* settings::k_volume_samples = "volume_samples";
@@ -418,9 +419,13 @@ PRM_Template* settings::GetTemplates()
 	static PRM_Name export_nsi(k_export_nsi, "Export NSI to stdout");
 	static PRM_Default export_nsi_d(false);
 
+	static PRM_Name ipr(k_ipr, "IPR");
+	static PRM_Default ipr_d(false);
+
 	static std::vector<PRM_Template> debug_templates =
 	{
-		PRM_Template(PRM_TOGGLE, 1, &export_nsi, &export_nsi_d)
+		PRM_Template(PRM_TOGGLE, 1, &export_nsi, &export_nsi_d),
+		PRM_Template(PRM_TOGGLE, 1, &ipr, &ipr_d)
 	};
 
 	// Put everything together

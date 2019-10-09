@@ -1,9 +1,13 @@
 #pragma once
 
 #include "exporter.h"
+
 #include "3Delight/ShaderQuery.h"
 #include "osl_utilities.h"
 
+#include <OP/OP_Value.h>
+
+class OP_Node;
 class OP_Parameters;
 
 /**
@@ -42,6 +46,12 @@ public:
 	*/
 	std::string vop_name( void ) const;
 
+	static void changed_cb(
+		OP_Node* i_caller,
+		void* i_callee,
+		OP_EventType i_type,
+		void* i_data);
+
 protected:
 	/**
 		Set all parameters of 'i_shader' by finding their values pairs
@@ -53,6 +63,8 @@ protected:
 			The OSL shader from where to get parameter names.
 		\param i_time
 			The time to use for the parameter's eval.
+		\param i_parm_index
+			If non-negative, index of the only node parameter to be exported.
 		\param o_list
 			The resulting NSI argument list that can be passed directly
 			to NSISetAttribute[AtTime]
@@ -61,6 +73,7 @@ protected:
 		const OP_Parameters *i_parameters,
 		const char *i_shader,
 		float i_time,
+		int i_parm_index,
 		NSI::ArgumentList &o_list );
 
 private:
@@ -81,6 +94,9 @@ private:
 		and connect our aov group
 	*/
 	void add_and_connect_aov_group() const;
+
+	/// Sets a single attribute on the associated NSI node
+	bool set_single_attribute(int i_parm_index)const;
 
 	/**
 		\returns true if i_param_name indicates used of a texture path.

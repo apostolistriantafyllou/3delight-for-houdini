@@ -222,7 +222,7 @@ void light::set_attributes_at_time( double i_time ) const
 	vop::list_shader_parameters(
 		m_vop,
 		m_is_env_light ? "environmentlight" : "hlight",
-		i_time, list );
+		i_time, -1, list );
 
 	std::string shader(m_handle); shader += "|shader";
 	m_nsi.SetAttributeAtTime( shader, i_time, list );

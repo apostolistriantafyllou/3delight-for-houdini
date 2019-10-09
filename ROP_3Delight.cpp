@@ -279,6 +279,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	bool render = !evalInt(settings::k_export_nsi, 0, 0.0f);
 	fpreal fps = OPgetDirector()->getChannelManager()->getSamplesPerSec();
 	bool batch = !UTisUIAvailable();
+	bool ipr = render && evalInt(settings::k_ipr, 0, 0.0f);
 
 	m_current_render = new context(
 		m_nsi,
@@ -288,6 +289,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		fps,
 		HasDepthOfField(),
 		batch,
+		ipr,
 		!render,
 		m_cloud,
 		getFullPath().toStdString(),
@@ -385,7 +387,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 
 	scene::export_object_attribute_nodes(*m_current_render);
 
-	scene::convert_to_nsi( *m_current_render );
+	scene::convert_to_nsi( *m_current_render, m_interests );
 
 	ExportAtmosphere(*m_current_render);
 	ExportOutputs(*m_current_render);
@@ -408,6 +410,9 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 				ROP_3Delight* rop = (ROP_3Delight*)i_data;
 
 				rop->m_render_end_mutex.lock();
+
+				rop->m_interests.clear();
+				delete rop->m_current_render; rop->m_current_render = nullptr;
 
 				/*
 					If m_rendering is still true, it means that the render
@@ -432,6 +437,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 		m_nsi.RenderControl(
 		(
 			NSI::CStringPArg("action", "start"),
+			NSI::IntegerArg("interactive", m_current_render->m_ipr),
 			NSI::PointerArg("stoppedcallback", (const void*)render_stopped),
 			NSI::PointerArg("stoppedcallbackdata", this)
 		) );
@@ -497,7 +503,15 @@ ROP_3Delight::endRender()
 	OP_BundlePattern::freePattern(m_current_render->m_lights_to_render_pattern);
 	OP_BundlePattern::freePattern(m_current_render->m_objects_to_render_pattern);
 
-	delete m_current_render; m_current_render = nullptr;
+	/*
+		If we render in a background thread, the interests and rendering context
+		will be destroyed by this thread's stoppedcallback.
+	*/
+	if(!m_current_render->BackgroundThreadRendering())
+	{
+		m_interests.clear();
+		delete m_current_render; m_current_render = nullptr;
+	}
 
 	return ROP_CONTINUE_RENDER;
 }

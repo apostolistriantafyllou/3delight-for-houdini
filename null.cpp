@@ -7,9 +7,7 @@
 
 #include <GT/GT_Handles.h>
 
-#include <assert.h>
 #include <nsi.hpp>
-#include <iostream>
 
 null::null( const context& i_ctx, OBJ_Node *i_object )
 :
@@ -75,5 +73,34 @@ void null::connect( void ) const
 	{
 		scene::connect_to_object_attributes_nodes(
 			m_context, m_object, m_handle );
+	}
+}
+
+/**
+	\brief Callback that should be connected to an OP_Node that has an
+	associated null exporter.
+*/
+void null::changed_cb(
+	OP_Node* i_caller,
+	void* i_callee,
+	OP_EventType i_type,
+	void* i_data)
+{
+	context* ctx = (context*)i_callee;
+	if(i_type == OP_PARM_CHANGED)
+	{
+		intptr_t parm_index = reinterpret_cast<intptr_t>(i_data);
+		if(parm_index > 13)
+		{
+			/*
+				Those parameters seem to have no effect on the transform : they
+				are	also displayed in other tabs of the object's parameters
+				sheet.
+			*/
+			return;
+		}
+
+		null(*ctx, i_caller->castToOBJNode()).set_attributes_at_time(0.0);
+		ctx->m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
 	}
 }
