@@ -396,6 +396,12 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 		void (*render_stopped)(void*, NSIContext_t, int) =
 			[](void* i_data, NSIContext_t i_ctx, int i_status)
 			{
+				if(i_status != NSIRenderCompleted &&
+					i_status != NSIRenderAborted)
+				{
+					return;
+				}
+
 				ROP_3Delight* rop = (ROP_3Delight*)i_data;
 
 				rop->m_render_end_mutex.lock();
