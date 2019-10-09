@@ -276,8 +276,6 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		assert(!m_renderdl);
 	}
 
-	m_rendering = true;
-
 	bool render = !evalInt(settings::k_export_nsi, 0, 0.0f);
 	fpreal fps = OPgetDirector()->getChannelManager()->getSamplesPerSec();
 	bool batch = !UTisUIAvailable();
@@ -294,6 +292,8 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		m_cloud,
 		OP_BundlePattern::allocPattern(m_settings.GetObjectsToRender()),
 		OP_BundlePattern::allocPattern(m_settings.GetLightsToRender()));
+
+	m_rendering = render;
 
 	if(m_current_render->BackgroundProcessRendering())
 	{
