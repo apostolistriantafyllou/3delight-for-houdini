@@ -30,8 +30,8 @@ static bool file_exists( const char *name );
 static std::string dir_name( const std::string &i_path );
 static const char *get_env( const char* i_var );
 bool scan_dir(
-	const char *i_path,
-	std::function<void(const char*,const char*)> i_userFct );
+	const std::string& i_path,
+	std::unordered_map<std::string, std::string>& io_list);
 
 /**
 	Find the path of the plugin's dso and guess the shader path from there
@@ -228,27 +228,16 @@ void shader_library::find_all_shaders( const char *i_root)
 	const char *user_osos = get_env( "_3DELIGHT_USER_OSO_PATH" );
 	tokenize_path( user_osos, to_scan );
 
-	std::function<void(const char *, const char *)> F =
-		[&] (const char *path, const char*name)
-		{
-			m_user_osos[name] = path;
-		};
-
 	for( auto &path : to_scan )
 	{
-		scan_dir( path.c_str(), F );
+		scan_dir( path, m_user_osos );
 	}
 
 	/*
 		Get 3delight for houdini shaders.
 	*/
-	F = [&] (const char *path, const char*name)
-		{
-			m_3dfh_osos[name] = path;
-		};
-
 	std::string installation_path = m_plugin_path + "/../osl/";
-	scan_dir( installation_path.c_str(), F );
+	scan_dir( installation_path, m_3dfh_osos );
 
 	std::cout <<
 		"3Delight for Houdini: loaded "
@@ -433,17 +422,17 @@ const char *get_env( const char* i_var )
 }
 
 bool scan_dir(
-	const char *i_path,
-	std::function<void(const char*,const char*)> i_userFct )
+	const std::string& i_path,
+	std::unordered_map<std::string, std::string>& io_list )
 {
-	FS_Info info(i_path);
+	FS_Info info(i_path.c_str());
 	if(!info.getIsDirectory())
 	{
-		i_userFct(i_path, i_path);
+		io_list[i_path] = i_path;
 		return true;
 	}
 
-	UT_Directory dir(i_path, nullptr, 0);
+	UT_Directory dir(i_path.c_str(), nullptr, 0);
 	UT_StringArray files;
 	dir.getFiles("*", files);
 
@@ -457,9 +446,9 @@ bool scan_dir(
 	std::string dir_path = i_path;
 	for(int f = 0; f < files.size(); f++)
 	{
-		UT_StringRef file = files[f];
-		std::string full_path = dir_path + separator + file.toStdString();
-		i_userFct(full_path.c_str(), file.c_str());
+		std::string file = files[f].toStdString();
+		std::string full_path = dir_path + separator + file;
+		io_list[file] = full_path;
 	}
 
 	return true;
