@@ -68,7 +68,13 @@ void polygonmesh::set_attributes( void ) const
 		->SetCount( vertex_list->entries() )
 		->SetValuePointer( vertices ) );
 
-	if( !m_is_subdiv )
+	if (m_is_subdiv)
+	{
+		mesh_args.Add(
+			new NSI::StringArg("subdivision.scheme",
+				"catmull-clark"));
+	}
+	else
 	{
 		mesh_args.Add( NSI::Argument::New( "N.indices" )
 			->SetType( NSITypeInteger )
