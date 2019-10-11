@@ -48,19 +48,24 @@ public:
 	NSI::DynamicAPI m_api;
 	decltype(&DlGetShaderInfo) m_shader_info_ptr = nullptr;
 
-	/**
-		Shader name to shader path lookup table for 3Deligth installation
-		shaders.
+	// Group of shaders from a single location
+	struct ShadersGroup
+	{
+		ShadersGroup(
+			const std::string i_name = std::string(),
+			const std::string i_menu = std::string())
+		:	m_name(i_name),
+			m_menu(i_menu)
+		{
+		}
 
-		\ref scan_shaders
-	*/
-	std::unordered_map<std::string, std::string> m_3delight_osos;
+		// Name of the group
+		std::string m_name;
+		// Menu where to put the group's shaders
+		std::string m_menu;
+		// Shader name to shader path lookup table
+		std::unordered_map<std::string, std::string> m_osos;
+	};
 
-	/**
-		3dfh installation osos.
-	*/
-	std::unordered_map<std::string, std::string> m_3dfh_osos;
-
-	/** User defined osos */
-	std::unordered_map<std::string, std::string> m_user_osos;
+	std::vector<ShadersGroup> m_shaders;
 };

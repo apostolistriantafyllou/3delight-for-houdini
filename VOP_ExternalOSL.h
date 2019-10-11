@@ -142,7 +142,9 @@ private:
 struct VOP_ExternalOSLOperator : public VOP_Operator
 {
 	/// Constructor.
-	VOP_ExternalOSLOperator(const StructuredShaderInfo& i_shader_info);
+	VOP_ExternalOSLOperator(
+		const StructuredShaderInfo& i_shader_info,
+		const std::string& i_menu_name);
 
 	/// The shader information we want to pass to the VOP_ExternalOSL node
 	StructuredShaderInfo m_shader_info;

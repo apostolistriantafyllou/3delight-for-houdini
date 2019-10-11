@@ -111,17 +111,12 @@ std::string shader_library::get_shader_path( const char *vop ) const
 
 	name += ".oso";
 
-	auto it = m_3dfh_osos.find( name );
-	if( it != m_3dfh_osos.end() )
-		return it->second;
-
-	it = m_3delight_osos.find( name );
-	if( it != m_3delight_osos.end() )
-		return it->second;
-
-	it = m_user_osos.find( name );
-	if( it != m_user_osos.end() )
-		return it->second;
+	for(const ShadersGroup& g : m_shaders)
+	{
+		auto it = g.m_osos.find( name );
+		if( it != g.m_osos.end() )
+			return it->second;
+	}
 
 	return {};
 }
@@ -208,6 +203,7 @@ void shader_library::find_all_shaders( const char *i_root)
 		"vdbVolume",
 	};
 
+	m_shaders.emplace_back(ShadersGroup("3Delight", "3Delight"));
 	for( auto &path : to_scan )
 	{
 		for( const auto &shader : shaders )
@@ -216,7 +212,7 @@ void shader_library::find_all_shaders( const char *i_root)
 			std::string path_to_oso = path + oso;
 			if( file_exists(path_to_oso.c_str()) )
 			{
-				m_3delight_osos[oso] = path_to_oso;
+				m_shaders.back().m_osos[oso] = path_to_oso;
 			}
 		}
 	}
@@ -228,59 +224,55 @@ void shader_library::find_all_shaders( const char *i_root)
 	const char *user_osos = get_env( "_3DELIGHT_USER_OSO_PATH" );
 	tokenize_path( user_osos, to_scan );
 
+	m_shaders.emplace_back(
+		ShadersGroup("user-defined", "3Delight/User-defined"));
 	for( auto &path : to_scan )
 	{
-		scan_dir( path, m_user_osos );
+		scan_dir( path, m_shaders.back().m_osos );
 	}
 
 	/*
-		Get 3delight for houdini shaders.
+		Get 3Delight for Houdini shaders.
 	*/
+	m_shaders.emplace_back(ShadersGroup("3Delight for Houdini"));
 	std::string installation_path = m_plugin_path + "/../osl/";
-	scan_dir( installation_path, m_3dfh_osos );
+	scan_dir( installation_path, m_shaders.back().m_osos );
 
-	std::cout <<
-		"3Delight for Houdini: loaded "
-		<< m_3delight_osos.size() << " 3Delight shaders, "
-		<< m_3dfh_osos.size() << " 3Delight for Houdini shaders and "
-		<< m_user_osos.size() << " user-defined shaders" << std::endl;
+	std::cout << "3Delight for Houdini: loaded";
+	for(const ShadersGroup& g : m_shaders)
+	{
+		std::cout << "\n  " << g.m_osos.size() << " " << g.m_name << " shaders";
+	}
+	std::cout << std::endl;
 
 }
 
 /// Registers one VOP for each .oso file found in the shaders path
 void shader_library::Register(OP_OperatorTable* io_table)const
 {
-	for( auto &oso : m_3delight_osos )
+	for(const ShadersGroup& g : m_shaders)
 	{
-		const DlShaderInfo* info = get_shader_info( oso.second.c_str() );
-		if(!info)
+		if(g.m_menu.empty())
 		{
-			std::cerr
-				<< "3Delight for Houdini: unable to load 3Delight shader "
-				<< oso.first;
 			continue;
 		}
 
-		io_table->addOperator(
-			new VOP_ExternalOSLOperator(StructuredShaderInfo(info)));
-	}
-
-	for( auto &oso : m_user_osos )
-	{
-		const DlShaderInfo* info = get_shader_info( oso.second.c_str() );
-		if(!info)
+		for( auto &oso : g.m_osos )
 		{
-			std::cerr
-				<< "3Delight for Houdini: unable to load user shader "
-				<< oso.first;
-			continue;
+			const DlShaderInfo* info = get_shader_info( oso.second.c_str() );
+			if(!info)
+			{
+				std::cerr
+					<< "3Delight for Houdini: unable to load " << g.m_name
+					<< " shader " << oso.first;
+				continue;
+			}
+
+			io_table->addOperator(
+				new VOP_ExternalOSLOperator(
+						StructuredShaderInfo(info),
+						g.m_menu));
 		}
-
-		io_table->addOperator(
-			new VOP_ExternalOSLOperator(StructuredShaderInfo(info)));
-
-		std::cout << "3Delight for Houdini: loaded user shader "
-			<< oso.second;
 	}
 }
 

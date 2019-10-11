@@ -854,7 +854,8 @@ VOP_ExternalOSL::getOutputTypeInfoSubclass(VOP_TypeInfo& o_type_info, int i_idx)
 
 
 VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
-	const StructuredShaderInfo& i_shader_info)
+	const StructuredShaderInfo& i_shader_info,
+	const std::string& i_menu_name)
 	:	VOP_Operator(
 			("3Delight::" + i_shader_info.m_dl.shadername().string()).c_str(),
 			i_shader_info.m_dl.shadername().c_str(),
@@ -873,7 +874,7 @@ VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
 	osl_utilities::FindMetaData(name, i_shader_info.m_dl.metadata(), "niceName");
 	setEnglish(name);
 
-	setOpTabSubMenuPath("3Delight");
+	setOpTabSubMenuPath(i_menu_name.c_str());
 	/*
 		The RenderMask is what ends up being the MaterialNetworkSelector in
 		Hydra. If we don't set it, the default translator will not provide
