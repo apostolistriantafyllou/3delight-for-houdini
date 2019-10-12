@@ -62,7 +62,7 @@ void exporter::connect( void ) const
 
 			\ref instancer::connect
 		*/
-		goto assign_material; // one goto for assembly gods.
+		goto assign_material; // one goto for the assembly gods.
 	}
 
 	/*
@@ -108,13 +108,9 @@ assign_material:
 	m_nsi.Create( attributes, "attributes" );
 	m_nsi.Connect( attributes, "", m_handle, "geometryattributes" );
 
-	/*
-		FIXME: this is a poor way to know if we have a volume or not.
-		Since we lost track of the original SOP_node at this moment.
-		We could re-implement this method in `vdb.cpp` but that might
-		be uglier.
-	*/
-	if( m_gt_primitive != sm_invalid_gt_primitive )
+	if( m_gt_primitive != sm_invalid_gt_primitive &&
+		m_gt_primitive->getPrimitiveType() != GT_PRIM_VDB_VOLUME &&
+		m_gt_primitive->getPrimitiveType() != GT_PRIM_VOXEL_VOLUME )
 	{
 		m_nsi.Connect( material_path.buffer(), "", attributes, "surfaceshader" );
 	}
