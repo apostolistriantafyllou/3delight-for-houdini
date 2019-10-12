@@ -180,12 +180,10 @@ void tokenize_path( const char *osl_path, std::vector<std::string> &o_paths )
 
 void shader_library::find_all_shaders( const char *i_root)
 {
-	/*
-		Get 3Delight installation shaders.
-	*/
+	// Get 3Delight installation shaders.
 	std::string root(i_root);
 
-	std::vector<std::string> to_scan{ root + "/osl/", root + "/maya/osl/" };
+	std::string plugin_osl = root + "/osl/";
 	const char *shaders[] =
 	{
 		"dlPrincipled",
@@ -204,23 +202,18 @@ void shader_library::find_all_shaders( const char *i_root)
 	};
 
 	m_shaders.emplace_back(ShadersGroup("3Delight", "3Delight"));
-	for( auto &path : to_scan )
+	for( const auto &shader : shaders )
 	{
-		for( const auto &shader : shaders )
+		std::string oso( shader ); oso += ".oso";
+		std::string path_to_oso = plugin_osl + oso;
+		if( file_exists(path_to_oso.c_str()) )
 		{
-			std::string oso( shader ); oso += ".oso";
-			std::string path_to_oso = path + oso;
-			if( file_exists(path_to_oso.c_str()) )
-			{
-				m_shaders.back().m_osos[oso] = path_to_oso;
-			}
+			m_shaders.back().m_osos[oso] = path_to_oso;
 		}
 	}
 
-	/*
-		Get user specified shaders.
-	*/
-	to_scan.clear();
+	// Get user specified shaders.
+	std::vector<std::string> to_scan;
 	const char *user_osos = get_env( "_3DELIGHT_USER_OSO_PATH" );
 	tokenize_path( user_osos, to_scan );
 
@@ -231,12 +224,15 @@ void shader_library::find_all_shaders( const char *i_root)
 		scan_dir( path, m_shaders.back().m_osos );
 	}
 
-	/*
-		Get 3Delight for Houdini shaders.
-	*/
+	// Get 3Delight for Houdini shaders.
 	m_shaders.emplace_back(ShadersGroup("3Delight for Houdini"));
-	std::string installation_path = m_plugin_path + "/../osl/";
+	std::string installation_path = m_plugin_path + "/../osl";
 	scan_dir( installation_path, m_shaders.back().m_osos );
+
+	// Get 3Delight for Maya shaders.
+	m_shaders.emplace_back(ShadersGroup("3Delight for Maya", "3Delight/Maya"));
+	std::string maya_path = root + "/maya/osl";
+	scan_dir( maya_path, m_shaders.back().m_osos );
 
 	std::cout << "3Delight for Houdini: loaded";
 	for(const ShadersGroup& g : m_shaders)
