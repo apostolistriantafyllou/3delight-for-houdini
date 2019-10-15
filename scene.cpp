@@ -207,9 +207,11 @@ void scene::process_node(
 		return;
 	}
 
+	const char* rop_path = i_context.m_rop_path.c_str();
+
 	if( obj->castToOBJLight() )
 	{
-		if(i_context.m_lights_to_render_pattern->match(obj, nullptr, true))
+		if(i_context.m_lights_to_render_pattern->match(obj, rop_path, true))
 		{
 			o_to_export.push_back( new light(i_context, obj) );
 		}
@@ -227,7 +229,7 @@ void scene::process_node(
 		return;
 	}
 
-	if(!i_context.m_objects_to_render_pattern->match(obj, nullptr, true))
+	if(!i_context.m_objects_to_render_pattern->match(obj, rop_path, true))
 	{
 		return;
 	}
@@ -366,7 +368,10 @@ void scene::convert_to_nsi( const context &i_context )
 	std::set<std::string> exported_lights_categories;
 
 	std::vector<OBJ_Node*> lights_to_render;
-	find_lights( *i_context.m_lights_to_render_pattern, lights_to_render );
+	find_lights(
+		*i_context.m_lights_to_render_pattern,
+		i_context.m_rop_path.c_str(),
+		lights_to_render );
 
 	for( auto &exporter : to_export )
 	{
@@ -380,6 +385,7 @@ void scene::convert_to_nsi( const context &i_context )
 
 void scene::find_lights(
 	const OP_BundlePattern &i_light_pattern,
+	const char* i_rop_path,
 	std::vector<OBJ_Node*>& o_lights )
 {
 	/* A traversal stack to avoid recursion */
@@ -402,7 +408,7 @@ void scene::find_lights(
 			OBJ_Node *obj = node->castToOBJNode();
 			if( obj && obj->castToOBJLight() )
 			{
-				if( i_light_pattern.match(obj, nullptr, true))
+				if( i_light_pattern.match(obj, i_rop_path, true))
 				{
 					o_lights.push_back(obj);
 				}

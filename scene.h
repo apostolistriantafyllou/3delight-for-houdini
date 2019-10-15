@@ -25,6 +25,7 @@ public:
 	static void convert_to_nsi( const context & );
 	static void find_lights(
 		const OP_BundlePattern &i_pattern,
+		const char* i_rop_path,
 		std::vector<OBJ_Node*>& o_lights );
 
 	/**

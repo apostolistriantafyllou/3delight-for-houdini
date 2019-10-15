@@ -692,7 +692,7 @@ void settings::UpdateLights()
 
 	auto pattern = OP_BundlePattern::allocPattern(GetLightsToRender());
 
-	scene::find_lights(*pattern, m_lights);
+	scene::find_lights(*pattern, m_parameters.getFullPath().c_str(), m_lights);
 
 	OP_BundlePattern::freePattern( pattern );
 

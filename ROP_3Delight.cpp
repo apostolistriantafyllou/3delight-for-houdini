@@ -290,6 +290,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		batch,
 		!render,
 		m_cloud,
+		getFullPath().toStdString(),
 		OP_BundlePattern::allocPattern(m_settings.GetObjectsToRender()),
 		OP_BundlePattern::allocPattern(m_settings.GetLightsToRender()));
 

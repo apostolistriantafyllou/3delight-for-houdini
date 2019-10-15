@@ -26,6 +26,7 @@ public:
 		bool i_batch,
 		bool i_export_nsi,
 		bool i_cloud,
+		const std::string& i_rop_path,
 		OP_BundlePattern* i_objects_to_render_pattern,
 		OP_BundlePattern* i_lights_to_render_pattern)
 	:
@@ -39,6 +40,7 @@ public:
 		m_batch(i_batch),
 		m_export_nsi(i_export_nsi),
 		m_cloud(i_cloud),
+		m_rop_path(i_rop_path),
 		m_objects_to_render_pattern(i_objects_to_render_pattern),
 		m_lights_to_render_pattern(i_lights_to_render_pattern)
 	{
@@ -79,6 +81,11 @@ public:
 	bool m_export_nsi;
 	bool m_cloud;
 
+	// Full path of the 3Delight ROP from where rendering originates
+	std::string m_rop_path;
+
+	// Objects export filter
 	OP_BundlePattern* m_objects_to_render_pattern;
+	// Lights export filter
 	OP_BundlePattern* m_lights_to_render_pattern;
 };
