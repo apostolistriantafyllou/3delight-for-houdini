@@ -773,6 +773,12 @@ VOP_ExternalOSL::outputLabel(unsigned i_idx) const
 }
 
 unsigned
+VOP_ExternalOSL::minInputs() const
+{
+	return 0;
+}
+
+unsigned
 VOP_ExternalOSL::getNumVisibleInputs() const
 {
 	return m_shader_info.NumInputs();

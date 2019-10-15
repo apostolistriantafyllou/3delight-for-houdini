@@ -75,6 +75,9 @@ public:
 	/// Returns the label for output port at index i_idx
 	virtual const char* outputLabel(unsigned i_idx)const override;
 
+	/// Minimum inputs that must be connected to a node for it to cook.
+	virtual unsigned minInputs() const override;
+
 	/// Returns the number input ports that should be visible
 	virtual unsigned getNumVisibleInputs()const override;
 
