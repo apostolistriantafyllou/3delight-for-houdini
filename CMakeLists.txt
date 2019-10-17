@@ -75,5 +75,17 @@ install(
 	FILES ui/select_layers_ui.ui
 	DESTINATION ${INSTALL_DIR}/config/Applications )
 
+install(
+	FILES scripts/obj/geo.cmd
+	DESTINATION ${INSTALL_DIR}/scripts/obj )
+
+install(
+	FILES soho/parameters/SOHOparameters
+	DESTINATION ${INSTALL_DIR}/soho/parameters )
+
+install(
+	FILES soho/parameters/3Delight.ds
+	DESTINATION ${INSTALL_DIR}/soho/parameters )
+
 # Configure several common target properties, such as its output directory.
 houdini_configure_target( ${library_name} "INSTDIR" "${INSTALL_DIR}/dso" )

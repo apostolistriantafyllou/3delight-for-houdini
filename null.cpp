@@ -1,6 +1,7 @@
 #include "null.h"
 
 #include "context.h"
+#include "scene.h"
 
 #include <OBJ/OBJ_Node.h>
 
@@ -64,5 +65,15 @@ void null::connect( void ) const
 		m_nsi.Connect(
 			m_handle.c_str(), "",
 			NSI_SCENE_ROOT, "objects" );
+	}
+
+	/*
+		Connect here to avoid to do it in each mesh creates by the refiner
+		(which may result in many hundred of connections)
+	*/
+	if ( m_object->castToOBJGeometry() )
+	{
+		scene::connect_to_object_attributes_nodes(
+			m_context, m_object, m_handle );
 	}
 }

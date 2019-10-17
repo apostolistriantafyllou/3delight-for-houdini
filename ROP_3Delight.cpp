@@ -383,6 +383,8 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 
 	executePreFrameScript(time);
 
+	scene::export_object_attribute_nodes(*m_current_render);
+
 	scene::convert_to_nsi( *m_current_render );
 
 	ExportAtmosphere(*m_current_render);
