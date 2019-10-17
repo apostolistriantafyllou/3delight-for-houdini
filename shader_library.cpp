@@ -201,7 +201,7 @@ void shader_library::find_all_shaders( const char *i_root)
 		"vdbVolume",
 	};
 
-	m_shaders.emplace_back(ShadersGroup("3Delight", "3Delight"));
+	m_shaders.emplace_back("3Delight", "3Delight");
 	for( const auto &shader : shaders )
 	{
 		std::string oso( shader ); oso += ".oso";
@@ -217,20 +217,19 @@ void shader_library::find_all_shaders( const char *i_root)
 	const char *user_osos = get_env( "_3DELIGHT_USER_OSO_PATH" );
 	tokenize_path( user_osos, to_scan );
 
-	m_shaders.emplace_back(
-		ShadersGroup("user-defined", "3Delight/User-defined"));
+	m_shaders.emplace_back("user-defined", "3Delight/User-defined");
 	for( auto &path : to_scan )
 	{
 		scan_dir( path, m_shaders.back().m_osos );
 	}
 
 	// Get 3Delight for Houdini shaders.
-	m_shaders.emplace_back(ShadersGroup("3Delight for Houdini"));
+	m_shaders.emplace_back("3Delight for Houdini");
 	std::string installation_path = m_plugin_path + "/../osl";
 	scan_dir( installation_path, m_shaders.back().m_osos );
 
 	// Get 3Delight for Maya shaders.
-	m_shaders.emplace_back(ShadersGroup("3Delight for Maya", "3Delight/Maya"));
+	m_shaders.emplace_back("3Delight for Maya", "3Delight/Maya");
 	std::string maya_path = root + "/maya/osl";
 	scan_dir( maya_path, m_shaders.back().m_osos );
 
