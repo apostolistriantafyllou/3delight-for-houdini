@@ -43,6 +43,12 @@ private:
 		return m_handle + "|attributes";
 	}
 
+	/// Returns the name of the shader to use for this light
+	const char* shader_name()const
+	{
+		return m_is_env_light ? "environmentlight" : "hlight";
+	}
+
 	/** = true if this is an environment light */
 	bool m_is_env_light{false};
 };

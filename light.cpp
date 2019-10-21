@@ -43,8 +43,7 @@ void light::create( void ) const
 	m_nsi.Create( shader, "shader" );
 
 	const shader_library& library = shader_library::get_instance();
-	std::string path_to_hlight = library.get_shader_path(
-			m_is_env_light ? "environmentlight" : "hlight" );
+	std::string path_to_hlight = library.get_shader_path(shader_name());
 
 	m_nsi.SetAttribute(
 		shader, NSI::StringArg("shaderfilename", path_to_hlight) );
@@ -224,7 +223,7 @@ void light::set_attributes_at_time( double i_time ) const
 	NSI::ArgumentList list;
 	vop::list_shader_parameters(
 		m_vop,
-		m_is_env_light ? "environmentlight" : "hlight",
+		shader_name(),
 		i_time, -1, list );
 
 	std::string shader(m_handle); shader += "|shader";
