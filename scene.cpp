@@ -228,6 +228,13 @@ void scene::process_node(
 		if(i_context.m_lights_to_render_pattern->match(obj, rop_path, true))
 		{
 			o_to_export.push_back( new light(i_context, obj) );
+			if(i_context.m_ipr)
+			{
+				io_interests.emplace_back(
+					i_node,
+					const_cast<context*>(&i_context),
+					&light::changed_cb);
+			}
 		}
 
 		/*

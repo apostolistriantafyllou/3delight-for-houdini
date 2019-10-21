@@ -39,7 +39,7 @@ void light::create( void ) const
 	std::string attributes = attributes_handle();
 	m_nsi.Create( attributes, "attributes" );
 
-	std::string shader( m_handle ); shader += "|shader";
+	std::string shader = shader_handle();
 	m_nsi.Create( shader, "shader" );
 
 	const shader_library& library = shader_library::get_instance();
@@ -54,7 +54,7 @@ void light::create( void ) const
 
 void light::create_geometry( void ) const
 {
-	std::string geo_name = m_handle + "|geometry";
+	std::string geo_name = geometry_handle();
 
 	if( m_is_env_light )
 	{
@@ -193,14 +193,28 @@ void light::create_geometry( void ) const
 		}
 
 		/*
+			First create a transform node, which could be deleted in
+			delete_geometry(), if needed, thus severing the connection to the
+			user-defined node. Using a direct connection would require
+			remembering the handle of the connected object for IPR.
+		*/
+		m_nsi.Create(geo_name, "transform");
+
+		/*
 			Simply connect to the named geo, welcome to NSI!
 			FIXME: support "intothisobject"
 		*/
-		geo_name = obj_node->getFullPath();
+		m_nsi.Connect(
+			obj_node->getFullPath().toStdString(), "", geo_name, "objects");
 	}
 
 	/* Connect to parent transform. */
 	m_nsi.Connect( geo_name, "", m_handle, "objects" );
+}
+
+void light::delete_geometry( void ) const
+{
+	m_nsi.Delete(geometry_handle());
 }
 
 void light::set_attributes( void ) const
@@ -212,7 +226,7 @@ void light::set_attributes( void ) const
 
 /**
 	We set the attributes of the surface shader here. We trick ourselves
-	to believe that hlight is actually a vop node so that we just have
+	into believing that hlight is actually a vop node so that we just have
 	to write an "hlight.osl" and that's it.
 */
 void light::set_attributes_at_time( double i_time ) const
@@ -237,6 +251,94 @@ void light::connect( void ) const
 	{
 		exporter::connect();
 	}
+}
+
+/**
+	\brief Callback that should be connected to an OP_Node that has an
+	associated light exporter.
+*/
+void light::changed_cb(
+	OP_Node* i_caller,
+	void* i_callee,
+	OP_EventType i_type,
+	void* i_data)
+{
+	context* ctx = (context*)i_callee;
+	if(i_type != OP_PARM_CHANGED)
+	{
+		return;
+	}
+
+	intptr_t parm_index = reinterpret_cast<intptr_t>(i_data);
+
+	light node(*ctx, i_caller->castToOBJNode());
+	if(!node.set_single_shader_attribute(parm_index))
+	{
+		PRM_Parm& parm = node.m_object->getParm(parm_index);
+		std::string name = parm.getToken();
+
+		if(name == "light_enable")
+		{
+			node.disconnect();
+			// Will connect only if required
+			node.connect();
+		}
+		else if(name == "light_contribprimary")
+		{
+			node.set_visibility_to_camera();
+		}
+		else if(name == "light_type" || name == "coneenable" ||
+			name == "areasize" || name == "areageometry")
+		{
+			// Rebuild the whole geometry
+			node.delete_geometry();
+			node.create_geometry();
+			node.connect();
+		}
+		else
+		{
+			return;
+		}
+	}
+
+	ctx->m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
+}
+
+void light::disconnect()const
+{
+	std::string parent_handle = m_object->getFullPath().c_str();
+	m_nsi.Disconnect(m_handle, "", parent_handle, "objects");
+}
+
+/*
+	This is *very* similar to vop::set_single_attribute. Unfortunately, the NSI
+	nodes are not named the same way in both classes (because the light's shader
+	is an auxiliary node, not the "main" one in the light) so we can't just call
+	vop(m_context, m_vop).set_single_shader_attribute(i_parm_index).
+*/
+bool light::set_single_shader_attribute(int i_parm_index)const
+{
+	NSI::ArgumentList list;
+
+	/*
+		Again, we use the light OBJ_Node as a VOP_Node
+		(see set_attributes_at_time).
+	*/
+	vop::list_shader_parameters(
+		m_vop,
+		shader_name(),
+		0.0f,
+		i_parm_index,
+		list);
+
+	if(list.empty())
+	{
+		return false;
+	}
+
+	m_nsi.SetAttribute( shader_handle(), list );
+
+	return true;
 }
 
 void light::set_visibility_to_camera()const
