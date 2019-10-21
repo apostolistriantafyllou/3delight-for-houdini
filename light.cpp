@@ -26,7 +26,7 @@ light::light( const context& i_ctx, OBJ_Node *i_object )
 void light::create( void ) const
 {
 	/*
-		We will be crating the light's geometry under this transform.
+		We will be creating the light's geometry under this transform.
 		Note that we create the light even if not enabled. This will
 		be useful for IPR.
 	*/
@@ -59,10 +59,9 @@ void light::create_default_geometry( void ) const
 
 	if( m_is_env_light )
 	{
-		/**
-			Envlight is a bit different as it won't have the "light_type" and
-			other things defined. So we are making a shortcut here so not
-			have evalInt() warnings because of the accesses below.
+		/*
+			Envlight is a bit different as it doesn't have a "light_type"
+			parameter.
 		*/
 		m_nsi.Create( geo_name, "environment" );
 		m_nsi.SetAttribute( geo_name, NSI::DoubleArg("angle", 360) );
@@ -74,14 +73,16 @@ void light::create_default_geometry( void ) const
 	int is_spot = m_object->evalInt( "coneenable", 0, 0 );
 
 	// for area lights.
-	float x_size = m_object->evalFloat( "areasize", 0, 0 ) * 0.5f;
-	float y_size = m_object->evalFloat( "areasize", 1, 0 ) * 0.5f;
 
 	if( type == e_grid || is_spot )
 	{
-		if( is_spot )
+		float x_size = 0.001f;
+		float y_size = x_size;
+
+		if( !is_spot )
 		{
-			x_size = y_size = 0.001f;
+			x_size = m_object->evalFloat( "areasize", 0, 0 ) * 0.5f;
+			y_size = m_object->evalFloat( "areasize", 1, 0 ) * 0.5f;
 		}
 
 		float P[] = {
