@@ -36,7 +36,7 @@ void light::create( void ) const
 		Create the attribute node so that we can connect the surface
 		shader used for the light source.
 	*/
-	std::string attributes( m_handle ); attributes += "|attributes";
+	std::string attributes = attributes_handle();
 	m_nsi.Create( attributes, "attributes" );
 
 	std::string shader( m_handle ); shader += "|shader";
@@ -209,6 +209,8 @@ void light::set_attributes( void ) const
 		return;
 
 	create_default_geometry();
+
+	set_visibility_to_camera();
 }
 
 /**
@@ -226,4 +228,11 @@ void light::set_attributes_at_time( double i_time ) const
 
 	std::string shader(m_handle); shader += "|shader";
 	m_nsi.SetAttributeAtTime( shader, i_time, list );
+}
+
+void light::set_visibility_to_camera()const
+{
+	int cam_vis = m_object->evalInt("light_contribprimary", 0, 0);
+	m_nsi.SetAttribute(
+		attributes_handle(), NSI::IntegerArg("visibility.camera", cam_vis));
 }

@@ -36,6 +36,13 @@ private:
 	*/
 	void create_default_geometry( void ) const;
 
+	void set_visibility_to_camera()const;
+
+	std::string attributes_handle()const
+	{
+		return m_handle + "|attributes";
+	}
+
 	/** = true if this is an environment light */
 	bool m_is_env_light{false};
 };
