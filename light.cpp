@@ -205,9 +205,6 @@ void light::create_default_geometry( void ) const
 
 void light::set_attributes( void ) const
 {
-	if( !m_object->evalInt("light_enable", 0, 0) )
-		return;
-
 	create_default_geometry();
 
 	set_visibility_to_camera();
@@ -228,6 +225,18 @@ void light::set_attributes_at_time( double i_time ) const
 
 	std::string shader(m_handle); shader += "|shader";
 	m_nsi.SetAttributeAtTime( shader, i_time, list );
+}
+
+void light::connect( void ) const
+{
+	/*
+		The light is always created, but connected only if visible, so its easy
+		to deal with visibility changes in IPR.
+	*/
+	if( m_object->evalInt("light_enable", 0, 0) )
+	{
+		exporter::connect();
+	}
 }
 
 void light::set_visibility_to_camera()const
