@@ -591,6 +591,8 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		return;
 	}
 
+	fpreal current_time = i_ctx.m_current_time;
+
 	int default_resolution[2] =
 	{
 		int(::roundf(cam->RESX(0)*GetResolutionFactor())),
@@ -637,12 +639,19 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 	UT_String idisplay_driver = "idisplay";
 	UT_String file_driver;
-	evalString(file_driver, settings::k_default_image_format, 0, 0.0f);
+	evalString(
+		file_driver,
+		settings::k_default_image_format, 0,
+		current_time );
+
 	UT_String png_driver = "png";
 	UT_String jpeg_driver = "jpeg";
 
 	UT_String image_file_name;
-	evalString( image_file_name, settings::k_default_image_filename, 0, 0.0f );
+	evalString(
+		image_file_name,
+		settings::k_default_image_filename, 0,
+		current_time );
 
 	UT_String image_display_name =
 		image_file_name.replaceExtension(idisplay_driver);
@@ -672,7 +681,9 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	unsigned sort_key = 0;
 
 	UT_String scalar_format;
-	evalString(scalar_format, settings::k_default_image_bits, 0, 0.0f);
+	evalString(
+		scalar_format,
+		settings::k_default_image_bits, 0, current_time );
 
 	UT_String filter;
 	evalString(filter, settings::k_pixel_filter, 0, 0.0f);
@@ -685,7 +696,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	for (int i = 0; i < nb_aovs; i++)
 	{
 		UT_String label;
-		evalString(label, aov::getAovStrToken(i), 0, 0.0f);
+		evalString(label, aov::getAovStrToken(i), 0, current_time );
 
 		const aov::description& desc = aov::getDescription(label.toStdString());
 
