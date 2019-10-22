@@ -32,10 +32,9 @@ public:
 	void connect( void ) const override;
 
 private:
-	/**
-		\brief Creates the geometry for Houdini's "light_type".
-	*/
-	void create_default_geometry( void ) const;
+
+	/// Creates the light's geometry according to Houdini's "light_type".
+	void create_geometry( void ) const;
 
 	void set_visibility_to_camera()const;
 

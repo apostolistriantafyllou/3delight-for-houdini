@@ -52,7 +52,7 @@ void light::create( void ) const
 	m_nsi.Connect( attributes, "", m_handle, "geometryattributes" );
 }
 
-void light::create_default_geometry( void ) const
+void light::create_geometry( void ) const
 {
 	std::string geo_name = m_handle + "|geometry";
 
@@ -205,7 +205,7 @@ void light::create_default_geometry( void ) const
 
 void light::set_attributes( void ) const
 {
-	create_default_geometry();
+	create_geometry();
 
 	set_visibility_to_camera();
 }
