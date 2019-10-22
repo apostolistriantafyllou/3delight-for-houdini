@@ -74,13 +74,6 @@ void polygonmesh::set_attributes( void ) const
 			new NSI::StringArg("subdivision.scheme",
 				"catmull-clark"));
 	}
-	else
-	{
-		mesh_args.Add( NSI::Argument::New( "N.indices" )
-			->SetType( NSITypeInteger )
-			->SetCount( vertex_list->entries() )
-			->SetValuePointer( vertices ) );
-	}
 
 	m_nsi.SetAttribute( m_handle.c_str(), mesh_args );
 

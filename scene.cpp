@@ -16,6 +16,7 @@
 
 #include "context.h"
 
+#include <GEO/GEO_Normal.h>
 #include <GT/GT_GEODetail.h>
 #include <GT/GT_Refine.h>
 #include <GT/GT_RefineParms.h>
@@ -150,6 +151,8 @@ struct OBJ_Node_Refiner : public GT_Refine
 #endif
 			GT_RefineParms params;
 			params.setAllowSubdivision( true );
+			params.setAddVertexNormals( true );
+			params.setCuspAngle( GEO_DEFAULT_ADJUSTED_CUSP_ANGLE );
 
 			OBJ_Node_Refiner refiner( m_node, m_context, m_result, m_level+1 );
 			if(	i_primitive->refine( refiner, &params ) )
@@ -276,7 +279,12 @@ void scene::process_node(
 
 	GT_PrimitiveHandle gt( GT_GEODetail::makeDetail(detail_handle) );
 	OBJ_Node_Refiner refiner( obj, i_context, gt_primitives );
-	gt->refine( refiner, nullptr );
+
+	GT_RefineParms params;
+	params.setAllowSubdivision( true );
+	params.setAddVertexNormals( true );
+	params.setCuspAngle( GEO_DEFAULT_ADJUSTED_CUSP_ANGLE );
+	gt->refine( refiner, &params );
 
 #ifdef VERBOSE
 	std::cout << obj->getFullPath() << " gave birth to " <<
