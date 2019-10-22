@@ -9,6 +9,7 @@
 
 #include <nsi.hpp>
 
+#include <deque>
 #include <mutex>
 #include <thread>
 #include <vector>
