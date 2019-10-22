@@ -202,11 +202,6 @@ void scene::process_node(
 	if( !obj )
 		return;
 
-#if 0
-	if( !obj->isObjectRenderable(i_context.m_current_time) )
-		return;
-#endif
-
 	/*
 		Each object is its own null transform. This could produce useless
 		transforms if we decide not to output the node after all but I am
@@ -272,6 +267,15 @@ void scene::process_node(
 		std::cerr
 			<< "3Delight for Houdini: " << obj->getFullPath()
 			<< " has no valid detail" << std::endl;
+		return;
+	}
+
+	/**
+		Don't put this before cameras and lights have been detected
+		above as these are not "renderable"
+	*/
+	if( !obj->getObjectDisplay(i_context.m_current_time) )
+	{
 		return;
 	}
 

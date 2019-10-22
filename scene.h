@@ -147,5 +147,4 @@ private:
 		const std::string& i_handle,
 		geo_attribute i_type,
 		bool i_first_time );
-
 };
