@@ -139,7 +139,7 @@ private:
 		destructor) from nodes, so the callbacks point to the right
 		safe_interest object.
 	*/
-	std::deque<safe_interest, std::allocator<safe_interest> > m_interests;
+	std::deque<safe_interest> m_interests;
 
 	// renderdl process rendering a list of NSI files being read from stdin
 	UT_ReadWritePipe* m_renderdl;
