@@ -100,7 +100,10 @@ void null::changed_cb(
 			return;
 		}
 
-		null(*ctx, i_caller->castToOBJNode()).set_attributes_at_time(0.0);
+		null null_node(*ctx, i_caller->castToOBJNode());
+		ctx->m_nsi.DeleteAttribute(null_node.m_handle, "transformationmatrix");
+		null_node.set_attributes_at_time(ctx->m_current_time);
+
 		ctx->m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
 	}
 }
