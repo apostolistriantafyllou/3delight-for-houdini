@@ -487,7 +487,7 @@ bool vop::set_single_attribute(int i_parm_index)const
 	list_shader_parameters(
 		m_vop,
 		m_vop->getOperator()->getName(),
-		0.0f,
+		m_context.m_current_time,
 		i_parm_index,
 		list);
 
