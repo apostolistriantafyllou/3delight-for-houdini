@@ -138,17 +138,17 @@ void light::create_geometry( void ) const
 	{
 		m_nsi.Create( geo_name, "mesh" );
 
-		/* The cylinder is 1 unit long (in X) and has a radius of 0.5. */
+		/* The cylinder is 1 unit long (in X) and has a diameter of 0.15. */
 		std::vector<float> P;
 		std::vector<int> indices, nvertices;
 		const int kNumSteps = 18;
 		for( int i = 0; i < kNumSteps; ++i )
 		{
 			float angle = (float(i) / float(kNumSteps)) * float(2.0 * M_PI);
-			float z = 1.0f * cos( angle );
-			float y = 1.0f * sin( angle );
-			P.push_back( y ); P.push_back( 1.0f ); P.push_back( z );
-			P.push_back( y ); P.push_back( -1.0f ); P.push_back( z );
+			float z = 0.075f * sin( angle );
+			float y = 0.075f * cos( angle );
+			P.push_back( 0.5f ); P.push_back( y ); P.push_back( z );
+			P.push_back( -0.5f ); P.push_back( y ); P.push_back( z );
 
 			nvertices.push_back( 4 );
 			indices.push_back( i * 2 );
