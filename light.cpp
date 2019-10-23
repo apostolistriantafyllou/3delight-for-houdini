@@ -172,14 +172,19 @@ void light::create_geometry( void ) const
 			->SetValuePointer( &indices[0] ) );
 		m_nsi.SetAttribute( geo_name, args );
 	}
-	else if( type == e_distant )
+	else if( type == e_distant || type == e_sun )
 	{
+		float angle =
+			type == e_distant
+			?	0.0f
+			:	m_object->evalFloat("vm_envangle", 0, 0.0f) * 2.0f;
+
 		/*
-			Yes ladies and gentlemen, a distant light is just an environment
-			with an angle of 0 :)
+			Yes ladies and gentlemen, a distant/sun light is just an environment
+			with a small angle :)
 		*/
 		m_nsi.Create( geo_name, "environment" );
-		m_nsi.SetAttribute( geo_name, NSI::DoubleArg("angle", 0) );
+		m_nsi.SetAttribute( geo_name, NSI::DoubleArg("angle", angle) );
 	}
 	else if( type == e_geometry )
 	{
@@ -288,7 +293,8 @@ void light::changed_cb(
 			node.set_visibility_to_camera();
 		}
 		else if(name == "light_type" || name == "coneenable" ||
-			name == "areasize" || name == "areageometry")
+			name == "areasize" || name == "areageometry" ||
+			name == "vm_envangle")
 		{
 			// Rebuild the whole geometry
 			node.delete_geometry();
