@@ -71,17 +71,25 @@ void light::create_geometry( void ) const
 	int type = m_object->evalInt( "light_type", 0, 0 );
 	int is_spot = m_object->evalInt( "coneenable", 0, 0 );
 
-	// for area lights.
+	float x_size = 1.0f;
+	float y_size = 1.0f;
+	if(!is_spot && (type == e_grid || type == e_tube || type == e_geometry))
+	{
+		x_size = m_object->evalFloat( "areasize", 0, 0 );
+		y_size = m_object->evalFloat( "areasize", 1, 0 );
+	}
+
 
 	if( type == e_grid || is_spot )
 	{
-		float x_size = 0.001f;
-		float y_size = x_size;
-
-		if( !is_spot )
+		if(is_spot)
 		{
-			x_size = m_object->evalFloat( "areasize", 0, 0 ) * 0.5f;
-			y_size = m_object->evalFloat( "areasize", 1, 0 ) * 0.5f;
+			y_size = x_size = 0.001f;
+		}
+		else
+		{
+			x_size *= 0.5f;
+			y_size *= 0.5f;
 		}
 
 		float P[] = {
@@ -107,6 +115,11 @@ void light::create_geometry( void ) const
 	}
 	else if( type == e_point || type == e_disk || type == e_sphere )
 	{
+		/*
+			FIXME : scale disk with (x_size, y_size) and sphere with
+			(x_size, y_size, x_size).
+		*/
+
 		NSI::ArgumentList args;
 		float P[3] = { 0.0f, 0.0f, 0.0f };
 		float N[3] = { 0.0f, 0.0f, -1.0f }; // for disks
@@ -138,17 +151,20 @@ void light::create_geometry( void ) const
 	{
 		m_nsi.Create( geo_name, "mesh" );
 
-		/* The cylinder is 1 unit long (in X) and has a diameter of 0.15. */
+		// The base cylinder is 1 unit long (in X) and has a diameter of 0.15.
+		x_size *= 0.5f;
+		y_size *= 0.075f;
+
 		std::vector<float> P;
 		std::vector<int> indices, nvertices;
 		const int kNumSteps = 18;
 		for( int i = 0; i < kNumSteps; ++i )
 		{
 			float angle = (float(i) / float(kNumSteps)) * float(2.0 * M_PI);
-			float z = 0.075f * sin( angle );
-			float y = 0.075f * cos( angle );
-			P.push_back( 0.5f ); P.push_back( y ); P.push_back( z );
-			P.push_back( -0.5f ); P.push_back( y ); P.push_back( z );
+			float z = y_size * sin( angle );
+			float y = y_size * cos( angle );
+			P.push_back( x_size ); P.push_back( y ); P.push_back( z );
+			P.push_back( -x_size ); P.push_back( y ); P.push_back( z );
 
 			nvertices.push_back( 4 );
 			indices.push_back( i * 2 );
@@ -204,6 +220,18 @@ void light::create_geometry( void ) const
 			remembering the handle of the connected object for IPR.
 		*/
 		m_nsi.Create(geo_name, "transform");
+
+		double scale[16] =
+		{
+			x_size, 0.0, 0.0, 0.0,
+			0.0, y_size, 0.0, 0.0,
+			0.0, 0.0, x_size, 0.0,
+			0.0, 0.0, 0.0, 1.0
+		};
+
+		m_nsi.SetAttribute(
+			geo_name,
+			NSI::DoubleMatrixArg("transformationmatrix", scale));
 
 		/*
 			Simply connect to the named geo, welcome to NSI!
