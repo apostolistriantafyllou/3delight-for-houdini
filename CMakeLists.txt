@@ -77,6 +77,10 @@ install(
 	DESTINATION ${INSTALL_DIR}/config/Applications )
 
 install(
+	FILES scripts/456.cmd
+	DESTINATION ${INSTALL_DIR}/scripts )
+
+install(
 	FILES scripts/obj/geo.cmd
 	DESTINATION ${INSTALL_DIR}/scripts/obj )
 

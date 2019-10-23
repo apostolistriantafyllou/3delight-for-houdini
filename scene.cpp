@@ -531,6 +531,10 @@ bool scene::geo_attribute_has_houdini_default_value(
 		case e_matte:
 		{
 			// Matte is off by default
+			if ( !i_object->hasParm(geo_attribute_houdini_name(i_type)) )
+			{
+				return false;
+			}
 			UT_String value;
 			i_object->evalString(value, geo_attribute_houdini_name(i_type), 0, 0.0f);
 			return value != "matte";
@@ -538,24 +542,25 @@ bool scene::geo_attribute_has_houdini_default_value(
 		case e_prelit:
 		{
 			// Prelit is off by default
+			if ( !i_object->hasParm(geo_attribute_houdini_name(i_type)) )
+			{
+				return false;
+			}
 			UT_String value;
 			i_object->evalString(value, geo_attribute_houdini_name(i_type), 0, 0.0f);
 			return value != "prelit";
-		}
-		case e_visDiffuse:
-		{
-			// Visibility attributes are all on by default
-			bool value =
-				i_object->evalInt(geo_attribute_houdini_name(i_type), 0, 0.0f);
-			return value;
 		}
 		default:
 		{
 			// Visibility attributes are all on by default
 			// For the moment, only e_visDiffuse is supported
-//			bool value =
-//				i_object->evalInt(geo_attribute_houdini_name(i_type), 0, 0.0f);
-			return true;
+			if ( !i_object->hasParm(geo_attribute_houdini_name(i_type)) )
+			{
+				return true;
+			}
+			bool value =
+				i_object->evalInt(geo_attribute_houdini_name(i_type), 0, 0.0f);
+			return value;
 		}
 	}
 }
