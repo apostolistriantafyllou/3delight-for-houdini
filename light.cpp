@@ -207,12 +207,6 @@ void light::create_geometry( void ) const
 		UT_String path;
 		m_object->evalString(path, "areageometry", 0, 0.0f);
 
-		OBJ_Node* obj_node = OPgetDirector()->findOBJNode(path);
-		if(!obj_node)
-		{
-			return;
-		}
-
 		/*
 			First create a transform node, which could be deleted in
 			delete_geometry(), if needed, thus severing the connection to the
@@ -237,8 +231,12 @@ void light::create_geometry( void ) const
 			Simply connect to the named geo, welcome to NSI!
 			FIXME: support "intothisobject"
 		*/
-		m_nsi.Connect(
-			obj_node->getFullPath().toStdString(), "", geo_name, "objects");
+		OBJ_Node* obj_node = OPgetDirector()->findOBJNode(path);
+		if(obj_node)
+		{
+			m_nsi.Connect(
+				obj_node->getFullPath().toStdString(), "", geo_name, "objects");
+		}
 	}
 
 	/* Connect to parent transform. */
