@@ -522,6 +522,19 @@ bool scene::geo_attribute_has_houdini_default_value(
 	double i_time )
 {
 	assert( i_object );
+	const char* parm_name = geo_attribute_houdini_name(i_type);
+
+	/*
+		As a safety measure, check whether the OBJ node has the actual
+		3Delight attribute defined. This can happen if for some reason
+		scripts are not run or if the user simply decides to remove
+		attributes.
+	*/
+	if(!i_object->hasParm(parm_name))
+	{
+		return true;
+	}
+
 	switch( i_type )
 	{
 		/*
@@ -531,38 +544,21 @@ bool scene::geo_attribute_has_houdini_default_value(
 		*/
 		case e_matte:
 		{
-			// Matte is off by default
-			if ( !i_object->hasParm(geo_attribute_houdini_name(i_type)) )
-			{
-				return false;
-			}
 			UT_String value;
-			i_object->evalString(value, geo_attribute_houdini_name(i_type), 0, i_time);
+			i_object->evalString(value, parm_name, 0, i_time);
+			// Matte is off by default
 			return value != "matte";
 		}
 		case e_prelit:
 		{
-			// Prelit is off by default
-			if ( !i_object->hasParm(geo_attribute_houdini_name(i_type)) )
-			{
-				return false;
-			}
 			UT_String value;
-			i_object->evalString(value, geo_attribute_houdini_name(i_type), 0, i_time);
+			i_object->evalString(value, parm_name, 0, i_time);
+			// Prelit is off by default
 			return value != "prelit";
 		}
 		default:
-		{
 			// Visibility attributes are all on by default
-			// For the moment, only e_visDiffuse is supported
-			if ( !i_object->hasParm(geo_attribute_houdini_name(i_type)) )
-			{
-				return true;
-			}
-			bool value =
-				i_object->evalInt(geo_attribute_houdini_name(i_type), 0, i_time);
-			return value;
-		}
+			return i_object->evalInt(parm_name, 0, i_time);
 	}
 }
 
@@ -573,16 +569,6 @@ void scene::adjust_geo_attribute_connection(
 	geo_attribute i_type,
 	bool i_first_time )
 {
-	/*
-		As a safety measure, make sure that the OBJ node has the actual
-		3Delight attribute defined. This can happen if for some reason
-		scripts are not run or if the user simply decides the remove
-		attributes.
-	*/
-	const char *name = geo_attribute_houdini_name( i_type );
-	if( i_object->getParmIndex(name) < 0 )
-		return;
-
 	if( !geo_attribute_has_houdini_default_value( i_type, i_object,i_ctx.m_current_time ) )
 	{
 		i_ctx.m_nsi.Connect(
