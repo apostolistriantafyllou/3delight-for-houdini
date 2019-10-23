@@ -68,15 +68,16 @@ void light::create_geometry( void ) const
 		return;
 	}
 
-	int type = m_object->evalInt( "light_type", 0, 0 );
-	int is_spot = m_object->evalInt( "coneenable", 0, 0 );
+	fpreal time = m_context.m_current_time;
+	int type = m_object->evalInt( "light_type", 0, time );
+	int is_spot = m_object->evalInt( "coneenable", 0, time );
 
 	float x_size = 1.0f;
 	float y_size = 1.0f;
 	if(!is_spot && (type == e_grid || type == e_tube || type == e_geometry))
 	{
-		x_size = m_object->evalFloat( "areasize", 0, 0 );
-		y_size = m_object->evalFloat( "areasize", 1, 0 );
+		x_size = m_object->evalFloat( "areasize", 0, time );
+		y_size = m_object->evalFloat( "areasize", 1, time );
 	}
 
 
@@ -193,7 +194,7 @@ void light::create_geometry( void ) const
 		float angle =
 			type == e_distant
 			?	0.0f
-			:	m_object->evalFloat("vm_envangle", 0, 0.0f) * 2.0f;
+			:	m_object->evalFloat("vm_envangle", 0, time) * 2.0f;
 
 		/*
 			Yes ladies and gentlemen, a distant/sun light is just an environment
@@ -205,7 +206,7 @@ void light::create_geometry( void ) const
 	else if( type == e_geometry )
 	{
 		UT_String path;
-		m_object->evalString(path, "areageometry", 0, 0.0f);
+		m_object->evalString(path, "areageometry", 0, time);
 
 		/*
 			First create a transform node, which could be deleted in
@@ -278,7 +279,7 @@ void light::connect( void ) const
 		The light is always created, but connected only if visible, so its easy
 		to deal with visibility changes in IPR.
 	*/
-	if( m_object->evalInt("light_enable", 0, 0) )
+	if( m_object->evalInt("light_enable", 0, m_context.m_current_time) )
 	{
 		exporter::connect();
 	}
@@ -359,7 +360,7 @@ bool light::set_single_shader_attribute(int i_parm_index)const
 	vop::list_shader_parameters(
 		m_vop,
 		shader_name(),
-		0.0f,
+		m_context.m_current_time,
 		i_parm_index,
 		list);
 
@@ -375,7 +376,8 @@ bool light::set_single_shader_attribute(int i_parm_index)const
 
 void light::set_visibility_to_camera()const
 {
-	int cam_vis = m_object->evalInt("light_contribprimary", 0, 0);
+	int cam_vis =
+		m_object->evalInt("light_contribprimary", 0, m_context.m_current_time);
 	m_nsi.SetAttribute(
 		attributes_handle(), NSI::IntegerArg("visibility.camera", cam_vis));
 }
