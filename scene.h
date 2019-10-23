@@ -137,7 +137,8 @@ private:
 	*/
 	static bool geo_attribute_has_houdini_default_value(
 		geo_attribute i_type,
-		OBJ_Node* i_object );
+		OBJ_Node* i_object,
+		double i_time );
 	/**
 		\brief Connect or disconnect the speficied object to the attribute node
 	*/

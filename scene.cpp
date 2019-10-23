@@ -518,7 +518,8 @@ bool scene::geo_attribute_nsi_default_value( geo_attribute i_type )
 
 bool scene::geo_attribute_has_houdini_default_value(
 	geo_attribute i_type,
-	OBJ_Node* i_object )
+	OBJ_Node* i_object,
+	double i_time )
 {
 	assert( i_object );
 	switch( i_type )
@@ -536,7 +537,7 @@ bool scene::geo_attribute_has_houdini_default_value(
 				return false;
 			}
 			UT_String value;
-			i_object->evalString(value, geo_attribute_houdini_name(i_type), 0, 0.0f);
+			i_object->evalString(value, geo_attribute_houdini_name(i_type), 0, i_time);
 			return value != "matte";
 		}
 		case e_prelit:
@@ -547,7 +548,7 @@ bool scene::geo_attribute_has_houdini_default_value(
 				return false;
 			}
 			UT_String value;
-			i_object->evalString(value, geo_attribute_houdini_name(i_type), 0, 0.0f);
+			i_object->evalString(value, geo_attribute_houdini_name(i_type), 0, i_time);
 			return value != "prelit";
 		}
 		default:
@@ -559,7 +560,7 @@ bool scene::geo_attribute_has_houdini_default_value(
 				return true;
 			}
 			bool value =
-				i_object->evalInt(geo_attribute_houdini_name(i_type), 0, 0.0f);
+				i_object->evalInt(geo_attribute_houdini_name(i_type), 0, i_time);
 			return value;
 		}
 	}
@@ -572,7 +573,17 @@ void scene::adjust_geo_attribute_connection(
 	geo_attribute i_type,
 	bool i_first_time )
 {
-	if( !geo_attribute_has_houdini_default_value( i_type, i_object ) )
+	/*
+		As a safety measure, make sure that the OBJ node has the actual
+		3Delight attribute defined. This can happen if for some reason
+		scripts are not run or if the user simply decides the remove
+		attributes.
+	*/
+	const char *name = geo_attribute_houdini_name( i_type );
+	if( i_object->getParmIndex(name) < 0 )
+		return;
+
+	if( !geo_attribute_has_houdini_default_value( i_type, i_object,i_ctx.m_current_time ) )
 	{
 		i_ctx.m_nsi.Connect(
 			geo_attribute_node_handle( i_type ), "",
