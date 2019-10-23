@@ -2,6 +2,7 @@
 
 #include "camera.h"
 #include "context.h"
+#include "exporter.h"
 #include "idisplay_port.h"
 #include "mplay.h"
 #include "scene.h"
@@ -386,6 +387,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	executePreFrameScript(time);
 
 	scene::export_object_attribute_nodes(*m_current_render);
+	ExportTransparentSurface(*m_current_render);
 
 	scene::convert_to_nsi( *m_current_render, m_interests );
 
@@ -542,6 +544,31 @@ ROP_3Delight::loadFinished()
 {
 	ROP_Node::loadFinished();
 	m_settings.UpdateLights();
+}
+
+void
+ROP_3Delight::ExportTransparentSurface(const context& i_ctx) const
+{
+	std::string shaderHandle = exporter::TransparentSurfaceHandle();
+	shaderHandle =+ "|shader";
+
+	NSI::Context& nsi = i_ctx.m_nsi;
+	nsi.Create(exporter::TransparentSurfaceHandle(), "attributes");
+	nsi.Create(shaderHandle.c_str(), "shader");
+
+	const shader_library& library = shader_library::get_instance();
+	std::string path = library.get_shader_path( "transparent" );
+
+	nsi.SetAttribute(
+		shaderHandle.c_str(),
+		NSI::CStringPArg("shaderfilename", path.c_str()));
+
+	NSI::ArgumentList argList;
+	argList.Add(new NSI::IntegerArg("priority", 60));
+
+	nsi.Connect(
+		shaderHandle.c_str(), "",
+		exporter::TransparentSurfaceHandle(), "surfaceshader", argList );
 }
 
 std::string

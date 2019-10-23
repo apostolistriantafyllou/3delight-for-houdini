@@ -199,6 +199,7 @@ void shader_library::find_all_shaders( const char *i_root)
 		"dlFlakes",
 		"dlThin",
 		"vdbVolume",
+		"transparent"
 	};
 
 	m_shaders.emplace_back("3Delight", "3Delight");

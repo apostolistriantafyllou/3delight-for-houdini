@@ -71,6 +71,12 @@ public:
 	void set_as_instanced( void ) { m_instanced = true; }
 
 	OBJ_Node *obj( void ) { return m_object; }
+
+	/**
+		\brief Returns the name of transparent shader attribute.
+	*/
+	static const char* TransparentSurfaceHandle();
+
 protected:
 	/**
 		\brief Helper to export attributes lists to NSI.
@@ -98,6 +104,7 @@ protected:
 		double i_time,
 		std::vector<const char *> &i_which_ones ) const;
 
+	void export_override_attributes() const;
 
 protected:
 	/** Depending on what we are exporting, an OBJ or a VOP node */
