@@ -279,7 +279,7 @@ void scene::process_node(
 
 	/**
 		Don't put this before cameras and lights have been detected
-		above as these are not "renderable"
+		above as these should be output even if not displayed.
 	*/
 	if( !obj->getObjectDisplay(i_context.m_current_time) )
 	{
@@ -343,6 +343,15 @@ void scene::scan(
 
 			if( !node->isNetwork() )
 				continue;
+
+			/*
+				If we the object is not displayed, don't get inside the SOP.
+			*/
+			OBJ_Node *obj = node->castToOBJNode();
+			if( obj && !obj->getObjectDisplay(i_context.m_current_time) )
+			{
+				continue;
+			}
 
 			OP_Network *kidnet = (OP_Network *)node;
 			if( kidnet->getNchildren() )
