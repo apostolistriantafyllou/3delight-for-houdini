@@ -371,14 +371,16 @@ NewPRMChoiceList(
 			return nullptr;
 		}
 
-		char* next = colon+1+offset;
+		char* end = colon+1+offset;
 
 		// Items are separated with vertical bar
-		if(*next && *next != '|')
+		if(*end && *end != '|')
 		{
 			assert(false);
 			return nullptr;
 		}
+
+		char* next = end;
 		if(*next)
 		{
 			next++;
@@ -390,9 +392,10 @@ NewPRMChoiceList(
 			items->push_back(PRM_Item("", ""));
 		}
 
-		// Use our "options" copy as the string passed to the item
+		// Use our "options" copy as the strings passed to the item
 		*colon = '\0';
-		(*items)[value] = PRM_Item("", options);
+		*end = '\0';
+		(*items)[value] = PRM_Item(colon+1, options);
 
 		options = next;
 	}

@@ -232,8 +232,8 @@ PRM_Template* settings::GetTemplates()
 	static PRM_Default batch_output_mode_d(0);
 	static PRM_Item batch_output_mode_i[] =
 	{
-		PRM_Item("", "Enable file output as selected"),
-		PRM_Item("", "Enable all file output and selected JPEG"),
+		PRM_Item("as selected", "Enable file output as selected"),
+		PRM_Item("all files", "Enable all file output and selected JPEG"),
 		PRM_Item(),
 	};
 	static PRM_ChoiceList batch_output_mode_c(PRM_CHOICELIST_SINGLE, batch_output_mode_i);
@@ -242,9 +242,9 @@ PRM_Template* settings::GetTemplates()
 	static PRM_Default interactive_output_mode_d(2);
 	static PRM_Item interactive_output_mode_i[] =
 	{
-		PRM_Item("", "Enable file output as selected"),
-		PRM_Item("", "Enable file output only for selected layer"),
-		PRM_Item("", "Disable file output"),
+		PRM_Item("as selected", "Enable file output as selected"),
+		PRM_Item("file with fb", "Enable file output only for selected layer"),
+		PRM_Item("no file", "Disable file output"),
 		PRM_Item(),
 	};
 	static PRM_ChoiceList interactive_output_mode_c(PRM_CHOICELIST_SINGLE, interactive_output_mode_i);
@@ -375,10 +375,10 @@ PRM_Template* settings::GetTemplates()
 	static PRM_Default resolution_factor_d(0);
 	static PRM_Item resolution_factor_i[] =
 	{
-		PRM_Item("", "Full"),
-		PRM_Item("", "Half"),
-		PRM_Item("", "Quarter"),
-		PRM_Item("", "Eighth"),
+		PRM_Item("1", "Full"),
+		PRM_Item("1/2", "Half"),
+		PRM_Item("1/4", "Quarter"),
+		PRM_Item("1/8", "Eighth"),
 		PRM_Item(),
 	};
 	static PRM_ChoiceList resolution_factor_c(PRM_CHOICELIST_SINGLE, resolution_factor_i);
@@ -387,11 +387,11 @@ PRM_Template* settings::GetTemplates()
 	static PRM_Default sampling_factor_d(0.1f);
 	static PRM_Item sampling_factor_i[] =
 	{
-		PRM_Item("", "100%"),
-		PRM_Item("", "  25%"),
-		PRM_Item("", "  10%"),
-		PRM_Item("", "    4%"),
-		PRM_Item("", "    1%"),
+		PRM_Item("1.00", "100%"),
+		PRM_Item("0.25", "  25%"),
+		PRM_Item("0.10", "  10%"),
+		PRM_Item("0.04", "    4%"),
+		PRM_Item("0.01", "    1%"),
 		PRM_Item(),
 	};
 	static PRM_ChoiceList sampling_factor_c(PRM_CHOICELIST_SINGLE, sampling_factor_i);
