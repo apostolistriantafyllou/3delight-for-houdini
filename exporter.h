@@ -27,10 +27,14 @@ public:
 	exporter( const context &, VOP_Node * );
 
 	/**
-		\brief Create NSI nodes required for this object.
+		\brief Create the NSI node that corresponds to this object's handle.
 
-		For example, a camera might need a "perspectivecamera" NSI node as well
-		as a "screen" node.
+		It might also create other, auxiliary nodes here (for example, a camera
+		might need a "perspectivecamera" NSI node as well as a "screen" node),
+		but this could also wait later, in set_attributes() or connect().
+
+		We simply need to ensure that other nodes could be connected to this one
+		after create() has been called.
 	*/
 	virtual void create( void  ) const = 0;
 

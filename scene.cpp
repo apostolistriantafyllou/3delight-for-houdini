@@ -2,25 +2,17 @@
 
 /* exporters { */
 #include "camera.h"
-#include "curvemesh.h"
 #include "exporter.h"
-#include "instance.h"
+#include "geometry.h"
 #include "light.h"
-#include "polygonmesh.h"
 #include "null.h"
-#include "pointmesh.h"
 #include "safe_interest.h"
-#include "vdb.h"
 #include "vop.h"
 /* } */
 
 #include "context.h"
 
 #include <GEO/GEO_Normal.h>
-#include <GT/GT_GEODetail.h>
-#include <GT/GT_Refine.h>
-#include <GT/GT_RefineParms.h>
-#include <GT/GT_PrimInstance.h>
 #include <OBJ/OBJ_Camera.h>
 #include <OBJ/OBJ_Node.h>
 #include <OP/OP_BundlePattern.h>
@@ -32,228 +24,6 @@
 
 #include <set>
 
-namespace
-{
-
-/// Refines i_primitive and puts the resulting primitives in io_result
-bool Refine(
-	const GT_PrimitiveHandle& i_primitive,
-	OBJ_Node& i_object,
-	const context& i_context,
-	std::vector<exporter*>& io_result,
-	int i_level = 0);
-
-/**
-	\brief A GT refiner for an OBJ_Node.
-
-	When an OBJ_Node is refined, the top node is a null to which
-	we will connect all newly created primitives. The GT prmitives
-	are not registered as
-*/
-struct OBJ_Node_Refiner : public GT_Refine
-{
-	OBJ_Node *m_node;
-	std::vector<exporter *> &m_result;
-	const context &m_context;
-	int m_level;
-
-	OBJ_Node_Refiner(
-		OBJ_Node *i_node,
-		const context &i_context,
-		std::vector< exporter *> &i_result,
-		int level )
-	:
-		m_result(i_result),
-		m_node(i_node),
-		m_context(i_context),
-		m_level(level)
-	{
-	}
-
-	/**
-		\brief Returns the path of a VDB file if this node is a "VDB loader".
-
-		\returns path to VDB file if the file SOP indeed loads a VDB file;
-
-		Just try to find any FILE SOP that has a VDB.
-
-		We don't support the general case VDB as we go through the file
-		SOP. For now we just skip this until we can find a more elegant
-		way to handle both file-loaded VDBs and general Houdini volumes.
-	*/
-	std::string node_is_vdb_loader()const
-	{
-		std::vector< SOP_Node *> files;
-		std::vector< OP_Node * > traversal; traversal.push_back( m_node );
-		while( traversal.size() )
-		{
-			OP_Node *network = traversal.back();
-			traversal.pop_back();
-			int nkids = network->getNchildren();
-			for( int i=0; i< nkids; i++ )
-			{
-				OP_Node *node = network->getChild(i);
-				SOP_Node *sop = node->castToSOPNode();
-				if( sop )
-				{
-					const UT_StringRef &SOP_name = node->getOperator()->getName();
-					if( SOP_name == "file" )
-						files.push_back( sop );
-				}
-
-				if( !node->isNetwork() )
-					continue;
-
-				OP_Network *kidnet = (OP_Network *)node;
-				if( kidnet->getNchildren() )
-				{
-					traversal.push_back( kidnet );
-				}
-			}
-		}
-
-		if( files.size() != 1 )
-		{
-			fprintf( stderr,
-					"3Delight for Houdini: we support only one VDB file per file obj" );
-			return {};
-		}
-
-		SOP_Node *file_sop = files.back();
-		int index = file_sop->getParmIndex( "file" );
-		if( index < 0 )
-		{
-			return {};
-		}
-
-		UT_String file;
-		file_sop->evalString( file, "file", 0, m_context.m_current_time );
-
-		if( !file.fileExtension() || ::strcmp(file.fileExtension(),".vdb") )
-		{
-			return {};
-		}
-
-		return std::string( file.c_str() );
-	}
-
-	/**
-		The only interesting thing here is how we deal with instances. We first
-		addPrimitive() recursively to resolve the instanced geometry since we
-		need it's handle to pass to the actual instancer. All the rest is
-		is 1 to 1 mapping with either one of our exporters.
-	*/
-	void addPrimitive( const GT_PrimitiveHandle &i_primitive )
-	{
-		switch( i_primitive->getPrimitiveType() )
-		{
-		case GT_PRIM_POLYGON_MESH:
-			m_result.push_back(
-				new polygonmesh(m_context, m_node,i_primitive, false) );
-			break;
-
-		case GT_PRIM_SUBDIVISION_MESH:
-			m_result.push_back(
-				new polygonmesh(m_context, m_node,i_primitive, true) );
-			break;
-
-		case GT_PRIM_POINT_MESH:
-			m_result.push_back(
-				new pointmesh(m_context, m_node,i_primitive) );
-			break;
-
-		case GT_PRIM_SUBDIVISION_CURVES:
-			m_result.push_back(
-				new curvemesh(m_context, m_node,i_primitive) );
-			break;
-
-		case GT_PRIM_CURVE_MESH:
-			m_result.push_back(
-				new curvemesh(m_context, m_node,i_primitive) );
-			break;
-
-		case GT_PRIM_INSTANCE:
-		{
-			size_t s = m_result.size();
-
-			/* First add the primitive so that we can get its handle. */
-			const GT_PrimInstance *I =
-				static_cast<const GT_PrimInstance *>( i_primitive.get() );
-			addPrimitive( I->geometry() );
-
-			if( s == m_result.size() )
-			{
-				std::cerr
-					<< "3Delight for Houdini: unable to create instanced geometry for "
-					<< m_node->getFullPath() << std::endl;
-				return;
-			}
-
-			primitive *instanced = (primitive*)m_result.back();
-			instanced->set_as_instanced();
-			m_result.push_back(
-				new instance(
-					m_context, m_node, i_primitive, instanced->handle()) );
-			break;
-		}
-
-		case GT_PRIM_VOXEL_VOLUME:
-			fprintf(
-				stderr, "3Delight for Houdini: unsupported VDB/Volume "
-					"workflow for %s\n", m_node->getName().c_str() );
-			break;
-
-		case GT_PRIM_VDB_VOLUME:
-		{
-			std::string vdb_path = node_is_vdb_loader();
-
-			if( !vdb_path.empty() )
-			{
-				m_result.push_back(
-					new vdb( m_context, m_node, i_primitive, vdb_path) );
-			}
-			else
-			{
-				fprintf( stderr, "3Delight for Houdini: unsupported VDB/Volume "
-					"workflow for %s\n", m_node->getName().c_str() );
-			}
-			break;
-		}
-
-		default:
-#ifdef VERBOSE
-			std::cout << "Refining " << m_node->getFullPath() <<
-				" to level " << m_level  << std::endl;
-#endif
-			if(	!Refine( i_primitive, *m_node, m_context, m_result, m_level+1 ) )
-			{
-				std::cerr << "3Delight for Houdini: unsupported object "
-					<< m_node->getFullPath()
-					<< " of class " << i_primitive->className()
-					<< std::endl;
-			}
-		}
-	}
-};
-
-bool Refine(
-	const GT_PrimitiveHandle& i_primitive,
-	OBJ_Node& i_object,
-	const context& i_context,
-	std::vector<exporter*>& io_result,
-	int i_level)
-{
-	OBJ_Node_Refiner refiner( &i_object, i_context, io_result, i_level );
-
-	GT_RefineParms params;
-	params.setAllowSubdivision( true );
-	params.setAddVertexNormals( true );
-	params.setCuspAngle( GEO_DEFAULT_ADJUSTED_CUSP_ANGLE );
-
-	return i_primitive->refine( refiner, &params );
-}
-
-}
 
 /**
 	\brief Decide what to do with the given OP_Node.
@@ -354,18 +124,6 @@ void scene::process_node(
 		return;
 	}
 
-	/* FIXME: motion blur */
-	OP_Context context( i_context.m_current_time );
-	const GU_ConstDetailHandle detail_handle( sop->getCookedGeoHandle(context) );
-
-	if( !detail_handle.isValid() )
-	{
-		std::cerr
-			<< "3Delight for Houdini: " << obj->getFullPath()
-			<< " has no valid detail" << std::endl;
-		return;
-	}
-
 	/**
 		Don't put this before cameras and lights have been detected
 		above as these should be output even if not displayed.
@@ -375,18 +133,15 @@ void scene::process_node(
 		return;
 	}
 
-	std::vector< exporter *> gt_primitives;
+	if( obj->castToOBJGeometry() )
+	{
+		o_to_export.push_back( new geometry(i_context, obj) );
+		return;
+	}
 
-	GT_PrimitiveHandle gt( GT_GEODetail::makeDetail(detail_handle) );
-	Refine(gt, *obj, i_context, gt_primitives);
-
-#ifdef VERBOSE
-	std::cout << obj->getFullPath() << " gave birth to " <<
-		gt_primitives.size() << " primitives." << std::endl;
-#endif
-
-	o_to_export.insert(
-		o_to_export.end(), gt_primitives.begin(), gt_primitives.end() );
+	std::cerr
+		<< "3Delight for Houdini: object " << obj->getFullPath()
+		<< " is not supported" << std::endl;
 }
 
 /**
@@ -478,7 +233,11 @@ void scene::convert_to_nsi(
 		exporter->connect();
 	}
 
-	/* Finally, SetAttributes, in parallel (FIXME) */
+	/*
+		Finally, set the attributes on each node, possibly creating privately
+		managed nodes in the process.
+		FIXME : parallel processing?
+	*/
 	for( auto &exporter : to_export )
 	{
 		exporter->set_attributes();

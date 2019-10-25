@@ -27,6 +27,7 @@ add_library( ${library_name} SHARED
 	camera.cpp
 	curvemesh.cpp
 	exporter.cpp
+	geometry.cpp
 	idisplay_port.cpp
 	instance.cpp
 	light.cpp
