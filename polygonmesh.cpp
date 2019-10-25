@@ -12,9 +12,10 @@ polygonmesh::polygonmesh(
 	const context& i_ctx,
 	OBJ_Node *i_object,
 	const GT_PrimitiveHandle &i_gt_primitive,
+	unsigned i_primitive_index,
 	bool is_subdivision )
 :
-	primitive( i_ctx, i_object, i_gt_primitive ),
+	primitive( i_ctx, i_object, i_gt_primitive, i_primitive_index ),
 	m_is_subdiv(is_subdivision)
 {
 }

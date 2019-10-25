@@ -11,9 +11,10 @@ instance::instance(
 	const context& i_ctx,
 	OBJ_Node *i_object,
 	const GT_PrimitiveHandle &i_gt_primitive,
+	unsigned i_primitive_index,
 	const std::string &i_geometry_handle )
 :
-	primitive( i_ctx, i_object, i_gt_primitive ),
+	primitive( i_ctx, i_object, i_gt_primitive, i_primitive_index ),
 	m_geometry_handle(i_geometry_handle)
 {
 }

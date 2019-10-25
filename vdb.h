@@ -18,6 +18,7 @@ public:
 	vdb(
 		const context&, OBJ_Node *i_obj,
 		const GT_PrimitiveHandle &i_handle,
+		unsigned i_primitive_index,
 		const std::string &i_vdb_path );
 
 	void create( void ) const override;

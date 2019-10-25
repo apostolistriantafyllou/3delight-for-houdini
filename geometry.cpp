@@ -132,43 +132,42 @@ struct OBJ_Node_Refiner : public GT_Refine
 	*/
 	void addPrimitive( const GT_PrimitiveHandle &i_primitive )
 	{
+		unsigned index = m_result.size();
 		switch( i_primitive->getPrimitiveType() )
 		{
 		case GT_PRIM_POLYGON_MESH:
 			m_result.push_back(
-				new polygonmesh(m_context, m_node,i_primitive, false) );
+				new polygonmesh(m_context, m_node, i_primitive, index, false) );
 			break;
 
 		case GT_PRIM_SUBDIVISION_MESH:
 			m_result.push_back(
-				new polygonmesh(m_context, m_node,i_primitive, true) );
+				new polygonmesh(m_context, m_node,i_primitive, index, true) );
 			break;
 
 		case GT_PRIM_POINT_MESH:
 			m_result.push_back(
-				new pointmesh(m_context, m_node,i_primitive) );
+				new pointmesh(m_context, m_node,i_primitive, index) );
 			break;
 
 		case GT_PRIM_SUBDIVISION_CURVES:
 			m_result.push_back(
-				new curvemesh(m_context, m_node,i_primitive) );
+				new curvemesh(m_context, m_node,i_primitive, index) );
 			break;
 
 		case GT_PRIM_CURVE_MESH:
 			m_result.push_back(
-				new curvemesh(m_context, m_node,i_primitive) );
+				new curvemesh(m_context, m_node,i_primitive, index) );
 			break;
 
 		case GT_PRIM_INSTANCE:
 		{
-			size_t s = m_result.size();
-
 			/* First add the primitive so that we can get its handle. */
 			const GT_PrimInstance *I =
 				static_cast<const GT_PrimInstance *>( i_primitive.get() );
 			addPrimitive( I->geometry() );
 
-			if( s == m_result.size() )
+			if( m_result.size() == index )
 			{
 				std::cerr
 					<< "3Delight for Houdini: unable to create instanced geometry for "
@@ -176,11 +175,13 @@ struct OBJ_Node_Refiner : public GT_Refine
 				return;
 			}
 
+			index = m_result.size();
+
 			primitive *instanced = m_result.back();
 			instanced->set_as_instanced();
 			m_result.push_back(
 				new instance(
-					m_context, m_node, i_primitive, instanced->handle()) );
+					m_context, m_node, i_primitive, index, instanced->handle()) );
 			break;
 		}
 
@@ -197,7 +198,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 			if( !vdb_path.empty() )
 			{
 				m_result.push_back(
-					new vdb( m_context, m_node, i_primitive, vdb_path) );
+					new vdb( m_context, m_node, i_primitive, index, vdb_path) );
 			}
 			else
 			{

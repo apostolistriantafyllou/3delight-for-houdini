@@ -19,11 +19,15 @@ public:
 		\param i_gt_primitive
 			One of the GT primitives obtained from successive refinement of
 			i_object.
+		\param i_primitive_index
+			The index of this primitive exporter inside the associated object's
+			geometry exporter.
 	*/
 	primitive(
 		const context& i_context,
 		OBJ_Node* i_object,
-		const GT_PrimitiveHandle& i_gt_primitive);
+		const GT_PrimitiveHandle& i_gt_primitive,
+		unsigned i_primitive_index);
 
 	void connect()const override;
 

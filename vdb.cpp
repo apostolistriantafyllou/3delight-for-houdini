@@ -13,9 +13,10 @@
 vdb::vdb(
 	const context& i_ctx, OBJ_Node *i_obj,
 	const GT_PrimitiveHandle &i_gt_primitive,
+	unsigned i_primitive_index,
 	const std::string &i_vdb_file )
 :
-	primitive( i_ctx, i_obj, i_gt_primitive),
+	primitive( i_ctx, i_obj, i_gt_primitive, i_primitive_index ),
 	m_vdb_file(i_vdb_file)
 {
 }

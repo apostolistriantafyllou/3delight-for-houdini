@@ -4,11 +4,11 @@
 
 #include <OBJ/OBJ_Node.h>
 
-static int s_handle = 0;
 primitive::primitive(
 	const context& i_context,
 	OBJ_Node* i_object,
-	const GT_PrimitiveHandle& i_gt_primitive)
+	const GT_PrimitiveHandle& i_gt_primitive,
+	unsigned i_primitive_index)
 	:	exporter(i_context, i_object),
 		m_gt_primitive(i_gt_primitive)
 {
@@ -16,7 +16,7 @@ primitive::primitive(
 		Geometry uses its full path + a prefix as a handle. So that
 		it leaves the full path handle to the parent transform.
 	*/
-	m_handle += "|object|" + std::to_string( s_handle ++ );
+	m_handle += "|object|" + std::to_string(i_primitive_index);
 }
 
 void
