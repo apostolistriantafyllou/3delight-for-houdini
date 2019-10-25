@@ -20,5 +20,5 @@ public:
 	void connect( void ) const override;
 
 private:
-	std::string m_geomtry_handle;
+	std::string m_geometry_handle;
 };

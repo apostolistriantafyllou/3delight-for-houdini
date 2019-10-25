@@ -10,7 +10,7 @@ instance::instance(
 	const std::string &i_geometry_handle )
 :
 	exporter( i_ctx, i_object, i_gt_primitive ),
-	m_geomtry_handle(i_geometry_handle)
+	m_geometry_handle(i_geometry_handle)
 {
 }
 
@@ -23,7 +23,7 @@ void instance::connect( void ) const
 {
 	exporter::connect();
 
-	m_nsi.Connect( m_geomtry_handle, "", m_handle, "sourcemodels" );
+	m_nsi.Connect( m_geometry_handle, "", m_handle, "sourcemodels" );
 }
 
 void instance::set_attributes( void ) const
