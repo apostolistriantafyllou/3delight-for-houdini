@@ -1,7 +1,6 @@
 #include "null.h"
 
 #include "context.h"
-#include "object_attributes.h"
 
 #include <OBJ/OBJ_Node.h>
 
@@ -40,7 +39,7 @@ void null::set_attributes_at_time( double i_time ) const
 
 /**
 	\brief Connect to the parent object of this null object. This could
-	be the immediate parent in Houdini's scene hierary or NSI_NODE_ROOT
+	be the immediate parent in Houdini's scene hierarchy or NSI_SCENE_ROOT
 	if this null object has no parent.
 */
 void null::connect( void ) const
@@ -59,16 +58,6 @@ void null::connect( void ) const
 		m_nsi.Connect(
 			m_handle.c_str(), "",
 			NSI_SCENE_ROOT, "objects" );
-	}
-
-	/*
-		Connect here to avoid to do it in each mesh creates by the refiner
-		(which may result in many hundred of connections)
-	*/
-	if( m_object->castToOBJGeometry() )
-	{
-		object_attributes::connect_to_object_attributes_nodes(
-			m_context, m_object, m_handle );
 	}
 }
 

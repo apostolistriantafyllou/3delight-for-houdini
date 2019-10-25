@@ -3,6 +3,7 @@
 #include "context.h"
 #include "curvemesh.h"
 #include "instance.h"
+#include "object_attributes.h"
 #include "polygonmesh.h"
 #include "pointmesh.h"
 #include "vdb.h"
@@ -324,4 +325,10 @@ void geometry::connect()const
 	m_nsi.Connect(
 		material_path.buffer(), "",
 		attributes, volume ? "volumeshader" : "surfaceshader" );
+
+	// Connect geometry attributes for non-default values
+	object_attributes::connect_to_object_attributes_nodes(
+		m_context,
+		m_object,
+		m_handle);
 }
