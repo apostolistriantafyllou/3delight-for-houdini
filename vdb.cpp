@@ -105,7 +105,7 @@ void vdb::set_attributes( void ) const
 
 	m_nsi.SetAttribute( m_handle + "|volume", arguments );
 
-	set_attributes_at_time(m_context.m_current_time);
+	primitive::set_attributes();
 }
 
 bool vdb::is_volume()const
@@ -119,9 +119,11 @@ bool vdb::is_volume()const
 	the actual volume container might be moving, so we need to set the
 	right matrix.
 */
-void vdb::set_attributes_at_time( double i_time ) const
+void vdb::set_attributes_at_time(
+	double i_time,
+	const GT_PrimitiveHandle i_gt_primitive) const
 {
-	const GT_TransformHandle &handle = m_gt_primitive->getPrimitiveTransform();
+	const GT_TransformHandle &handle = i_gt_primitive->getPrimitiveTransform();
 	UT_Matrix4D local;
 	handle->getMatrix( local );
 

@@ -26,10 +26,12 @@ public:
 
 	bool is_volume()const override;
 
-private:
 	/// Exports time-dependent attributes to NSI
-	void set_attributes_at_time( double i_time ) const;
+	void set_attributes_at_time(
+		double i_time,
+		const GT_PrimitiveHandle i_gt_primitive)const override;
 
+private:
 	/* VDB file path. */
 	std::string m_vdb_file;
 };

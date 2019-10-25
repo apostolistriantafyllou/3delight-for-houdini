@@ -4,6 +4,7 @@
 #include "shader_library.h"
 
 #include "context.h"
+#include "time_sampler.h"
 
 #include <VOP/VOP_Node.h>
 #include <OBJ/OBJ_Node.h>
@@ -255,7 +256,10 @@ void light::set_attributes( void ) const
 
 	set_visibility_to_camera();
 
-	set_attributes_at_time(m_context.m_current_time);
+	for(time_sampler t(m_context, *m_object); t; t++)
+	{
+		set_attributes_at_time(*t);
+	}
 }
 
 /**

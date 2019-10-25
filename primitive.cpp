@@ -1,5 +1,7 @@
 #include "primitive.h"
 
+#include "time_sampler.h"
+
 #include <nsi.hpp>
 
 #include <OBJ/OBJ_Node.h>
@@ -10,7 +12,7 @@ primitive::primitive(
 	const GT_PrimitiveHandle& i_gt_primitive,
 	unsigned i_primitive_index)
 	:	exporter(i_context, i_object),
-		m_gt_primitive(i_gt_primitive)
+		m_gt_primitives(1, i_gt_primitive)
 {
 	/*
 		Geometry uses its full path + a prefix as a handle. So that
@@ -40,7 +42,7 @@ primitive::connect()const
 	*/
 	std::string parent = m_handle + "|transform";
 	const GT_TransformHandle &transform =
-		m_gt_primitive->getPrimitiveTransform();
+		default_gt_primitive()->getPrimitiveTransform();
 	UT_Matrix4D matrix;
 	transform->getMatrix( matrix );
 
@@ -52,6 +54,35 @@ primitive::connect()const
 	m_nsi.Connect( m_handle, "", parent, "objects" );
 
 	export_override_attributes();
+}
+
+void primitive::set_attributes()const
+{
+	time_sampler t(m_context, *m_object);
+	if(t.nb_samples() > m_gt_primitives.size())
+	{
+		std::cerr
+			<< "3Delight for Houdini: missing motion blur samples for "
+			<< m_object->getFullPath() << std::endl;
+	}
+
+	for(const GT_PrimitiveHandle& prim : m_gt_primitives)
+	{
+		set_attributes_at_time(*t, prim);
+		t++;
+	}
+}
+
+bool primitive::add_time_sample(const GT_PrimitiveHandle& i_primitive)
+{
+	if(!m_gt_primitives.empty() &&
+		m_gt_primitives[0]->getPrimitiveType() != i_primitive->getPrimitiveType())
+	{
+		return false;
+	}
+
+	m_gt_primitives.push_back(i_primitive);
+	return true;
 }
 
 bool primitive::is_volume()const

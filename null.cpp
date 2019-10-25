@@ -1,6 +1,7 @@
 #include "null.h"
 
 #include "context.h"
+#include "time_sampler.h"
 
 #include <OBJ/OBJ_Node.h>
 
@@ -21,7 +22,10 @@ void null::create( void ) const
 
 void null::set_attributes( void ) const
 {
-	set_attributes_at_time(m_context.m_current_time);
+	for(time_sampler t(m_context, *m_object); t; t++)
+	{
+		set_attributes_at_time(*t);
+	}
 }
 
 void null::set_attributes_at_time( double i_time ) const

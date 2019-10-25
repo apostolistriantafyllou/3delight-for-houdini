@@ -31,15 +31,12 @@ void instance::connect( void ) const
 	m_nsi.Connect( m_geometry_handle, "", m_handle, "sourcemodels" );
 }
 
-void instance::set_attributes( void ) const
-{
-	set_attributes_at_time(m_context.m_current_time);
-}
-
-void instance::set_attributes_at_time( double i_time ) const
+void instance::set_attributes_at_time(
+	double i_time,
+	const GT_PrimitiveHandle i_gt_primitive) const
 {
 	const GT_PrimInstance *instance =
-		static_cast<const GT_PrimInstance *>(m_gt_primitive.get());
+		static_cast<const GT_PrimInstance *>(i_gt_primitive.get());
 
 	const GT_TransformArrayHandle transforms = instance->transforms();
 

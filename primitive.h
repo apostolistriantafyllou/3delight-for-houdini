@@ -31,6 +31,8 @@ public:
 
 	void connect()const override;
 
+	void set_attributes()const override;
+
 	/**
 		\brief Declare this as an instnaced object. Such objects
 		do not have to be connected to a parent transform because
@@ -38,14 +40,29 @@ public:
 	*/
 	void set_as_instanced( void ) { m_instanced = true; }
 
+	/// Specifies the GT primitive to use when exporting one more time sample
+	bool add_time_sample(const GT_PrimitiveHandle& i_primitive);
+
 	/// Returns true if the primitive should be rendered as a volume
 	virtual bool is_volume()const;
 
 protected:
 
-	GT_PrimitiveHandle m_gt_primitive;
+	/// Exports time-dependent attributes to NSI
+	virtual void set_attributes_at_time(
+		double i_time,
+		const GT_PrimitiveHandle i_gt_primitive) const = 0;
+
+	/// Returns the GT primitive to use when exporting constant attributes
+	const GT_PrimitiveHandle& default_gt_primitive()const
+	{
+		return m_gt_primitives.front();
+	}
 
 private:
+
+	/// One GT primitive for each time sample
+	std::vector<GT_PrimitiveHandle> m_gt_primitives;
 
 	/** =true if instanced geo */
 	bool m_instanced{false};

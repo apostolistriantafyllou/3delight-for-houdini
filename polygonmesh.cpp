@@ -33,7 +33,7 @@ void polygonmesh::create( void ) const
 void polygonmesh::set_attributes( void ) const
 {
 	const GT_PrimPolygonMesh *polygon_mesh =
-		static_cast<const GT_PrimPolygonMesh *>(m_gt_primitive.get());
+		static_cast<const GT_PrimPolygonMesh *>(default_gt_primitive().get());
 
 	NSI::ArgumentList mesh_args;
 
@@ -92,7 +92,7 @@ void polygonmesh::set_attributes( void ) const
 		m_context.m_current_time,
 		to_export );
 
-	set_attributes_at_time(m_context.m_current_time);
+	primitive::set_attributes();
 }
 
 /**
@@ -100,10 +100,12 @@ void polygonmesh::set_attributes( void ) const
 
 	\ref http://www.sidefx.com/docs/hdk/_g_t___prim_polygon_mesh_8h_source.html
 */
-void polygonmesh::set_attributes_at_time( double i_time ) const
+void polygonmesh::set_attributes_at_time(
+	double i_time,
+	const GT_PrimitiveHandle i_gt_primitive) const
 {
 	const GT_PrimPolygonMesh *polygon_mesh =
-		static_cast<const GT_PrimPolygonMesh *>(m_gt_primitive.get());
+		static_cast<const GT_PrimPolygonMesh *>(i_gt_primitive.get());
 
 	GT_AttributeListHandle attributes[] =
 	{

@@ -22,7 +22,7 @@ curvemesh::curvemesh(
 void curvemesh::create( void ) const
 {
 	const GT_PrimCurveMesh *curve =
-		static_cast<const GT_PrimCurveMesh *>(m_gt_primitive.get());
+		static_cast<const GT_PrimCurveMesh *>(default_gt_primitive().get());
 
 	if( !curve->isUniformOrder() )
 	{
@@ -51,7 +51,7 @@ void curvemesh::create( void ) const
 void curvemesh::set_attributes( void ) const
 {
 	const GT_PrimCurveMesh *curve =
-		static_cast<const GT_PrimCurveMesh *>(m_gt_primitive.get());
+		static_cast<const GT_PrimCurveMesh *>(default_gt_primitive().get());
 
 	NSI::ArgumentList args;
 
@@ -83,13 +83,15 @@ void curvemesh::set_attributes( void ) const
 		m_nsi.SetAttribute( m_handle, NSI::CStringPArg("basis", "catmull-rom") );
 	}
 
-	set_attributes_at_time( m_context.m_current_time );
+	primitive::set_attributes();
 }
 
-void curvemesh::set_attributes_at_time( double i_time ) const
+void curvemesh::set_attributes_at_time(
+	double i_time,
+	const GT_PrimitiveHandle i_gt_primitive) const
 {
 	const GT_PrimCurveMesh *curve =
-		static_cast<const GT_PrimCurveMesh *>(m_gt_primitive.get());
+		static_cast<const GT_PrimCurveMesh *>(i_gt_primitive.get());
 
 	GT_AttributeListHandle attributes[] =
 	{

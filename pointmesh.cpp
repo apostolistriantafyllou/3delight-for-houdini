@@ -21,15 +21,12 @@ void pointmesh::create( void ) const
 	m_nsi.Create( m_handle.c_str(), "particles" );
 }
 
-void pointmesh::set_attributes( void ) const
-{
-	set_attributes_at_time(m_context.m_current_time);
-}
-
-void pointmesh::set_attributes_at_time( double i_time ) const
+void pointmesh::set_attributes_at_time(
+	double i_time,
+	const GT_PrimitiveHandle i_gt_primitive) const
 {
 	const GT_PrimPointMesh *pointmesh =
-		static_cast<const GT_PrimPointMesh *>(m_gt_primitive.get());
+		static_cast<const GT_PrimPointMesh *>(i_gt_primitive.get());
 
 	/*
 		NSI doesn't care if it's "vertex" or "uniform". It guess that

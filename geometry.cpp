@@ -6,6 +6,7 @@
 #include "object_attributes.h"
 #include "polygonmesh.h"
 #include "pointmesh.h"
+#include "time_sampler.h"
 #include "vdb.h"
 
 #include <GT/GT_GEODetail.h>
@@ -27,6 +28,7 @@ bool Refine(
 	OBJ_Node& i_object,
 	const context& i_context,
 	std::vector<primitive*>& io_result,
+	bool i_add_time_samples,
 	int i_level = 0);
 
 
@@ -43,17 +45,24 @@ struct OBJ_Node_Refiner : public GT_Refine
 	std::vector<primitive*> &m_result;
 	const context &m_context;
 	int m_level;
+	unsigned m_primitive_index;
+	bool m_add_time_samples;
+	bool m_stop;
 
 	OBJ_Node_Refiner(
 		OBJ_Node *i_node,
 		const context &i_context,
-		std::vector<primitive*> &i_result,
+		std::vector<primitive*> &io_result,
+		bool i_add_time_samples,
 		int level )
 	:
-		m_result(i_result),
+		m_result(io_result),
 		m_node(i_node),
 		m_context(i_context),
-		m_level(level)
+		m_level(level),
+		m_primitive_index(0),
+		m_add_time_samples(i_add_time_samples),
+		m_stop(false)
 	{
 	}
 
@@ -125,14 +134,71 @@ struct OBJ_Node_Refiner : public GT_Refine
 	}
 
 	/**
-		The only interesting thing here is how we deal with instances. We first
+		One interesting thing here is how we deal with instances. We first
 		addPrimitive() recursively to resolve the instanced geometry since we
 		need its handle to pass to the actual instancer. All the rest is 1 to 1
 		mapping with either one of our primitive exporters.
+
+		When m_add_time_samples is true, we follow the same refinement logic,
+		but we add the resulting GT primitives to previously creates primitive
+		exporters instead of creating new ones.
 	*/
 	void addPrimitive( const GT_PrimitiveHandle &i_primitive )
 	{
+		if(m_stop)
+		{
+			return;
+		}
+
+		if(m_add_time_samples)
+		{
+			// Update existing primitive exporters
+
+			switch( i_primitive->getPrimitiveType() )
+			{
+				case GT_PRIM_INSTANCE:
+				{
+					const GT_PrimInstance* I =
+						static_cast<const GT_PrimInstance*>(i_primitive.get());
+					addPrimitive(I->geometry());
+				}
+				// Fall through so the instancer is updated, too
+				case GT_PRIM_POLYGON_MESH:
+				case GT_PRIM_SUBDIVISION_MESH:
+				case GT_PRIM_POINT_MESH:
+				case GT_PRIM_SUBDIVISION_CURVES:
+				case GT_PRIM_CURVE_MESH:
+				case GT_PRIM_VDB_VOLUME:
+					if(!m_result[m_primitive_index]->add_time_sample(i_primitive))
+					{
+						m_stop = true;
+						std::cerr
+							<< "3Delight for Houdini: unable to create motion-"
+								"blurred geometry for "
+							<< m_node->getFullPath() << std::endl;
+					}
+					break;
+				case GT_PRIM_VOXEL_VOLUME:
+					// Unsupported
+					break;
+				default:
+					Refine(
+						i_primitive,
+						*m_node,
+						m_context,
+						m_result,
+						m_add_time_samples,
+						m_level+1);
+			}
+
+			m_primitive_index++;
+			return;
+		}
+
+		// Create new primitive exporters for refined GT primitives
+
 		unsigned index = m_result.size();
+
 		switch( i_primitive->getPrimitiveType() )
 		{
 		case GT_PRIM_POLYGON_MESH:
@@ -213,7 +279,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 			std::cout << "Refining " << m_node->getFullPath() <<
 				" to level " << m_level  << std::endl;
 #endif
-			if(	!Refine( i_primitive, *m_node, m_context, m_result, m_level+1 ) )
+			if( !Refine( i_primitive, *m_node, m_context, m_result, m_add_time_samples, m_level+1 ) )
 			{
 				std::cerr << "3Delight for Houdini: unsupported object "
 					<< m_node->getFullPath()
@@ -229,9 +295,11 @@ bool Refine(
 	OBJ_Node& i_object,
 	const context& i_context,
 	std::vector<primitive*>& io_result,
+	bool i_add_time_samples,
 	int i_level)
 {
-	OBJ_Node_Refiner refiner( &i_object, i_context, io_result, i_level );
+	OBJ_Node_Refiner refiner(
+		&i_object, i_context, io_result, i_add_time_samples, i_level );
 
 	GT_RefineParms params;
 	params.setAllowSubdivision( true );
@@ -248,20 +316,32 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 {
 	SOP_Node *sop = m_object->getRenderSopPtr();
 
-	/* FIXME: motion blur */
-	OP_Context context( i_context.m_current_time );
-	const GU_ConstDetailHandle detail_handle( sop->getCookedGeoHandle(context) );
-
-	if( !detail_handle.isValid() )
+	// Refine the geometry once per time sample
+	bool update = false;
+	for(time_sampler t(i_context, *m_object); t; t++)
 	{
-		std::cerr
-			<< "3Delight for Houdini: " << m_object->getFullPath()
-			<< " has no valid detail" << std::endl;
-		return;
-	}
+		OP_Context context( *t );
+		GU_DetailHandle detail_handle( sop->getCookedGeoHandle(context) );
 
-	GT_PrimitiveHandle gt( GT_GEODetail::makeDetail(detail_handle) );
-	Refine(gt, *m_object, m_context, m_primitives);
+		if( !detail_handle.isValid() )
+		{
+			std::cerr
+				<< "3Delight for Houdini: " << m_object->getFullPath()
+				<< " has no valid detail" << std::endl;
+			return;
+		}
+
+		/*
+			This seems to be important in order to avoid overwriting previous
+			time sample's handles with the current one.
+		*/
+		detail_handle.makeUnique();
+
+		GT_PrimitiveHandle gt( GT_GEODetail::makeDetail(detail_handle) );
+		Refine(gt, *m_object, m_context, m_primitives, update);
+
+		update = true;
+	}
 
 #ifdef VERBOSE
 	std::cout << m_object->getFullPath() << " gave birth to " <<

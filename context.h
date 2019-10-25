@@ -51,7 +51,11 @@ public:
 		assert(!m_ipr || !m_export_nsi);
 	}
 
+	/// Returns true if motion blur is required for this render
+	bool MotionBlur()const { return m_shutter > 0.0f; }
+	/// Returns the time at which the shutter opens
 	float ShutterOpen()const { return m_current_time - m_shutter/2.0f; }
+	/// Returns the time at which the shutter closes
 	float ShutterClose()const { return m_current_time + m_shutter/2.0f; }
 
 	/// Returns true if a single frame is to be rendered

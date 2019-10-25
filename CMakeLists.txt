@@ -42,6 +42,7 @@ add_library( ${library_name} SHARED
 	safe_interest.cpp
 	scene.cpp
 	shader_library.cpp
+	time_sampler.cpp
 	vdb.cpp
 	vop.cpp
 	ui/settings.cpp
