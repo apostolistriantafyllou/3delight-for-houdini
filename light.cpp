@@ -254,6 +254,8 @@ void light::set_attributes( void ) const
 	create_geometry();
 
 	set_visibility_to_camera();
+
+	set_attributes_at_time(m_context.m_current_time);
 }
 
 /**

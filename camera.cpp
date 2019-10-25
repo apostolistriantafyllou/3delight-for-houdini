@@ -24,6 +24,7 @@ void camera::create( void ) const
 
 void camera::set_attributes( void ) const
 {
+	set_attributes_at_time(m_context.m_current_time);
 }
 
 /**

@@ -35,6 +35,7 @@ void vop::create( void ) const
 
 void vop::set_attributes( void ) const
 {
+	set_attributes_at_time(m_context.m_current_time);
 }
 
 void vop::set_attributes_at_time( double i_time ) const

@@ -28,10 +28,9 @@ void instance::connect( void ) const
 
 void instance::set_attributes( void ) const
 {
+	set_attributes_at_time(m_context.m_current_time);
 }
 
-/**
-*/
 void instance::set_attributes_at_time( double i_time ) const
 {
 	const GT_PrimInstance *instance =

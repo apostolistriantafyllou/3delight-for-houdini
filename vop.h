@@ -38,7 +38,6 @@ public:
 
 	void create( void ) const override;
 	void set_attributes( void ) const override;
-	void set_attributes_at_time( double i_time ) const override;
 	void connect( void ) const override;
 
 	/**
@@ -77,6 +76,9 @@ protected:
 		NSI::ArgumentList &o_list );
 
 private:
+	/// Exports time-dependent attributes to NSI
+	void set_attributes_at_time( double i_time ) const;
+
 	/**
 		\returns true if we should not connect this VOP to its subnetworks.
 		(probably because the OSL version has all the functionality inside).

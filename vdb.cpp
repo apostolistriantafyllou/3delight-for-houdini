@@ -103,6 +103,8 @@ void vdb::set_attributes( void ) const
 #endif
 
 	m_nsi.SetAttribute( m_handle + "|volume", arguments );
+
+	set_attributes_at_time(m_context.m_current_time);
 }
 
 /**

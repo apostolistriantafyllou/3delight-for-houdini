@@ -90,6 +90,8 @@ void polygonmesh::set_attributes( void ) const
 		sizeof(attributes)/sizeof(attributes[0]),
 		m_context.m_current_time,
 		to_export );
+
+	set_attributes_at_time(m_context.m_current_time);
 }
 
 /**

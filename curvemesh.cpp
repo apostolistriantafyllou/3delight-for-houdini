@@ -81,10 +81,10 @@ void curvemesh::set_attributes( void ) const
 	{
 		m_nsi.SetAttribute( m_handle, NSI::CStringPArg("basis", "catmull-rom") );
 	}
+
+	set_attributes_at_time( m_context.m_current_time );
 }
 
-/**
-*/
 void curvemesh::set_attributes_at_time( double i_time ) const
 {
 	const GT_PrimCurveMesh *curve =

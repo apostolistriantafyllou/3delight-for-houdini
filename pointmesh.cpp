@@ -22,6 +22,7 @@ void pointmesh::create( void ) const
 
 void pointmesh::set_attributes( void ) const
 {
+	set_attributes_at_time(m_context.m_current_time);
 }
 
 void pointmesh::set_attributes_at_time( double i_time ) const

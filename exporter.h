@@ -35,23 +35,17 @@ public:
 	exporter( const context &, VOP_Node * );
 
 	/**
-		\brief Create any NSI node required for this object. For example,
-		a camera might need a "perspectivecamera" NSI node as well as a
-		"screen" node.
+		\brief Create NSI nodes required for this object.
+
+		For example, a camera might need a "perspectivecamera" NSI node as well
+		as a "screen" node.
 	*/
 	virtual void create( void  ) const = 0;
 
 	/**
-		\brief Set all attributes for this primitive that do not change with
-		time. For example, the number of faces of a polygon.
+		\brief Set all attributes for this primitive.
 	*/
 	virtual void set_attributes( void  ) const = 0;
-
-	/**
-		\brief Set all the time valuing attributes for this primitive. For
-		example the "P" attribute for a mesh.
-	*/
-	virtual void set_attributes_at_time( double i_time ) const = 0;
 
 	/**
 		\brief Connect.

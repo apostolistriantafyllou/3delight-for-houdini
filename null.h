@@ -16,7 +16,6 @@ public:
 
 	void create( void ) const override;
 	void set_attributes( void ) const override;
-	void set_attributes_at_time( double i_time ) const override;
 	void connect( void ) const override;
 
 	static void changed_cb(
@@ -24,4 +23,8 @@ public:
 		void* i_callee,
 		OP_EventType i_type,
 		void* i_data);
+
+private:
+	/// Exports time-dependent attributes to NSI
+	void set_attributes_at_time( double i_time ) const;
 };

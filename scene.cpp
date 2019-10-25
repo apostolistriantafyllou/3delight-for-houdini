@@ -460,8 +460,9 @@ void scene::convert_to_nsi(
 	scan( i_context, to_export, io_interests );
 
 	/*
-		Create phase. This will create all the NSI nodes from the Houdini
-		objects that we support.
+		Create phase. This will create all the main NSI nodes from the Houdini
+		objects that we support, so that connections can later be made in any
+		particular order.
 	*/
 	for( auto &exporter : to_export )
 	{
@@ -477,11 +478,10 @@ void scene::convert_to_nsi(
 		exporter->connect();
 	}
 
-	/* Finally, SetAttributes[AtTime], in parallel (FIXME) */
+	/* Finally, SetAttributes, in parallel (FIXME) */
 	for( auto &exporter : to_export )
 	{
 		exporter->set_attributes();
-		exporter->set_attributes_at_time( i_context.m_current_time );
 	}
 
 	/*
