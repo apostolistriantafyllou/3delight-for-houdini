@@ -19,6 +19,8 @@ exporter::exporter(
 	m_object(i_object),
 	m_gt_primitive(i_gt_primitive)
 {
+	assert(m_object);
+
 	/*
 		Geometry uses its full path + a prefix as a handle. So that
 		it leaves the full path handle to the parent transform.
@@ -34,6 +36,7 @@ exporter::exporter( const context &i_context, VOP_Node *i_node )
 	m_nsi(i_context.m_nsi),
 	m_vop(i_node)
 {
+	assert(m_vop);
 }
 
 const std::string &exporter::handle( void ) const
@@ -48,8 +51,7 @@ const std::string &exporter::handle( void ) const
 */
 void exporter::connect( void ) const
 {
-	if( !m_object )
-		return;
+	assert(m_object);
 
 	std::string parent;
 
