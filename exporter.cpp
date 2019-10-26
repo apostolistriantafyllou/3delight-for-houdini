@@ -66,8 +66,8 @@ void exporter::connect( void ) const
 	}
 
 	/*
-	   We support the transformation of the GT_Primitive by inserting
-	   a local NSI transform node between the object and its parent.
+		We support the transformation of the GT_Primitive by inserting
+		a local NSI transform node between the object and its parent.
 	*/
 	if( m_gt_primitive != sm_invalid_gt_primitive )
 	{
