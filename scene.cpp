@@ -60,6 +60,79 @@ struct OBJ_Node_Refiner : public GT_Refine
 	}
 
 	/**
+		\brief Returns the path of a VDB file if this node is a "VDB loader".
+
+		\param i_cobj
+			The obj node to analyse.
+
+		\param i_time
+			The time to use for the parameter eval operation.
+
+		\returns path to VDB file if the file SOP indeed loads a VDB file;
+
+		Just try to find any FILE SOP that has a VDB.
+
+		We don't support the general case VDB as we go through the file
+		SOP. For now we just skip this until we can find a more elegant
+		way to handle both file-loaded VDBs and general Houdini volumes.
+	*/
+	std::string node_is_vdb_loader( OBJ_Node *i_node, double i_time )
+	{
+		std::vector< SOP_Node *> files;
+		std::vector< OP_Node * > traversal; traversal.push_back( i_node );
+		while( traversal.size() )
+		{
+			OP_Node *network = traversal.back();
+			traversal.pop_back();
+			int nkids = network->getNchildren();
+			for( int i=0; i< nkids; i++ )
+			{
+				OP_Node *node = network->getChild(i);
+				SOP_Node *sop = node->castToSOPNode();
+				if( sop )
+				{
+					const UT_StringRef &SOP_name = node->getOperator()->getName();
+					if( SOP_name == "file" )
+						files.push_back( sop );
+				}
+
+				if( !node->isNetwork() )
+					continue;
+
+				OP_Network *kidnet = (OP_Network *)node;
+				if( kidnet->getNchildren() )
+				{
+					traversal.push_back( kidnet );
+				}
+			}
+		}
+
+		if( files.size() != 1 )
+		{
+			fprintf( stderr,
+					"3Delight for Houdini: we support only one VDB file per file obj" );
+			return {};
+		}
+
+		SOP_Node *file_sop = files.back();
+		int index = file_sop->getParmIndex( "file" );
+		if( index < 0 )
+		{
+			return {};
+		}
+
+		UT_String file;
+		file_sop->evalString( file, "file", 0, i_time );
+
+		if( !file.fileExtension() || ::strcmp(file.fileExtension(),".vdb") )
+		{
+			return {};
+		}
+
+		return std::string( file.c_str() );
+	}
+
+	/**
 		The only interesting thing here is how we deal with instances. We first
 		addPrimitive() recursively to resolve the instanced geometry since we
 		need it's handle to pass to the actual instancer. All the rest is
@@ -128,9 +201,9 @@ struct OBJ_Node_Refiner : public GT_Refine
 		case GT_PRIM_VDB_VOLUME:
 		{
 			std::string vdb_path =
-				scene::node_is_vdb_loader(m_node, m_context.m_current_time );
+				node_is_vdb_loader(m_node, m_context.m_current_time );
 
-			if( vdb_path.size() != 0 )
+			if( !vdb_path.empty() )
 			{
 				m_result.push_back(
 					new vdb( m_context, m_node, vdb_path, i_primitive) );
@@ -430,169 +503,6 @@ void scene::convert_to_nsi(
 	}
 }
 
-void scene::export_object_attribute_nodes(const context& i_ctx)
-{
-	for( int i = 0; i != e_invalidAttribute; i++ )
-	{
-		geo_attribute type = (geo_attribute)i;
-		const char* handle = geo_attribute_node_handle( type );
-		i_ctx.m_nsi.Create( handle, "attributes" );
-
-		i_ctx.m_nsi.SetAttribute(
-			handle,
-			NSI::IntegerArg(
-				geo_attribute_nsi_name( type ),
-				geo_attribute_nsi_default_value( type ) ? 0 : 1 ) );
-	}
-}
-
-void scene::connect_to_object_attributes_nodes(
-	const context& i_ctx,
-	OBJ_Node* i_object,
-	const std::string& i_handle	)
-{
-	for( int i = 0; i != e_invalidAttribute; i++ )
-	{
-		geo_attribute type = (geo_attribute)i;
-		adjust_geo_attribute_connection( i_ctx, i_object, i_handle, type,
-			/* first time = */ true );
-	}
-}
-
-const char* scene::geo_attribute_node_handle( geo_attribute i_type )
-{
-	switch( i_type )
-	{
-		case e_matte: return "3delight_matte";
-		case e_prelit: return "3delight_prelit";
-		case e_visCamera: return "3delight_invisibleToCameraRays";
-		case e_visShadow: return "3delight_invisibleToShadowRays";
-		case e_visDiffuse: return "3delight_invisibleToDiffuseRays";
-		case e_visReflection: return "3delight_invisibleToReflectionRays";
-		case e_visRefraction: return "3delight_invisibleToRefractionRays";
-		case e_invalidAttribute:
-		default: assert( false );
-	}
-
-	return "";
-}
-
-const char* scene::geo_attribute_nsi_name( geo_attribute i_type )
-{
-	switch( i_type )
-	{
-		case e_matte: return "matte";
-		case e_prelit: return "prelit";
-		case e_visCamera: return "visibility.camera";
-		case e_visShadow: return "visibility.shadow";
-		case e_visDiffuse: return "visibility.diffuse";
-		case e_visReflection: return "visibility.reflection";
-		case e_visRefraction: return "visibility.refraction";
-		case e_invalidAttribute:
-		default: assert( false );
-	}
-
-	return "";
-}
-
-const char* scene::geo_attribute_houdini_name( geo_attribute i_type )
-{
-	switch( i_type )
-	{
-		case e_matte:
-		case e_prelit: return "compositing";
-		case e_visCamera: return "vis_camera";
-		case e_visShadow: return "vis_shadow";
-		case e_visDiffuse: return "vis_diffuse";
-		case e_visReflection: return "vis_reflection";
-		case e_visRefraction: return "vis_refraction";
-		case e_invalidAttribute:
-		default: assert( false );
-	}
-
-	return "";
-}
-
-bool scene::geo_attribute_nsi_default_value( geo_attribute i_type )
-{
-	switch( i_type )
-	{
-		case e_matte:
-		case e_prelit:
-			return false;
-		default:
-			return true;
-	}
-}
-
-bool scene::geo_attribute_has_houdini_default_value(
-	geo_attribute i_type,
-	OBJ_Node* i_object,
-	double i_time )
-{
-	assert( i_object );
-	const char* parm_name = geo_attribute_houdini_name(i_type);
-
-	/*
-		As a safety measure, check whether the OBJ node has the actual
-		3Delight attribute defined. This can happen if for some reason
-		scripts are not run or if the user simply decides to remove
-		attributes.
-	*/
-	if(!i_object->hasParm(parm_name))
-	{
-		return true;
-	}
-
-	switch( i_type )
-	{
-		/*
-			Matte and prelit require special processing because they're separate
-			boolean attribute in NSI but are implemented by the same enum
-			attribute in 3DFH, to make them mutually exclusive.
-		*/
-		case e_matte:
-		{
-			UT_String value;
-			i_object->evalString(value, parm_name, 0, i_time);
-			// Matte is off by default
-			return value != "matte";
-		}
-		case e_prelit:
-		{
-			UT_String value;
-			i_object->evalString(value, parm_name, 0, i_time);
-			// Prelit is off by default
-			return value != "prelit";
-		}
-		default:
-			// Visibility attributes are all on by default
-			return i_object->evalInt(parm_name, 0, i_time);
-	}
-}
-
-void scene::adjust_geo_attribute_connection(
-	const context& i_ctx,
-	OBJ_Node* i_object,
-	const std::string& i_handle,
-	geo_attribute i_type,
-	bool i_first_time )
-{
-	if( !geo_attribute_has_houdini_default_value( i_type, i_object,i_ctx.m_current_time ) )
-	{
-		i_ctx.m_nsi.Connect(
-			geo_attribute_node_handle( i_type ), "",
-			i_handle.c_str(), "geometryattributes");
-	}
-	else if( !i_first_time )
-	{
-		// The disconnect operation is needed during live render.
-		i_ctx.m_nsi.Disconnect(
-			geo_attribute_node_handle( i_type ), "",
-			i_handle.c_str(), "geometryattributes");
-	}
-}
-
 void scene::find_lights(
 	const OP_BundlePattern &i_light_pattern,
 	const char* i_rop_path,
@@ -767,65 +677,4 @@ void scene::export_light_categories(
 		) );
 }
 
-/**
-	Just try to find any FILE SOP that has a VDB.
 
-	We don't support the general case VDB as we go through the file
-	SOP. For now we just skip this until we can find a more elegant
-	way to handle both file-loaded VDBs and general Houdini volumes.
-*/
-std::string scene::node_is_vdb_loader( OBJ_Node *i_node, double i_time )
-{
-	std::vector< SOP_Node *> files;
-	std::vector< OP_Node * > traversal; traversal.push_back( i_node );
-	while( traversal.size() )
-	{
-		OP_Node *network = traversal.back();
-		traversal.pop_back();
-		int nkids = network->getNchildren();
-		for( int i=0; i< nkids; i++ )
-		{
-			OP_Node *node = network->getChild(i);
-			SOP_Node *sop = node->castToSOPNode();
-			if( sop )
-			{
-				const UT_StringRef &SOP_name = node->getOperator()->getName();
-				if( SOP_name == "file" )
-					files.push_back( sop );
-			}
-
-			if( !node->isNetwork() )
-				continue;
-
-			OP_Network *kidnet = (OP_Network *)node;
-			if( kidnet->getNchildren() )
-			{
-				traversal.push_back( kidnet );
-			}
-		}
-	}
-
-	if( files.size() != 1 )
-	{
-		fprintf( stderr,
-			"3Delight for Houdini: we support only one VDB file per file obj" );
-		return {};
-	}
-
-	SOP_Node *file_sop = files.back();
-	int index = file_sop->getParmIndex( "file" );
-	if( index < 0 )
-	{
-		return {};
-	}
-
-	UT_String file;
-	file_sop->evalString( file, "file", 0, i_time );
-
-	if( !file.fileExtension() || ::strcmp(file.fileExtension(),".vdb") )
-	{
-		return {};
-	}
-
-	return std::string( file.c_str() );
-}

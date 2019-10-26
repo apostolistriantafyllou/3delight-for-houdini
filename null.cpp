@@ -1,7 +1,7 @@
 #include "null.h"
 
 #include "context.h"
-#include "scene.h"
+#include "object_attributes.h"
 
 #include <OBJ/OBJ_Node.h>
 
@@ -69,9 +69,9 @@ void null::connect( void ) const
 		Connect here to avoid to do it in each mesh creates by the refiner
 		(which may result in many hundred of connections)
 	*/
-	if ( m_object->castToOBJGeometry() )
+	if( m_object->castToOBJGeometry() )
 	{
-		scene::connect_to_object_attributes_nodes(
+		object_attributes::connect_to_object_attributes_nodes(
 			m_context, m_object, m_handle );
 	}
 }

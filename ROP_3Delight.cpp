@@ -5,6 +5,7 @@
 #include "exporter.h"
 #include "idisplay_port.h"
 #include "mplay.h"
+#include "object_attributes.h"
 #include "scene.h"
 #include "shader_library.h"
 #include "ui/select_layers_dialog.h"
@@ -386,7 +387,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 
 	executePreFrameScript(time);
 
-	scene::export_object_attribute_nodes(*m_current_render);
+	object_attributes::export_object_attribute_nodes(*m_current_render);
 	ExportTransparentSurface(*m_current_render);
 
 	scene::convert_to_nsi( *m_current_render, m_interests );

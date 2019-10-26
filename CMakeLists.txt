@@ -34,6 +34,7 @@ add_library( ${library_name} SHARED
 	polygonmesh.cpp
 	pointmesh.cpp
 	null.cpp
+	object_attributes.cpp
 	osl_utilities.cpp
 	plugin.cpp
 	safe_interest.cpp
