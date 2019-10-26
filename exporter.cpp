@@ -171,6 +171,12 @@ void exporter::export_attributes(
 		{
 			const char *name = *it;
 
+			if( !i_attributes[i] )
+			{
+				it ++;
+				continue;
+			}
+
 			const GT_DataArrayHandle &data = i_attributes[i]->get( name );
 			if( data.get() == nullptr )
 			{
