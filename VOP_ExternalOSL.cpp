@@ -886,6 +886,12 @@ VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
 
 	setOpTabSubMenuPath(i_menu_name.c_str());
 	/*
+	FIXME:
+	We need to setShaderType(VPO_BSDF_SHADER) on surface meterials. Such OSL
+	shaders have tags[] = {"surface",..} in them.
+	*/
+
+	/*
 		The RenderMask is what ends up being the MaterialNetworkSelector in
 		Hydra. If we don't set it, the default translator will not provide
 		networks at all. And if it does not match the Hydra plugin, we won't

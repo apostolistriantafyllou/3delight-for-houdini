@@ -37,7 +37,7 @@ public:
 	/// Returns the number of output parameters
 	unsigned NumOutputs()const { return m_outputs.size(); }
 
-	/// Should probably returns true if the shader can be used as a material
+	/// FIXME: must returns true if the shader can be used as a material
 	bool IsTerminal()const { return false; }
 
 	/// The shader description
