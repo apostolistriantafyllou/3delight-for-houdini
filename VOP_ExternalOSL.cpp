@@ -837,9 +837,10 @@ VOP_ExternalOSL::getInputTypeInfoSubclass(VOP_TypeInfo &o_type_info, int i_idx)
 	o_type_info.setType(GetVOPType(param.type));
 }
 
-void 
-VOP_ExternalOSL::getAllowedInputTypeInfosSubclass( unsigned i_idx,
-					      VOP_VopTypeInfoArray &o_type_infos)
+void
+VOP_ExternalOSL::getAllowedInputTypeInfosSubclass(
+	unsigned i_idx,
+	VOP_VopTypeInfoArray &o_type_infos)
 {
 	VOP_TypeInfo info;
 	getInputTypeInfoSubclass(info, i_idx);
