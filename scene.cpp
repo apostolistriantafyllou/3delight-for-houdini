@@ -32,6 +32,17 @@
 
 #include <set>
 
+namespace
+{
+
+/// Refines i_primitive and puts the resulting primitives in io_result
+bool Refine(
+	const GT_PrimitiveHandle& i_primitive,
+	OBJ_Node& i_object,
+	const context& i_context,
+	std::vector<exporter*>& io_result,
+	int i_level = 0);
+
 /**
 	\brief A GT refiner for an OBJ_Node.
 
@@ -50,7 +61,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 		OBJ_Node *i_node,
 		const context &i_context,
 		std::vector< exporter *> &i_result,
-		int level = 0 )
+		int level )
 	:
 		m_result(i_result),
 		m_node(i_node),
@@ -214,13 +225,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 			std::cout << "Refining " << m_node->getFullPath() <<
 				" to level " << m_level  << std::endl;
 #endif
-			GT_RefineParms params;
-			params.setAllowSubdivision( true );
-			params.setAddVertexNormals( true );
-			params.setCuspAngle( GEO_DEFAULT_ADJUSTED_CUSP_ANGLE );
-
-			OBJ_Node_Refiner refiner( m_node, m_context, m_result, m_level+1 );
-			if(	!i_primitive->refine( refiner, &params ) )
+			if(	!Refine( i_primitive, *m_node, m_context, m_result, m_level+1 ) )
 			{
 				std::cerr << "3Delight for Houdini: unsupported object "
 					<< m_node->getFullPath()
@@ -230,6 +235,25 @@ struct OBJ_Node_Refiner : public GT_Refine
 		}
 	}
 };
+
+bool Refine(
+	const GT_PrimitiveHandle& i_primitive,
+	OBJ_Node& i_object,
+	const context& i_context,
+	std::vector<exporter*>& io_result,
+	int i_level)
+{
+	OBJ_Node_Refiner refiner( &i_object, i_context, io_result, i_level );
+
+	GT_RefineParms params;
+	params.setAllowSubdivision( true );
+	params.setAddVertexNormals( true );
+	params.setCuspAngle( GEO_DEFAULT_ADJUSTED_CUSP_ANGLE );
+
+	return i_primitive->refine( refiner, &params );
+}
+
+}
 
 /**
 	\brief Decide what to do with the given OP_Node.
@@ -354,13 +378,7 @@ void scene::process_node(
 	std::vector< exporter *> gt_primitives;
 
 	GT_PrimitiveHandle gt( GT_GEODetail::makeDetail(detail_handle) );
-	OBJ_Node_Refiner refiner( obj, i_context, gt_primitives );
-
-	GT_RefineParms params;
-	params.setAllowSubdivision( true );
-	params.setAddVertexNormals( true );
-	params.setCuspAngle( GEO_DEFAULT_ADJUSTED_CUSP_ANGLE );
-	gt->refine( refiner, &params );
+	Refine(gt, *obj, i_context, gt_primitives);
 
 #ifdef VERBOSE
 	std::cout << obj->getFullPath() << " gave birth to " <<
