@@ -11,8 +11,9 @@
 #include <iostream>
 
 vdb::vdb(
-	const context& i_ctx, OBJ_Node *i_obj, const std::string &i_vdb_file,
-	const GT_PrimitiveHandle &i_gt_primitive )
+	const context& i_ctx, OBJ_Node *i_obj,
+	const GT_PrimitiveHandle &i_gt_primitive,
+	const std::string &i_vdb_file )
 :
 	exporter( i_ctx, i_obj, i_gt_primitive),
 	m_vdb_file(i_vdb_file)
