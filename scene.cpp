@@ -62,12 +62,6 @@ struct OBJ_Node_Refiner : public GT_Refine
 	/**
 		\brief Returns the path of a VDB file if this node is a "VDB loader".
 
-		\param i_cobj
-			The obj node to analyse.
-
-		\param i_time
-			The time to use for the parameter eval operation.
-
 		\returns path to VDB file if the file SOP indeed loads a VDB file;
 
 		Just try to find any FILE SOP that has a VDB.
@@ -76,10 +70,10 @@ struct OBJ_Node_Refiner : public GT_Refine
 		SOP. For now we just skip this until we can find a more elegant
 		way to handle both file-loaded VDBs and general Houdini volumes.
 	*/
-	std::string node_is_vdb_loader( OBJ_Node *i_node, double i_time )
+	std::string node_is_vdb_loader()const
 	{
 		std::vector< SOP_Node *> files;
-		std::vector< OP_Node * > traversal; traversal.push_back( i_node );
+		std::vector< OP_Node * > traversal; traversal.push_back( m_node );
 		while( traversal.size() )
 		{
 			OP_Node *network = traversal.back();
@@ -122,7 +116,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 		}
 
 		UT_String file;
-		file_sop->evalString( file, "file", 0, i_time );
+		file_sop->evalString( file, "file", 0, m_context.m_current_time );
 
 		if( !file.fileExtension() || ::strcmp(file.fileExtension(),".vdb") )
 		{
@@ -200,8 +194,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 
 		case GT_PRIM_VDB_VOLUME:
 		{
-			std::string vdb_path =
-				node_is_vdb_loader(m_node, m_context.m_current_time );
+			std::string vdb_path = node_is_vdb_loader();
 
 			if( !vdb_path.empty() )
 			{
