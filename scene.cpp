@@ -220,7 +220,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 			params.setCuspAngle( GEO_DEFAULT_ADJUSTED_CUSP_ANGLE );
 
 			OBJ_Node_Refiner refiner( m_node, m_context, m_result, m_level+1 );
-			if(	i_primitive->refine( refiner, &params ) )
+			if(	!i_primitive->refine( refiner, &params ) )
 			{
 				std::cerr << "3Delight for Houdini: unsupported object "
 					<< m_node->getFullPath()
