@@ -5,6 +5,7 @@
 
 #include <FS/FS_Info.h>
 #include <FS/UT_Directory.h>
+#include <UT/UT_UI.h>
 #include <VOP/VOP_Operator.h>
 
 #include <vector>
@@ -234,13 +235,15 @@ void shader_library::find_all_shaders( const char *i_root)
 	std::string maya_path = root + "/maya/osl";
 	scan_dir( maya_path, m_shaders.back().m_osos );
 
-	std::cout << "3Delight for Houdini: loaded";
-	for(const ShadersGroup& g : m_shaders)
+	if(UTisUIAvailable())
 	{
-		std::cout << "\n  " << g.m_osos.size() << " " << g.m_name << " shaders";
+		std::cout << "3Delight for Houdini: loaded";
+		for(const ShadersGroup& g : m_shaders)
+		{
+			std::cout << "\n  " << g.m_osos.size() << " " << g.m_name << " shaders";
+		}
+		std::cout << std::endl;
 	}
-	std::cout << std::endl;
-
 }
 
 /// Registers one VOP for each .oso file found in the shaders path
