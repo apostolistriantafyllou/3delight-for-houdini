@@ -8,5 +8,5 @@ if( "$nodes" == "" ) then
 endif
 
 foreach node ( $nodes )
-	source $HIH/scripts/obj/geo.cmd $node
+	obj/geo.cmd $node
 end
