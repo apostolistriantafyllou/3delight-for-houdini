@@ -38,30 +38,30 @@
 
 	collection
 	{
-		name	obj_geo_label1_group
+		name	_3dl_obj_geo_label1_group
 		parmtag	{ spare_category "3Delight" }
 		parm
 		{
-			DELIGHT_BEGIN_SEP_TITLE(obj_geo_separator1, "3Delight")
+			DELIGHT_BEGIN_SEP_TITLE(_3dl_obj_geo_separator1, "3Delight")
     	}
 		parm
 		{
-			DELIGHT_TITLE(obj_geo_label1, "3Delight", "Visibility")
+			DELIGHT_TITLE(_3dl_obj_geo_label1, "3Delight", "Visibility")
     	}
 		parm
 		{
-			DELIGHT_END_SEP_TITLE(obj_geo_separator2, "3Delight")
+			DELIGHT_END_SEP_TITLE(_3dl_obj_geo_separator2, "3Delight")
     	}
 	}
 
 	parm 
 	{
-		SOHO_TOGGLE(vis_diffuse, "Visible in Diffuse", "3Delight", 1)
+		SOHO_TOGGLE(_3dl_vis_diffuse, "Visible in Diffuse", "3Delight", 1)
 	}
 
 	parm 
 	{
-		SOHO_PARM(compositing, "Compositing", "3Delight", string, 1, "regular")
+		SOHO_PARM(_3dl_compositing, "Compositing", "3Delight", string, 1, "regular")
 		menu
 		{
 			"regular" "Regular"
@@ -72,32 +72,32 @@
 
 	collection
 	{
-		name	obj_geo_label2_group
+		name	_3dl_obj_geo_label2_group
 		parmtag	{ spare_category "3Delight" }
 		parm
 		{
-			name space2
+			name _3dl_space2
 			type label
 			nolabel
 			parmtag	{ spare_category "3Delight" }
 		}
 		parm
 		{
-			DELIGHT_BEGIN_SEP_TITLE(obj_geo_separator3, "3Delight")
+			DELIGHT_BEGIN_SEP_TITLE(_3dl_obj_geo_separator3, "3Delight")
     	}
 		parm
 		{
-			DELIGHT_TITLE(obj_geo_label2, "3Delight", "Motion Blur")
+			DELIGHT_TITLE(_3dl_obj_geo_label2, "3Delight", "Motion Blur")
     	}
 		parm
 		{
-			DELIGHT_END_SEP_TITLE(obj_geo_separator4, "3Delight")
+			DELIGHT_END_SEP_TITLE(_3dl_obj_geo_separator4, "3Delight")
     	}
 	}
 
 	parm 
 	{
-		SOHO_PARM(deformation, "Deformation Motion Blur", "3Delight", string, 1, "on1")
+		SOHO_PARM(_3dl_deformation, "Deformation Motion Blur", "3Delight", string, 1, "on1")
 		menu
 		{
 			"on1" "On (if detected)"
@@ -108,123 +108,123 @@
 
 	parm 
 	{
-		SOHO_INT(add_samples, "Additional Samples", "3Delight", 0)
+		SOHO_INT(_3dl_add_samples, "Additional Samples", "3Delight", 0)
 		range { 0! 10 }
 	}
 
 	collection
 	{
-		name	obj_geo_label3_group
+		name	_3dl_obj_geo_label3_group
 		parmtag	{ spare_category "3Delight" }
 		parm
 		{
-			name space3
+			name _3dl_space3
 			type label
 			nolabel
 			parmtag	{ spare_category "3Delight" }
 		}
 		parm
 		{
-			DELIGHT_BEGIN_SEP_TITLE(obj_geo_separator5, "3Delight")
+			DELIGHT_BEGIN_SEP_TITLE(_3dl_obj_geo_separator5, "3Delight")
     	}
 		parm
 		{
-			DELIGHT_TITLE(obj_geo_label3, "3Delight", "Attributes Override Volume")
+			DELIGHT_TITLE(_3dl_obj_geo_label3, "3Delight", "Attributes Override Volume")
     	}
 		parm
 		{
-			DELIGHT_END_SEP_TITLE(obj_geo_separator6, "3Delight")
+			DELIGHT_END_SEP_TITLE(_3dl_obj_geo_separator6, "3Delight")
     	}
 	}
 
 	parm 
 	{
-		SOHO_TOGGLE(override_vol, "Render as an Attribute Override Volume", "3Delight", 0)
+		SOHO_TOGGLE(_3dl_override_vol, "Render as an Attribute Override Volume", "3Delight", 0)
 	}
 
 	collection
 	{
-	    name	over_compositing_group
+	    name	_3dl_over_compositing_group
 		parmtag	{ spare_category "3Delight" }
 		parm
 		{
-			DELIGHT_CONTROL_NEXT_PARM(over_compositing_enable, "3Delight", 0)
+			DELIGHT_CONTROL_NEXT_PARM(_3dl_over_compositing_enable, "3Delight", 0)
 		}
 		parm 
 		{
-			SOHO_PARM(over_compositing, "Compositing", "3Delight", string, 1, "regular")
+			SOHO_PARM(_3dl_over_compositing, "Compositing", "3Delight", string, 1, "regular")
 			menu
 			{
 				"regular" "Regular"
 				"matte" "Matte"
 				"prelit" "Prelit"
 			}
-        	disablewhen  "{ over_compositing_enable == 0 }"
+        	disablewhen  "{ _3dl_over_compositing_enable == 0 }"
 		}
 	}
 
 	collection
 	{
-		name	over_vis_camera_group
+		name	_3dl_over_vis_camera_group
 		parmtag	{ spare_category "3Delight" }
 		parm
 		{
-			DELIGHT_CONTROL_NEXT_PARM(over_vis_camera_enable, "3Delight", 0)
+			DELIGHT_CONTROL_NEXT_PARM(_3dl_over_vis_camera_enable, "3Delight", 0)
 		}
 		parm 
 		{
-			SOHO_TOGGLE(over_vis_camera, "Visible to Camera", "3Delight", 0)
-        	disablewhen  "{ over_vis_camera_enable == 0 }"
+			SOHO_TOGGLE(_3dl_over_vis_camera, "Visible to Camera", "3Delight", 0)
+        	disablewhen  "{ _3dl_over_vis_camera_enable == 0 }"
 		}
 	}
 
 	collection
 	{
-	    name	over_vis_diffuse_group
+	    name	_3dl_over_vis_diffuse_group
 		parmtag	{ spare_category "3Delight" }
 		parm
 		{
-			DELIGHT_CONTROL_NEXT_PARM(over_vis_diffuse_enable, "3Delight", 0)
+			DELIGHT_CONTROL_NEXT_PARM(_3dl_over_vis_diffuse_enable, "3Delight", 0)
 		}
 		parm 
 		{
-			SOHO_TOGGLE(over_vis_diffuse, "Visible in Diffuse", "3Delight", 0)
-        	disablewhen  "{ over_vis_diffuse_enable == 0 }"
+			SOHO_TOGGLE(_3dl_over_vis_diffuse, "Visible in Diffuse", "3Delight", 0)
+        	disablewhen  "{ _3dl_over_vis_diffuse_enable == 0 }"
 		}
 	}
 
 	collection
 	{
-	    name	over_vis_reflection_group
+	    name	_3dl_over_vis_reflection_group
 		parmtag	{ spare_category "3Delight" }
 		parm
 		{
-			DELIGHT_CONTROL_NEXT_PARM(over_vis_reflection_enable, "3Delight", 0)
+			DELIGHT_CONTROL_NEXT_PARM(_3dl_over_vis_reflection_enable, "3Delight", 0)
 		}
 		parm 
 		{
-			SOHO_TOGGLE(over_vis_reflection, "Visible in Reflections", "3Delight", 0)
-        	disablewhen  "{ over_vis_reflection_enable == 0 }"
+			SOHO_TOGGLE(_3dl_over_vis_reflection, "Visible in Reflections", "3Delight", 0)
+        	disablewhen  "{ _3dl_over_vis_reflection_enable == 0 }"
 		}
 	}
 
 	collection
 	{
-	    name	over_vis_refraction_group
+	    name	_3dl_over_vis_refraction_group
 		parmtag	{ spare_category "3Delight" }
 		parm
 		{
-			DELIGHT_CONTROL_NEXT_PARM(over_vis_refraction_enable, "3Delight", 0)
+			DELIGHT_CONTROL_NEXT_PARM(_3dl_over_vis_refraction_enable, "3Delight", 0)
 		}
 		parm 
 		{
-			SOHO_TOGGLE(over_vis_refraction, "Visible in Refractions", "3Delight", 0)
-        	disablewhen  "{ over_vis_refraction_enable == 0 }"
+			SOHO_TOGGLE(_3dl_over_vis_refraction, "Visible in Refractions", "3Delight", 0)
+        	disablewhen  "{ _3dl_over_vis_refraction_enable == 0 }"
 		}
 	}
 
 	parm 
 	{
-		SOHO_TOGGLE(override_ss, "Override Surface Shader", "3Delight", 0)
+		SOHO_TOGGLE(_3dl_override_ss, "Override Surface Shader", "3Delight", 0)
 	}
 }
