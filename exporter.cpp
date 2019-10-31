@@ -231,15 +231,15 @@ void exporter::export_override_attributes() const
 	float time = m_context.m_current_time;
 
 	// Visible to Camera override
-	if ( m_object->hasParm("over_vis_camera_enable") )
+	if ( m_object->hasParm("_3dl_over_vis_camera_enable") )
 	{
 		bool over_vis_camera_enable =
-			m_object->evalInt("over_vis_camera_enable", 0, time);
+			m_object->evalInt("_3dl_over_vis_camera_enable", 0, time);
 
 		if( over_vis_camera_enable )
 		{
 			bool vis_camera_over =
-				m_object->evalInt("over_vis_camera", 0, time);
+				m_object->evalInt("_3dl_over_vis_camera", 0, time);
 
 			arg_list.Add(
 				new NSI::IntegerArg("visibility.camera", vis_camera_over));
@@ -256,15 +256,15 @@ void exporter::export_override_attributes() const
 	}
 
 	// Visible in Diffuse override
-	if ( m_object->hasParm("over_vis_diffuse_enable") )
+	if ( m_object->hasParm("_3dl_over_vis_diffuse_enable") )
 	{
 		bool over_vis_diffuse_enable =
-			m_object->evalInt("over_vis_diffuse_enable", 0, time);
+			m_object->evalInt("_3dl_over_vis_diffuse_enable", 0, time);
 
 		if( over_vis_diffuse_enable )
 		{
 			bool vis_diffuse_over = false;
-				m_object->evalInt("over_vis_diffuse", 0, time);
+				m_object->evalInt("_3dl_over_vis_diffuse", 0, time);
 
 			arg_list.Add(
 				new NSI::IntegerArg("visibility.diffuse", vis_diffuse_over));
@@ -281,15 +281,15 @@ void exporter::export_override_attributes() const
 	}
 
 	// Visible in Reflections override
-	if ( m_object->hasParm("over_vis_reflection_enable") )
+	if ( m_object->hasParm("_3dl_over_vis_reflection_enable") )
 	{
 		bool over_vis_reflection_enable =
-			m_object->evalInt("over_vis_reflection_enable", 0, time);
+			m_object->evalInt("_3dl_over_vis_reflection_enable", 0, time);
 
 		if( over_vis_reflection_enable )
 		{
 			bool over_vis_reflection =
-				m_object->evalInt("over_vis_reflection", 0, time);
+				m_object->evalInt("_3dl_over_vis_reflection", 0, time);
 
 			arg_list.Add(
 				new NSI::IntegerArg("visibility.reflection", over_vis_reflection));
@@ -306,15 +306,15 @@ void exporter::export_override_attributes() const
 	}
 
 	// Visible in Refractions override
-	if ( m_object->hasParm("over_vis_refraction_enable") )
+	if ( m_object->hasParm("_3dl_over_vis_refraction_enable") )
 	{
 		bool over_vis_refraction_enable =
-			m_object->evalInt("over_vis_refraction_enable", 0, time);
+			m_object->evalInt("_3dl_over_vis_refraction_enable", 0, time);
 
 		if( over_vis_refraction_enable )
 		{
 			bool over_vis_refraction =
-				m_object->evalInt("over_vis_refraction", 0, time);
+				m_object->evalInt("_3dl_over_vis_refraction", 0, time);
 
 			arg_list.Add(
 				new NSI::IntegerArg("visibility.refraction", over_vis_refraction));
@@ -331,15 +331,15 @@ void exporter::export_override_attributes() const
 	}
 
 	// Compositing mode override
-	if ( m_object->hasParm("over_compositing_enable") )
+	if ( m_object->hasParm("_3dl_over_compositing_enable") )
 	{
 		bool over_compositing_enable =
-			m_object->evalInt("over_compositing_enable", 0, time);
+			m_object->evalInt("_3dl_over_compositing_enable", 0, time);
 
 		if( over_compositing_enable )
 		{
 			UT_String over_compositing;
-			m_object->evalString(over_compositing, "over_compositing", 0, time);
+			m_object->evalString(over_compositing, "_3dl_over_compositing", 0, time);
 
 			bool matte = over_compositing == "matte";
 			bool prelit = over_compositing == "prelit";
@@ -372,9 +372,9 @@ void exporter::export_override_attributes() const
 		Adjust connections to make the override effective or not according to
 		its	main override toggle.
 	*/
-	if ( m_object->hasParm("override_vol") )
+	if ( m_object->hasParm("_3dl_override_vol") )
 	{
-		bool override_vol =	m_object->evalInt("override_vol", 0, time);
+		bool override_vol =	m_object->evalInt("_3dl_override_vol", 0, time);
 		if( override_vol )
 		{
 			m_nsi.Connect( m_handle.c_str(), "",
@@ -387,7 +387,7 @@ void exporter::export_override_attributes() const
 				m_handle.c_str(), "geometryattributes" );
 #if 0
 			// FIXME - how to get surfaceShaderHandle?
-			bool override_ss = m_object->evalInt("override_ss", 0, time);
+			bool override_ss = m_object->evalInt("_3dl_override_ss", 0, time);
 
 			if ( override_ss )
 			{
