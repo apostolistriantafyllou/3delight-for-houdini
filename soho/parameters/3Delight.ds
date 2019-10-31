@@ -104,12 +104,14 @@
 			"on2" "On (always)"
 			"off" "Off"
 		}
+		disablewhen	  "{ _3dl_deformation == "on1" }"
 	}
 
 	parm 
 	{
 		SOHO_INT(_3dl_add_samples, "Additional Samples", "3Delight", 0)
 		range { 0! 10 }
+		disablewhen	  "{ _3dl_add_samples == 0 }"
 	}
 
 	collection
@@ -231,6 +233,6 @@
 	parm 
 	{
 		SOHO_TOGGLE(_3dl_override_ss, "Override Surface Shader", "3Delight", 0)
-       	disablewhen  "{ _3dl_override_vol == 0 }"
+       	disablewhen  "{ _3dl_override_vol == 0 } { _3dl_override_ss == 0 }"
 	}
 }
