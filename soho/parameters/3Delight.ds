@@ -149,6 +149,7 @@
 		parm
 		{
 			DELIGHT_CONTROL_NEXT_PARM(_3dl_over_compositing_enable, "3Delight", 0)
+			disablewhen  "{ _3dl_override_vol == 0 }"
 		}
 		parm 
 		{
@@ -159,7 +160,7 @@
 				"matte" "Matte"
 				"prelit" "Prelit"
 			}
-        	disablewhen  "{ _3dl_over_compositing_enable == 0 }"
+        	disablewhen  "{ _3dl_over_compositing_enable == 0 } { _3dl_override_vol == 0 }"
 		}
 	}
 
@@ -170,11 +171,12 @@
 		parm
 		{
 			DELIGHT_CONTROL_NEXT_PARM(_3dl_over_vis_camera_enable, "3Delight", 0)
+			disablewhen  "{ _3dl_override_vol == 0 }"
 		}
 		parm 
 		{
 			SOHO_TOGGLE(_3dl_over_vis_camera, "Visible to Camera", "3Delight", 0)
-        	disablewhen  "{ _3dl_over_vis_camera_enable == 0 }"
+        	disablewhen  "{ _3dl_over_vis_camera_enable == 0 } { _3dl_override_vol == 0 }"
 		}
 	}
 
@@ -185,11 +187,12 @@
 		parm
 		{
 			DELIGHT_CONTROL_NEXT_PARM(_3dl_over_vis_diffuse_enable, "3Delight", 0)
+			disablewhen  "{ _3dl_override_vol == 0 }"
 		}
 		parm 
 		{
 			SOHO_TOGGLE(_3dl_over_vis_diffuse, "Visible in Diffuse", "3Delight", 0)
-        	disablewhen  "{ _3dl_over_vis_diffuse_enable == 0 }"
+        	disablewhen  "{ _3dl_over_vis_diffuse_enable == 0 } { _3dl_override_vol == 0 }"
 		}
 	}
 
@@ -200,11 +203,12 @@
 		parm
 		{
 			DELIGHT_CONTROL_NEXT_PARM(_3dl_over_vis_reflection_enable, "3Delight", 0)
+			disablewhen  "{ _3dl_override_vol == 0 }"
 		}
 		parm 
 		{
 			SOHO_TOGGLE(_3dl_over_vis_reflection, "Visible in Reflections", "3Delight", 0)
-        	disablewhen  "{ _3dl_over_vis_reflection_enable == 0 }"
+        	disablewhen  "{ _3dl_over_vis_reflection_enable == 0 } { _3dl_override_vol == 0 }"
 		}
 	}
 
@@ -215,16 +219,18 @@
 		parm
 		{
 			DELIGHT_CONTROL_NEXT_PARM(_3dl_over_vis_refraction_enable, "3Delight", 0)
+			disablewhen  "{ _3dl_override_vol == 0 }"
 		}
 		parm 
 		{
 			SOHO_TOGGLE(_3dl_over_vis_refraction, "Visible in Refractions", "3Delight", 0)
-        	disablewhen  "{ _3dl_over_vis_refraction_enable == 0 }"
+        	disablewhen  "{ _3dl_over_vis_refraction_enable == 0 } { _3dl_override_vol == 0 }"
 		}
 	}
 
 	parm 
 	{
 		SOHO_TOGGLE(_3dl_override_ss, "Override Surface Shader", "3Delight", 0)
+       	disablewhen  "{ _3dl_override_vol == 0 }"
 	}
 }
