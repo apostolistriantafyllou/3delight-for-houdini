@@ -401,7 +401,7 @@ PRM_Template* settings::GetTemplates()
 
 	static std::vector<PRM_Template> overrides_templates =
 	{
-		PRM_Template(PRM_TOGGLE|PRM_TYPE_JOIN_NEXT, 1, &speed_boost, &speed_boost_d),
+		PRM_Template(PRM_TOGGLE|PRM_TYPE_JOIN_NEXT, 1, &speed_boost, &speed_boost_d, 0, 0, &settings::speed_boost_cb),
 		PRM_Template(PRM_LABEL, 0, &speed_boost_align),
 		PRM_Template(PRM_TOGGLE, 1, &disable_motion_blur, &disable_motion_blur_d),
 		PRM_Template(PRM_TOGGLE, 1, &disable_depth_of_field, &disable_depth_of_field_d),
@@ -665,6 +665,22 @@ int settings::refresh_lights_cb(
 {
 	ROP_3Delight* node = reinterpret_cast<ROP_3Delight*>(data);
 	node->m_settings.UpdateLights();
+	return 1;
+}
+
+int settings::speed_boost_cb(
+	void* data, int index, fpreal t,
+	const PRM_Template* tplate )
+{
+	ROP_3Delight* node = reinterpret_cast<ROP_3Delight*>(data);
+	assert(node);
+	bool value = node->evalInt(k_speed_boost, 0, 0.0f);
+	node->enableParm(k_disable_motion_blur, value);
+	node->enableParm(k_disable_depth_of_field, value);
+	node->enableParm(k_disable_displacement, value);
+	node->enableParm(k_disable_subsurface, value);
+	node->enableParm(k_resolution_factor, value);
+	node->enableParm(k_sampling_factor, value);
 	return 1;
 }
 

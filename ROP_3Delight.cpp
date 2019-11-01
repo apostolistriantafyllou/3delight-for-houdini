@@ -132,6 +132,7 @@ void ROP_3Delight::onCreated()
 {
 	ROP_Node::onCreated();
 	m_settings.UpdateLights();
+	m_settings.speed_boost_cb(this, 0, 0, 0);
 	enableParm(settings::k_save_ids_as_cryptomatte, false);
 	std::vector<VOP_Node*> custom_aovs;
 	scene::find_custom_aovs(custom_aovs);

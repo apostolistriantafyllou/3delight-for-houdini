@@ -46,6 +46,10 @@ public:
 		void* data, int index, fpreal t,
 		const PRM_Template* tplate );
 
+	static int speed_boost_cb(
+		void* data, int index, fpreal t,
+		const PRM_Template* tplate );
+
 public:
 	static const char* k_export_nsi;
 	static const char* k_ipr;
