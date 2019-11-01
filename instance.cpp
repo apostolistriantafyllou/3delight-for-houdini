@@ -32,7 +32,7 @@ void instance::set_attributes( void ) const
 
 /**
 */
-void instance::set_attributes_at_time( double ) const
+void instance::set_attributes_at_time( double i_time ) const
 {
 	const GT_PrimInstance *instance =
 		static_cast<const GT_PrimInstance *>(m_gt_primitive.get());
@@ -60,7 +60,7 @@ void instance::set_attributes_at_time( double ) const
 			->SetCount( transforms->entries() )
 			->SetValuePointer(matrices) );
 
-	m_nsi.SetAttribute( m_handle.c_str(), args );
+	m_nsi.SetAttributeAtTime( m_handle.c_str(), i_time, args );
 
 	delete [] matrices;
 }
