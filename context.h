@@ -78,8 +78,8 @@ public:
 	NSI::Context &m_nsi;
 	fpreal m_start_time, m_end_time;
 	fpreal m_current_time;
-	fpreal m_shutter;
 	fpreal m_frame_duration;
+	fpreal m_shutter;
 	// True if depth-of-field is enabled
 	bool m_dof;
 	bool m_batch;
