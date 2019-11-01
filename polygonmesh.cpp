@@ -104,9 +104,9 @@ void polygonmesh::set_attributes_at_time( double i_time ) const
 
 	GT_AttributeListHandle attributes[] =
 	{
-		polygon_mesh->getShared(),
-		polygon_mesh->getVertex(),
-		polygon_mesh->getUniform()
+		polygon_mesh->getPointAttributes(),
+		polygon_mesh->getVertexAttributes(),
+		polygon_mesh->getUniformAttributes()
 	};
 
 	std::vector<const char *> to_export{ "P" };

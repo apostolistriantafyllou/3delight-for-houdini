@@ -92,9 +92,9 @@ void curvemesh::set_attributes_at_time( double i_time ) const
 
 	GT_AttributeListHandle attributes[] =
 	{
-		curve->getVertex(),
-		curve->getUniform(),
-		curve->getDetail()
+		curve->getVertexAttributes(),
+		curve->getUniformAttributes(),
+		curve->getDetailAttributes()
 	};
 
 
