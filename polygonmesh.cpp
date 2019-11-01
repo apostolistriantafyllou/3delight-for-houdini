@@ -102,15 +102,6 @@ void polygonmesh::set_attributes_at_time( double i_time ) const
 	const GT_PrimPolygonMesh *polygon_mesh =
 		static_cast<const GT_PrimPolygonMesh *>(m_gt_primitive.get());
 
-	const GT_PrimPolygonMesh *with_normals =  nullptr;
-	if( !m_is_subdiv )
-	{
-		with_normals = polygon_mesh->createPointNormalsIfMissing();
-	}
-
-	if( with_normals != nullptr )
-		polygon_mesh = with_normals;
-
 	GT_AttributeListHandle attributes[] =
 	{
 		polygon_mesh->getShared(),
@@ -128,5 +119,4 @@ void polygonmesh::set_attributes_at_time( double i_time ) const
 		i_time,
 		to_export );
 
-	delete with_normals;
 }
