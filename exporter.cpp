@@ -168,16 +168,15 @@ void exporter::export_attributes(
 {
 	for( int i=0; i<i_n; i++ )
 	{
+		if( !i_attributes[i] )
+		{
+			continue;
+		}
+
 		auto it = io_which_ones.begin();
 		while( it != io_which_ones.end() )
 		{
 			const char *name = *it;
-
-			if( !i_attributes[i] )
-			{
-				it ++;
-				continue;
-			}
 
 			const GT_DataArrayHandle &data = i_attributes[i]->get( name );
 			if( data.get() == nullptr )
