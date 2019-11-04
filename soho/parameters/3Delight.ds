@@ -95,7 +95,25 @@
     	}
 	}
 
-	parm 
+	parm
+	{
+		SOHO_PARM(_3dl_transformation_blur, "Transform Motion Blur", "3Delight", string, 1, "on1")
+		menu
+		{
+			"on1" "On (if detected)"
+			"on2" "On (always)"
+			"off" "Off"
+		}
+	}
+
+	parm
+	{
+		SOHO_INT(_3dl_transformation_extra_samples, "Additional Transform Samples", "3Delight", 0)
+		range { 0! 10 }
+		disablewhen	  "{ _3dl_transformation_blur == "off" }"
+	}
+
+	parm
 	{
 		SOHO_PARM(_3dl_deformation, "Deformation Motion Blur", "3Delight", string, 1, "on1")
 		menu
@@ -106,9 +124,9 @@
 		}
 	}
 
-	parm 
+	parm
 	{
-		SOHO_INT(_3dl_add_samples, "Additional Samples", "3Delight", 0)
+		SOHO_INT(_3dl_add_samples, "Additional Deformation Samples", "3Delight", 0)
 		range { 0! 10 }
 		disablewhen	  "{ _3dl_deformation == "off" }"
 	}

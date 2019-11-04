@@ -256,7 +256,7 @@ void light::set_attributes( void ) const
 
 	set_visibility_to_camera();
 
-	for(time_sampler t(m_context, *m_object); t; t++)
+	for(time_sampler t(m_context, *m_object, time_sampler::e_deformation); t; t++)
 	{
 		set_attributes_at_time(*t);
 	}

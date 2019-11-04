@@ -5,8 +5,10 @@
 
 namespace
 {
+	const char* k_add_transformation_samples = "_3dl_transformation_blur";
+	const char* k_nb_transformation_samples = "_3dl_transformation_extra_samples";
 	const char* k_add_deformation_samples = "_3dl_deformation";
-	const char* k_nb_additional_samples = "_3dl_add_samples";
+	const char* k_nb_deformation_samples = "_3dl_add_samples";
 
 	/*
 		Calls OP_Node::isTimeDependent on i_node without using a temporary
@@ -20,7 +22,10 @@ namespace
 	}
 }
 
-time_sampler::time_sampler(const context& i_context, OBJ_Node& i_node)
+time_sampler::time_sampler(
+	const context& i_context,
+	OBJ_Node& i_node,
+	time_sampler::blur_source i_type)
 	:	m_first(i_context.ShutterOpen()),
 		m_length(i_context.m_shutter),
 		m_nb_intervals(
@@ -34,11 +39,16 @@ time_sampler::time_sampler(const context& i_context, OBJ_Node& i_node)
 		Here, we presume that the presence of k_nb_additional_samples implies
 		that our other motion blur parameters are present, too.
 	*/
-	if(i_context.MotionBlur() && i_node.hasParm(k_nb_additional_samples))
+	if(i_context.MotionBlur() && i_node.hasParm(k_nb_deformation_samples))
 	{
 		UT_String mb;
 		i_node.evalString(
-			mb, k_add_deformation_samples, 0, i_context.m_current_time);
+			mb,
+			i_type == e_deformation
+			? k_add_deformation_samples
+			: k_add_transformation_samples,
+			0,
+			i_context.m_current_time);
 
 		// This avoids testing i_node.isTimeDependent a second time
 		bool time_dependent = m_nb_intervals > 0;
@@ -49,8 +59,14 @@ time_sampler::time_sampler(const context& i_context, OBJ_Node& i_node)
 		}
 		else if(time_dependent || mb == "on2")
 		{
-			m_nb_intervals = 1 +
-				i_node.evalInt(k_nb_additional_samples, 0, i_context.m_current_time);
+			m_nb_intervals =
+				1 +
+				i_node.evalInt(
+					i_type == e_deformation
+					? k_nb_deformation_samples
+					: k_nb_transformation_samples,
+					0,
+					i_context.m_current_time);
 		}
 	}
 }

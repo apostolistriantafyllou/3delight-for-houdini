@@ -318,7 +318,7 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 
 	// Refine the geometry once per time sample
 	bool update = false;
-	for(time_sampler t(i_context, *m_object); t; t++)
+	for(time_sampler t(i_context, *m_object, time_sampler::e_deformation); t; t++)
 	{
 		OP_Context context( *t );
 		GU_DetailHandle detail_handle( sop->getCookedGeoHandle(context) );

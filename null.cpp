@@ -22,7 +22,7 @@ void null::create( void ) const
 
 void null::set_attributes( void ) const
 {
-	for(time_sampler t(m_context, *m_object); t; t++)
+	for(time_sampler t(m_context, *m_object, time_sampler::e_transformation); t; t++)
 	{
 		set_attributes_at_time(*t);
 	}

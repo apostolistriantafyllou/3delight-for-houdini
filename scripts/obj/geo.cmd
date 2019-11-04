@@ -38,6 +38,8 @@ if ( "$arg1" != "" ) then
    opproperty -f $arg1 3Delight _3dl_vis_diffuse
    opproperty -f $arg1 3Delight _3dl_compositing
    opproperty -f $arg1 3Delight _3dl_obj_geo_label2_group
+   opproperty -f $arg1 3Delight _3dl_transformation_blur
+   opproperty -f $arg1 3Delight _3dl_transformation_extra_samples
    opproperty -f $arg1 3Delight _3dl_deformation
    opproperty -f $arg1 3Delight _3dl_add_samples
    opproperty -f $arg1 3Delight _3dl_obj_geo_label3_group

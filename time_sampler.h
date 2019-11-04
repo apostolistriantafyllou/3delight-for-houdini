@@ -16,6 +16,8 @@ class time_sampler
 {
 public:
 
+	enum blur_source { e_transformation, e_deformation };
+
 	/**
 		\brief Constructor.
 
@@ -26,8 +28,11 @@ public:
 			The object which is to be sampled over time. The number of samples
 			may vary from one object to the other. In particular, some objects
 			are static and don't need motion blur at all.
+		\param i_type
+			Specifies whether we're iterating over deformation blur or
+			transformation blur time samples.
 	*/
-	time_sampler(const context& i_context, OBJ_Node& i_node);
+	time_sampler(const context& i_context, OBJ_Node& i_node, blur_source i_type);
 
 	/// Returns a null pointer if iteration is over
 	operator void*()const

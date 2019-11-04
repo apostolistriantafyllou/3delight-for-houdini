@@ -58,7 +58,7 @@ primitive::connect()const
 
 void primitive::set_attributes()const
 {
-	time_sampler t(m_context, *m_object);
+	time_sampler t(m_context, *m_object, time_sampler::e_deformation);
 	if(t.nb_samples() > m_gt_primitives.size())
 	{
 		std::cerr
