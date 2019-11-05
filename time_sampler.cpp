@@ -76,4 +76,17 @@ time_sampler::time_sampler(
 					i_context.m_current_time);
 		}
 	}
+
+	/*
+		If we need only one time sample, after all, use the current time instead
+		of the "shutter open" time. This shouldn't change anything to the
+		rendered image since an attribute specified at a single time will be
+		considered as a constant, regardless of its associated sampling time.
+		However, it makes the NSI output clearer and debugging easier.
+	*/
+	if(m_nb_intervals == 0)
+	{
+		m_first = i_context.m_current_time;
+		m_length = 0.0;
+	}
 }
