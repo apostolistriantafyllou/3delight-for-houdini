@@ -36,6 +36,9 @@ public:
 
 protected:
 
+	/// Returns true if the primitive should be rendered as a volume
+	virtual bool is_volume()const;
+
 	GT_PrimitiveHandle m_gt_primitive;
 
 private:

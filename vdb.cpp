@@ -107,6 +107,11 @@ void vdb::set_attributes( void ) const
 	set_attributes_at_time(m_context.m_current_time);
 }
 
+bool vdb::is_volume()const
+{
+	return true;
+}
+
 /**
 	There is no motion blur parameters to set here on the volumes itself as the
 	volume contains a velocity field that is supported by 3Delight. BUT,

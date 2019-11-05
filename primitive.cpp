@@ -73,10 +73,12 @@ assign_material:
 	m_nsi.Create( attributes, "attributes" );
 	m_nsi.Connect( attributes, "", m_handle, "geometryattributes" );
 
-	bool volume = 
-		m_gt_primitive->getPrimitiveType() == GT_PRIM_VDB_VOLUME ||
-		m_gt_primitive->getPrimitiveType() == GT_PRIM_VOXEL_VOLUME;
 	m_nsi.Connect(
 		material_path.buffer(), "",
-		attributes, volume ? "volumeshader" : "surfaceshader" );
+		attributes, is_volume() ? "volumeshader" : "surfaceshader" );
+}
+
+bool primitive::is_volume()const
+{
+	return false;
 }
