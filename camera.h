@@ -12,6 +12,7 @@ public:
 
 	void create( void ) const override;
 	void set_attributes( void ) const override;
+	void connect( void ) const override;
 
 	/// Returns the NSI handle used for the camera i_camera
 	static std::string get_nsi_handle(OBJ_Node& i_camera);

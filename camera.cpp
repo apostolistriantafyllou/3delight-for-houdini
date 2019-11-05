@@ -13,8 +13,8 @@ camera::camera(
 :
 	exporter( i_ctx, i_object )
 {
-	assert(i_object);
-	m_handle = get_nsi_handle(*i_object);
+	assert(m_object);
+	m_handle = get_nsi_handle(*m_object);
 }
 
 void camera::create( void ) const
@@ -25,6 +25,12 @@ void camera::create( void ) const
 void camera::set_attributes( void ) const
 {
 	set_attributes_at_time(m_context.m_current_time);
+}
+
+void camera::connect( void ) const
+{
+	std::string parent = m_object->getFullPath().c_str();
+	m_nsi.Connect( m_handle, "", parent, "objects" );
 }
 
 /**

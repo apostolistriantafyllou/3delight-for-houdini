@@ -1,4 +1,5 @@
 #include "light.h"
+
 #include "vop.h"
 #include "shader_library.h"
 
@@ -17,10 +18,9 @@ light::light( const context& i_ctx, OBJ_Node *i_object )
 :
 	exporter( i_ctx, i_object )
 {
-	m_handle = i_object->getFullPath();
 	m_handle += "|light";
 
-	m_is_env_light = i_object->getParmPtr("env_map") != nullptr;
+	m_is_env_light = m_object->getParmPtr("env_map") != nullptr;
 }
 
 void light::create( void ) const
@@ -283,8 +283,11 @@ void light::connect( void ) const
 	*/
 	if( m_object->evalInt("light_enable", 0, m_context.m_current_time) )
 	{
-		exporter::connect();
+		std::string parent_handle = m_object->getFullPath().c_str();
+		m_nsi.Connect(m_handle, "", parent_handle, "objects");
 	}
+
+	export_override_attributes();
 }
 
 /**

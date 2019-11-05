@@ -1,11 +1,11 @@
 #pragma once
 
-#include "exporter.h"
+#include "primitive.h"
 
 /**
-	\brief Poly and poly soupe exporter.
+	\brief Poly and poly soup exporter.
 */
-class polygonmesh : public exporter
+class polygonmesh : public primitive
 {
 public:
 	polygonmesh( const context&, OBJ_Node *, const GT_PrimitiveHandle &, bool subdiv );

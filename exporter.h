@@ -1,20 +1,15 @@
 #pragma once
 
-#include "context.h"
-
 /* WARNING: The order of the following two includes is important  { */
 #include <GT/GT_Primitive.h>
 #include <GT/GT_Handles.h>
 /* }  */
 
-#include <assert.h>
-#include <nsi.hpp>
-
 #include <string>
 #include <vector>
 
+class context;
 class OBJ_Node;
-class SOP_Node;
 class VOP_Node;
 namespace NSI { class Context; }
 
@@ -27,10 +22,7 @@ namespace NSI { class Context; }
 class exporter
 {
 public:
-	exporter(
-		const context &,
-		OBJ_Node *,
-		const GT_PrimitiveHandle & = sm_invalid_gt_primitive);
+	exporter( const context &, OBJ_Node * );
 
 	exporter( const context &, VOP_Node * );
 
@@ -48,21 +40,14 @@ public:
 	virtual void set_attributes( void  ) const = 0;
 
 	/**
-		\brief Connect.
+		\brief Connect to the parent object of this exporter.
 	*/
-	virtual void connect( void ) const;
+	virtual void connect( void ) const = 0;
 
 	/**
 		\brief Returns the handle of this node.
 	*/
 	const std::string &handle( void ) const;
-
-	/**
-		\brief Declare this as an instnaced object. Such objects
-		do not have to be connected to a parent transform because
-		they will be using the 'instance' exporter.
-	*/
-	void set_as_instanced( void ) { m_instanced = true; }
 
 	OBJ_Node *obj( void ) { return m_object; }
 
@@ -108,16 +93,6 @@ protected:
 		OBJ_Node *m_object;
 	};
 
-	/**
-		Will be invalid if GT primitives are not requried. Such as for the
-		null node and VOP nodes. This also happens when we deal with the
-		file node when loading a VDB file (\ref vdb).
-	*/
-	GT_PrimitiveHandle m_gt_primitive;
-
-	/** = for the default parameter in the ctor */
-	static GT_PrimitiveHandle sm_invalid_gt_primitive;
-
 	/** The export context. */
 	const context& m_context;
 
@@ -126,7 +101,4 @@ protected:
 
 	/** The NSI handle */
 	std::string m_handle;
-
-	/** =true if instanced geo */
-	bool m_instanced{false};
 };

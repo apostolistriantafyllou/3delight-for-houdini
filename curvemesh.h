@@ -1,8 +1,8 @@
 #pragma once
 
-#include "exporter.h"
+#include "primitive.h"
 
-class curvemesh : public exporter
+class curvemesh : public primitive
 {
 public:
 	curvemesh( const context&, OBJ_Node *, const GT_PrimitiveHandle &);

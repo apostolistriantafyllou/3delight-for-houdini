@@ -1,6 +1,6 @@
 #pragma once
 
-#include "exporter.h"
+#include "primitive.h"
 
 #include <string>
 
@@ -12,7 +12,7 @@
 
 	This is not a generic volume support for Houdini.
 */
-class vdb : public exporter
+class vdb : public primitive
 {
 public:
 	vdb(

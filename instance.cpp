@@ -1,7 +1,11 @@
 #include "instance.h"
 
-#include <GT/GT_PrimInstance.h>
+#include "context.h"
 
+#include <nsi.hpp>
+
+#include <GT/GT_PrimInstance.h>
+#include <OBJ/OBJ_Node.h>
 
 instance::instance(
 	const context& i_ctx,
@@ -9,7 +13,7 @@ instance::instance(
 	const GT_PrimitiveHandle &i_gt_primitive,
 	const std::string &i_geometry_handle )
 :
-	exporter( i_ctx, i_object, i_gt_primitive ),
+	primitive( i_ctx, i_object, i_gt_primitive ),
 	m_geometry_handle(i_geometry_handle)
 {
 }
@@ -21,7 +25,7 @@ void instance::create( void ) const
 
 void instance::connect( void ) const
 {
-	exporter::connect();
+	primitive::connect();
 
 	m_nsi.Connect( m_geometry_handle, "", m_handle, "sourcemodels" );
 }

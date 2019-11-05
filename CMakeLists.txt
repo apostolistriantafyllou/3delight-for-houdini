@@ -33,6 +33,7 @@ add_library( ${library_name} SHARED
 	mplay.cpp
 	polygonmesh.cpp
 	pointmesh.cpp
+	primitive.cpp
 	null.cpp
 	object_attributes.cpp
 	osl_utilities.cpp

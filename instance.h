@@ -1,11 +1,11 @@
 #pragma once
 
-#include "exporter.h"
+#include "primitive.h"
 
 /**
 	\brief exports Houdini's instance as an NSI instances node.
 */
-class instance : public exporter
+class instance : public primitive
 {
 public:
 	instance(

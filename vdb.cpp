@@ -15,7 +15,7 @@ vdb::vdb(
 	const GT_PrimitiveHandle &i_gt_primitive,
 	const std::string &i_vdb_file )
 :
-	exporter( i_ctx, i_obj, i_gt_primitive),
+	primitive( i_ctx, i_obj, i_gt_primitive),
 	m_vdb_file(i_vdb_file)
 {
 }

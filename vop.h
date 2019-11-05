@@ -10,6 +10,8 @@
 class OP_Node;
 class OP_Parameters;
 
+namespace NSI { class ArgumentList; }
+
 /**
 	Creates the NSI representation of a VOP node by creating a shader node
 	with VOP's type id as the shader file name and connecting it to it's

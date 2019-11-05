@@ -18,7 +18,6 @@ vop::vop(
 :
 	exporter( i_ctx, i_vop )
 {
-	m_handle = i_vop->getFullPath();
 }
 
 void vop::create( void ) const

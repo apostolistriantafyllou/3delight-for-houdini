@@ -14,7 +14,7 @@ curvemesh::curvemesh(
 	OBJ_Node *i_object,
 	const GT_PrimitiveHandle &i_gt_primitive )
 :
-	exporter( i_ctx, i_object, i_gt_primitive )
+	primitive( i_ctx, i_object, i_gt_primitive )
 {
 }
 

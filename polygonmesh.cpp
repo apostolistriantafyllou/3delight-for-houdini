@@ -14,7 +14,7 @@ polygonmesh::polygonmesh(
 	const GT_PrimitiveHandle &i_gt_primitive,
 	bool is_subdivision )
 :
-	exporter( i_ctx, i_object, i_gt_primitive ),
+	primitive( i_ctx, i_object, i_gt_primitive ),
 	m_is_subdiv(is_subdivision)
 {
 }

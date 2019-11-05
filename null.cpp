@@ -13,11 +13,6 @@ null::null( const context& i_ctx, OBJ_Node *i_object )
 :
 	exporter( i_ctx, i_object )
 {
-	/*
-		The null object has its full path as handle.
-		\ref exporter::exporter
-	*/
-	m_handle = i_object->getFullPath();
 }
 
 void null::create( void ) const

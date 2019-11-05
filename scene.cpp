@@ -189,7 +189,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 				return;
 			}
 
-			exporter *instanced = m_result.back();
+			primitive *instanced = (primitive*)m_result.back();
 			instanced->set_as_instanced();
 			m_result.push_back(
 				new instance(

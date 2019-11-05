@@ -1,11 +1,11 @@
 #pragma once
 
-#include "exporter.h"
+#include "primitive.h"
 
 /**
 	\brief Exporter for a GT_PrimPointMesh.
 */
-class pointmesh : public exporter
+class pointmesh : public primitive
 {
 public:
 	pointmesh( const context&, OBJ_Node *, const GT_PrimitiveHandle & );
