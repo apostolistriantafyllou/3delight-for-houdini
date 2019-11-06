@@ -36,7 +36,7 @@ void vdb::set_attributes( void ) const
 	/*
 		Houdini will nuke [DY]LD_LIBRARY_PATH on macOS. This is a bit insane
 		but reality is more insane so that's fine. We will try to get the
-		library path manually, something we usaully try to avoid for robustness
+		library path manually, something we usually try to avoid for robustness
 		reasons.
 	*/
 	const char *macos_delight = ::getenv("DELIGHT" );
@@ -57,7 +57,7 @@ void vdb::set_attributes( void ) const
 	{
 		::fprintf( stderr,
 			"3Delight for Houdini: unable to load VDB utility "
-			"function from 3Deligth dynamic library" );
+			"function from 3Delight dynamic library" );
 		return;
 	}
 
