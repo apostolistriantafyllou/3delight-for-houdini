@@ -285,8 +285,43 @@ void geometry::set_attributes()const
 
 void geometry::connect()const
 {
+	// Connect all primitives to their ancestor
+	bool volume = false;
 	for(primitive* p : m_primitives)
 	{
+		/*
+			There is only one material for the whole object. Let's hope that all
+			its components use it the same way! We give priority to the volume
+			because of our limited current support, which involves VDB
+			primitives (volumes) referred to by instancers (non-volume, but
+			also non-surface).
+		*/
+		volume = volume || p->is_volume();
+
 		p->connect();
 	}
+
+	// Do local material assignment
+
+	int index = m_object->getParmIndex( "shop_materialpath" );
+	if( index < 0 )
+	{
+		return;
+	}
+
+	UT_String material_path;
+	m_object->evalString( material_path, "shop_materialpath", 0, 0.f );
+
+	if( material_path.length() == 0 )
+	{
+		return;
+	}
+
+	std::string attributes = m_handle + "|attributes";
+	m_nsi.Create( attributes, "attributes" );
+	m_nsi.Connect( attributes, "", m_handle, "geometryattributes" );
+
+	m_nsi.Connect(
+		material_path.buffer(), "",
+		attributes, volume ? "volumeshader" : "surfaceshader" );
 }

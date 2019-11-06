@@ -23,7 +23,6 @@ public:
 	void create( void ) const override;
 	void set_attributes( void ) const override;
 
-protected:
 	bool is_volume()const override;
 
 private:

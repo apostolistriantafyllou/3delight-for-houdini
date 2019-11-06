@@ -34,10 +34,10 @@ public:
 	*/
 	void set_as_instanced( void ) { m_instanced = true; }
 
-protected:
-
 	/// Returns true if the primitive should be rendered as a volume
 	virtual bool is_volume()const;
+
+protected:
 
 	GT_PrimitiveHandle m_gt_primitive;
 
