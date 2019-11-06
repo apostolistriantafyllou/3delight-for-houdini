@@ -117,6 +117,12 @@ void vdb::set_attributes_at_time( double i_time ) const
 	UT_Matrix4D local;
 	handle->getMatrix( local );
 
+	/*
+		FIXME : this is redundant with the attribute already set by
+		primitive::connect. However, since our way of supporting VDBs involves
+		them being read as instances, that part is skipped (for now). We don't
+		want the transform to be applied twice!
+	*/
 	/* The stars are aligned for Houdini and NSI */
 	m_nsi.SetAttributeAtTime(
 		m_handle,
