@@ -36,6 +36,11 @@
 #include "$HFS/houdini/soho/parameters/CommonObject.ds"
 #include "$HFS/houdini/soho/parameters/Instance.ds"
 
+	parm
+	{
+		SOHO_TOGGLE(_3dl_render_poly_as_subd, "Render Polygons as Subdivision Surface", "3Delight", 0)
+	}
+
 	collection
 	{
 		name	_3dl_obj_geo_label1_group

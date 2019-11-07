@@ -34,6 +34,7 @@ if ( "$arg1" != "" ) then
    opspare -d over_vis_refraction $arg1
    opspare -d override_ss $arg1
 # Add properties into tab 3Delight
+   opproperty -f $arg1 3Delight _3dl_render_poly_as_subd
    opproperty -f $arg1 3Delight _3dl_obj_geo_label1_group
    opproperty -f $arg1 3Delight _3dl_vis_diffuse
    opproperty -f $arg1 3Delight _3dl_compositing

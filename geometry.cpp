@@ -202,10 +202,16 @@ struct OBJ_Node_Refiner : public GT_Refine
 		switch( i_primitive->getPrimitiveType() )
 		{
 		case GT_PRIM_POLYGON_MESH:
+		{
+			bool subdiv =
+				m_node->evalInt(
+					"_3dl_render_poly_as_subd",
+					0,
+					m_context.m_current_time);
 			m_result.push_back(
-				new polygonmesh(m_context, m_node, i_primitive, index, false) );
+				new polygonmesh(m_context, m_node, i_primitive, index, subdiv) );
 			break;
-
+		}
 		case GT_PRIM_SUBDIVISION_MESH:
 			m_result.push_back(
 				new polygonmesh(m_context, m_node,i_primitive, index, true) );
