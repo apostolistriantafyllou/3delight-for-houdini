@@ -2,6 +2,7 @@
 
 #include <OBJ/OBJ_Node.h>
 #include <OP/OP_Context.h>
+#include <SOP/SOP_Node.h>
 
 namespace
 {
@@ -15,10 +16,16 @@ namespace
 		OP_Context, which we can't because isTimeDependent's argument is
 		non-const.
 	*/
-	bool IsTimeDependent(OBJ_Node& i_node, double i_time)
+	bool IsTimeDependent(
+		OBJ_Node& i_node,
+		double i_time,
+		time_sampler::blur_source i_type)
 	{
 		OP_Context op_ctx(i_time);
-		return i_node.isTimeDependent(op_ctx);
+		return
+			i_type == time_sampler::e_deformation
+			? i_node.getRenderSopPtr()->isTimeDependent(op_ctx)
+			: i_node.isTimeDependent(op_ctx);
 	}
 }
 
@@ -30,7 +37,7 @@ time_sampler::time_sampler(
 		m_length(i_context.m_shutter),
 		m_nb_intervals(
 			i_context.MotionBlur() &&
-				IsTimeDependent(i_node, i_context.m_current_time)
+				IsTimeDependent(i_node, i_context.m_current_time, i_type)
 			? 1
 			: 0),
 		m_current_sample(0)
