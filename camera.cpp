@@ -52,8 +52,7 @@ void camera::set_attributes_at_time( double i_time ) const
 		return;
 	}
 
-	fpreal shutter = cam->SHUTTER(i_time) * m_context.m_frame_duration;
-	double nsi_shutter[2] = { i_time - shutter/2.0, i_time + shutter/2.0 };
+	double nsi_shutter[2] = { m_context.ShutterOpen(), m_context.ShutterClose() };
 
 	double nsi_clip[2] = { cam->getNEAR(i_time), cam->getFAR(i_time) };
 
