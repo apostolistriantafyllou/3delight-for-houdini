@@ -7,6 +7,55 @@
 
 #include <nsi.hpp>
 
+namespace
+{
+	/*
+		Returns the focal length of the camera, in scene units.
+
+		It uses the "focalunits" string (!) attribute to choose a scaling factor
+		to apply to the focal length returned by OBJ_Camera::FOCAL.
+
+		This system seems to assume that scene units are meters, even though
+		there is a global scene scale factor in Edit > Preferences > Hip File
+		Options named "Unit Length". It should probably play a role in the
+		computation, but since it doesn't seem to be taken into account by
+		Mantra, we'll also ignore it for the moment.
+	*/
+	double get_focal_length(OBJ_Camera& i_camera, double i_time)
+	{
+		double scale = 1.0;
+
+		// Cameras attached to light sources sometimes don't have this parameter
+		if(i_camera.hasParm("focalunits"))
+		{
+			UT_String focalunits;
+			i_camera.evalString(focalunits, "focalunits", 0, i_time);
+			if(focalunits == "mm")
+			{
+				scale = 0.001;
+			}
+			else if(focalunits == "m")
+			{
+				scale = 1.0;
+			}
+			else if(focalunits == "nm")
+			{
+				scale = 0.000001;
+			}
+			else if(focalunits == "in")
+			{
+				scale = 0.0254;
+			}
+			else if(focalunits == "ft")
+			{
+				scale = 0.3048;
+			}
+		}
+
+		return scale * i_camera.FOCAL(i_time);
+	}
+}
+
 camera::camera(
 	const context& i_ctx,
 	OBJ_Node *i_object )
@@ -39,9 +88,6 @@ void camera::connect( void ) const
 
 	NOTE: NSI expects a horizontal field of view and the description we get from
 	Houdini is for a vertical FOV.
-
-	TODO:
-	depth of field.
 */
 void camera::set_attributes_at_time( double i_time ) const
 {
@@ -81,10 +127,9 @@ void camera::set_attributes_at_time( double i_time ) const
 			m_handle,
 			(
 				NSI::FloatArg("fov",  horizontal_fov),
-				// FIXME : DOF is broken
-				NSI::IntegerArg("depthoffield.enable", false),//m_context.m_dof),
+				NSI::IntegerArg("depthoffield.enable", m_context.m_dof),
 				NSI::DoubleArg("depthoffield.fstop", cam->FSTOP(i_time)),
-				NSI::DoubleArg("depthoffield.focallength", cam->FOCAL(i_time)),
+				NSI::DoubleArg("depthoffield.focallength", get_focal_length(*cam, i_time)),
 				NSI::DoubleArg("depthoffield.focaldistance", cam->FOCUS(i_time))
 			) );
 	}
