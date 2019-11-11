@@ -28,23 +28,35 @@ void pointmesh::set_attributes_at_time(
 	const GT_PrimPointMesh *pointmesh =
 		static_cast<const GT_PrimPointMesh *>(i_gt_primitive.get());
 
-	/*
-		NSI doesn't care if it's "vertex" or "uniform". It guess that
-		from how many data its given. So just pass through the attributes
-		as one list.
-	*/
-	const GT_AttributeListHandle all_attributes[2] =
-	{
-		pointmesh->getPointAttributes(),
-		pointmesh->getDetailAttributes()
-	};
-
 	const char* width = "width";
 	std::vector<const char *> to_export;
 	to_export.push_back("P");
 	to_export.push_back(width);
+	to_export.push_back("id");
 
-	export_attributes( &all_attributes[0], 2, i_time, to_export );
+	/*
+		Export per-particles attributes first. We make sure to specify the
+		NSIParamPerVertex flag because, if the number of particles varies from
+		one time step to the next, 3Delight might not be able to guess that
+		those attributes are assigned per-vertex simply by looking at their
+		count.
+	*/
+	std::vector<int> vertex_flags(to_export.size(), NSIParamPerVertex);
+	export_attributes(
+		&pointmesh->getPointAttributes(),
+		1,
+		i_time,
+		to_export,
+		&vertex_flags[0] );
+	if(!to_export.empty())
+	{
+		// Export constant attributes if necessary
+		export_attributes(
+			&pointmesh->getDetailAttributes(),
+			1,
+			i_time,	
+			to_export );
+	}
 
 	if(std::find(to_export.begin(), to_export.end(), width) != to_export.end())
 	{
