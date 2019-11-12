@@ -34,7 +34,7 @@ time_sampler::time_sampler(
 	OBJ_Node& i_node,
 	time_sampler::blur_source i_type)
 	:	m_first(i_context.ShutterOpen()),
-		m_length(i_context.m_shutter),
+		m_last(i_context.ShutterClose()),
 		m_nb_intervals(
 			i_context.MotionBlur() &&
 				IsTimeDependent(i_node, i_context.m_current_time, i_type)
@@ -86,7 +86,6 @@ time_sampler::time_sampler(
 	*/
 	if(m_nb_intervals == 0)
 	{
-		m_first = i_context.m_current_time;
-		m_length = 0.0;
+		m_last = m_first = i_context.m_current_time;
 	}
 }

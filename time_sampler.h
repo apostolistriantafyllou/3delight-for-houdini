@@ -47,7 +47,9 @@ public:
 		{
 			return m_first;
 		}
-		return m_first + (double(m_current_sample) / double(m_nb_intervals)) * m_length;
+
+		double s = double(m_current_sample) / double(m_nb_intervals);
+		return s * m_last + (1.0-s) * m_first;
 	}
 
 	/// Move on to the next time sample.
@@ -71,7 +73,7 @@ public:
 private:
 
 	double m_first;
-	double m_length;
+	double m_last;
 	unsigned m_nb_intervals;
 	unsigned m_current_sample;
 };
