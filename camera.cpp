@@ -1,6 +1,7 @@
 #include "camera.h"
 
 #include "context.h"
+#include "time_sampler.h"
 
 #include <OBJ/OBJ_Node.h>
 #include <OBJ/OBJ_Camera.h>
@@ -73,7 +74,18 @@ void camera::create( void ) const
 
 void camera::set_attributes( void ) const
 {
-	set_attributes_at_time(m_context.m_current_time);
+	double nsi_shutter[2] = { m_context.ShutterOpen(), m_context.ShutterClose() };
+	m_nsi.SetAttribute(
+		m_handle,
+		*NSI::Argument("shutterrange")
+			.SetType(NSITypeDouble)
+			->SetCount(2)
+			->CopyValue(nsi_shutter, sizeof(nsi_shutter)));
+
+	for(time_sampler t(m_context, *m_object, time_sampler::e_deformation); t; t++)
+	{
+		set_attributes_at_time(*t);
+	}
 }
 
 void camera::connect( void ) const
@@ -98,8 +110,6 @@ void camera::set_attributes_at_time( double i_time ) const
 		return;
 	}
 
-	double nsi_shutter[2] = { m_context.ShutterOpen(), m_context.ShutterClose() };
-
 	double nsi_clip[2] = { cam->getNEAR(i_time), cam->getFAR(i_time) };
 
 	/* compute horizontal field of view */
@@ -108,23 +118,23 @@ void camera::set_attributes_at_time( double i_time ) const
 	float horizontal_fov = 2.0 * ::atan( ::tanf(V*0.5f) * 1/ratio );
 	horizontal_fov *=  360.f / (2.0 * M_PI); // to degrees
 
-	m_nsi.SetAttribute(
+	m_nsi.SetAttributeAtTime(
 		m_handle,
-		(
-			*NSI::Argument("shutterrange")
-				.SetType(NSITypeDouble)
-				->SetCount(2)
-				->CopyValue(nsi_shutter, sizeof(nsi_shutter)),
-			*NSI::Argument("clippingdistance")
-				.SetType(NSITypeDouble)
-				->SetCount(2)
-				->CopyValue(nsi_clip, sizeof(nsi_clip))
-		) );
+		i_time,
+		*NSI::Argument("clippingdistance")
+			.SetType(NSITypeDouble)
+			->SetCount(2)
+			->CopyValue(nsi_clip, sizeof(nsi_clip)));
 
 	if(cam->PROJECTION(0.0f) == OBJ_PROJ_PERSPECTIVE)
 	{
-		m_nsi.SetAttribute(
+		/*
+			We use SetAttributeAtTime even though 3Delight doesn't support
+			motion-blurring those attributes, yet.
+		*/
+		m_nsi.SetAttributeAtTime(
 			m_handle,
+			i_time,
 			(
 				NSI::FloatArg("fov",  horizontal_fov),
 				NSI::IntegerArg("depthoffield.enable", m_context.m_dof),
