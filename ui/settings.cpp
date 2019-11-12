@@ -56,6 +56,7 @@ const char* settings::k_disable_displacement = "disable_displacement";
 const char* settings::k_disable_subsurface = "disable_subsurface";
 const char* settings::k_resolution_factor = "resolution_factor";
 const char* settings::k_sampling_factor = "sampling_factor";
+const char* settings::k_default_export_nsi_filename = "default_export_nsi_filename";
 
 SelectLayersDialog* settings::sm_dialog = 0;
 
@@ -417,6 +418,9 @@ PRM_Template* settings::GetTemplates()
 	// Debug
 
 	static PRM_Name export_nsi(k_export_nsi, "Export NSI to output (file or stdout)");
+	static PRM_Name default_export_nsi_filename(k_default_export_nsi_filename, "Export NSI Filename");
+	static PRM_Default default_export_nsi_filename_d(
+		0.0f, "$HIP/render/`$HIPNAME`_`$OS`_$F4.nsi");
 	static PRM_Default export_nsi_d(false);
 
 	static PRM_Name ipr(k_ipr, "IPR");
@@ -425,6 +429,7 @@ PRM_Template* settings::GetTemplates()
 	static std::vector<PRM_Template> debug_templates =
 	{
 		PRM_Template(PRM_TOGGLE, 1, &export_nsi, &export_nsi_d),
+		PRM_Template(PRM_FILE, 1, &default_export_nsi_filename, &default_export_nsi_filename_d),
 		PRM_Template(PRM_TOGGLE, 1, &ipr, &ipr_d)
 	};
 

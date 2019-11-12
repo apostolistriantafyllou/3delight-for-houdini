@@ -352,29 +352,6 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	return 1;
 }
 
-static std::string hdkExecuteFilechooserCmd()
-{
-    // construct and run the command
-    UT_String command = "filechooser "
-						"-d $HIH/output.nsi "
-						"-n \"Export NSI\" "
-						"-p *.nsi";
-	UT_OStrStream os;
-	OPgetDirector()->getCommandManager()->execute( command, false, &os );
-
-	// retrieve the output stream string
-	UT_String res;
-	res.harden( os.str() );
-	if( res.isstring() )
-	{
-		UT_WorkArgs argv;
-		int n = res.tokenize(argv);
-		if (n > 0)
-			return argv[0];
-	}
-	return "stdout";
-}
-
 ROP_RENDER_CODE
 ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 {
@@ -387,7 +364,16 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 
 	if(m_current_render->m_export_nsi)
 	{
-		frame_nsi_file = hdkExecuteFilechooserCmd();
+		UT_String export_file;
+		evalString(
+			export_file,
+			settings::k_default_export_nsi_filename, 0,
+			time );
+		if ( export_file.isstring() )
+			frame_nsi_file = export_file.c_str();
+		else
+			frame_nsi_file = "stdout";
+
 		// Output NSI commands to the specified file or standard output
 		m_nsi.Begin(
 		(

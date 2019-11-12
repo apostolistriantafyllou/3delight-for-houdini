@@ -92,6 +92,7 @@ public:
 	static const char* k_disable_subsurface;
 	static const char* k_resolution_factor;
 	static const char* k_sampling_factor;
+	static const char* k_default_export_nsi_filename;
 
 protected:
 
