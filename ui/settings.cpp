@@ -416,7 +416,7 @@ PRM_Template* settings::GetTemplates()
 
 	// Debug
 
-	static PRM_Name export_nsi(k_export_nsi, "Export NSI to stdout");
+	static PRM_Name export_nsi(k_export_nsi, "Export NSI to output (file or stdout)");
 	static PRM_Default export_nsi_d(false);
 
 	static PRM_Name ipr(k_ipr, "IPR");
