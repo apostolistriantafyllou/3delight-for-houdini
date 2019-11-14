@@ -69,25 +69,23 @@ const char* exporter::TransparentSurfaceHandle()
 void exporter::export_attributes(
 	const GT_AttributeListHandle *i_attributes,
 	int i_n, double i_time,
-	std::vector<const char *> &io_which_ones ) const
+	std::vector<const char *> &io_which_ones,
+	const int* i_which_flags ) const
 {
-	for( int i=0; i<i_n; i++ )
+	for(int w = io_which_ones.size()-1; w >= 0; w--)
 	{
-		if( !i_attributes[i] )
-		{
-			continue;
-		}
+		const char *name = io_which_ones[w];
 
-		auto it = io_which_ones.begin();
-		while( it != io_which_ones.end() )
+		for( int i=0; i<i_n; i++ )
 		{
-			const char *name = *it;
+			if( !i_attributes[i] )
+			{
+				continue;
+			}
 
 			const GT_DataArrayHandle &data = i_attributes[i]->get( name );
 			if( data.get() == nullptr )
 			{
-				/* Name not part of this attributes list */
-				it ++;
 				continue;
 			}
 
@@ -96,11 +94,13 @@ void exporter::export_attributes(
 			{
 				std::cout << "unsupported attribute type " << data->getTypeInfo()
 					<< " of name " << name << " on " << m_handle;
-				it ++ ;
 				continue;
 			}
 
-			it = io_which_ones.erase( it );
+			int flags = i_which_flags ? i_which_flags[w] : 0;
+
+			io_which_ones.erase(io_which_ones.begin()+w);
+
 			GT_DataArrayHandle buffer_in_case_we_need_it;
 
 			if( data->getTypeInfo() == GT_TYPE_TEXTURE )
@@ -110,7 +110,8 @@ void exporter::export_attributes(
 						.SetArrayType( NSITypeFloat, 3)
 						->SetCount( data->entries() )
 						->SetValuePointer(
-							data->getF32Array(buffer_in_case_we_need_it)));
+							data->getF32Array(buffer_in_case_we_need_it))
+						->SetFlags(flags));
 				continue;
 			}
 
@@ -118,7 +119,8 @@ void exporter::export_attributes(
 				*NSI::Argument(name)
 					.SetType( nsi_type )
 					->SetCount( data->entries() )
-					->SetValuePointer( data->getF32Array(buffer_in_case_we_need_it)));
+					->SetValuePointer( data->getF32Array(buffer_in_case_we_need_it))
+					->SetFlags(flags));
 		}
 	}
 

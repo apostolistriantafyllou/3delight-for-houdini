@@ -77,6 +77,10 @@ protected:
 			that were not found in i_attributes. This allows the exporter to
 			take corrective measures (add some default attribute) or to issue
 			error messages.
+		\param i_which_flags
+			If not empty, points to an array of length io_which_ones.size()
+			containing the NSI attribute flags for each attribute in
+			i_which_ones.
 
 		\see pointmesh::set_attributes_at_time
 		\see curvemesh::set_attributes_at_time
@@ -85,7 +89,8 @@ protected:
 		const GT_AttributeListHandle *i_attributes,
 		int i_n,
 		double i_time,
-		std::vector<const char *> &i_which_ones ) const;
+		std::vector<const char *> &i_which_ones,
+		const int* i_which_flags = nullptr) const;
 
 	void export_override_attributes() const;
 
