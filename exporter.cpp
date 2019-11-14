@@ -64,8 +64,7 @@ const char* exporter::TransparentSurfaceHandle()
 	gotchas:
 	- When we find a texture coordinate attribute, we output "st".
 	  regardless of the name we find (usually "uv"). This is to be
-	  consistant with other packages.  After the first one we add a
-	  number.
+	  consistent with other packages.
 */
 void exporter::export_attributes(
 	const GT_AttributeListHandle *i_attributes,
