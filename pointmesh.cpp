@@ -39,20 +39,16 @@ void pointmesh::set_attributes_at_time(
 		pointmesh->getDetailAttributes()
 	};
 
+	const char* width = "width";
 	std::vector<const char *> to_export;
 	to_export.push_back("P");
-	to_export.push_back("width");
+	to_export.push_back(width);
 
 	export_attributes( &all_attributes[0], 2, i_time, to_export );
 
-	if( to_export.size() == 1 )
+	if(std::find(to_export.begin(), to_export.end(), width) != to_export.end())
 	{
-		/*
-			"width" not in attribute list. default to something.
-			We assume "P" is alwasy there. If not, everything is broken (tm)
-			anyway.
-		*/
-		m_nsi.SetAttributeAtTime( m_handle, i_time,
-			NSI::FloatArg("width", 0.1f) );
+		// "width" not in attribute list. default to something.
+		m_nsi.SetAttributeAtTime( m_handle, i_time, NSI::FloatArg(width, 0.1f) );
 	}
 }
