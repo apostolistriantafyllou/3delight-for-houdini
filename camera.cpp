@@ -10,8 +10,8 @@
 
 namespace
 {
-	/*
-		Returns the focal length of the camera, in scene units.
+	/**
+		\brief Returns the focal length of the camera, in scene units.
 
 		It uses the "focalunits" string (!) attribute to choose a scaling factor
 		to apply to the focal length returned by OBJ_Camera::FOCAL.
