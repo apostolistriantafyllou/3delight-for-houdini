@@ -169,7 +169,9 @@ struct OBJ_Node_Refiner : public GT_Refine
 				case GT_PRIM_SUBDIVISION_CURVES:
 				case GT_PRIM_CURVE_MESH:
 				case GT_PRIM_VDB_VOLUME:
-					if(!m_result[m_primitive_index]->add_time_sample(i_primitive))
+					assert(m_primitive_index < m_result.size());
+					if(m_primitive_index >= m_result.size() ||
+						!m_result[m_primitive_index]->add_time_sample(i_primitive))
 					{
 						m_stop = true;
 						std::cerr
@@ -345,6 +347,11 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 
 		GT_PrimitiveHandle gt( GT_GEODetail::makeDetail(detail_handle) );
 		Refine(gt, *m_object, m_context, m_primitives, update);
+
+		if(m_primitives.empty())
+		{
+			break;
+		}
 
 		update = true;
 	}
