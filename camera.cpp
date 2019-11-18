@@ -128,6 +128,12 @@ void camera::set_attributes_at_time( double i_time ) const
 
 	if(cam->PROJECTION(0.0f) == OBJ_PROJ_PERSPECTIVE)
 	{
+		bool dof = m_context.m_dof;
+		if(cam->hasParm("_3dl_enable_dof"))
+		{
+			dof = dof && cam->evalInt("_3dl_enable_dof", 0, i_time) != 0;
+		}
+
 		/*
 			We use SetAttributeAtTime even though 3Delight doesn't support
 			motion-blurring those attributes, yet.
@@ -137,7 +143,7 @@ void camera::set_attributes_at_time( double i_time ) const
 			i_time,
 			(
 				NSI::FloatArg("fov",  horizontal_fov),
-				NSI::IntegerArg("depthoffield.enable", m_context.m_dof),
+				NSI::IntegerArg("depthoffield.enable", dof),
 				NSI::DoubleArg("depthoffield.fstop", cam->FSTOP(i_time)),
 				NSI::DoubleArg("depthoffield.focallength", get_focal_length(*cam, i_time)),
 				NSI::DoubleArg("depthoffield.focaldistance", cam->FOCUS(i_time))

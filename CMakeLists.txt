@@ -85,7 +85,7 @@ install(
 	DESTINATION ${INSTALL_DIR}/scripts )
 
 install(
-	FILES scripts/obj/geo.cmd
+	FILES scripts/obj/geo.cmd scripts/obj/cam.cmd
 	DESTINATION ${INSTALL_DIR}/scripts/obj )
 
 install(

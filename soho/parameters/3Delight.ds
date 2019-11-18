@@ -257,4 +257,9 @@
 		SOHO_TOGGLE(_3dl_override_ss, "Override Surface Shader", "3Delight", 0)
        	disablewhen  "{ _3dl_override_vol == 0 } { _3dl_override_ss == 0 }"
 	}
+
+	parm
+	{
+		SOHO_TOGGLE(_3dl_enable_dof, "Depth of Field", "3Delight", 0)
+	}
 }
