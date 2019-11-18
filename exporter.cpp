@@ -39,7 +39,7 @@ const std::string &exporter::handle( void ) const
 	\returns NSITypeInvalid if we don't know what to do with
 	the type
 */
-NSIType_t gt_to_nsi_type( GT_Type i_type )
+static NSIType_t gt_to_nsi_type( GT_Type i_type, GT_Storage i_storage )
 {
 	switch( i_type)
 	{
@@ -48,11 +48,31 @@ NSIType_t gt_to_nsi_type( GT_Type i_type )
 	case GT_TYPE_VECTOR: return  NSITypeVector;
 	case GT_TYPE_TEXTURE: return  NSITypeFloat; // it's a float float[3]
 	case GT_TYPE_NORMAL: return  NSITypeNormal;
-	case GT_TYPE_NONE: return  NSITypeFloat;
-	default:
-		break;
+
+	case GT_TYPE_NONE:
+	{
+		// HDK doc for GT_TYPE_NONE says "Implicit type based on data"
+		switch( i_storage )
+		{
+		case GT_STORE_INT32: return NSITypeInteger;
+		case GT_STORE_REAL32: return NSITypeFloat;
+		case GT_STORE_REAL64: return NSITypeDouble;
+		/*
+			FIXME : we could support strings, but we would probably need some
+			kind of special handling in export_attributes.
+		case GT_STORE_STRING: return NSITypeString;
+		*/
+		/*
+			This should probably be NSITypeInvalid, as we have no idea how to
+			interpret this data. But NSITypeFloat was already there and I don't
+			know why, so I suppose there might be a reason.
+		*/
+		default: return NSITypeFloat;
+		}
 	}
-	return NSITypeInvalid;
+
+	default: return NSITypeInvalid;
+	}
 }
 
 const char* exporter::TransparentSurfaceHandle()
@@ -89,7 +109,8 @@ void exporter::export_attributes(
 				continue;
 			}
 
-			NSIType_t nsi_type = gt_to_nsi_type( data->getTypeInfo() );
+			NSIType_t nsi_type =
+				gt_to_nsi_type( data->getTypeInfo(), data->getStorage() );
 			if( nsi_type == NSITypeInvalid )
 			{
 				std::cout << "unsupported attribute type " << data->getTypeInfo()
@@ -115,11 +136,25 @@ void exporter::export_attributes(
 				continue;
 			}
 
+			const void* nsi_data = nullptr;
+			switch(nsi_type)
+			{
+				case NSITypeInteger:
+					nsi_data = data->getI32Array(buffer_in_case_we_need_it);
+					break;
+				case NSITypeDouble:
+				case NSITypeDoubleMatrix:
+					nsi_data = data->getF64Array(buffer_in_case_we_need_it);
+					break;
+				default:
+					nsi_data = data->getF32Array(buffer_in_case_we_need_it);
+			}
+
 			m_nsi.SetAttributeAtTime( m_handle, i_time,
 				*NSI::Argument(name)
 					.SetType( nsi_type )
 					->SetCount( data->entries() )
-					->SetValuePointer( data->getF32Array(buffer_in_case_we_need_it))
+					->SetValuePointer( nsi_data )
 					->SetFlags(flags));
 		}
 	}
