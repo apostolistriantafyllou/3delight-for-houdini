@@ -341,7 +341,7 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 			This seems to be important in order to avoid overwriting previous
 			time sample's handles with the current one.
 		*/
-		detail_handle.makeUnique();
+		detail_handle.addPreserveRequest();
 
 		GT_PrimitiveHandle gt( GT_GEODetail::makeDetail(detail_handle) );
 		Refine(gt, *m_object, m_context, m_primitives, update);
