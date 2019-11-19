@@ -26,7 +26,10 @@ namespace
 	{
 		double scale = 1.0;
 
-		// Cameras attached to light sources sometimes don't have this parameter
+		/*
+			light sources, which are also cameras in Houdini, don't have this
+			parameter.
+		*/
 		if(i_camera.hasParm("focalunits"))
 		{
 			UT_String focalunits;
