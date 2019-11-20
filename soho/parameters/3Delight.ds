@@ -27,6 +27,25 @@
 	type	separator \
 	parmtag	{ spare_category CATEGORY }
 
+#define DELIGHT_FULL_TITLE(NAME, TITLE)	\
+	collection	\
+	{	\
+		name	NAME##_title	\
+		parmtag	{ spare_category "3Delight" }	\
+		parm	\
+		{	\
+			DELIGHT_BEGIN_SEP_TITLE(NAME##_separator1, "3Delight")	\
+		}	\
+		parm	\
+		{	\
+			DELIGHT_TITLE(NAME##_label1, "3Delight", TITLE)	\
+		}	\
+		parm	\
+		{	\
+			DELIGHT_END_SEP_TITLE(NAME##_separator2, "3Delight")	\
+		}	\
+	}
+
 {
 	name 3Delight
 	label "3Delight"
