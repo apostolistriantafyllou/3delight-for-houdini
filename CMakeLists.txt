@@ -1,3 +1,4 @@
+
 #  Specify the minimum required version of CMake to build the project.
 cmake_minimum_required( VERSION 3.6 )
 project( 3Delight_for_Houdini )
@@ -85,7 +86,7 @@ install(
 	DESTINATION ${INSTALL_DIR}/scripts )
 
 install(
-	FILES scripts/obj/geo.cmd scripts/obj/cam.cmd
+	FILES scripts/obj/geo.cmd scripts/obj/cam.cmd scripts/obj/hlight-2.0_OnCreated.cmd scripts/obj/hlight-2.0_OnCreated.cmd.py
 	DESTINATION ${INSTALL_DIR}/scripts/obj )
 
 install(

@@ -1,3 +1,5 @@
+#include "utils.h"
+
 surface hlight(
 	color light_color = color(1),
 	float light_intensity = 1,
@@ -5,6 +7,11 @@ surface hlight(
 	int normalizearea  = 1,
 	int singlesided = 0,
 	int reverse = 0,
+	float _3dl_spread = 1,
+	float _3dl_diffuse_contribution = 1,
+	float _3dl_specular_contribution = 1,
+	float _3dl_hair_contribution = 1,
+	float _3dl_volume_contribution = 1,
 
 	/* spot light */
 	int coneenable = 0,
@@ -49,5 +56,19 @@ surface hlight(
 			scale /= surfacearea();
 	}
 
-	Ci += scale * light_color * light_intensity * pow(2, light_exposure) * emission();
+	color result = light_color * light_intensity * pow(2, light_exposure);
+	/*
+		Conditions are arranged so that if 3Delight tags hair rays as
+		specular we won't be scaling twice.
+	*/
+	if( _3dl_diffuse_contribution!=1.0 && raytype("diffuse") )
+		result *= _3dl_diffuse_contribution;
+	else if( _3dl_hair_contribution!=1.0 && raytype("hair") )
+		result *= _3dl_hair_contribution;
+	else if( _3dl_specular_contribution!=1.0 && raytype("specular") )
+		result *= _3dl_specular_contribution;
+	else if( _3dl_volume_contribution!=1.0 && raytype("volume") )
+		result *= _3dl_volume_contribution;
+
+	Ci += scale * result * emission( "focus",  spread_to_focus(_3dl_spread) );
 }
