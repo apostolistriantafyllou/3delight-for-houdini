@@ -22,7 +22,7 @@ public:
 		\brief Copy-constructor.
 
 		The callback details are duplicated so, if the interest is ever
-		activated. the callback would be called both by the source and the
+		activated, the callback would be called both by the source and the
 		newly-constructed object. This is unlikely to be a problem because it's
 		most likely a temporary state.
 	*/
@@ -34,7 +34,7 @@ public:
 		\brief Assignment operator.
 
 		The callback details are duplicated so, if the interest is ever
-		activated. the callback would be called both by the source and the
+		activated, the callback would be called both by the source and the
 		newly-assigned object. This is unlikely to be a problem because it's
 		most likely a temporary state.
 	*/
