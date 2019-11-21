@@ -37,8 +37,8 @@ public:
 	/// Returns the number of output parameters
 	unsigned NumOutputs()const { return m_outputs.size(); }
 
-	/// FIXME: must returns true if the shader can be used as a material
-	bool IsTerminal()const { return false; }
+	/// Returns true if the shader can be used as a material
+	bool IsTerminal()const { return m_terminal; }
 
 	/// The shader description
 	const DlShaderInfo& m_dl;
@@ -49,6 +49,8 @@ private:
 	std::vector<unsigned> m_inputs;
 	// Indices of output parameters
 	std::vector<unsigned> m_outputs;
+	// Indicates that the shader is meant to be used as a shading network's root
+	bool m_terminal;
 };
 
 

@@ -537,10 +537,11 @@ AddRampParameterTemplate(
 
 
 StructuredShaderInfo::StructuredShaderInfo(const DlShaderInfo* i_info)
-	:	m_dl(*i_info)
+	:	m_dl(*i_info), m_terminal(false)
 {
 	assert(i_info);
 
+	// Retrieve the description of the shader's input and output parameters
 	unsigned nparams = m_dl.nparams();
 	for(unsigned p = 0; p < nparams; p++)
 	{
@@ -553,6 +554,27 @@ StructuredShaderInfo::StructuredShaderInfo(const DlShaderInfo* i_info)
 		else
 		{
 			m_inputs.push_back(p);
+		}
+	}
+
+	// Retrieve useful tags from the shader
+	const DlShaderInfo::constvector<DlShaderInfo::Parameter>& meta =
+		i_info->metadata();
+	for(const DlShaderInfo::Parameter& param : meta)
+	{
+		if(param.name != "tags" || param.type.type != NSITypeString)
+		{
+			continue;
+		}
+
+		for(const DlShaderInfo::conststring& tag : param.sdefault)
+		{
+			// The only tag that interests us for now is "surface"
+			if(tag == "surface")
+			{
+				m_terminal = true;
+				break;
+			}
 		}
 	}
 }
@@ -751,6 +773,19 @@ VOP_ExternalOSL::VOP_ExternalOSL(
     :	VOP_Node(parent, name, entry),
 		m_shader_info(entry->m_shader_info)
 {
+	if(m_shader_info.IsTerminal())
+	{
+		/*
+			Tell Houdini that this shader can be used as a material.  It allows
+			it to appear in the "Choose Operator" window that is displayed when
+			one clicks on the associated button near an geometry object's
+			"Material" parameter field.
+			We were told to call this in an override of
+			VOP_Node::initMaterialFlag(), but it works just fine here. After
+			all, here is the earliest time we can call it.
+		*/
+		setMaterialFlag(true);
+	}
 }
 
 VOP_ExternalOSL::~VOP_ExternalOSL()
@@ -862,7 +897,6 @@ VOP_ExternalOSL::getOutputTypeInfoSubclass(VOP_TypeInfo& o_type_info, int i_idx)
 	o_type_info.setType(GetVOPType(param.type));
 }
 
-
 VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
 	const StructuredShaderInfo& i_shader_info,
 	const std::string& i_menu_name)
@@ -876,6 +910,10 @@ VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
 			i_shader_info.NumInputs(),
 			"*",
 			nullptr,
+			/*
+				FIXME : this might be useless. We probably meant to set the
+				material flag on the node, instead.
+			*/
 			i_shader_info.IsTerminal() ? OP_FLAG_OUTPUT : 0u,
 			i_shader_info.NumOutputs()),
 		m_shader_info(i_shader_info)
@@ -885,11 +923,9 @@ VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
 	setEnglish(name);
 
 	setOpTabSubMenuPath(i_menu_name.c_str());
-	/*
-	FIXME:
-	We need to setShaderType(VPO_BSDF_SHADER) on surface meterials. Such OSL
-	shaders have tags[] = {"surface",..} in them.
-	*/
+
+	VOP_OperatorInfo* vop_info =
+		static_cast<VOP_OperatorInfo*>(getOpSpecificData());
 
 	/*
 		The RenderMask is what ends up being the MaterialNetworkSelector in
@@ -897,5 +933,5 @@ VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
 		networks at all. And if it does not match the Hydra plugin, we won't
 		see the networks there.
 	*/
-	static_cast<VOP_OperatorInfo*>(getOpSpecificData())->setRenderMask("nsi");
+	vop_info->setRenderMask("nsi");
 }
