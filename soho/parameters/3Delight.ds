@@ -27,6 +27,32 @@
 	type	separator \
 	parmtag	{ spare_category CATEGORY }
 
+#define DELIGHT_FULL_TITLE(NAME, TITLE)	\
+	collection	\
+	{	\
+		name	NAME##_title	\
+		parmtag	{ spare_category "3Delight" }	\
+		parm	\
+		{	\
+			name NAME##_space	\
+			type label	\
+			nolabel	\
+			parmtag	{ spare_category "3Delight" }	\
+		}	\
+		parm	\
+		{	\
+			DELIGHT_BEGIN_SEP_TITLE(NAME##_separator1, "3Delight")	\
+		}	\
+		parm	\
+		{	\
+			DELIGHT_TITLE(NAME##_label1, "3Delight", TITLE)	\
+		}	\
+		parm	\
+		{	\
+			DELIGHT_END_SEP_TITLE(NAME##_separator2, "3Delight")	\
+		}	\
+	}
+
 {
 	name 3Delight
 	label "3Delight"
@@ -261,5 +287,38 @@
 	parm
 	{
 		SOHO_TOGGLE(_3dl_enable_dof, "Depth of Field", "3Delight", 0)
+	}
+
+	parm 
+	{
+		SOHO_FLOAT(_3dl_spread, "Spread", "3Delight", 1)
+		range { 0! 1! }
+		hidewhen	  "{ light_type != "grid" light_type != "point" } { light_type == "point" coneenable == "off" }"
+	}
+
+	DELIGHT_FULL_TITLE(_3dl_obj_light_contrib, "Contributions")
+
+	parm 
+	{
+		SOHO_FLOAT(_3dl_diffuse_contribution, "Diffuse", "3Delight", 1)
+		range { 0! 1! }
+	}
+
+	parm 
+	{
+		SOHO_FLOAT(_3dl_specular_contribution, "Specular", "3Delight", 1)
+		range { 0! 1! }
+	}
+
+	parm 
+	{
+		SOHO_FLOAT(_3dl_hair_contribution, "Hair", "3Delight", 1)
+		range { 0! 1! }
+	}
+
+	parm 
+	{
+		SOHO_FLOAT(_3dl_volume_contribution, "Volume", "3Delight", 1)
+		range { 0! 1! }
 	}
 }
