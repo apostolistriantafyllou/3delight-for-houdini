@@ -1,9 +1,11 @@
 #include "vdb.h"
 
 #include "context.h"
+#include "VOP_ExternalOSL.h"
 #include "VDBQuery.h" /* From 3delight */
 
 #include <GT/GT_Handles.h>
+#include <OBJ/OBJ_Node.h>
 
 #include <nsi_dynamic.hpp>
 #include <assert.h>
@@ -77,23 +79,58 @@ void vdb::set_attributes( void ) const
 	NSI::ArgumentList arguments;
 	arguments.Add( new NSI::CStringPArg( "vdbfilename", m_vdb_file.c_str()) );
 
+	/*
+		Retrieve the required grid names from the material (see
+		GetVolumeParams() in VOP_ExternalOSL.cpp).
+	*/
+
+	UT_String density_grid = VolumeGridParameters::density_default;
+	UT_String temperature_grid = VolumeGridParameters::temperature_default;
+	UT_String emissionintensity_grid = VolumeGridParameters::emission_default;
+	UT_String velocity_grid = VolumeGridParameters::velocity_default;
+
+	double time = m_context.m_current_time;
+	OP_Node* material = m_object->getMaterialNode(time);
+	if(material)
+	{
+		using namespace VolumeGridParameters;
+
+		if(material->hasParm(density_name))
+		{
+			material->evalString(density_grid, density_name, 0, time);
+		}
+		if(material->hasParm(temperature_name))
+		{
+			material->evalString(temperature_grid, temperature_name, 0, time);
+		}
+		if(material->hasParm(emission_name))
+		{
+			material->evalString(emissionintensity_grid, emission_name, 0, time);
+		}
+		if(material->hasParm(velocity_name))
+		{
+			material->evalString(velocity_grid, velocity_name, 0, time);
+		}
+	}
+
+	// Export required grid names if they're available
 	for( int i=0; i<num_grids; i++ )
 	{
 		std::string grid( grid_names[i] ? grid_names[i] : "" );
 
-		if( grid == "density" )
+		if( grid == density_grid.c_str() )
 		{
 			arguments.Add( new NSI::StringArg("densitygrid", grid) );
 		}
-		else if( grid == "temperature" )
+		else if( grid == temperature_grid.c_str() )
 		{
 			arguments.Add( new NSI::StringArg( "temperaturegrid", grid) );
 		}
-		else if( grid == "heat" )
+		else if( grid == emissionintensity_grid.c_str() )
 		{
 			arguments.Add( new NSI::StringArg( "emissionintensitygrid", grid) );
 		}
-		else if( grid == "velocity" || grid == "v" || grid == "vel" )
+		else if( grid == velocity_grid.c_str() )
 		{
 			arguments.Add( new NSI::StringArg( "velocitygrid", grid) );
 		}

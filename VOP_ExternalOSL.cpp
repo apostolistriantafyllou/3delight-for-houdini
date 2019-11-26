@@ -30,11 +30,7 @@ static const std::vector<const DlShaderInfo::Parameter*> GetVolumeParams()
 	static const unsigned nstrings = 4;
 	static const char label[] = "label";
 
-	static const char density_name[] = "density_grid_name";
-	static const char temperature_name[] = "temperature_grid_name";
-	static const char emission_name[] = "emission_grid_name";
-	static const char velocity_name[] = "velocity_grid_name";
-	static const char velocity_scale_name[] = "velocity_scale";
+	using namespace VolumeGridParameters;
 
 	static const conststring name_strings[nparams] =
 	{
@@ -69,12 +65,6 @@ static const std::vector<const DlShaderInfo::Parameter*> GetVolumeParams()
 		conststring(
 			velocity_scale_label, velocity_scale_label+sizeof(velocity_scale_label))
 	};
-
-	static const char density_default[] = "density";
-	static const char temperature_default[] = "";
-	static const char emission_default[] = "";
-	static const char velocity_default[] = "";
-	static const float velocity_scale_default = 1.0f;
 
 	static const conststring default_strings[nstrings] =
 	{

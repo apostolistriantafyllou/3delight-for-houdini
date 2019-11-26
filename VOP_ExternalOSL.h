@@ -9,6 +9,32 @@
 class DlShaderInfo;
 struct VOP_ExternalOSLOperator;
 
+/// Description of hardcoded parameters added to the "vdbVolume" shader
+namespace VolumeGridParameters
+{
+	/// Name of the "density" hardcoded parameter
+	const char density_name[] = "density_grid_name";
+	/// Name of the "temperature" hardcoded parameter
+	const char temperature_name[] = "temperature_grid_name";
+	/// Name of the "emission" hardcoded parameter
+	const char emission_name[] = "emission_grid_name";
+	/// Name of the "velocity" hardcoded parameter
+	const char velocity_name[] = "velocity_grid_name";
+	/// Name of the "velocity_scale" hardcoded parameter
+	const char velocity_scale_name[] = "velocity_scale";
+
+	/// Default value of the "density" hardcoded parameter
+	const char density_default[] = "density";
+	/// Default value of the "temperature" hardcoded parameter
+	const char temperature_default[] = "temperature";
+	/// Default value of the "emission" hardcoded parameter
+	const char emission_default[] = "heat";
+	/// Default value of the "velocity" hardcoded parameter
+	const char velocity_default[] = "v";
+	/// Default value of the "velocity_scale" hardcoded parameter
+	const float velocity_scale_default = 1.0f;
+}
+
 
 /// A partition of a DlShaderInfo object into input and output parameters
 class StructuredShaderInfo
