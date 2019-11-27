@@ -101,7 +101,7 @@ namespace
 	}
 
 	const char* k_shutter_efficiency = "_3dl_shutter_efficiency";
-	const char* k_shutter_center = "_3dl_shutter_center";
+//	const char* k_shutter_center = "_3dl_shutter_center";
 
 	/**
 		\brief Computes NSI's "shutteropening" attribute from 3DFH's attributes.
@@ -121,6 +121,10 @@ namespace
 		and closing rates using a single parameter, which is all is going to be
 		needed for the majority of users.  Any valid trapezoid shape can still
 		be specified by tweaking the "center" parameter.
+
+		LATEST NEWS : For now, we don't present the "center" parameter to the
+		user. When one of them asks for it, we might also get an indication for
+		a better name.
 	*/
 	void get_fully_open_shutter_range(
 		OBJ_Camera& i_camera,
@@ -135,7 +139,7 @@ namespace
 		}
 
 		double efficiency = i_camera.evalFloat(k_shutter_efficiency, 0, i_time);
-		double center = i_camera.evalFloat(k_shutter_center, 0, i_time);
+		double center = 0.5;//i_camera.evalFloat(k_shutter_center, 0, i_time);
 
 		/*
 			Now, convert efficiency/center into normalized "shutteropening"

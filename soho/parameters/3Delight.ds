@@ -337,12 +337,15 @@
 			disablewhen  "{ _3dl_shutter_duration == 0 }"
 		}
 
+/*
+		Disabled until we actually need it
 		parm
 		{
 			SOHO_FLOAT(_3dl_shutter_center, "Center", "3Delight", 0.5)
 			range { 0! 1! }
 			disablewhen  "{ _3dl_shutter_duration == 0 }"
 		}
+*/
 	}
 
 	DELIGHT_FULL_TITLE(_3dl_aperture, "Lens")
