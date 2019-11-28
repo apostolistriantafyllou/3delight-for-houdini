@@ -122,15 +122,18 @@ void vdb::set_attributes( void ) const
 		{
 			arguments.Add( new NSI::StringArg("densitygrid", grid) );
 		}
-		else if( grid == temperature_grid.c_str() )
+
+		if( grid == temperature_grid.c_str() )
 		{
 			arguments.Add( new NSI::StringArg( "temperaturegrid", grid) );
 		}
-		else if( grid == emissionintensity_grid.c_str() )
+
+		if( grid == emissionintensity_grid.c_str() )
 		{
 			arguments.Add( new NSI::StringArg( "emissionintensitygrid", grid) );
 		}
-		else if( grid == velocity_grid.c_str() )
+
+		if( grid == velocity_grid.c_str() )
 		{
 			arguments.Add( new NSI::StringArg( "velocitygrid", grid) );
 		}
