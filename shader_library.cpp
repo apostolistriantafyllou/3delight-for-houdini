@@ -235,6 +235,7 @@ void shader_library::find_all_shaders( const char *i_root)
 	std::string maya_path = root + "/maya/osl";
 	scan_dir( maya_path, m_shaders.back().m_osos );
 
+#ifndef NDEBUG
 	if(UTisUIAvailable())
 	{
 		std::cout << "3Delight for Houdini: loaded";
@@ -244,6 +245,7 @@ void shader_library::find_all_shaders( const char *i_root)
 		}
 		std::cout << std::endl;
 	}
+#endif
 }
 
 /// Registers one VOP for each .oso file found in the shaders path
