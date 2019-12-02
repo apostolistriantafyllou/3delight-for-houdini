@@ -159,3 +159,9 @@ camera::get_nsi_handle(OBJ_Node& i_camera)
 {
 	return std::string(i_camera.getFullPath()) + "|camera";
 }
+
+double
+camera::get_shutter_duration(OBJ_Camera& i_camera, double i_time)
+{
+	return i_camera.SHUTTER(i_time);
+}

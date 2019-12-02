@@ -116,7 +116,7 @@ private:
 	float GetSamplingFactor()const;
 	int GetPixelSamples()const;
 	OBJ_Camera* GetCamera()const;
-	float GetShutterInterval(float i_time)const;
+	double GetShutterInterval(double i_time)const;
 	bool HasDepthOfField()const;
 	UT_String GetObjectsToRender()const;
 	UT_String GetLightsToRender()const;

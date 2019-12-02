@@ -1208,16 +1208,16 @@ ROP_3Delight::GetCamera()const
 	return obj_node->castToOBJCamera();
 }
 
-float
-ROP_3Delight::GetShutterInterval(float i_time)const
+double
+ROP_3Delight::GetShutterInterval(double i_time)const
 {
 	if(!HasMotionBlur())
 	{
-		return 0.0f;
+		return 0.0;
 	}
 
 	OBJ_Camera* cam = ROP_3Delight::GetCamera();
-	return cam ? cam->SHUTTER(i_time) : 1.0f;
+	return cam ? camera::get_shutter_duration(*cam, i_time) : 1.0;
 }
 
 bool

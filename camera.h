@@ -2,6 +2,8 @@
 
 #include "exporter.h"
 
+class OBJ_Camera;
+
 /**
 	\brief camera exporter.
 */
@@ -16,6 +18,10 @@ public:
 
 	/// Returns the NSI handle used for the camera i_camera
 	static std::string get_nsi_handle(OBJ_Node& i_camera);
+
+	static double get_shutter_duration(
+		OBJ_Camera& i_camera,
+		double i_time);
 
 private:
 	/// Exports time-dependent attributes to NSI
