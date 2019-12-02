@@ -58,6 +58,30 @@ namespace
 
 		return scale * i_camera.FOCAL(i_time);
 	}
+
+	/// Returns the field of view for a perspective camera.
+	float get_fov(OBJ_Camera& i_camera, double i_time)
+	{
+		/*
+			Houdini's camera has an horizontal aperture parameter.  However,
+			since we don't specify a "screenwindow" when exporting the screen,
+			it will range from -1 to 1 along the vertical axis (while the
+			horizontal values will depend upon the image resolution), so the
+			"fov" attribute will be used as a vertical field of view.
+
+			Here, we suppose that the camera's aperture and focal length are
+			using the same unit, which seems to be what Mantra does, even though
+			the "focalunits" parameter seems to apply only to the focal length
+			in the UI.
+		*/
+		double horizontal_aperture = i_camera.APERTURE(i_time);
+		double aspect_ratio = i_camera.RESX(i_time) / double(i_camera.RESY(i_time));
+		double vertical_aperture = horizontal_aperture / aspect_ratio;
+		double vertical_fov =
+			2.0 * atan(vertical_aperture / 2.0 / i_camera.FOCAL(i_time));
+		return float(vertical_fov * 360.0 / (2.0 * M_PI));
+	}
+
 }
 
 camera::camera(
@@ -100,9 +124,6 @@ void camera::connect( void ) const
 /**
 	\brief Sets the field of view, clipping planes and depth of field parameters
 	of this camera.
-
-	NOTE: NSI expects a horizontal field of view and the description we get from
-	Houdini is for a vertical FOV.
 */
 void camera::set_attributes_at_time( double i_time ) const
 {
@@ -114,12 +135,6 @@ void camera::set_attributes_at_time( double i_time ) const
 	}
 
 	double nsi_clip[2] = { cam->getNEAR(i_time), cam->getFAR(i_time) };
-
-	/* compute horizontal field of view */
-	float V = 2.0f * atan2f( cam->APERTURE(i_time) * 0.5, cam->FOCAL(i_time));
-	double ratio = cam->RESX(i_time) / double(cam->RESY(i_time));
-	float horizontal_fov = 2.0 * ::atan( ::tanf(V*0.5f) * 1/ratio );
-	horizontal_fov *=  360.f / (2.0 * M_PI); // to degrees
 
 	m_nsi.SetAttributeAtTime(
 		m_handle,
@@ -145,7 +160,7 @@ void camera::set_attributes_at_time( double i_time ) const
 			m_handle,
 			i_time,
 			(
-				NSI::FloatArg("fov",  horizontal_fov),
+				NSI::FloatArg("fov", get_fov(*cam, i_time)),
 				NSI::IntegerArg("depthoffield.enable", dof),
 				NSI::DoubleArg("depthoffield.fstop", cam->FSTOP(i_time)),
 				NSI::DoubleArg("depthoffield.focallength", get_focal_length(*cam, i_time)),
