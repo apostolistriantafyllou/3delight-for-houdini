@@ -139,9 +139,15 @@ void vdb::set_attributes( void ) const
 		}
 	}
 
-#if 0
-	arguments.Add( new NSI::DoubleArg( "velocityscale", doubleValue ) );
-#endif
+	double velocity_scale = 1;
+	if( material->hasParm(VolumeGridParameters::velocity_scale_name) )
+	{
+		velocity_scale =
+			material->evalFloat(
+				VolumeGridParameters::velocity_scale_name, 0, time );
+	}
+
+	arguments.Add( new NSI::DoubleArg( "velocityscale", velocity_scale ) );
 
 	m_nsi.SetAttribute( m_handle + "|volume", arguments );
 
