@@ -643,16 +643,6 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	};
 	float crop[2][2] = {{ float(cam->CROPL(0)), float(cam->CROPB(0)) },
 						{ float(cam->CROPR(0)), float(cam->CROPT(0)) }};
-	// screenwindow
-#if 0
-	double size[2] = { cam->WINSIZEX(0), cam->WINSIZEY(0) };
-	double center[2] = { cam->WINX(0), cam->WINY(0) };
-	double sw[2][2] =
-	{
-		{ center[0] - size[0], center[1] - size[1] },
-		{ center[0] + size[0], center[1] + size[1] }
-	};
-#endif
 
 	std::string screen_name = "default_screen";
 
@@ -668,15 +658,23 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 			->SetArrayType(NSITypeFloat, 2)
 			->SetCount(2)
 			->SetValuePointer(crop),
-#if 0
-			*NSI::Argument::New("screenwindow")
-			->SetArrayType(NSITypeDouble, 2)
-			->SetCount(2)
-			->SetValuePointer(sw),
-#endif
 			NSI::IntegerArg("oversampling", GetPixelSamples())
 		) );
 
+	/*
+		If the camera is not orthographic, use the default screen window.
+		Otherwise, define it so it fits the camera's "ortho width" parameter.
+	*/
+	double sw[4];
+	if(camera::get_ortho_screen_window(sw, *cam, current_time))
+	{
+		i_ctx.m_nsi.SetAttribute(
+			screen_name,
+			*NSI::Argument::New("screenwindow")
+			->SetArrayType(NSITypeDouble, 2)
+			->SetCount(2)
+			->SetValuePointer(sw));
+	}
 
 	i_ctx.m_nsi.Connect(
 		screen_name, "",

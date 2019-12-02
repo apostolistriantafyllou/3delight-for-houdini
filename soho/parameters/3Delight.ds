@@ -284,11 +284,6 @@
        	disablewhen  "{ _3dl_override_vol == 0 } { _3dl_override_ss == 0 }"
 	}
 
-	parm
-	{
-		SOHO_TOGGLE(_3dl_enable_dof, "Depth of Field", "3Delight", 0)
-	}
-
 	parm 
 	{
 		SOHO_FLOAT(_3dl_spread, "Spread", "3Delight", 1)
@@ -320,5 +315,129 @@
 	{
 		SOHO_FLOAT(_3dl_volume_contribution, "Volume", "3Delight", 1)
 		range { 0! 1! }
+	}
+
+	DELIGHT_FULL_TITLE(_3dl_shutter, "Shutter")
+
+	collection
+	{
+	    name	_3dl_shutter_group
+		parmtag	{ spare_category "3Delight" }
+
+		parm
+		{
+			SOHO_FLOAT(_3dl_shutter_duration, "Duration", "3Delight", 0.5)
+			range { 0! 1 }
+		}
+
+		parm
+		{
+			SOHO_FLOAT(_3dl_shutter_efficiency, "Efficiency", "3Delight", 1)
+			range { 0! 1! }
+			disablewhen  "{ _3dl_shutter_duration == 0 }"
+		}
+
+		parm
+		{
+			SOHO_FLOAT(_3dl_shutter_center, "Center", "3Delight", 0.5)
+			range { 0! 1! }
+			disablewhen  "{ _3dl_shutter_duration == 0 }"
+		}
+	}
+
+	DELIGHT_FULL_TITLE(_3dl_aperture, "Lens")
+
+	collection
+	{
+	    name	_3dl_aperture_group
+		parmtag	{ spare_category "3Delight" }
+
+		parm
+		{
+			SOHO_TOGGLE(_3dl_enable_dof, "Depth of Field", "3Delight", 0)
+		}
+
+		parm
+		{
+			SOHO_TOGGLE(_3dl_enable_aperture_blades, "Use Finite Number of Blades", "3Delight", 0)
+		}
+
+		parm
+		{
+			SOHO_INT(_3dl_aperture_blades, "Number of Blades", "3Delight", 5)
+			range { 3! 10 }
+			disablewhen  "{ _3dl_enable_aperture_blades == 0 }"
+		}
+
+		parm
+		{
+			SOHO_FLOAT(_3dl_aperture_blades_rotation, "Rotation", "3Delight", 0)
+			range { 0! 180! }
+			disablewhen  "{ _3dl_enable_aperture_blades == 0 }"
+		}
+	}
+
+	DELIGHT_FULL_TITLE(_3dl_lens_distortion, "Distortion")
+
+	collection
+	{
+	    name	_3dl_lens_distortion_group
+		parmtag	{ spare_category "3Delight" }
+
+		parm
+		{
+			SOHO_PARM(_3dl_distortion_type, "Type", "3Delight", string, 1, "none")
+			menu
+			{
+				"none" "None"
+				"barrel" "Barrel"
+				"pincushion" "Pincushion"
+			}
+		}
+
+		parm
+		{
+			SOHO_FLOAT(_3dl_distortion_intensity, "Intensity", "3Delight", 0)
+			range { 0! 1! }
+			disablewhen  "{ _3dl_distortion_type == "none" }"
+		}
+	}
+
+	DELIGHT_FULL_TITLE(_3dl_projection, "Projection")
+
+	collection
+	{
+	    name	_3dl_projection_group
+		parmtag	{ spare_category "3Delight" }
+
+		parm
+		{
+			SOHO_PARM(_3dl_projection_type, "Type", "3Delight", string, 1, "perspectivecamera")
+			menu
+			{
+				"perspectivecamera" "Perspective"
+				"orthographiccamera" "Orthographic"
+				"cylindricalcamera" "Cylindrical"
+				"fisheyecamera/stereographic" "Fisheye Stereographic"
+				"fisheyecamera/equidistant" "Fisheye Equidistant"
+				"fisheyecamera/equisolidangle" "Fisheye Equisolid"
+				"fisheyecamera/orthographic" "Fisheye Orthographic"
+				"sphericalcamera" "Spherical"
+			}
+		}
+
+		parm
+		{
+			SOHO_FLOAT(_3dl_fov, "Field of View", "3Delight", 45)
+			range { 0! 360! }
+			disablewhen  "{ _3dl_projection_type == "orthographiccamera" } { _3dl_projection_type == "sphericalcamera" }"
+		}
+
+		parm
+		{
+			SOHO_FLOAT(_3dl_projection_aux_fov, "Horizontal Field of View", "3Delight", 180)
+			range { 0! 360! }
+			disablewhen  "{ _3dl_projection_type != "cylindricalcamera" }"
+		}
 	}
 }
