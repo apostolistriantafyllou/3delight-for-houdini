@@ -736,6 +736,8 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	light_names.push_back(""); // no light for the first one
 	m_settings.GetSelectedLights(light_names);
 
+	bool has_frame_buffer = false;
+
 	for (int i = 0; i < nb_aovs; i++)
 	{
 		UT_String label;
@@ -795,6 +797,8 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 			if (idisplay_output)
 			{
+				has_frame_buffer = true;
+
 				if (idisplay_driver_name.empty())
 				{
 					idisplay_driver_name = "idisplay_driver";
@@ -904,6 +908,18 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 			}
 		}
 	}
+
+	/*
+		If we have at least one frame buffer output, we go for the circular
+		pattern. When only file output is request, we will use the more
+		efficient (at least, memory wise) scanline pattern.
+	*/
+	i_ctx.m_nsi.SetAttribute( NSI_SCENE_GLOBAL,
+	(
+		NSI::CStringPArg(
+			"bucketorder",
+			has_frame_buffer ? "circle" : "horizontal")
+	) );
 }
 
 void
