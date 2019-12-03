@@ -653,9 +653,12 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		{ center[0] + size[0], center[1] + size[1] }
 	};
 #endif
-	i_ctx.m_nsi.Create("default_screen", "screen");
+
+	std::string screen_name = "default_screen";
+
+	i_ctx.m_nsi.Create(screen_name, "screen");
 	i_ctx.m_nsi.SetAttribute(
-		"default_screen",
+		screen_name,
 		(
 			*NSI::Argument::New("resolution")
 			->SetArrayType(NSITypeInteger, 2)
@@ -674,10 +677,9 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 			NSI::IntegerArg("oversampling", GetPixelSamples())
 		) );
 
-	std::string screen_name = "default_screen";
 
 	i_ctx.m_nsi.Connect(
-		screen_name.c_str(), "",
+		screen_name, "",
 		camera::get_nsi_handle(*cam), "screens");
 
 	UT_String idisplay_driver = "idisplay";
