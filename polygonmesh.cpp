@@ -78,7 +78,6 @@ void polygonmesh::set_attributes( void ) const
 
 	m_nsi.SetAttribute( m_handle.c_str(), mesh_args );
 
-	/* output the UVs only once */
 	GT_AttributeListHandle attributes[] =
 	{
 		polygon_mesh->getShared(),

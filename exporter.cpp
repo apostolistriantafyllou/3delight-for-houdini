@@ -38,6 +38,10 @@ const std::string &exporter::handle( void ) const
 
 	\returns NSITypeInvalid if we don't know what to do with
 	the type
+
+	NOTE: we don't try to resolve the "tuple size" here. For example,
+	a float with a tuple size of 3 might be better of as a "point" in NSI.
+	We let the caller take care of this.
 */
 static NSIType_t gt_to_nsi_type( GT_Type i_type, GT_Storage i_storage )
 {
@@ -116,6 +120,14 @@ void exporter::export_attributes(
 				std::cout << "unsupported attribute type " << data->getTypeInfo()
 					<< " of name " << name << " on " << m_handle;
 				continue;
+			}
+
+			if( nsi_type == NSITypeFloat && data->getTupleSize()==3 )
+			{
+				/* This seem to work well with, e.g, uvs. */
+				nsi_type = NSITypePoint;
+				if( !::strcmp(name, "uv") )
+					name = "st";
 			}
 
 			int flags = i_which_flags ? i_which_flags[w] : 0;
