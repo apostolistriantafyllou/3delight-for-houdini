@@ -381,7 +381,7 @@ void camera::changed_cb(
 	if(name == k_fov || k_aux_fov)
 	{
 		// Simply re-export all attributes.  It's not that expensive.
-		SetAttributes();
+		node.set_attributes();
 		ctx->m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
 	}
 }
