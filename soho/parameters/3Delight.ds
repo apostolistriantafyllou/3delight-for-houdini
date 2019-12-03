@@ -363,20 +363,21 @@
 		parm
 		{
 			SOHO_TOGGLE(_3dl_enable_aperture_blades, "Use Finite Number of Blades", "3Delight", 0)
+			disablewhen  "{ _3dl_enable_dof == 0 }"
 		}
 
 		parm
 		{
 			SOHO_INT(_3dl_aperture_blades, "Number of Blades", "3Delight", 5)
 			range { 3! 10 }
-			disablewhen  "{ _3dl_enable_aperture_blades == 0 }"
+			disablewhen  "{ _3dl_enable_aperture_blades == 0 } { _3dl_enable_dof == 0 }"
 		}
 
 		parm
 		{
 			SOHO_FLOAT(_3dl_aperture_blades_rotation, "Rotation", "3Delight", 0)
 			range { 0! 180! }
-			disablewhen  "{ _3dl_enable_aperture_blades == 0 }"
+			disablewhen  "{ _3dl_enable_aperture_blades == 0 } { _3dl_enable_dof == 0 }"
 		}
 	}
 
