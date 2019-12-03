@@ -374,16 +374,9 @@ void camera::changed_cb(
 
 	camera node(*ctx, i_caller->castToOBJNode());
 
-	PRM_Parm& parm = node.m_object->getParm(parm_index);
-	std::string name = parm.getToken();
-
-	// FOV attributes are the only one supported in IPR for now
-	if(name == k_fov || k_aux_fov)
-	{
-		// Simply re-export all attributes.  It's not that expensive.
-		node.set_attributes();
-		ctx->m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
-	}
+	// Simply re-export all attributes.  It's not that expensive.
+	node.set_attributes();
+	ctx->m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
 }
 
 /**
