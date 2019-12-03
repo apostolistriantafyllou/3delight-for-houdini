@@ -76,20 +76,37 @@ void polygonmesh::set_attributes( void ) const
 				"catmull-clark"));
 	}
 
-	m_nsi.SetAttribute( m_handle.c_str(), mesh_args );
+	m_nsi.SetAttribute( m_handle, mesh_args );
+
+	std::vector<const char *> to_export{ "uv" };
 
 	GT_AttributeListHandle attributes[] =
 	{
-		polygon_mesh->getShared(),
-		polygon_mesh->getVertex(),
-		polygon_mesh->getUniform()
+		polygon_mesh->getVertexAttributes(),
+		polygon_mesh->getPointAttributes(),
+		polygon_mesh->getUniformAttributes(),
+		polygon_mesh->getDetailAttributes(),
 	};
-	std::vector<const char *> to_export{ "uv" };
+
 	exporter::export_attributes(
 		attributes,
 		sizeof(attributes)/sizeof(attributes[0]),
 		m_context.m_current_time,
 		to_export );
+
+	bool uvs_have_been_output =
+		std::find(to_export.begin(), to_export.end(), "uv") == to_export.end();
+
+	if( polygon_mesh->getPointAttributes()->get("uv") &&
+		uvs_have_been_output )
+	{
+		m_nsi.SetAttribute(
+			m_handle,
+			*NSI::Argument::New( "st.indices" )
+				->SetType( NSITypeInteger )
+				->SetCount( vertex_list->entries() )
+				->SetValuePointer(vertices) );
+	}
 
 	primitive::set_attributes();
 }
@@ -108,9 +125,10 @@ void polygonmesh::set_attributes_at_time(
 
 	GT_AttributeListHandle attributes[] =
 	{
-		polygon_mesh->getPointAttributes(),
 		polygon_mesh->getVertexAttributes(),
-		polygon_mesh->getUniformAttributes()
+		polygon_mesh->getPointAttributes(),
+		polygon_mesh->getUniformAttributes(),
+		polygon_mesh->getDetailAttributes(),
 	};
 
 	std::vector<const char *> to_export{ "P" };
@@ -123,4 +141,23 @@ void polygonmesh::set_attributes_at_time(
 		i_time,
 		to_export );
 
+	bool N_have_been_output =
+		!m_is_subdiv &&
+		std::find(to_export.begin(), to_export.end(), "N") == to_export.end();
+
+	if( polygon_mesh->getPointAttributes()->get("N") &&
+		N_have_been_output )
+	{
+		const GT_DataArrayHandle &vertex_list = polygon_mesh->getVertexList();
+		GT_DataArrayHandle buffer_in_case_we_need_it;
+		const int *vertices =
+			vertex_list->getI32Array( buffer_in_case_we_need_it );
+
+		m_nsi.SetAttribute(
+			m_handle,
+			*NSI::Argument::New( "N.indices" )
+				->SetType( NSITypeInteger )
+				->SetCount( vertex_list->entries() )
+				->SetValuePointer( vertices ) );
+	}
 }
