@@ -24,6 +24,22 @@ public:
 		OP_EventType i_type,
 		void* i_data);
 
+	/**
+		\brief Returns true if the index refers to a transform parameter.
+
+		Since Houdini's object contain their own transform, but NSI geometry
+		nodes don't, we need a quick way to differentiate between transform and
+		geometry edits. This should do for now.
+	*/
+	static bool is_transform_parameter_index(int i_parm_index)
+	{
+		/*
+			The other parameters seem to have no effect on the transform : they
+			are also displayed in other tabs of the object's parameters sheet.
+		*/
+		return i_parm_index <= 13;
+	}
+
 private:
 	/// Exports time-dependent attributes to NSI
 	void set_attributes_at_time( double i_time ) const;

@@ -1,10 +1,10 @@
 #include "light.h"
 
-#include "vop.h"
-#include "shader_library.h"
-
 #include "context.h"
+#include "null.h"
+#include "shader_library.h"
 #include "time_sampler.h"
+#include "vop.h"
 
 #include <VOP/VOP_Node.h>
 #include <OBJ/OBJ_Node.h>
@@ -311,6 +311,11 @@ void light::changed_cb(
 	}
 
 	intptr_t parm_index = reinterpret_cast<intptr_t>(i_data);
+
+	if(null::is_transform_parameter_index(parm_index))
+	{
+		return;
+	}
 
 	light node(*ctx, i_caller->castToOBJNode());
 	if(!node.set_single_shader_attribute(parm_index))

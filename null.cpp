@@ -78,14 +78,8 @@ void null::changed_cb(
 	context* ctx = (context*)i_callee;
 	if(i_type == OP_PARM_CHANGED)
 	{
-		intptr_t parm_index = reinterpret_cast<intptr_t>(i_data);
-		if(parm_index > 13)
+		if(!is_transform_parameter_index(reinterpret_cast<intptr_t>(i_data)))
 		{
-			/*
-				Those parameters seem to have no effect on the transform : they
-				are	also displayed in other tabs of the object's parameters
-				sheet.
-			*/
 			return;
 		}
 
