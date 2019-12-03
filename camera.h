@@ -2,7 +2,10 @@
 
 #include "exporter.h"
 
+#include <OP/OP_Value.h>
+
 class OBJ_Camera;
+class OP_Node;
 
 /**
 	\brief camera exporter.
@@ -16,9 +19,20 @@ public:
 	void set_attributes( void ) const override;
 	void connect( void ) const override;
 
+	/**
+		\brief Callback that should be connected to an OP_Node that has an
+		associated camera exporter.
+	*/
+	static void changed_cb(
+		OP_Node* i_caller,
+		void* i_callee,
+		OP_EventType i_type,
+		void* i_data);
+
 	/// Returns the NSI handle used for the camera i_camera
 	static std::string get_nsi_handle(OBJ_Node& i_camera);
 
+	/// Returns the time during which i_camera's shutter is open, around i_time
 	static double get_shutter_duration(
 		OBJ_Camera& i_camera,
 		double i_time);

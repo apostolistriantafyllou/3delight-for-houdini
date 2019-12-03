@@ -1,6 +1,7 @@
 #include "camera.h"
 
 #include "context.h"
+#include "null.h"
 #include "shader_library.h"
 #include "time_sampler.h"
 
@@ -60,15 +61,17 @@ namespace
 		return scale * i_camera.FOCAL(i_time);
 	}
 
+	const char* k_fov = "_3dl_fov";
+
 	/// Returns the field of view for a perspective camera.
 	float get_fov(OBJ_Camera& i_camera, double i_time)
 	{
-		if(!i_camera.hasParm("_3dl_fov"))
+		if(!i_camera.hasParm(k_fov))
 		{
 			return 30.0f;
 		}
 
-		return i_camera.evalFloat("_3dl_fov", 0, i_time);
+		return i_camera.evalFloat(k_fov, 0, i_time);
 	}
 
 	/// Returns true if depth-of-field must be enabled
@@ -348,6 +351,39 @@ void camera::connect( void ) const
 {
 	std::string parent = m_object->getFullPath().c_str();
 	m_nsi.Connect( m_handle, "", parent, "objects" );
+}
+
+void camera::changed_cb(
+	OP_Node* i_caller,
+	void* i_callee,
+	OP_EventType i_type,
+	void* i_data)
+{
+	context* ctx = (context*)i_callee;
+	if(i_type != OP_PARM_CHANGED)
+	{
+		return;
+	}
+
+	intptr_t parm_index = reinterpret_cast<intptr_t>(i_data);
+
+	if(null::is_transform_parameter_index(parm_index))
+	{
+		return;
+	}
+
+	camera node(*ctx, i_caller->castToOBJNode());
+
+	PRM_Parm& parm = node.m_object->getParm(parm_index);
+	std::string name = parm.getToken();
+
+	// FOV attributes are the only one supported in IPR for now
+	if(name == k_fov || k_aux_fov)
+	{
+		// Simply re-export all attributes.  It's not that expensive.
+		SetAttributes();
+		ctx->m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
+	}
 }
 
 /**

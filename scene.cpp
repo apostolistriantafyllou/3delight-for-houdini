@@ -106,6 +106,13 @@ void scene::process_node(
 	if( obj->castToOBJCamera() )
 	{
 		o_to_export.push_back( new camera(i_context, obj) );
+		if(i_context.m_ipr)
+		{
+			io_interests.emplace_back(
+				i_node,
+				const_cast<context*>(&i_context),
+				&camera::changed_cb);
+		}
 		return;
 	}
 
