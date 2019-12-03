@@ -74,6 +74,32 @@ namespace
 		return i_camera.evalFloat(k_fov, 0, i_time);
 	}
 
+	const char* k_focal_distance = "_3dl_focal_distance";
+
+	/// Returns the focal distance for a perspective camera.
+	double get_focal_distance(OBJ_Camera& i_camera, double i_time)
+	{
+		if(!i_camera.hasParm(k_focal_distance))
+		{
+			return i_camera.FOCUS(i_time);
+		}
+
+		return i_camera.evalFloat(k_focal_distance, 0, i_time);
+	}
+
+	const char* k_fstop = "_3dl_fstop";
+
+	/// Returns the relative aperture (f-stop) for a perspective camera.
+	double get_fstop(OBJ_Camera& i_camera, double i_time)
+	{
+		if(!i_camera.hasParm(k_fstop))
+		{
+			return i_camera.FSTOP(i_time);
+		}
+
+		return i_camera.evalFloat(k_fstop, 0, i_time);
+	}
+
 	/// Returns true if depth-of-field must be enabled
 	bool get_dof(const context& i_context, OBJ_Camera& i_camera, double i_time)
 	{
@@ -419,9 +445,9 @@ void camera::set_attributes_at_time( double i_time ) const
 			(
 				NSI::FloatArg("fov", get_fov(*cam, i_time)),
 				NSI::IntegerArg("depthoffield.enable", get_dof(m_context, *cam, i_time)),
-				NSI::DoubleArg("depthoffield.fstop", cam->FSTOP(i_time)),
+				NSI::DoubleArg("depthoffield.fstop", get_fstop(*cam, i_time)),
 				NSI::DoubleArg("depthoffield.focallength", get_focal_length(*cam, i_time)),
-				NSI::DoubleArg("depthoffield.focaldistance", cam->FOCUS(i_time)),
+				NSI::DoubleArg("depthoffield.focaldistance", get_focal_distance(*cam, i_time)),
 				NSI::IntegerArg("depthoffield.aperture.enable", (int)enable_blades),
 				NSI::IntegerArg("depthoffield.aperture.sides", nb_blades),
 				NSI::DoubleArg("depthoffield.aperture.angle", blades_angle)

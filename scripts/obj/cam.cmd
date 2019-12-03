@@ -10,6 +10,8 @@ if ( "$arg1" != "" ) then
 	# collections are added.
 	set fov_defined = `run("opparm -ql $arg1 _3dl_fov")`
 	set shutter_defined = `run("opparm -ql $arg1 _3dl_shutter_duration")`
+	set focal_distance_defined = `run("opparm -ql $arg1 _3dl_focal_distance")`
+	set fstop_defined = `run("opparm -ql $arg1 _3dl_fstop")`
 	set projection_defined = `run("opparm -ql $arg1 _3dl_projection_type")`
 
 	# Add properties into tab 3Delight
@@ -43,6 +45,14 @@ if ( "$arg1" != "" ) then
 	if("$shutter_defined" == "") then
 		chadd -t 0 0 $arg1 _3dl_shutter_duration
 		chkey -t 0 -T a -F 'ch("shutter")' $arg1/_3dl_shutter_duration
+	endif
+	if("$focal_distance_defined" == "") then
+		chadd -t 0 0 $arg1 _3dl_focal_distance
+		chkey -t 0 -T a -F 'ch("focus")' $arg1/_3dl_focal_distance
+	endif
+	if("$fstop_defined" == "") then
+		chadd -t 0 0 $arg1 _3dl_fstop
+		chkey -t 0 -T a -F 'ch("fstop")' $arg1/_3dl_fstop
 	endif
 	if("$projection_defined" == "") then
 		# String values are a special case since they can be their own

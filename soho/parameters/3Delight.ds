@@ -362,6 +362,21 @@
 
 		parm
 		{
+			SOHO_FLOAT(_3dl_focal_distance, "Focus Distance", "3Delight", 0)
+			range { 0! 1000 }
+			disablewhen  "{ _3dl_enable_dof == 0 }"
+		}
+
+		parm
+		{
+			SOHO_FLOAT(_3dl_fstop, "F-Stop", "3Delight", 0)
+			range { 1.4 22 }
+			logarithmic
+			disablewhen  "{ _3dl_enable_dof == 0 }"
+		}
+
+		parm
+		{
 			SOHO_TOGGLE(_3dl_enable_aperture_blades, "Use Finite Number of Blades", "3Delight", 0)
 			disablewhen  "{ _3dl_enable_dof == 0 }"
 		}
