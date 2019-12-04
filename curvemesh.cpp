@@ -31,16 +31,7 @@ void curvemesh::create( void ) const
 		return;
 	}
 
-	if( curve->getBasis() == GT_BASIS_BSPLINE ||
-		curve->getBasis() == GT_BASIS_CATMULLROM )
-	{
-		m_nsi.Create( m_handle.c_str(), "cubiccurves" );
-	}
-	else
-	{
-		/* render everything else as linear curves, including  */
-		m_nsi.Create( m_handle.c_str(), "linearcurves" );
-	}
+	m_nsi.Create( m_handle.c_str(), "curves" );
 }
 
 /**
