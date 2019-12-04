@@ -64,14 +64,29 @@ void curvemesh::set_attributes( void ) const
 			->SetValuePointer(nvertices.get())
 		);
 
+	const char* smooth_parm = "_3dl_smooth_curves";
+
 	if( curve->getBasis() == GT_BASIS_BSPLINE )
 	{
 		m_nsi.SetAttribute( m_handle, NSI::CStringPArg("basis", "b-spline") );
 	}
-
-	if( curve->getBasis() == GT_BASIS_CATMULLROM )
+	else if( curve->getBasis() == GT_BASIS_CATMULLROM)
 	{
 		m_nsi.SetAttribute( m_handle, NSI::CStringPArg("basis", "catmull-rom") );
+	}
+	else if(m_object->hasParm(smooth_parm) &&
+		m_object->evalInt(smooth_parm, 0, m_context.m_current_time) != 0)
+	{
+		m_nsi.SetAttribute(
+			m_handle,
+			(
+				NSI::CStringPArg("basis", "catmull-rom"),
+				NSI::IntegerArg("extrapolate", 1)
+			) );
+	}
+	else
+	{
+		m_nsi.SetAttribute( m_handle, NSI::CStringPArg("basis", "linear") );
 	}
 
 	primitive::set_attributes();
