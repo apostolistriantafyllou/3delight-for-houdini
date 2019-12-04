@@ -122,13 +122,6 @@ void exporter::export_attributes(
 				continue;
 			}
 
-			if( nsi_type == NSITypeFloat && data->getTupleSize()==3 )
-			{
-				/* This seem to work well with, e.g, uvs. */
-				nsi_type = NSITypePoint;
-				if( !::strcmp(name, "uv") )
-					name = "st";
-			}
 
 			int flags = i_which_flags ? i_which_flags[w] : 0;
 
@@ -162,12 +155,28 @@ void exporter::export_attributes(
 					nsi_data = data->getF32Array(buffer_in_case_we_need_it);
 			}
 
-			m_nsi.SetAttributeAtTime( m_handle, i_time,
-				*NSI::Argument(name)
-					.SetType( nsi_type )
-					->SetCount( data->entries() )
-					->SetValuePointer( nsi_data )
-					->SetFlags(flags));
+			if( !::strcmp(name, "uv") )
+				name = "st";
+
+			if( nsi_type == NSITypeFloat && data->getTupleSize()>1 )
+			{
+				m_nsi.SetAttributeAtTime( m_handle, i_time,
+					*NSI::Argument(name)
+						.SetArrayType( nsi_type, data->getTupleSize() )
+						->SetCount( data->entries() )
+						->SetValuePointer( nsi_data )
+						->SetFlags(flags));
+			}
+			else
+			{
+				m_nsi.SetAttributeAtTime( m_handle, i_time,
+					*NSI::Argument(name)
+						.SetType( nsi_type )
+						->SetCount( data->entries() )
+						->SetValuePointer( nsi_data )
+						->SetFlags(flags));
+			}
+
 		}
 	}
 
