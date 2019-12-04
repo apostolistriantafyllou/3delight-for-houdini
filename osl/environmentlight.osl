@@ -10,5 +10,6 @@ environmentlight(
 	R = rotate(R, M_PI, vector(0,1,0));
 	float s = (-atan2(R[0], R[2]) + M_PI) / (2*M_PI);
 	float t = 1 - acos(R[1]) / M_PI;
-	Ci = emission() * (color)texture(env_map, s, t) * light_color * light_intensity * pow(2, light_exposure);
+	color tex = env_map == "" ? color(1) : (color)texture(env_map, s, t);
+	Ci = emission() * tex * light_color * light_intensity * pow(2, light_exposure);
 }
