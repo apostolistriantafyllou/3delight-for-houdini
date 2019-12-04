@@ -48,4 +48,5 @@ private:
 
 	std::vector<UT_NetSocket*> m_clients;
 	std::vector<std::thread> m_threads;
+	int m_main_thread;
 };

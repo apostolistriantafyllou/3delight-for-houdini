@@ -27,7 +27,8 @@ idisplay_port *idisplay_port::get_instance()
 }
 
 idisplay_port::idisplay_port()
-	: UT_SocketListener(UT_NetSocket::newSocket(0))
+	:	UT_SocketListener(UT_NetSocket::newSocket(0)),
+		m_main_thread(SYSgetSTID())
 {
 	start();
 }
@@ -215,7 +216,9 @@ void idisplay_port::ExecuteJSonCommand(const UT_JSONValue& i_object)
 			return;
 		}
 
-		rop_node->execute(0);
+		double time =
+			OPgetDirector()->getChannelManager()->getEvaluateTime(m_main_thread);
+		rop_node->executeSingle(time);
 	}
 	else if (op == "select layer")
 	{
