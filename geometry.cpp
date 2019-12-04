@@ -66,72 +66,6 @@ struct OBJ_Node_Refiner : public GT_Refine
 	{
 	}
 
-	/**
-		\brief Returns the path of a VDB file if this node is a "VDB loader".
-
-		\returns path to VDB file if the file SOP indeed loads a VDB file;
-
-		Just try to find any FILE SOP that has a VDB.
-
-		We don't support the general case VDB as we go through the file
-		SOP. For now we just skip this until we can find a more elegant
-		way to handle both file-loaded VDBs and general Houdini volumes.
-	*/
-	std::string node_is_vdb_loader()const
-	{
-		std::vector< SOP_Node *> files;
-		std::vector< OP_Node * > traversal; traversal.push_back( m_node );
-		while( traversal.size() )
-		{
-			OP_Node *network = traversal.back();
-			traversal.pop_back();
-			int nkids = network->getNchildren();
-			for( int i=0; i< nkids; i++ )
-			{
-				OP_Node *node = network->getChild(i);
-				SOP_Node *sop = node->castToSOPNode();
-				if( sop )
-				{
-					const UT_StringRef &SOP_name = node->getOperator()->getName();
-					if( SOP_name == "file" )
-						files.push_back( sop );
-				}
-
-				if( !node->isNetwork() )
-					continue;
-
-				OP_Network *kidnet = (OP_Network *)node;
-				if( kidnet->getNchildren() )
-				{
-					traversal.push_back( kidnet );
-				}
-			}
-		}
-
-		if( files.size() != 1 )
-		{
-			fprintf( stderr,
-					"3Delight for Houdini: we support only one VDB file per file obj" );
-			return {};
-		}
-
-		SOP_Node *file_sop = files.back();
-		int index = file_sop->getParmIndex( "file" );
-		if( index < 0 )
-		{
-			return {};
-		}
-
-		UT_String file;
-		file_sop->evalString( file, "file", 0, m_context.m_current_time );
-
-		if( !file.fileExtension() || ::strcmp(file.fileExtension(),".vdb") )
-		{
-			return {};
-		}
-
-		return std::string( file.c_str() );
-	}
 
 	/**
 		One interesting thing here is how we deal with instances. We first
@@ -267,7 +201,8 @@ struct OBJ_Node_Refiner : public GT_Refine
 
 		case GT_PRIM_VDB_VOLUME:
 		{
-			std::string vdb_path = node_is_vdb_loader();
+			std::string vdb_path =
+				vdb::node_is_vdb_loader( m_node, m_context.m_current_time );
 
 			if( !vdb_path.empty() )
 			{

@@ -6,6 +6,7 @@
 
 #include <GT/GT_Handles.h>
 #include <OBJ/OBJ_Node.h>
+#include <SOP/SOP_Node.h>
 
 #include <nsi_dynamic.hpp>
 #include <assert.h>
@@ -185,3 +186,74 @@ void vdb::set_attributes_at_time(
 		i_time,
 		NSI::DoubleMatrixArg( "transformationmatrix", local.data() ) );
 }
+
+/**
+	\brief Returns the path of a VDB file if this node is a "VDB loader".
+
+	\returns path to VDB file if the file SOP indeed loads a VDB file or
+	empty string if not a valid VDB loader.
+
+	Just try to find any FILE SOP that has a VDB.
+
+	We don't support the general case VDB as we go through the file
+	SOP. For now we just skip this until we can find a more elegant
+	way to handle both file-loaded VDBs and general Houdini volumes.
+*/
+std::string vdb::node_is_vdb_loader( OBJ_Node *i_node, double i_time )
+{
+	std::vector< SOP_Node *> files;
+	std::vector< OP_Node * > traversal; traversal.push_back( i_node );
+
+	while( traversal.size() )
+	{
+		OP_Node *network = traversal.back();
+		traversal.pop_back();
+		int nkids = network->getNchildren();
+		for( int i=0; i< nkids; i++ )
+		{
+			OP_Node *node = network->getChild(i);
+			SOP_Node *sop = node->castToSOPNode();
+			if( sop )
+			{
+				const UT_StringRef &SOP_name = node->getOperator()->getName();
+				if( SOP_name == "file" )
+					files.push_back( sop );
+			}
+
+			if( !node->isNetwork() )
+				continue;
+
+			OP_Network *kidnet = (OP_Network *)node;
+			if( kidnet->getNchildren() )
+			{
+				traversal.push_back( kidnet );
+			}
+		}
+	}
+
+	if( files.size() != 1 )
+	{
+		fprintf(
+			stderr,
+			"3Delight for Houdini: we support only one VDB file per file obj" );
+		return {};
+	}
+
+	SOP_Node *file_sop = files.back();
+	int index = file_sop->getParmIndex( "file" );
+	if( index < 0 )
+	{
+		return {};
+	}
+
+	UT_String file;
+	file_sop->evalString( file, "file", 0, i_time );
+
+	if( !file.fileExtension() || ::strcmp(file.fileExtension(),".vdb") )
+	{
+		return {};
+	}
+
+	return std::string( file.c_str() );
+}
+

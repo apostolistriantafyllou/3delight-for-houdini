@@ -8,6 +8,7 @@
 #include "null.h"
 #include "safe_interest.h"
 #include "vop.h"
+#include "vdb.h"
 /* } */
 
 #include "context.h"
@@ -302,7 +303,9 @@ void scene::find_lights(
 		{
 			OP_Node *node = network->getChild(i);
 			OBJ_Node *obj = node->castToOBJNode();
-			if( obj && obj->castToOBJLight() )
+			if( obj &&
+				(obj->castToOBJLight() ||
+					!vdb::node_is_vdb_loader(obj, 0).empty()) )
 			{
 				if( i_light_pattern.match(obj, i_rop_path, true))
 				{

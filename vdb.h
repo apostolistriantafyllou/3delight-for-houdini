@@ -4,6 +4,8 @@
 
 #include <string>
 
+class OBJ_Node;
+
 /**
 	\brief Exports a file node that points to a VDB file.
 
@@ -30,6 +32,8 @@ public:
 	void set_attributes_at_time(
 		double i_time,
 		const GT_PrimitiveHandle i_gt_primitive)const override;
+
+	static std::string node_is_vdb_loader( OBJ_Node *i_node, double i_time );
 
 private:
 	/* VDB file path. */
