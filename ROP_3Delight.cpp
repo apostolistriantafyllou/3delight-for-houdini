@@ -139,6 +139,11 @@ void ROP_3Delight::onCreated()
 	aov::updateCustomVariables(custom_aovs);
 }
 
+void ROP_3Delight::StartRenderFromIDisplay(double i_time)
+{
+	executeSingle(i_time);
+}
+
 bool ROP_3Delight::HasMotionBlur() const
 {
 	return

@@ -1,5 +1,7 @@
 #include "idisplay_port.h"
 
+#include "ROP_3Delight.h"
+
 #include <HOM/HOM_Module.h>
 #include <OBJ/OBJ_Light.h>
 #include <OP/OP_Director.h>
@@ -216,9 +218,15 @@ void idisplay_port::ExecuteJSonCommand(const UT_JSONValue& i_object)
 			return;
 		}
 
+		ROP_3Delight* rop_3dl = dynamic_cast<ROP_3Delight*>(rop_node);
+		if(!rop_3dl)
+		{
+			return;
+		}
+
 		double time =
 			OPgetDirector()->getChannelManager()->getEvaluateTime(m_main_thread);
-		rop_node->executeSingle(time);
+		rop_3dl->StartRenderFromIDisplay(time);
 	}
 	else if (op == "select layer")
 	{

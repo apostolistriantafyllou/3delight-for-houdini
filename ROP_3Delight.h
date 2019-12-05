@@ -48,6 +48,9 @@ public:
 	bool HasMotionBlur()const;
 	virtual void onCreated();
 
+	/// Manually restarts rendering at the request of the i-display framebuffer
+	void StartRenderFromIDisplay(double i_time);
+
 protected:
 
 	ROP_3Delight(
