@@ -233,9 +233,11 @@ std::string vdb::node_is_vdb_loader( OBJ_Node *i_node, double i_time )
 
 	if( files.size() != 1 )
 	{
+#if 0
 		fprintf(
 			stderr,
 			"3Delight for Houdini: we support only one VDB file per file obj" );
+#endif
 		return {};
 	}
 
