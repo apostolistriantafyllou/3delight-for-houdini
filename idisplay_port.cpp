@@ -226,7 +226,34 @@ void idisplay_port::ExecuteJSonCommand(const UT_JSONValue& i_object)
 
 		double time =
 			OPgetDirector()->getChannelManager()->getEvaluateTime(m_main_thread);
-		rop_3dl->StartRenderFromIDisplay(time);
+
+		// Render with a crop region if possible
+		UT_JSONValue* useCropObj = object_map->get("usecrop");
+		if(useCropObj && useCropObj->getType() == UT_JSONValue::JSON_INT &&
+			useCropObj->getB())
+		{
+			UT_JSONValue* cropObj = object_map->get("cropregion");
+			if(cropObj->getType() == UT_JSONValue::JSON_ARRAY)
+			{
+				UT_JSONValueArray* cropArray = cropObj->getArray();
+				if(cropArray && cropArray->size() == 4 &&
+					(cropArray->get(0)->getType() == UT_JSONValue::JSON_INT ||
+					(cropArray->get(0)->getType() == UT_JSONValue::JSON_REAL)))
+				{
+					float crop[4] =
+					{
+						float(cropArray->get(0)->getF()),
+						float(cropArray->get(1)->getF()),
+						float(cropArray->get(2)->getF()),
+						float(cropArray->get(3)->getF())
+					};
+					rop_3dl->StartRenderFromIDisplay(time, crop);
+					return;
+				}
+			}
+		}
+
+		rop_3dl->StartRenderFromIDisplay(time, nullptr);
 	}
 	else if (op == "select layer")
 	{

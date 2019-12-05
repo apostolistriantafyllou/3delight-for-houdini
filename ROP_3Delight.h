@@ -48,8 +48,16 @@ public:
 	bool HasMotionBlur()const;
 	virtual void onCreated();
 
-	/// Manually restarts rendering at the request of the i-display framebuffer
-	void StartRenderFromIDisplay(double i_time);
+	/**
+		\brief Manually restarts rendering at the request of i-display.
+
+		\param i_time
+			Time at which the scene should be sampled.
+		\param i_window
+			Rectangular window to be used as crop or priority window for the new
+			render.
+	*/
+	void StartRenderFromIDisplay(double i_time, const float* i_window);
 
 protected:
 
@@ -159,6 +167,9 @@ private:
 		in order to prevent m_nsi to be invalidated by the stopper callback.
 	*/
 	bool m_rendering;
+
+	// Crop or priority window used only when rendering from i-display
+	float m_idisplay_rendering_window[4];
 
 	/*
 		Mutex controlling access to m_rendering and m_renderdl, specifically

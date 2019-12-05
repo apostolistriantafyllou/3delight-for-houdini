@@ -109,6 +109,9 @@ ROP_3Delight::ROP_3Delight(
 	PRM_Name* preview_name = preview_tmpl->getNamePtr();
 	assert(preview_name);
 	preview_name->setLabel("Render");
+
+	// Mark the window as invalid
+	m_idisplay_rendering_window[0] = -1.0f;
 }
 
 
@@ -139,9 +142,29 @@ void ROP_3Delight::onCreated()
 	aov::updateCustomVariables(custom_aovs);
 }
 
-void ROP_3Delight::StartRenderFromIDisplay(double i_time)
+void ROP_3Delight::StartRenderFromIDisplay(double i_time, const float* i_window)
 {
+	assert(m_idisplay_rendering_window[0] == -1.0f);
+
+	if(i_window)
+	{
+		/*
+			We can't add parameters to executeSingle, so we send the data
+			through private data members instead.
+		*/
+		memcpy(
+			m_idisplay_rendering_window,
+			i_window,
+			sizeof(m_idisplay_rendering_window));
+	}
+
 	executeSingle(i_time);
+
+	/*
+		Mark the window as invalid once rendering has started, so it really is
+		used only as a function parameter.
+	*/
+	m_idisplay_rendering_window[0] = -1.0f;
 }
 
 bool ROP_3Delight::HasMotionBlur() const
@@ -646,8 +669,6 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		int(::roundf(cam->RESX(0)*GetResolutionFactor())),
 		int(::roundf(cam->RESY(0)*GetResolutionFactor()))
 	};
-	float crop[2][2] = {{ float(cam->CROPL(0)), float(cam->CROPB(0)) },
-						{ float(cam->CROPR(0)), float(cam->CROPT(0)) }};
 
 	std::string screen_name = "default_screen";
 
@@ -659,12 +680,53 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 			->SetArrayType(NSITypeInteger, 2)
 			->SetCount(1)
 			->CopyValue(default_resolution, sizeof(default_resolution)),
-			*NSI::Argument::New("crop")
-			->SetArrayType(NSITypeFloat, 2)
-			->SetCount(2)
-			->SetValuePointer(crop),
 			NSI::IntegerArg("oversampling", GetPixelSamples())
 		) );
+
+	// Set the crop window or priority window
+
+	if(m_idisplay_rendering_window[0] != -1.0f)
+	{
+		if(m_current_render->m_ipr)
+		{
+			int priority[4];
+			for(unsigned p = 0; p < 4; p++)
+			{
+				int res = default_resolution[p%2];
+				priority[p] = roundf(m_idisplay_rendering_window[p] * float(res));
+			}
+
+			i_ctx.m_nsi.SetAttribute(
+				screen_name,
+				*NSI::Argument::New("prioritywindow")
+					->SetArrayType(NSITypeInteger, 2)
+					->SetCount(2)
+					->SetValuePointer(priority));
+		}
+		else
+		{
+			i_ctx.m_nsi.SetAttribute(
+				screen_name,
+				*NSI::Argument::New("crop")
+					->SetArrayType(NSITypeFloat, 2)
+					->SetCount(2)
+					->SetValuePointer(m_idisplay_rendering_window));
+		}
+	}
+	else
+	{
+		float cam_crop[4] =
+		{
+			float(cam->CROPL(0)), float(cam->CROPB(0)),
+			float(cam->CROPR(0)), float(cam->CROPT(0))
+		};
+		i_ctx.m_nsi.SetAttribute(
+			screen_name,
+			*NSI::Argument::New("crop")
+				->SetArrayType(NSITypeFloat, 2)
+				->SetCount(2)
+				->SetValuePointer(cam_crop));
+	}
 
 	/*
 		If the camera is not orthographic, use the default screen window.
