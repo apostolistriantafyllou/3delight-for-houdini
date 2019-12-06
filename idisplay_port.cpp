@@ -17,6 +17,57 @@
 
 #include <memory>
 
+
+namespace
+{
+	ROP_3Delight*
+	Get3DelightROP(const char* i_path)
+	{
+		if(!i_path)
+		{
+			return nullptr;
+		}
+
+		ROP_Node* rop_node = OPgetDirector()->findROPNode(i_path);
+		return dynamic_cast<ROP_3Delight*>(rop_node);
+	}
+
+	bool
+	RetrieveCrop(float* o_crop, const UT_JSONValueMap& i_object_map)
+	{
+		// Render with a crop region if possible
+		const UT_JSONValue* useCropObj = i_object_map.get("usecrop");
+		if(!useCropObj || useCropObj->getType() != UT_JSONValue::JSON_INT ||
+			!useCropObj->getB())
+		{
+			return false;
+		}
+
+		const UT_JSONValue* cropObj = i_object_map.get("cropregion");
+		if(cropObj->getType() != UT_JSONValue::JSON_ARRAY)
+		{
+			return false;
+		}
+
+		const UT_JSONValueArray* cropArray = cropObj->getArray();
+		if(!cropArray || cropArray->size() != 4 ||
+			(cropArray->get(0)->getType() != UT_JSONValue::JSON_INT &&
+			cropArray->get(0)->getType() != UT_JSONValue::JSON_REAL))
+		{
+			return false;
+		}
+
+		for(unsigned i = 0; i < 4; i++)
+		{
+			o_crop[i] = float(cropArray->get(i)->getF());
+		}
+
+		return true;
+	}
+
+}
+
+
 idisplay_port *idisplay_port::get_instance()
 {
 	static std::unique_ptr<idisplay_port> sm_instance;
@@ -205,55 +256,52 @@ void idisplay_port::ExecuteJSonCommand(const UT_JSONValue& i_object)
 			return;
 		}
 
-		const char *render = fromObj->getS();
-		if( !render )
-			render = "";
-
 		HOM_AutoLock hom_lock;
-		ROP_Node* rop_node = OPgetDirector()->findROPNode( render );
-		if(!rop_node)
-		{
-			Log( "render node `%s` hasn't been found, render impossible",
-				render );
-			return;
-		}
-
-		ROP_3Delight* rop_3dl = dynamic_cast<ROP_3Delight*>(rop_node);
+		ROP_3Delight* rop_3dl = Get3DelightROP(fromObj->getS());
 		if(!rop_3dl)
 		{
+			Log( "render node `%s` hasn't been found, render impossible",
+				fromObj->getS() );
 			return;
 		}
 
 		double time =
 			OPgetDirector()->getChannelManager()->getEvaluateTime(m_main_thread);
 
-		// Render with a crop region if possible
-		UT_JSONValue* useCropObj = object_map->get("usecrop");
-		if(useCropObj && useCropObj->getType() == UT_JSONValue::JSON_INT &&
-			useCropObj->getB())
+		float crop[4];
+		if(RetrieveCrop(crop, *object_map))
 		{
-			UT_JSONValue* cropObj = object_map->get("cropregion");
-			if(cropObj->getType() == UT_JSONValue::JSON_ARRAY)
-			{
-				UT_JSONValueArray* cropArray = cropObj->getArray();
-				if(cropArray && cropArray->size() == 4 &&
-					(cropArray->get(0)->getType() == UT_JSONValue::JSON_INT ||
-					(cropArray->get(0)->getType() == UT_JSONValue::JSON_REAL)))
-				{
-					float crop[4] =
-					{
-						float(cropArray->get(0)->getF()),
-						float(cropArray->get(1)->getF()),
-						float(cropArray->get(2)->getF()),
-						float(cropArray->get(3)->getF())
-					};
-					rop_3dl->StartRenderFromIDisplay(time, crop);
-					return;
-				}
-			}
+			rop_3dl->StartRenderFromIDisplay(time, crop);
+		}
+		else
+		{
+			rop_3dl->StartRenderFromIDisplay(time, nullptr);
+		}
+	}
+	else if (op == "update crop")
+	{
+		UT_JSONValue* fromObj = object_map->get("from");
+
+		if( !fromObj )
+		{
+			Log( "unsufficient data to select render node" );
+			return;
 		}
 
-		rop_3dl->StartRenderFromIDisplay(time, nullptr);
+		HOM_AutoLock hom_lock;
+		ROP_3Delight* rop_3dl = Get3DelightROP(fromObj->getS());
+		if(!rop_3dl)
+		{
+			Log( "render node `%s` hasn't been found, render impossible",
+				fromObj->getS() );
+			return;
+		}
+
+		float crop[4];
+		if(RetrieveCrop(crop, *object_map))
+		{
+			rop_3dl->UpdateIDisplayPriorityWindow(crop);
+		}
 	}
 	else if (op == "select layer")
 	{

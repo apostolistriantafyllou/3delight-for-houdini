@@ -37,6 +37,19 @@ namespace
 		return api;
 	}
 
+	const std::string k_screen_name = "default_screen";
+
+	void ComputePriorityWindow(
+		int* o_absolute_window,
+		const int* i_res,
+		const float* i_relative_window)
+	{
+		for(unsigned p = 0; p < 4; p++)
+		{
+			int res = i_res[p%2];
+			o_absolute_window[p] = roundf(i_relative_window[p] * float(res));
+		}
+	}
 }
 
 void
@@ -165,6 +178,37 @@ void ROP_3Delight::StartRenderFromIDisplay(double i_time, const float* i_window)
 		used only as a function parameter.
 	*/
 	m_idisplay_rendering_window[0] = -1.0f;
+}
+
+void ROP_3Delight::UpdateIDisplayPriorityWindow(const float* i_window)
+{
+	assert(i_window);
+
+	m_render_end_mutex.lock();
+	if(m_rendering && m_current_render && m_current_render->m_ipr)
+	{
+		memcpy(
+			m_idisplay_rendering_window,
+			i_window,
+			sizeof(m_idisplay_rendering_window));
+
+		int resolution[2];
+		if(GetScaledResolution(resolution[0], resolution[1]))
+		{
+			int priority[4];
+			ComputePriorityWindow(priority, resolution, i_window);
+
+			m_nsi.SetAttribute(
+				k_screen_name,
+				*NSI::Argument::New("prioritywindow")
+					->SetArrayType(NSITypeInteger, 2)
+					->SetCount(2)
+					->SetValuePointer(priority));
+
+			m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
+		}
+	}
+	m_render_end_mutex.unlock();
 }
 
 bool ROP_3Delight::HasMotionBlur() const
@@ -664,17 +708,12 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 	fpreal current_time = i_ctx.m_current_time;
 
-	int default_resolution[2] =
-	{
-		int(::roundf(cam->RESX(0)*GetResolutionFactor())),
-		int(::roundf(cam->RESY(0)*GetResolutionFactor()))
-	};
+	int default_resolution[2];
+	GetScaledResolution(default_resolution[0], default_resolution[1]);
 
-	std::string screen_name = "default_screen";
-
-	i_ctx.m_nsi.Create(screen_name, "screen");
+	i_ctx.m_nsi.Create(k_screen_name, "screen");
 	i_ctx.m_nsi.SetAttribute(
-		screen_name,
+		k_screen_name,
 		(
 			*NSI::Argument::New("resolution")
 			->SetArrayType(NSITypeInteger, 2)
@@ -690,14 +729,12 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		if(m_current_render->m_ipr)
 		{
 			int priority[4];
-			for(unsigned p = 0; p < 4; p++)
-			{
-				int res = default_resolution[p%2];
-				priority[p] = roundf(m_idisplay_rendering_window[p] * float(res));
-			}
-
+			ComputePriorityWindow(
+				priority,
+				default_resolution,
+				m_idisplay_rendering_window);
 			i_ctx.m_nsi.SetAttribute(
-				screen_name,
+				k_screen_name,
 				*NSI::Argument::New("prioritywindow")
 					->SetArrayType(NSITypeInteger, 2)
 					->SetCount(2)
@@ -706,7 +743,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		else
 		{
 			i_ctx.m_nsi.SetAttribute(
-				screen_name,
+				k_screen_name,
 				*NSI::Argument::New("crop")
 					->SetArrayType(NSITypeFloat, 2)
 					->SetCount(2)
@@ -721,7 +758,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 			float(cam->CROPR(0)), float(cam->CROPT(0))
 		};
 		i_ctx.m_nsi.SetAttribute(
-			screen_name,
+			k_screen_name,
 			*NSI::Argument::New("crop")
 				->SetArrayType(NSITypeFloat, 2)
 				->SetCount(2)
@@ -736,7 +773,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	if(camera::get_ortho_screen_window(sw, *cam, current_time))
 	{
 		i_ctx.m_nsi.SetAttribute(
-			screen_name,
+			k_screen_name,
 			*NSI::Argument::New("screenwindow")
 			->SetArrayType(NSITypeDouble, 2)
 			->SetCount(2)
@@ -744,7 +781,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	}
 
 	i_ctx.m_nsi.Connect(
-		screen_name, "",
+		k_screen_name, "",
 		camera::get_nsi_handle(*cam), "screens");
 
 	UT_String idisplay_driver = "idisplay";
@@ -883,7 +920,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 				ExportOneOutputLayer(
 					i_ctx, layer_name, desc, scalar_format,
 					filter, filter_width,
-					screen_name, light_names[j],
+					k_screen_name, light_names[j],
 					idisplay_driver_name, sort_key);
 
 				ExportLayerFeedbackData(
@@ -910,7 +947,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 				ExportOneOutputLayer(
 					i_ctx, file_layer_name, desc, scalar_format,
 					filter, filter_width,
-					screen_name, light_names[j],
+					k_screen_name, light_names[j],
 					file_driver_name, sort_key);
 			}
 
@@ -940,7 +977,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 				ExportOneOutputLayer(
 					i_ctx, png_layer_name, desc, "uint8",
 					filter, filter_width,
-					screen_name, light_names[j],
+					k_screen_name, light_names[j],
 					png_driver_name, sort_key);
 			}
 
@@ -970,7 +1007,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 				ExportOneOutputLayer(
 					i_ctx, jpeg_layer_name, desc, "uint8",
 					filter, filter_width,
-					screen_name, light_names[j],
+					k_screen_name, light_names[j],
 					jpeg_driver_name, sort_key);
 			}
 		}
@@ -1227,6 +1264,23 @@ ROP_3Delight::HasSpeedBoost()const
 
 	int speed_boost = evalInt(settings::k_speed_boost, 0, 0.0f);
 	return speed_boost;
+}
+
+bool
+ROP_3Delight::GetScaledResolution(int& o_x, int& o_y)const
+{
+	OBJ_Camera* cam = GetCamera();
+	if(!cam)
+	{
+		return false;
+	}
+
+	float scale = GetResolutionFactor();
+
+	o_x = int(::roundf(cam->RESX(0)*scale));
+	o_y = int(::roundf(cam->RESY(0)*scale));
+
+	return true;
 }
 
 float

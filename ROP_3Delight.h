@@ -59,6 +59,9 @@ public:
 	*/
 	void StartRenderFromIDisplay(double i_time, const float* i_window);
 
+	/// Updates the IPR's priority window from i-display
+	void UpdateIDisplayPriorityWindow(const float* i_window);
+
 protected:
 
 	ROP_3Delight(
@@ -123,6 +126,8 @@ private:
 	const char* GetUseLightToken(int index) const;
 
 	bool HasSpeedBoost()const;
+	/// Retrieves the image resolution, scaled by the Speed Boost res factor
+	bool GetScaledResolution(int& o_x, int& o_y)const;
 	float GetResolutionFactor()const;
 	float GetSamplingFactor()const;
 	int GetPixelSamples()const;
