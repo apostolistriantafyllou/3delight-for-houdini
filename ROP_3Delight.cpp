@@ -108,6 +108,8 @@ ROP_3Delight::ROP_3Delight(
 		m_nsi(GetNSIAPI()),
 		m_renderdl(nullptr),
 		m_rendering(false),
+		m_idisplay_rendering(false),
+		m_idisplay_ipr(false),
 		m_settings(*this)
 {
 	/*
@@ -157,7 +159,7 @@ void ROP_3Delight::StartRenderFromIDisplay(
 	bool i_ipr,
 	const float* i_window)
 {
-	assert(!i_display_rendering);
+	assert(!m_idisplay_rendering);
 
 	if(i_window)
 	{
@@ -179,13 +181,13 @@ void ROP_3Delight::StartRenderFromIDisplay(
 	m_idisplay_ipr = i_ipr;
 
 	/*
-		Set i_display_rendering to true only during the call to executeSingle so
-		m_idisplay_rendering_window and m_idisplay_ipr are really used only as
-		additional function parameters.
+		Set m_idisplay_rendering to true only during the call to executeSingle
+		so m_idisplay_rendering_window and m_idisplay_ipr are really used only
+		as additional function parameters.
 	*/
-	i_display_rendering = true;
+	m_idisplay_rendering = true;
 	executeSingle(i_time);
-	i_display_rendering = false;
+	m_idisplay_rendering = false;
 }
 
 void ROP_3Delight::UpdateIDisplayPriorityWindow(const float* i_window)
@@ -360,11 +362,11 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	}
 
 	bool render =
-		i_display_rendering || !evalInt(settings::k_export_nsi, 0, 0.0f);
+		m_idisplay_rendering || !evalInt(settings::k_export_nsi, 0, 0.0f);
 	fpreal fps = OPgetDirector()->getChannelManager()->getSamplesPerSec();
 	bool batch = !UTisUIAvailable();
 	bool ipr =
-		i_display_rendering
+		m_idisplay_rendering
 		?	m_idisplay_ipr
 		:	render && evalInt(settings::k_ipr, 0, 0.0f);
 
@@ -736,7 +738,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 	// Set the crop window or priority window
 
-	if(i_display_rendering)
+	if(m_idisplay_rendering)
 	{
 		if(m_current_render->m_ipr)
 		{

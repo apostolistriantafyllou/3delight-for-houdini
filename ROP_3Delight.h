@@ -179,7 +179,7 @@ private:
 	bool m_rendering;
 
 	// Indicates that rendering was requested by i-display
-	bool i_display_rendering;
+	bool m_idisplay_rendering;
 
 	// Indicates that i-display is requesting an IPR render
 	bool m_idisplay_ipr;
