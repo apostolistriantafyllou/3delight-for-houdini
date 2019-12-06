@@ -245,8 +245,7 @@ void idisplay_port::ExecuteJSonCommand(const UT_JSONValue& i_object)
 		}
 
 		// true means we start a live render, otherwise an interactive one
-		// ignore from the moment...
-//		bool live = liveObj->getI();
+		bool live = liveObj->getB();
 
 		UT_JSONValue* fromObj = object_map->get("from");
 
@@ -271,11 +270,11 @@ void idisplay_port::ExecuteJSonCommand(const UT_JSONValue& i_object)
 		float crop[4];
 		if(RetrieveCrop(crop, *object_map))
 		{
-			rop_3dl->StartRenderFromIDisplay(time, crop);
+			rop_3dl->StartRenderFromIDisplay(time, live, crop);
 		}
 		else
 		{
-			rop_3dl->StartRenderFromIDisplay(time, nullptr);
+			rop_3dl->StartRenderFromIDisplay(time, live, nullptr);
 		}
 	}
 	else if (op == "update crop")

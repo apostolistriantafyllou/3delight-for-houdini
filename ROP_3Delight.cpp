@@ -122,9 +122,6 @@ ROP_3Delight::ROP_3Delight(
 	PRM_Name* preview_name = preview_tmpl->getNamePtr();
 	assert(preview_name);
 	preview_name->setLabel("Render");
-
-	// Mark the window as invalid
-	m_idisplay_rendering_window[0] = -1.0f;
 }
 
 
@@ -155,9 +152,12 @@ void ROP_3Delight::onCreated()
 	aov::updateCustomVariables(custom_aovs);
 }
 
-void ROP_3Delight::StartRenderFromIDisplay(double i_time, const float* i_window)
+void ROP_3Delight::StartRenderFromIDisplay(
+	double i_time,
+	bool i_ipr,
+	const float* i_window)
 {
-	assert(m_idisplay_rendering_window[0] == -1.0f);
+	assert(!i_display_rendering);
 
 	if(i_window)
 	{
@@ -170,14 +170,22 @@ void ROP_3Delight::StartRenderFromIDisplay(double i_time, const float* i_window)
 			i_window,
 			sizeof(m_idisplay_rendering_window));
 	}
+	else
+	{
+		m_idisplay_rendering_window[1] = m_idisplay_rendering_window[0] = 0.0f;
+		m_idisplay_rendering_window[3] = m_idisplay_rendering_window[2] = 1.0f;
+	}
 
-	executeSingle(i_time);
+	m_idisplay_ipr = i_ipr;
 
 	/*
-		Mark the window as invalid once rendering has started, so it really is
-		used only as a function parameter.
+		Set i_display_rendering to true only during the call to executeSingle so
+		m_idisplay_rendering_window and m_idisplay_ipr are really used only as
+		additional function parameters.
 	*/
-	m_idisplay_rendering_window[0] = -1.0f;
+	i_display_rendering = true;
+	executeSingle(i_time);
+	i_display_rendering = false;
 }
 
 void ROP_3Delight::UpdateIDisplayPriorityWindow(const float* i_window)
@@ -351,10 +359,14 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		assert(!m_renderdl);
 	}
 
-	bool render = !evalInt(settings::k_export_nsi, 0, 0.0f);
+	bool render =
+		i_display_rendering || !evalInt(settings::k_export_nsi, 0, 0.0f);
 	fpreal fps = OPgetDirector()->getChannelManager()->getSamplesPerSec();
 	bool batch = !UTisUIAvailable();
-	bool ipr = render && evalInt(settings::k_ipr, 0, 0.0f);
+	bool ipr =
+		i_display_rendering
+		?	m_idisplay_ipr
+		:	render && evalInt(settings::k_ipr, 0, 0.0f);
 
 	m_current_render = new context(
 		m_nsi,
@@ -724,7 +736,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 	// Set the crop window or priority window
 
-	if(m_idisplay_rendering_window[0] != -1.0f)
+	if(i_display_rendering)
 	{
 		if(m_current_render->m_ipr)
 		{

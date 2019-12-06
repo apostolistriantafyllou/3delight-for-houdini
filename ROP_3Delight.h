@@ -53,11 +53,16 @@ public:
 
 		\param i_time
 			Time at which the scene should be sampled.
+		\param i_ipr
+			Indicates whether an editable/live render was requested.
 		\param i_window
 			Rectangular window to be used as crop or priority window for the new
 			render.
 	*/
-	void StartRenderFromIDisplay(double i_time, const float* i_window);
+	void StartRenderFromIDisplay(
+		double i_time,
+		bool i_ipr,
+		const float* i_window);
 
 	/// Updates the IPR's priority window from i-display
 	void UpdateIDisplayPriorityWindow(const float* i_window);
@@ -172,6 +177,12 @@ private:
 		in order to prevent m_nsi to be invalidated by the stopper callback.
 	*/
 	bool m_rendering;
+
+	// Indicates that rendering was requested by i-display
+	bool i_display_rendering;
+
+	// Indicates that i-display is requesting an IPR render
+	bool m_idisplay_ipr;
 
 	// Crop or priority window used only when rendering from i-display
 	float m_idisplay_rendering_window[4];
