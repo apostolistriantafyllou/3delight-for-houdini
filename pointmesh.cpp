@@ -21,6 +21,23 @@ void pointmesh::create( void ) const
 	m_nsi.Create( m_handle.c_str(), "particles" );
 }
 
+void pointmesh::set_attributes( void ) const
+{
+	const GT_PrimPointMesh *pointmesh =
+		static_cast<const GT_PrimPointMesh *>(default_gt_primitive().get());
+
+	GT_AttributeListHandle attributes[4] =
+	{
+		pointmesh->getVertexAttributes(),
+		pointmesh->getPointAttributes(),
+		GT_AttributeListHandle(),
+		pointmesh->getDetailAttributes(),
+	};
+
+	exporter::export_bind_attributes( attributes, nullptr /* not vertices */ );
+	primitive::set_attributes();
+}
+
 void pointmesh::set_attributes_at_time(
 	double i_time,
 	const GT_PrimitiveHandle i_gt_primitive) const

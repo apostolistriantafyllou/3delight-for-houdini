@@ -61,17 +61,9 @@ static NSIType_t gt_to_nsi_type( GT_Type i_type, GT_Storage i_storage )
 		case GT_STORE_INT32: return NSITypeInteger;
 		case GT_STORE_REAL32: return NSITypeFloat;
 		case GT_STORE_REAL64: return NSITypeDouble;
-		/*
-			FIXME : we could support strings, but we would probably need some
-			kind of special handling in export_attributes.
 		case GT_STORE_STRING: return NSITypeString;
-		*/
-		/*
-			This should probably be NSITypeInvalid, as we have no idea how to
-			interpret this data. But NSITypeFloat was already there and I don't
-			know why, so I suppose there might be a reason.
-		*/
-		default: return NSITypeFloat;
+		default:
+			return NSITypeInvalid;
 		}
 	}
 
@@ -115,13 +107,13 @@ void exporter::export_attributes(
 
 			NSIType_t nsi_type =
 				gt_to_nsi_type( data->getTypeInfo(), data->getStorage() );
-			if( nsi_type == NSITypeInvalid )
+
+			if( nsi_type == NSITypeInvalid || nsi_type == NSITypeString )
 			{
 				std::cout << "unsupported attribute type " << data->getTypeInfo()
 					<< " of name " << name << " on " << m_handle;
 				continue;
 			}
-
 
 			int flags = i_which_flags ? i_which_flags[w] : 0;
 
@@ -377,6 +369,210 @@ void exporter::export_override_attributes() const
 				override_nsi_handle.c_str(), "bounds" );
 			m_nsi.Disconnect( override_nsi_handle.c_str(), "",
 				NSI_SCENE_ROOT, "geometryattributes" );
+		}
+	}
+}
+
+/**
+*/
+void exporter::export_bind_attributes(
+	const GT_AttributeListHandle attributes[4],
+	const GT_DataArrayHandle *i_vertex_list ) const
+{
+	GT_DataArrayHandle buffer_in_case_we_need_it;
+	const int *vertices = nullptr;
+	if( i_vertex_list )
+	{
+		vertices = (*i_vertex_list)->getI32Array( buffer_in_case_we_need_it );
+	}
+
+	std::vector< std::string > binds, already_exported;
+	get_bind_attributes( binds );
+
+	for( int i=0; i<4; i++ )
+	{
+		if( !attributes[i] )
+			continue;
+
+		bool point_attributes = (i==1);
+
+		for( int j=0; j<attributes[i]->entries(); j++ )
+		{
+			const GT_DataArrayHandle &data = attributes[i]->get( j );
+
+			if( data.get() == nullptr )
+				continue;
+
+			auto name = attributes[i]->getName( j ).toStdString();
+
+			if( std::find(binds.begin(), binds.end(), name) == binds.end() )
+			{
+				continue;
+			}
+
+			if( name == "P" || name == "N" || name == "uv" || name == "width" ||
+				name == "id" )
+			{
+				/* reserved keywords handled in \ref export_attributes */
+				continue;
+			}
+
+			if( std::find(already_exported.begin(),already_exported.end(),name)
+				!= already_exported.end() )
+			{
+				/*
+					Assuming an ordder of point/vertex/primitive/detail as is
+					the priority in Houdini.
+				*/
+				continue;
+			}
+
+			NSIType_t nsi_type =
+				gt_to_nsi_type( data->getTypeInfo(), data->getStorage() );
+
+			if( nsi_type == NSITypeInvalid || nsi_type == NSITypeString )
+			{
+				continue;
+			}
+
+			already_exported.push_back( name );
+
+			if( point_attributes && i_vertex_list )
+			{
+				std::string indices(name.c_str());
+				indices += ".indices";
+
+				m_nsi.SetAttribute( m_handle,
+					*NSI::Argument(indices)
+						.SetType( NSITypeInteger )
+						->SetCount( (*i_vertex_list)->entries() )
+						->SetValuePointer( vertices ) );
+			}
+
+			GT_DataArrayHandle buffer_in_case_we_need_it;
+
+			if( data->getTypeInfo() == GT_TYPE_TEXTURE )
+			{
+				m_nsi.SetAttribute( m_handle,
+					*NSI::Argument(name)
+						.SetArrayType( NSITypeFloat, 3)
+						->SetCount( data->entries() )
+						->SetValuePointer(
+							data->getF32Array(buffer_in_case_we_need_it)));
+				continue;
+			}
+
+			const void* nsi_data = nullptr;
+			switch(nsi_type)
+			{
+				case NSITypeInteger:
+					nsi_data = data->getI32Array(buffer_in_case_we_need_it);
+					break;
+				case NSITypeDouble:
+				case NSITypeDoubleMatrix:
+					nsi_data = data->getF64Array(buffer_in_case_we_need_it);
+					break;
+				default:
+					nsi_data = data->getF32Array(buffer_in_case_we_need_it);
+			}
+
+			if( nsi_type == NSITypeFloat && data->getTupleSize()>1 )
+			{
+				m_nsi.SetAttribute( m_handle,
+					*NSI::Argument(name)
+						.SetArrayType( nsi_type, data->getTupleSize() )
+						->SetCount( data->entries() )
+						->SetValuePointer( nsi_data ) );
+			}
+			else
+			{
+				m_nsi.SetAttribute( m_handle,
+					*NSI::Argument(name)
+						.SetType( nsi_type )
+						->SetCount( data->entries() )
+						->SetValuePointer( nsi_data ) );
+			}
+		}
+	}
+}
+
+VOP_Node *exporter::get_assigned_material( std::string &o_path ) const
+{
+	int index = m_object->getParmIndex( "shop_materialpath" );
+	if( index < 0 )
+		return nullptr;
+
+	std::string attributes( m_handle + "|attributes" );
+	UT_String material_path;
+	m_object->evalString( material_path, "shop_materialpath", 0, 0.f );
+
+	if( material_path.length()==0 )
+	{
+		return nullptr;
+	}
+
+	OP_Node* op_node = OPgetDirector()->findNode( material_path );
+	VOP_Node *vop_node = op_node->castToVOPNode();
+
+	if( !vop_node )
+		return nullptr;
+
+	o_path = vop_node->getFullPath().toStdString();
+	return vop_node;
+}
+
+void exporter::get_bind_attributes(
+	std::vector< std::string > &o_to_export ) const
+{
+	std::string dummy;
+	VOP_Node *vop = get_assigned_material( dummy );
+
+	if( !vop )
+		return;
+
+	std::vector<VOP_Node*> aov_export_nodes;
+
+	std::vector<OP_Node*> traversal; traversal.push_back( vop );
+	while( traversal.size() )
+	{
+		OP_Node* node = traversal.back();
+		traversal.pop_back();
+
+		int ninputs = node->nInputs();
+		for( int i = 0; i < ninputs; i++ )
+		{
+			VOP_Node *input = CAST_VOPNODE( node->getInput(i) );
+			if( !input )
+				continue;
+
+			OP_Operator* op = input->getOperator();
+			if( !op )
+				continue;
+
+#if 0
+			/* bind is crazy, I don't want tp support that */
+			if( op->getName().toStdString() == "bind" &&
+				input->evalInt(
+					"useasparmdefiner", 0, m_context.m_current_time) == 0 )
+			{
+				UT_String primvar;
+				input->evalString(
+					primvar, "parmname", 0, m_context.m_current_time );
+				o_to_export.push_back( primvar.toStdString() );
+			}
+			else
+#endif
+			if( op->getName().toStdString() == "3Delight::dlPrimitiveAttribute")
+			{
+				UT_String primvar;
+				input->evalString(
+					primvar, "attribute_name", 0, m_context.m_current_time );
+				o_to_export.push_back( primvar.toStdString() );
+			}
+			else
+			{
+				traversal.push_back( input );
+			}
 		}
 	}
 }

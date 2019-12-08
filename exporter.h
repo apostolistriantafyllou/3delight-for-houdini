@@ -90,9 +90,25 @@ protected:
 		int i_n,
 		double i_time,
 		std::vector<const char *> &i_which_ones,
-		const int* i_which_flags = nullptr) const;
+		const int* i_which_flags = nullptr ) const;
 
 	void export_override_attributes() const;
+
+	void export_bind_attributes(
+		const GT_AttributeListHandle i_attributes[4],
+		const GT_DataArrayHandle *i_vertex_list ) const;
+
+private:
+	VOP_Node *get_assigned_material( std::string &o_path ) const;
+
+	/**
+		\brief Returns attributes that are referenced by a "bind" or
+		a PrimitiveAttribute VOP node.
+
+		These attributes will be exported alongside with the geometry.
+	*/
+	void get_bind_attributes(
+		std::vector< std::string > &o_to_export ) const;
 
 protected:
 	/** Depending on what we are exporting, an OBJ or a VOP node */

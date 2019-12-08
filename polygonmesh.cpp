@@ -108,6 +108,8 @@ void polygonmesh::set_attributes( void ) const
 				->SetValuePointer(vertices) );
 	}
 
+	exporter::export_bind_attributes( attributes, &vertex_list );
+
 	primitive::set_attributes();
 }
 
