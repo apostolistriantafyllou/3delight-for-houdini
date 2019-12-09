@@ -123,13 +123,6 @@ private:
 		const char* i_extension,
 		UT_String& o_image_unique_name) const;
 
-	/**
-		\brief Returns the light's token for the specified index
-	*/
-	const char* GetLightToken(int index) const;
-
-	const char* GetUseLightToken(int index) const;
-
 	bool HasSpeedBoost()const;
 	/// Retrieves the image resolution, scaled by the Speed Boost res factor
 	bool GetScaledResolution(int& o_x, int& o_y)const;
@@ -139,8 +132,6 @@ private:
 	OBJ_Camera* GetCamera()const;
 	double GetShutterInterval(double i_time)const;
 	bool HasDepthOfField()const;
-	UT_String GetObjectsToRender()const;
-	UT_String GetLightsToRender()const;
 
 	std::vector<OBJ_Node*> m_lights;
 	bool m_cloud;
