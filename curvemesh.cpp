@@ -89,6 +89,15 @@ void curvemesh::set_attributes( void ) const
 		m_nsi.SetAttribute( m_handle, NSI::CStringPArg("basis", "linear") );
 	}
 
+	GT_AttributeListHandle attributes[4] =
+	{
+		curve->getVertexAttributes(),
+		curve->getPointAttributes(),
+		GT_AttributeListHandle(),
+		curve->getDetailAttributes(),
+	};
+
+	exporter::export_bind_attributes( attributes, nullptr /* not vertices */ );
 	primitive::set_attributes();
 }
 
