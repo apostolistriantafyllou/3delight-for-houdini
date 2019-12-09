@@ -7,6 +7,7 @@
 #include <OP/OP_BundlePattern.h>
 #include <OP/OP_OperatorTable.h>
 #include <OP/OP_Parameters.h>
+#include <PRM/PRM_Conditional.h>
 #include <PRM/PRM_Include.h>
 #include <PRM/PRM_SpareData.h>
 #include <ROP/ROP_Node.h>
@@ -358,6 +359,7 @@ PRM_Template* settings::GetTemplates()
 
 	static PRM_Name speed_boost(k_speed_boost, "Enable Interactive Previewing with Speed Boost\t");
 	static PRM_Default speed_boost_d(false);
+	static PRM_Conditional speed_boost_g(("{ " + std::string(k_speed_boost) + " == 0 }").c_str());
 	static PRM_Name speed_boost_align("speed_boost_align", "\t");
 
 	static PRM_Name disable_motion_blur(k_disable_motion_blur, "Disable Motion Blur");
@@ -402,15 +404,15 @@ PRM_Template* settings::GetTemplates()
 
 	static std::vector<PRM_Template> overrides_templates =
 	{
-		PRM_Template(PRM_TOGGLE|PRM_TYPE_JOIN_NEXT, 1, &speed_boost, &speed_boost_d, 0, 0, &settings::speed_boost_cb),
+		PRM_Template(PRM_TOGGLE|PRM_TYPE_JOIN_NEXT, 1, &speed_boost, &speed_boost_d),
 		PRM_Template(PRM_LABEL, 0, &speed_boost_align),
-		PRM_Template(PRM_TOGGLE, 1, &disable_motion_blur, &disable_motion_blur_d),
-		PRM_Template(PRM_TOGGLE, 1, &disable_depth_of_field, &disable_depth_of_field_d),
-		PRM_Template(PRM_TOGGLE, 1, &disable_displacement, &disable_displacement_d),
-		PRM_Template(PRM_TOGGLE, 1, &disable_subsurface, &disable_subsurface_d),
+		PRM_Template(PRM_TOGGLE, 1, &disable_motion_blur, &disable_motion_blur_d, 0, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
+		PRM_Template(PRM_TOGGLE, 1, &disable_depth_of_field, &disable_depth_of_field_d, 0, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
+		PRM_Template(PRM_TOGGLE, 1, &disable_displacement, &disable_displacement_d, 0, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
+		PRM_Template(PRM_TOGGLE, 1, &disable_subsurface, &disable_subsurface_d, 0, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
 		PRM_Template(PRM_SEPARATOR, 0, &separator6),
-		PRM_Template(PRM_ORD, 1, &resolution_factor, &resolution_factor_d, &resolution_factor_c),
-		PRM_Template(PRM_ORD, 1, &sampling_factor, &sampling_factor_d, &sampling_factor_c),
+		PRM_Template(PRM_ORD, 1, &resolution_factor, &resolution_factor_d, &resolution_factor_c, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
+		PRM_Template(PRM_ORD, 1, &sampling_factor, &sampling_factor_d, &sampling_factor_c, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
 		PRM_Template(PRM_LABEL, 0, &overrides_note_spacing),
 		PRM_Template(PRM_LABEL, 0, &overrides_note)
 	};
@@ -670,22 +672,6 @@ int settings::refresh_lights_cb(
 {
 	ROP_3Delight* node = reinterpret_cast<ROP_3Delight*>(data);
 	node->m_settings.UpdateLights();
-	return 1;
-}
-
-int settings::speed_boost_cb(
-	void* data, int index, fpreal t,
-	const PRM_Template* tplate )
-{
-	ROP_3Delight* node = reinterpret_cast<ROP_3Delight*>(data);
-	assert(node);
-	bool value = node->evalInt(k_speed_boost, 0, 0.0f);
-	node->enableParm(k_disable_motion_blur, value);
-	node->enableParm(k_disable_depth_of_field, value);
-	node->enableParm(k_disable_displacement, value);
-	node->enableParm(k_disable_subsurface, value);
-	node->enableParm(k_resolution_factor, value);
-	node->enableParm(k_sampling_factor, value);
 	return 1;
 }
 
