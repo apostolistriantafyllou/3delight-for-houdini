@@ -419,19 +419,29 @@ PRM_Template* settings::GetTemplates()
 
 	// Debug
 
-	static PRM_Name export_nsi(k_export_nsi, "Export NSI to output (file or stdout)");
-	static PRM_Name default_export_nsi_filename(k_default_export_nsi_filename, "Export NSI Filename");
+	static PRM_Name export_nsi(k_export_nsi, "Export NSI");
+	static PRM_Default export_nsi_d(0.0f, "off");
+	static PRM_Item export_nsi_i[] =
+	{
+		PRM_Item("off", "Disabled"),
+		PRM_Item("on", "to File"),
+		PRM_Item("stdout", "to Console Window"),
+		PRM_Item(),
+	};
+	static PRM_ChoiceList export_nsi_c(PRM_CHOICELIST_SINGLE, export_nsi_i);
+
+	static PRM_Name default_export_nsi_filename(k_default_export_nsi_filename, "Output File");
 	static PRM_Default default_export_nsi_filename_d(
 		0.0f, "$HIP/render/`$HIPNAME`_`$OS`_$F4.nsi");
-	static PRM_Default export_nsi_d(false);
+	static PRM_Conditional default_export_nsi_filename_g(("{ " + std::string(k_export_nsi) + " != \"on\" }").c_str());
 
 	static PRM_Name ipr(k_ipr, "IPR");
 	static PRM_Default ipr_d(false);
 
 	static std::vector<PRM_Template> debug_templates =
 	{
-		PRM_Template(PRM_TOGGLE, 1, &export_nsi, &export_nsi_d),
-		PRM_Template(PRM_FILE, 1, &default_export_nsi_filename, &default_export_nsi_filename_d),
+		PRM_Template(PRM_STRING, 1, &export_nsi, &export_nsi_d, &export_nsi_c),
+		PRM_Template(PRM_FILE, 1, &default_export_nsi_filename, &default_export_nsi_filename_d, 0, 0, nullptr, nullptr, 1, nullptr, &default_export_nsi_filename_g),
 		PRM_Template(PRM_TOGGLE, 1, &ipr, &ipr_d)
 	};
 

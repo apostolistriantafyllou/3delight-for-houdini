@@ -132,6 +132,13 @@ private:
 	OBJ_Camera* GetCamera()const;
 	double GetShutterInterval(double i_time)const;
 	bool HasDepthOfField()const;
+	/**
+		\brief Returns the name of the file into which to export an NSI stream.
+
+		It might also return "stdout", which is valid in NSI, or an empty
+		string, which means to render instead of exporting.
+	*/
+	std::string GetNSIExportFilename(double i_time)const;
 
 	std::vector<OBJ_Node*> m_lights;
 	bool m_cloud;

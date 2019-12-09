@@ -360,8 +360,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		assert(!m_renderdl);
 	}
 
-	bool render =
-		m_idisplay_rendering || !evalInt(settings::k_export_nsi, 0, 0.0f);
+	bool render = m_idisplay_rendering || GetNSIExportFilename(tstart).empty();
 	fpreal fps = OPgetDirector()->getChannelManager()->getSamplesPerSec();
 	bool batch = !UTisUIAvailable();
 	bool ipr =
@@ -446,23 +445,15 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	m_current_render->m_current_time = time;
 
 	std::string frame_nsi_file;
-
 	if(m_current_render->m_export_nsi)
 	{
-		UT_String export_file;
-		evalString(
-			export_file,
-			settings::k_default_export_nsi_filename, 0,
-			time );
-		if ( export_file.isstring() )
-			frame_nsi_file = export_file.c_str();
-		else
-			frame_nsi_file = "stdout";
+		std::string export_file = GetNSIExportFilename(time);
+		assert(!export_file.empty());
 
 		// Output NSI commands to the specified file or standard output
 		m_nsi.Begin(
 		(
-			NSI::StringArg("streamfilename", frame_nsi_file),
+			NSI::StringArg("streamfilename", export_file),
 			NSI::CStringPArg("streamformat", "nsi")
 		) );
 	}
@@ -1374,6 +1365,35 @@ bool
 ROP_3Delight::HasDepthOfField()const
 {
 	return !(HasSpeedBoost() && evalInt(settings::k_disable_depth_of_field, 0, 0.0f));
+}
+
+std::string
+ROP_3Delight::GetNSIExportFilename(double i_time)const
+{
+	UT_String export_mode;
+	evalString(export_mode, settings::k_export_nsi, 0, i_time);
+
+	if(export_mode == "off")
+	{
+		return {};
+	}
+
+	if(export_mode == "stdout")
+	{
+		// A filename of "stdout" actually makes NSI output to standard output
+		return export_mode.toStdString();
+	}
+
+	UT_String export_file;
+	evalString(export_file, settings::k_default_export_nsi_filename, 0, i_time);
+
+	if(export_file.length() == 0)
+	{
+		// When no file is specified, we output to standard output by default
+		return std::string("stdout");
+	}
+
+	return export_file.toStdString();
 }
 
 void ROP_3Delight::register_mplay_driver( NSI::DynamicAPI &i_api )
