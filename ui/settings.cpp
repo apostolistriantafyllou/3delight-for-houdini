@@ -61,6 +61,23 @@ const char* settings::k_default_export_nsi_filename = "default_export_nsi_filena
 
 SelectLayersDialog* settings::sm_dialog = 0;
 
+settings::settings( OP_Parameters &i_parameters )
+	:	m_parameters(i_parameters)
+{
+	/*
+		Rename the "Render to Disk" button to better match our rendering
+		options, which allow rendering to disk and to a framebuffer
+		simultaneously.
+	*/
+	PRM_Parm* execute_parm = i_parameters.getParmPtr("execute");
+	assert(execute_parm);
+	PRM_Template* execute_tmpl = execute_parm->getTemplatePtr();
+	assert(execute_tmpl);
+	PRM_Name* execute_name = execute_tmpl->getNamePtr();
+	assert(execute_name);
+	execute_name->setLabel("Render");
+}
+
 settings::~settings()
 {
 	delete sm_dialog;

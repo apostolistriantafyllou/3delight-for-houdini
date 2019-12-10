@@ -112,18 +112,6 @@ ROP_3Delight::ROP_3Delight(
 		m_idisplay_ipr(false),
 		m_settings(*this)
 {
-	/*
-		Rename the "Render to Disk" button to better match our rendering
-		options, which allow rendering to disk and to a framebuffer
-		simultaneously.
-	*/
-	PRM_Parm* preview_parm = getParmPtr("execute");
-	assert(preview_parm);
-	PRM_Template* preview_tmpl = preview_parm->getTemplatePtr();
-	assert(preview_tmpl);
-	PRM_Name* preview_name = preview_tmpl->getNamePtr();
-	assert(preview_name);
-	preview_name->setLabel("Render");
 }
 
 

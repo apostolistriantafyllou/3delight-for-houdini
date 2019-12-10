@@ -18,11 +18,7 @@ class settings
 
 public:
 
-	settings( OP_Parameters &i_parameters )
-	:
-		m_parameters(i_parameters)
-	{
-	}
+	settings( OP_Parameters &i_parameters );
 
 	~settings();
 
