@@ -67,6 +67,9 @@ public:
 	/// Updates the IPR's priority window from i-display
 	void UpdateIDisplayPriorityWindow(const float* i_window);
 
+	/// Stops any current rendering session from this ROP
+	void StopRender();
+
 protected:
 
 	ROP_3Delight(
@@ -86,6 +89,7 @@ protected:
 	virtual void loadFinished();
 
 private:
+
 	static void register_mplay_driver( NSI::DynamicAPI &i_api );
 
 	void ExportTransparentSurface(const context& i_ctx) const;

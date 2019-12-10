@@ -291,12 +291,10 @@ ROP_3Delight::ExportGlobals(const context& i_ctx)const
 	}
 }
 
-
-int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
+void ROP_3Delight::StopRender()
 {
 	m_render_end_mutex.lock();
 
-	// We still have a render going on. Kill it first.
 	if(m_rendering)
 	{
 		/*
@@ -347,6 +345,12 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		m_renderdl_waiter.join();
 		assert(!m_renderdl);
 	}
+}
+
+int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
+{
+	// If we still have a render going on, kill it first.
+	StopRender();
 
 	bool render = m_idisplay_rendering || GetNSIExportFilename(tstart).empty();
 	fpreal fps = OPgetDirector()->getChannelManager()->getSamplesPerSec();
@@ -498,9 +502,9 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 
 				/*
 					If m_rendering is still true, it means that the render
-					wasn't stopped from ROP_3Delight::startRender, so it's safe
+					wasn't stopped from ROP_3Delight::StopRender, so it's safe
 					to (and we have to) close the context. Otherwise, we leave
-					the context intact so it can be used by startRender to wait
+					the context intact so it can be used by StopRender to wait
 					for the end of the render.
 				*/
 				if(rop->m_rendering)
@@ -575,7 +579,7 @@ ROP_3Delight::endRender()
 	simply kills the process, which we don't want to do right now, as all frames
 	might not have been rendered yet.
 	Not closing the pipe delays the termination of the renderdl process to the
-	next call to startRender or ~ROP_3Delight.
+	next call to StopRender or ~ROP_3Delight.
 	if(m_renderdl)
 	{
 		m_renderdl->close();
