@@ -477,6 +477,14 @@ PRM_Template* settings::GetTemplates()
 	static std::vector<PRM_Template> templates;
 	if(templates.size() == 0)
 	{
+		// Add templates from the base ROP_Node into our own list
+		for(PRM_Template* base = ROP_Node::getROPbaseTemplate();
+			base->getType() != PRM_LIST_TERMINATOR;
+			base++)
+		{
+			templates.push_back(*base);
+		}
+
 		templates.push_back(
 			PRM_Template(
 				PRM_SWITCHER,
@@ -540,10 +548,7 @@ OP_TemplatePair* settings::GetTemplatePair()
 	static OP_TemplatePair* ropPair = nullptr;
 	if(!ropPair)
 	{
-		OP_TemplatePair* base;
-
-		base = new OP_TemplatePair(GetTemplates());
-		ropPair = new OP_TemplatePair(ROP_Node::getROPbaseTemplate(), base);
+		ropPair = new OP_TemplatePair(GetTemplates());
 	}
 
 	return ropPair;
