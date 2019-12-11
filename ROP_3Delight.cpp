@@ -928,7 +928,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					idisplay_driver_name, sort_key);
 
 				if( !m_current_render->m_export_nsi &&
-					!UTisUIAvailable() )
+					!m_current_render->m_batch )
 				{
 					/*
 						Only export this for Preview renders.
