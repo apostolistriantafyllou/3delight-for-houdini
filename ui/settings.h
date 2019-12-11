@@ -22,6 +22,9 @@ public:
 
 	~settings();
 
+	/// Notifies the object of the ROP's rendering state
+	void Rendering(bool i_render);
+
 	static PRM_Template* GetTemplates();
 	static OP_TemplatePair* GetTemplatePair();
 	static OP_VariablePair* GetVariablePair();
@@ -43,6 +46,8 @@ public:
 		const PRM_Template* tplate );
 
 public:
+
+	static const char* k_rendering;
 	static const char* k_export_nsi;
 	static const char* k_ipr;
 	static const char* k_shading_samples;

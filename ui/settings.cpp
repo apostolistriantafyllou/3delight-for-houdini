@@ -16,6 +16,7 @@
 
 static const float k_one_line = 0.267;
 
+const char* settings::k_rendering = "rendering";
 const char* settings::k_export_nsi = "export_nsi";
 const char* settings::k_ipr = "ipr";
 const char* settings::k_shading_samples = "shading_samples";
@@ -83,6 +84,11 @@ settings::~settings()
 	delete sm_dialog;
 }
 
+void settings::Rendering(bool i_render)
+{
+	m_parameters.setInt(k_rendering, 0, 0.0, i_render);
+}
+
 PRM_Template* settings::GetTemplates()
 {
 	static PRM_Name separator1("separator1", "");
@@ -91,6 +97,10 @@ PRM_Template* settings::GetTemplates()
 	static PRM_Name separator4("separator4", "");
 	static PRM_Name separator5("separator5", "");
 	static PRM_Name separator6("separator6", "");
+
+	static PRM_Name rendering(k_rendering, "Rendering");
+	static PRM_Default rendering_d(false);
+	static PRM_Template rendering_t(PRM_TOGGLE|PRM_TYPE_JOIN_NEXT|PRM_TYPE_INVISIBLE, 1, &rendering, &rendering_d);
 
 	// Quality
 	static PRM_Name shading_samples(k_shading_samples, "Shading Samples");
@@ -477,6 +487,8 @@ PRM_Template* settings::GetTemplates()
 	static std::vector<PRM_Template> templates;
 	if(templates.size() == 0)
 	{
+		templates.push_back(rendering_t);
+
 		// Add templates from the base ROP_Node into our own list
 		for(PRM_Template* base = ROP_Node::getROPbaseTemplate();
 			base->getType() != PRM_LIST_TERMINATOR;

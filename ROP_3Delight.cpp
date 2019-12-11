@@ -304,6 +304,9 @@ void ROP_3Delight::StopRender()
 		*/
 		m_rendering = false;
 
+		// Notify the UI that rendering has stopped
+		m_settings.Rendering(false);
+
 		if(m_renderdl)
 		{
 			// Terminate the renderdl process
@@ -377,6 +380,9 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 
 	m_rendering = render;
 
+	// Notify the UI that a new render might have started
+	m_settings.Rendering(render);
+
 	if(m_current_render->BackgroundProcessRendering())
 	{
 		/*
@@ -414,6 +420,10 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 					m_render_end_mutex.lock();
 
 					m_rendering = false;
+
+					// Notify the UI that rendering has stopped
+					m_settings.Rendering(false);
+
 					delete m_renderdl; m_renderdl = nullptr;
 
 					m_render_end_mutex.unlock();
@@ -510,6 +520,10 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 				if(rop->m_rendering)
 				{
 					rop->m_rendering = false;
+
+					// Notify the UI that rendering has stopped
+					rop->m_settings.Rendering(false);
+
 					rop->m_nsi.End();
 				}
 
