@@ -927,8 +927,15 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					k_screen_name, light_names[j],
 					idisplay_driver_name, sort_key);
 
-				ExportLayerFeedbackData(
-					i_ctx, layer_name, light_names[j] );
+				if( !m_current_render->m_export_nsi &&
+					!UTisUIAvailable() )
+				{
+					/*
+						Only export this for Preview renders.
+					*/
+					ExportLayerFeedbackData(
+						i_ctx, layer_name, light_names[j] );
+				}
 			}
 
 			if (file_output)
