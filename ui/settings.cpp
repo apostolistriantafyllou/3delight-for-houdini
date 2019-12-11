@@ -1,4 +1,5 @@
 #include "settings.h"
+
 #include "select_layers_dialog.h"
 #include "../scene.h"
 #include "../ROP_3Delight.h"
@@ -6,7 +7,6 @@
 #include <OBJ/OBJ_Node.h>
 #include <OP/OP_BundlePattern.h>
 #include <OP/OP_OperatorTable.h>
-#include <OP/OP_Parameters.h>
 #include <PRM/PRM_Conditional.h>
 #include <PRM/PRM_Include.h>
 #include <PRM/PRM_SpareData.h>
@@ -17,6 +17,7 @@
 static const float k_one_line = 0.267;
 
 const char* settings::k_rendering = "rendering";
+const char* settings::k_stop_render = "stop_render";
 const char* settings::k_export_nsi = "export_nsi";
 const char* settings::k_ipr = "ipr";
 const char* settings::k_shading_samples = "shading_samples";
@@ -62,21 +63,27 @@ const char* settings::k_default_export_nsi_filename = "default_export_nsi_filena
 
 SelectLayersDialog* settings::sm_dialog = 0;
 
-settings::settings( OP_Parameters &i_parameters )
-	:	m_parameters(i_parameters)
+settings::settings( ROP_3Delight &i_rop )
+	:	m_parameters(i_rop)
 {
 	/*
 		Rename the "Render to Disk" button to better match our rendering
 		options, which allow rendering to disk and to a framebuffer
 		simultaneously.
 	*/
-	PRM_Parm* execute_parm = i_parameters.getParmPtr("execute");
+	PRM_Parm* execute_parm = m_parameters.getParmPtr("execute");
 	assert(execute_parm);
 	PRM_Template* execute_tmpl = execute_parm->getTemplatePtr();
 	assert(execute_tmpl);
 	PRM_Name* execute_name = execute_tmpl->getNamePtr();
 	assert(execute_name);
 	execute_name->setLabel("Render");
+
+	// Hide the Render button when rendering, so the Abort button replaces it.
+	static PRM_Conditional render_h(
+		("{ " + std::string(k_rendering) + " != 0 }").c_str(),
+		PRM_CONDTYPE_HIDE);
+	execute_tmpl->setConditionalBasePtr(&render_h);
 }
 
 settings::~settings()
@@ -98,9 +105,18 @@ PRM_Template* settings::GetTemplates()
 	static PRM_Name separator5("separator5", "");
 	static PRM_Name separator6("separator6", "");
 
+	// Actions
 	static PRM_Name rendering(k_rendering, "Rendering");
 	static PRM_Default rendering_d(false);
-	static PRM_Template rendering_t(PRM_TOGGLE|PRM_TYPE_JOIN_NEXT|PRM_TYPE_INVISIBLE, 1, &rendering, &rendering_d);
+	
+	static PRM_Name stop_render(k_stop_render, "Abort");
+	static PRM_Conditional stop_render_h(("{ " + std::string(k_rendering) + " == 0 }").c_str(), PRM_CONDTYPE_HIDE);
+
+	static std::vector<PRM_Template> actions_templates =
+	{
+		PRM_Template(PRM_TOGGLE|PRM_TYPE_JOIN_NEXT|PRM_TYPE_INVISIBLE, 1, &rendering, &rendering_d),
+		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &stop_render, nullptr, nullptr, nullptr, &settings::StopRenderCB, nullptr, 0, nullptr, &stop_render_h)
+	};
 
 	// Quality
 	static PRM_Name shading_samples(k_shading_samples, "Shading Samples");
@@ -487,7 +503,11 @@ PRM_Template* settings::GetTemplates()
 	static std::vector<PRM_Template> templates;
 	if(templates.size() == 0)
 	{
-		templates.push_back(rendering_t);
+		// Actions
+		templates.insert(
+			templates.end(),
+			actions_templates.begin(),
+			actions_templates.end());
 
 		// Add templates from the base ROP_Node into our own list
 		for(PRM_Template* base = ROP_Node::getROPbaseTemplate();
@@ -851,3 +871,9 @@ UT_String settings::GetLightsToRender() const
 	return lights_pattern;
 }
 
+int settings::StopRenderCB(void* i_node, int, double, const PRM_Template*)
+{
+	ROP_3Delight* node = (ROP_3Delight*)i_node;
+	node->StopRender();
+	return 1;
+}

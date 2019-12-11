@@ -5,7 +5,7 @@
 #include <UT/UT_String.h>
 #include <vector>
 
-class OP_Parameters;
+class ROP_3Delight;
 class OP_VariablePair;
 class OP_TemplatePair;
 class PRM_Template;
@@ -18,7 +18,7 @@ class settings
 
 public:
 
-	settings( OP_Parameters &i_parameters );
+	settings( ROP_3Delight &i_rop );
 
 	~settings();
 
@@ -48,6 +48,7 @@ public:
 public:
 
 	static const char* k_rendering;
+	static const char* k_stop_render;
 	static const char* k_export_nsi;
 	static const char* k_ipr;
 	static const char* k_shading_samples;
@@ -91,7 +92,7 @@ public:
 	static const char* k_sampling_factor;
 	static const char* k_default_export_nsi_filename;
 
-protected:
+private:
 
 	/**
 		\brief Update UI lights from scene lights.
@@ -109,8 +110,11 @@ protected:
 	UT_String GetObjectsToRender() const;
 	UT_String GetLightsToRender() const;
 
-	/** ROP base class containing all the parameters */
-	OP_Parameters &m_parameters;
+	/// Called when the Abort button is pressed
+	static int StopRenderCB(void* i_node, int, double, const PRM_Template*);
+
+	/** ROP containing all the parameters */
+	ROP_3Delight& m_parameters;
 
 	std::vector<OBJ_Node*> m_lights;
 	static SelectLayersDialog* sm_dialog;
