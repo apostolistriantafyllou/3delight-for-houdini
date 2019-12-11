@@ -18,6 +18,7 @@ static const float k_one_line = 0.267;
 
 const char* settings::k_rendering = "rendering";
 const char* settings::k_stop_render = "stop_render";
+const char* settings::k_export = "export";
 const char* settings::k_export_nsi = "export_nsi";
 const char* settings::k_ipr = "ipr";
 const char* settings::k_shading_samples = "shading_samples";
@@ -79,9 +80,13 @@ settings::settings( ROP_3Delight &i_rop )
 	assert(execute_name);
 	execute_name->setLabel("Render");
 
-	// Hide the Render button when rendering, so the Abort button replaces it.
+	/*
+		Hide the Render button when rendering or in export mode, so the Abort or
+		Export button replace it.
+	*/
 	static PRM_Conditional render_h(
-		("{ " + std::string(k_rendering) + " != 0 }").c_str(),
+		("{ " + std::string(k_rendering) + " != 0 } {" +
+			std::string(k_export_nsi) + " != \"off\" }").c_str(),
 		PRM_CONDTYPE_HIDE);
 	execute_tmpl->setConditionalBasePtr(&render_h);
 }
@@ -112,10 +117,14 @@ PRM_Template* settings::GetTemplates()
 	static PRM_Name stop_render(k_stop_render, "Abort");
 	static PRM_Conditional stop_render_h(("{ " + std::string(k_rendering) + " == 0 }").c_str(), PRM_CONDTYPE_HIDE);
 
+	static PRM_Name export_n(k_export, "Export");
+	static PRM_Conditional export_h(("{ " + std::string(k_export_nsi) + " == \"off\" }").c_str(), PRM_CONDTYPE_HIDE);
+
 	static std::vector<PRM_Template> actions_templates =
 	{
 		PRM_Template(PRM_TOGGLE|PRM_TYPE_JOIN_NEXT|PRM_TYPE_INVISIBLE, 1, &rendering, &rendering_d),
-		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &stop_render, nullptr, nullptr, nullptr, &settings::StopRenderCB, nullptr, 0, nullptr, &stop_render_h)
+		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &stop_render, nullptr, nullptr, nullptr, &settings::StopRenderCB, nullptr, 0, nullptr, &stop_render_h),
+		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &export_n, nullptr, nullptr, nullptr, &ExportCB, nullptr, 0, nullptr, &export_h)
 	};
 
 	// Quality
@@ -875,5 +884,16 @@ int settings::StopRenderCB(void* i_node, int, double, const PRM_Template*)
 {
 	ROP_3Delight* node = (ROP_3Delight*)i_node;
 	node->StopRender();
+	return 1;
+}
+
+int settings::ExportCB(void* i_node, int, double i_time, const PRM_Template*)
+{
+	ROP_3Delight* node = (ROP_3Delight*)i_node;
+	/*
+		This usually renders, but the Export button is only visible when the ROP
+		is in export mode, so it will export an NSI stream.
+	*/
+	node->execute(i_time);
 	return 1;
 }

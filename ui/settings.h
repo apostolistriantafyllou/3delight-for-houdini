@@ -49,6 +49,7 @@ public:
 
 	static const char* k_rendering;
 	static const char* k_stop_render;
+	static const char* k_export;
 	static const char* k_export_nsi;
 	static const char* k_ipr;
 	static const char* k_shading_samples;
@@ -112,6 +113,8 @@ private:
 
 	/// Called when the Abort button is pressed
 	static int StopRenderCB(void* i_node, int, double, const PRM_Template*);
+	/// Called when the Export button is pressed
+	static int ExportCB(void* i_node, int, double i_time, const PRM_Template*);
 
 	/** ROP containing all the parameters */
 	ROP_3Delight& m_parameters;
