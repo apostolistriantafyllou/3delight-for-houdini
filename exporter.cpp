@@ -491,19 +491,6 @@ void exporter::get_bind_attributes(
 			if( !op )
 				continue;
 
-#if 0
-			/* bind is crazy, I don't want tp support that */
-			if( op->getName().toStdString() == "bind" &&
-				input->evalInt(
-					"useasparmdefiner", 0, m_context.m_current_time) == 0 )
-			{
-				UT_String primvar;
-				input->evalString(
-					primvar, "parmname", 0, m_context.m_current_time );
-				o_to_export.push_back( primvar.toStdString() );
-			}
-			else
-#endif
 			if( op->getName().toStdString() == "3Delight::dlPrimitiveAttribute" ||
 				op->getName().toStdString() == "3Delight::dlAttributeRead")
 			{
