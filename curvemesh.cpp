@@ -89,15 +89,8 @@ void curvemesh::set_attributes( void ) const
 		m_nsi.SetAttribute( m_handle, NSI::CStringPArg("basis", "linear") );
 	}
 
-	GT_AttributeListHandle attributes[4] =
-	{
-		curve->getVertexAttributes(),
-		curve->getPointAttributes(),
-		GT_AttributeListHandle(),
-		curve->getDetailAttributes(),
-	};
+	exporter::export_bind_attributes( *curve );
 
-	exporter::export_bind_attributes( attributes, nullptr /* not vertices */ );
 	primitive::set_attributes();
 }
 
@@ -105,26 +98,16 @@ void curvemesh::set_attributes_at_time(
 	double i_time,
 	const GT_PrimitiveHandle i_gt_primitive) const
 {
-	const GT_PrimCurveMesh *curve =
-		static_cast<const GT_PrimCurveMesh *>(i_gt_primitive.get());
+	const GT_Primitive *curve = i_gt_primitive.get();
 
-	GT_AttributeListHandle attributes[] =
-	{
-		curve->getVertexAttributes(),
-		curve->getUniformAttributes(),
-		curve->getDetailAttributes()
-	};
-
-
-	std::vector<const char *> to_export;
+	std::vector< std::string > to_export;
 	to_export.push_back("P");
 	to_export.push_back("width");
 
-	export_attributes(
-		&attributes[0], sizeof(attributes)/sizeof(attributes[0]), i_time,
-		to_export);
+	export_attributes( *curve, i_time, to_export);
 
-	if( to_export.size() == 1 )
+	if( std::find(to_export.begin(), to_export.end(), "width") ==
+		to_export.end() )
 	{
 		/*
 			"width" not in attribute list. default to something.

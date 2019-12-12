@@ -62,12 +62,11 @@ public:
 
 protected:
 	/**
-		\brief Helper to export attributes lists to NSI.
+		\brief Helper to export vertex/point/primitive/detail attributes lists
+		to NSI.
 
-		\param i_attributes
-			An array of attrbute lists.
-		\param i_n
-			Total number of attrbute lists in the array.
+		\param i_prmitive
+			The primitive for which attributes output is required.
 		\param i_time
 			The time to communicate to NSISetAttributeAtTime
 		\param io_which_ones
@@ -77,26 +76,30 @@ protected:
 			that were not found in i_attributes. This allows the exporter to
 			take corrective measures (add some default attribute) or to issue
 			error messages.
-		\param i_which_flags
-			If not empty, points to an array of length io_which_ones.size()
-			containing the NSI attribute flags for each attribute in
-			i_which_ones.
+		\param i_vertex_list
+			A vertex list to use with point attributes.
 
 		\see pointmesh::set_attributes_at_time
 		\see curvemesh::set_attributes_at_time
 	*/
 	void export_attributes(
-		const GT_AttributeListHandle *i_attributes,
-		int i_n,
+		const GT_Primitive &i_primitive,
 		double i_time,
-		std::vector<const char *> &i_which_ones,
-		const int* i_which_flags = nullptr ) const;
+		std::vector<std::string> &i_which_ones ) const;
+
+	/**
+		\brief Export all the attributes that the user wishes to "bind".
+
+		We use the word bind here quiet liberaely as we don't really support
+		bind :) We use dlAttributeRead.
+
+		\param i_primitive
+			The primitive for which to output the bind attributes.
+	*/
+	void export_bind_attributes( const GT_Primitive &i_primitive) const;
 
 	void export_override_attributes() const;
 
-	void export_bind_attributes(
-		const GT_AttributeListHandle i_attributes[4],
-		const GT_DataArrayHandle *i_vertex_list ) const;
 
 private:
 	VOP_Node *get_assigned_material( std::string &o_path ) const;

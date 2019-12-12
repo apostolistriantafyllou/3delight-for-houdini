@@ -78,37 +78,11 @@ void polygonmesh::set_attributes( void ) const
 
 	m_nsi.SetAttribute( m_handle, mesh_args );
 
-	std::vector<const char *> to_export{ "uv" };
-
-	GT_AttributeListHandle attributes[] =
-	{
-		polygon_mesh->getVertexAttributes(),
-		polygon_mesh->getPointAttributes(),
-		polygon_mesh->getUniformAttributes(),
-		polygon_mesh->getDetailAttributes(),
-	};
-
+	std::vector< std::string > to_export{ "uv" };
 	exporter::export_attributes(
-		attributes,
-		sizeof(attributes)/sizeof(attributes[0]),
-		m_context.m_current_time,
-		to_export );
+		*polygon_mesh, m_context.m_current_time, to_export );
 
-	bool uvs_have_been_output =
-		std::find(to_export.begin(), to_export.end(), "uv") == to_export.end();
-
-	if( polygon_mesh->getPointAttributes()->get("uv") &&
-		uvs_have_been_output )
-	{
-		m_nsi.SetAttribute(
-			m_handle,
-			*NSI::Argument::New( "st.indices" )
-				->SetType( NSITypeInteger )
-				->SetCount( vertex_list->entries() )
-				->SetValuePointer(vertices) );
-	}
-
-	exporter::export_bind_attributes( attributes, &vertex_list );
+	exporter::export_bind_attributes( *polygon_mesh );
 
 	primitive::set_attributes();
 }
@@ -125,41 +99,9 @@ void polygonmesh::set_attributes_at_time(
 	const GT_PrimPolygonMesh *polygon_mesh =
 		static_cast<const GT_PrimPolygonMesh *>(i_gt_primitive.get());
 
-	GT_AttributeListHandle attributes[] =
-	{
-		polygon_mesh->getVertexAttributes(),
-		polygon_mesh->getPointAttributes(),
-		polygon_mesh->getUniformAttributes(),
-		polygon_mesh->getDetailAttributes(),
-	};
-
-	std::vector<const char *> to_export{ "P" };
+	std::vector< std::string > to_export{ "P" };
 	if( !m_is_subdiv )
 		to_export.push_back( "N" );
 
-	exporter::export_attributes(
-		attributes,
-		sizeof(attributes)/sizeof(attributes[0]),
-		i_time,
-		to_export );
-
-	bool N_have_been_output =
-		!m_is_subdiv &&
-		std::find(to_export.begin(), to_export.end(), "N") == to_export.end();
-
-	if( polygon_mesh->getPointAttributes()->get("N") &&
-		N_have_been_output )
-	{
-		const GT_DataArrayHandle &vertex_list = polygon_mesh->getVertexList();
-		GT_DataArrayHandle buffer_in_case_we_need_it;
-		const int *vertices =
-			vertex_list->getI32Array( buffer_in_case_we_need_it );
-
-		m_nsi.SetAttribute(
-			m_handle,
-			*NSI::Argument::New( "N.indices" )
-				->SetType( NSITypeInteger )
-				->SetCount( vertex_list->entries() )
-				->SetValuePointer( vertices ) );
-	}
+	exporter::export_attributes( *polygon_mesh, i_time, to_export );
 }
