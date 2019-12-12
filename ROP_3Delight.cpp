@@ -304,9 +304,6 @@ void ROP_3Delight::StopRender()
 		*/
 		m_rendering = false;
 
-		// Notify the UI that rendering has stopped
-		m_settings.Rendering(false);
-
 		if(m_renderdl)
 		{
 			// Terminate the renderdl process
@@ -348,6 +345,9 @@ void ROP_3Delight::StopRender()
 		m_renderdl_waiter.join();
 		assert(!m_renderdl);
 	}
+
+	// Notify the UI that rendering has stopped
+	m_settings.Rendering(false);
 }
 
 int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
