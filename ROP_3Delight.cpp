@@ -587,18 +587,16 @@ ROP_3Delight::endRender()
 		executePostRenderScript(m_current_render->m_end_time);
 	}
 
-/*
-	Ideally, we should close the pipe's input in order for renderdl to quit once
-	all files have been rendered.  However, calling UT_ReadWritePipe::close
-	simply kills the process, which we don't want to do right now, as all frames
-	might not have been rendered yet.
-	Not closing the pipe delays the termination of the renderdl process to the
-	next call to StopRender or ~ROP_3Delight.
+	// Close the renderdl NSI file names pipe if necessary
 	if(m_renderdl)
 	{
-		m_renderdl->close();
+		/*
+			Send an empty file name to signal the end of the list. The renderdl
+			process will exit and close the pipe from its end.
+		*/
+		fprintf(m_renderdl->getWriteFile(), "\n");
+		fflush(m_renderdl->getWriteFile());
 	}
-*/
 
 	OP_BundlePattern::freePattern(m_current_render->m_lights_to_render_pattern);
 	OP_BundlePattern::freePattern(m_current_render->m_objects_to_render_pattern);
