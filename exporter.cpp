@@ -562,7 +562,8 @@ void exporter::get_bind_attributes(
 			}
 			else
 #endif
-			if( op->getName().toStdString() == "3Delight::dlPrimitiveAttribute")
+			if( op->getName().toStdString() == "3Delight::dlPrimitiveAttribute" ||
+				op->getName().toStdString() == "3Delight::dlAttributeRead")
 			{
 				UT_String primvar;
 				input->evalString(
