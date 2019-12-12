@@ -12,7 +12,6 @@
 
 #include <OBJ/OBJ_Camera.h>
 #include <OBJ/OBJ_Light.h>
-#include <OP/OP_BundlePattern.h>
 #include <OP/OP_Director.h>
 #include <OP/OP_OperatorTable.h>
 #include <RE/RE_Light.h>
@@ -376,8 +375,8 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		!render,
 		m_cloud,
 		getFullPath().toStdString(),
-		OP_BundlePattern::allocPattern(m_settings.GetObjectsToRender()),
-		OP_BundlePattern::allocPattern(m_settings.GetLightsToRender()));
+		m_settings.GetObjectsToRender(),
+		m_settings.GetLightsToRender());
 
 	m_rendering = render;
 
@@ -598,9 +597,6 @@ ROP_3Delight::endRender()
 		fprintf(m_renderdl->getWriteFile(), "\n");
 		fflush(m_renderdl->getWriteFile());
 	}
-
-	OP_BundlePattern::freePattern(m_current_render->m_lights_to_render_pattern);
-	OP_BundlePattern::freePattern(m_current_render->m_objects_to_render_pattern);
 
 	/*
 		If we render in a background thread, the interests and rendering context

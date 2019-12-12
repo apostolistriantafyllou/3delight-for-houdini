@@ -2,12 +2,12 @@
 
 #include <nsi.hpp>
 
+#include <OP/OP_BundlePattern.h>
 #include <SYS/SYS_Types.h>
 
 #include <assert.h>
 
 class OBJ_Node;
-class OP_BundlePattern;
 
 /**
 	\brief An export context passed around to each exporter. Allows us
@@ -30,8 +30,8 @@ public:
 		bool i_export_nsi,
 		bool i_cloud,
 		const std::string& i_rop_path,
-		OP_BundlePattern* i_objects_to_render_pattern,
-		OP_BundlePattern* i_lights_to_render_pattern)
+		const UT_String& i_objects_to_render,
+		const UT_String& i_lights_to_render)
 	:
 		m_nsi(i_nsi),
 		m_start_time(i_start_time),
@@ -45,10 +45,18 @@ public:
 		m_export_nsi(i_export_nsi),
 		m_cloud(i_cloud),
 		m_rop_path(i_rop_path),
-		m_objects_to_render_pattern(i_objects_to_render_pattern),
-		m_lights_to_render_pattern(i_lights_to_render_pattern)
+		m_objects_to_render_pattern(
+			OP_BundlePattern::allocPattern(i_objects_to_render)),
+		m_lights_to_render_pattern(
+			OP_BundlePattern::allocPattern(i_lights_to_render))
 	{
 		assert(!m_ipr || !m_export_nsi);
+	}
+
+	~context()
+	{
+		OP_BundlePattern::freePattern(m_lights_to_render_pattern);
+		OP_BundlePattern::freePattern(m_objects_to_render_pattern);
 	}
 
 	/// Returns true if motion blur is required for this render
