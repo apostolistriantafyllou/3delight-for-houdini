@@ -17,6 +17,7 @@
 #include <OP/OP_OperatorTable.h>
 #include <RE/RE_Light.h>
 #include <ROP/ROP_Templates.h>
+#include <UT/UT_Exit.h>
 #include <UT/UT_ReadWritePipe.h>
 #include <UT/UT_Spawn.h>
 #include <UT/UT_TempFileManager.h>
@@ -29,7 +30,6 @@
 
 namespace
 {
-
 	NSI::DynamicAPI&
 	GetNSIAPI()
 	{
@@ -49,6 +49,12 @@ namespace
 			int res = i_res[p%2];
 			o_absolute_window[p] = roundf(i_relative_window[p] * float(res));
 		}
+	}
+
+	void ExitCB(void* i_data)
+	{
+		ROP_3Delight* rop = (ROP_3Delight*)i_data;
+		rop->StopRender();
 	}
 }
 
@@ -112,11 +118,14 @@ ROP_3Delight::ROP_3Delight(
 		m_idisplay_ipr(false),
 		m_settings(*this)
 {
+	UT_Exit::addExitCallback(&ExitCB, this);
 }
 
 
 ROP_3Delight::~ROP_3Delight()
 {
+	UT_Exit::removeExitCallback(&ExitCB, this);
+
 	idisplay_port::CleanUp();
 
 	StopRender();
