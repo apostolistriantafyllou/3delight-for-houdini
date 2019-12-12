@@ -126,9 +126,6 @@ void scene::process_node(
 
 	if( !sop )
 	{
-		std::cerr
-			<< "3Delight for Houdini: no render SOP for "
-			<< obj->getFullPath() << std::endl;
 		return;
 	}
 
@@ -146,10 +143,6 @@ void scene::process_node(
 		o_to_export.push_back( new geometry(i_context, obj) );
 		return;
 	}
-
-	std::cerr
-		<< "3Delight for Houdini: object " << obj->getFullPath()
-		<< " is not supported" << std::endl;
 }
 
 /**
