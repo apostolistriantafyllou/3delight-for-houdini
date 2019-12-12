@@ -56,19 +56,6 @@ void polygonmesh::set_attributes( void ) const
 		->SetCount( count_array.entries() )
 		->SetValuePointer( nvertices.get() ) );
 
-	/*
-		Prepare the P.indices attribute which, for each vertex on each face,
-		points to the "P" vertex.
-	*/
-	const GT_DataArrayHandle &vertex_list = polygon_mesh->getVertexList();
-	GT_DataArrayHandle buffer_in_case_we_need_it;
-	const int *vertices = vertex_list->getI32Array( buffer_in_case_we_need_it );
-
-	mesh_args.Add( NSI::Argument::New( "P.indices" )
-		->SetType( NSITypeInteger )
-		->SetCount( vertex_list->entries() )
-		->SetValuePointer( vertices ) );
-
 	if (m_is_subdiv)
 	{
 		mesh_args.Add(
