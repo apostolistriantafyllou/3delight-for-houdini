@@ -110,6 +110,7 @@ ROP_3Delight::ROP_3Delight(
 	:	ROP_Node(net, name, entry),
 		m_cloud(i_cloud),
 		m_current_render(nullptr),
+		m_end_time(0.0),
 		m_nsi(GetNSIAPI()),
 		m_renderdl(nullptr),
 		m_rendering(false),
@@ -378,6 +379,8 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		m_settings.GetObjectsToRender(),
 		m_settings.GetLightsToRender());
 
+	m_end_time = tend;
+
 	m_rendering = render;
 
 	// Notify the UI that a new render might have started
@@ -580,11 +583,9 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 ROP_RENDER_CODE
 ROP_3Delight::endRender()
 {
-	assert(m_current_render);
-
 	if(error() < UT_ERROR_ABORT)
 	{
-		executePostRenderScript(m_current_render->m_end_time);
+		executePostRenderScript(m_end_time);
 	}
 
 	// Close the renderdl NSI file names pipe if necessary
@@ -602,11 +603,13 @@ ROP_3Delight::endRender()
 		If we render in a background thread, the interests and rendering context
 		will be destroyed by this thread's stoppedcallback.
 	*/
-	if(!m_current_render->BackgroundThreadRendering())
+	m_render_end_mutex.lock();
+	if(m_current_render && !m_current_render->BackgroundThreadRendering())
 	{
 		m_interests.clear();
 		delete m_current_render; m_current_render = nullptr;
 	}
+	m_render_end_mutex.unlock();
 
 	return ROP_CONTINUE_RENDER;
 }

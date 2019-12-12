@@ -148,6 +148,10 @@ private:
 	bool m_cloud;
 
 	context* m_current_render;
+
+	/// "end time" parameter of the last call to startRender()
+	double m_end_time;
+
 	/*
 		NSI context used to export NSI scenes (and render single frames in a
 		background thread).
