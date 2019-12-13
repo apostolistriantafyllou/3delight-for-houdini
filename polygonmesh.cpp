@@ -3,6 +3,7 @@
 
 #include <GA/GA_Names.h>
 #include <GT/GT_PrimPolygonMesh.h>
+#include <unordered_map>
 #include <OBJ/OBJ_Node.h>
 #include <nsi.hpp>
 
@@ -91,4 +92,59 @@ void polygonmesh::set_attributes_at_time(
 		to_export.push_back( "N" );
 
 	exporter::export_attributes( *polygon_mesh, i_time, to_export );
+}
+
+void polygonmesh::connect( void ) const
+{
+	/*
+		The right place to do this as we need all the materials to be
+		already exported.
+	*/
+	assign_primitive_materials();
+
+	primitive::connect();
+}
+
+void polygonmesh::assign_primitive_materials( void ) const
+{
+	GT_AttributeListHandle uniforms =
+		default_gt_primitive().get()->getUniformAttributes();
+
+	if( !uniforms )
+		return;
+
+	GT_DataArrayHandle materials = uniforms->get( "shop_materialpath" );
+	if( !materials || materials->getStorage()!=GT_STORE_STRING )
+	{
+		return;
+	}
+
+	/* Build a material -> uniform/face number map */
+	std::unordered_map< std::string, std::vector<int> > all_materials;
+	for( GT_Offset i=0; i<materials->entries(); i++ )
+	{
+		GT_String shop = materials->getS( i );
+		if( shop == "" )
+			continue;
+		all_materials[shop.toStdString()].push_back( i );
+	}
+
+	/* Create the NSI face sets + attributes and connect to geo */
+	for( auto material : all_materials )
+	{
+		std::string attribute_handle = m_handle + material.first;
+		std::string set_handle = m_handle + material.first + "|set";
+
+		m_nsi.Create( attribute_handle, "attributes" );
+		m_nsi.Create( set_handle, "faceset" );
+		m_nsi.Connect( material.first, "", attribute_handle, "surfaceshader" );
+		m_nsi.Connect( attribute_handle, "", set_handle, "geometryattributes" );
+		m_nsi.Connect( set_handle, "", m_handle, "facesets" );
+
+		m_nsi.SetAttribute( set_handle,
+			*NSI::Argument( "faces" )
+				.SetType( NSITypeInteger )
+				->SetCount( material.second.size() )
+				->SetValuePointer( &material.second[0] ) );
+	}
 }

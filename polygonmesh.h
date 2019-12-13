@@ -12,12 +12,15 @@ public:
 
 	void create( void ) const override;
 	void set_attributes( void ) const override;
+	void connect( void ) const override;
 
 protected:
 	/// Exports time-dependent attributes to NSI
 	void set_attributes_at_time(
 		double i_time,
 		const GT_PrimitiveHandle i_gt_primitive)const override;
+
+	void assign_primitive_materials( void ) const;
 
 private:
 	bool m_is_subdiv{false};
