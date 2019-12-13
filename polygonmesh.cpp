@@ -123,10 +123,10 @@ void polygonmesh::assign_primitive_materials( void ) const
 	std::unordered_map< std::string, std::vector<int> > all_materials;
 	for( GT_Offset i=0; i<materials->entries(); i++ )
 	{
-		GT_String shop = materials->getS( i );
-		if( shop == "" )
+		std::string shop = std::string( materials->getS(i) );
+		if( shop.empty() )
 			continue;
-		all_materials[shop.toStdString()].push_back( i );
+		all_materials[ shop ].push_back( i );
 	}
 
 	/* Create the NSI face sets + attributes and connect to geo */
