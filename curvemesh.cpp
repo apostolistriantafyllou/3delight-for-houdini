@@ -106,7 +106,7 @@ void curvemesh::set_attributes_at_time(
 
 	export_attributes( *curve, i_time, to_export);
 
-	if( std::find(to_export.begin(), to_export.end(), "width") ==
+	if( std::find(to_export.begin(), to_export.end(), "width") !=
 		to_export.end() )
 	{
 		/*
