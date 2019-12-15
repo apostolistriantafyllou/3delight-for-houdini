@@ -224,10 +224,12 @@ struct OBJ_Node_Refiner : public GT_Refine
 #endif
 			if( !Refine( i_primitive, *m_node, m_context, m_result, m_add_time_samples, m_level+1 ) )
 			{
+#ifdef VERBOSE
 				std::cerr << "3Delight for Houdini: unsupported object "
 					<< m_node->getFullPath()
 					<< " of class " << i_primitive->className()
 					<< std::endl;
+#endif
 			}
 		}
 	}
