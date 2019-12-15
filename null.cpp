@@ -4,7 +4,7 @@
 #include "time_sampler.h"
 
 #include <OBJ/OBJ_Node.h>
-
+#include <OP/OP_Director.h>
 #include <GT/GT_Handles.h>
 
 #include <nsi.hpp>
@@ -45,23 +45,40 @@ void null::set_attributes_at_time( double i_time ) const
 	\brief Connect to the parent object of this null object. This could
 	be the immediate parent in Houdini's scene hierarchy or NSI_SCENE_ROOT
 	if this null object has no parent.
+
+	Note that Scene Hierarchy in Houdini is a very murky concept. Here we
+	need to check both getParentObject(), which seems to be one way to
+	do scene hierarchies, and getParent(), which seems to be the other
+	way (OBJ-level nested hierarchies).
 */
 void null::connect( void ) const
 {
 	assert( m_object );
-	OBJ_Node *parent = m_object->getParentObject();
+	OP_Node *parent = m_object->getParentObject();
 
 	if( parent )
 	{
 		m_nsi.Connect(
-			m_handle.c_str(), "",
+			m_handle, "",
 			parent->getFullPath().buffer(), "objects" );
 	}
 	else
 	{
-		m_nsi.Connect(
-			m_handle.c_str(), "",
-			NSI_SCENE_ROOT, "objects" );
+		OP_Node *obj_node = OPgetDirector()->findNode("/obj");
+		parent = m_object->getParent();
+		assert( parent );
+		if( parent == obj_node || parent == nullptr )
+		{
+			m_nsi.Connect(
+				m_handle, "",
+				NSI_SCENE_ROOT, "objects" );
+		}
+		else
+		{
+			m_nsi.Connect(
+				m_handle, "",
+				parent->getFullPath().c_str(), "objects" );
+		}
 	}
 }
 
