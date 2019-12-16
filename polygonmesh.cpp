@@ -109,16 +109,18 @@ void polygonmesh::assign_primitive_materials( void ) const
 {
 	GT_AttributeListHandle uniforms =
 		default_gt_primitive().get()->getUniformAttributes();
+	GT_AttributeListHandle details =
+		default_gt_primitive().get()->getDetailAttributes();
 
-	if( !uniforms )
-	{
-		uniforms =
-			default_gt_primitive().get()->getDetailAttributes();
-		if( !uniforms )
-			return;
-	}
+	GT_DataArrayHandle uniform_materials(
+		uniforms ? uniforms->get("shop_materialpath") : nullptr);
+	GT_DataArrayHandle detail_materials(
+		details ? details->get("shop_materialpath") : nullptr);
 
-	GT_DataArrayHandle materials = uniforms->get( "shop_materialpath" );
+	/* Priority to uniform/primitive materials */
+	GT_DataArrayHandle materials =
+		uniform_materials ? uniform_materials : detail_materials;
+
 	if( !materials || materials->getStorage()!=GT_STORE_STRING )
 	{
 		return;
