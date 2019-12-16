@@ -18,6 +18,7 @@
 #include <SOP/SOP_Node.h>
 
 #include <iostream>
+#include <algorithm>
 
 namespace
 {
@@ -201,6 +202,20 @@ struct OBJ_Node_Refiner : public GT_Refine
 
 		case GT_PRIM_VDB_VOLUME:
 		{
+			/*
+				Houdini coucld call us once per grid! And this is not want we
+				want.
+			*/
+			auto it = std::find_if(
+				m_result.begin(), m_result.end(),
+				[] (const primitive *e) { return e->is_volume(); } );
+
+			if( it != m_result.end() )
+			{
+				/* volume already output */
+				return;
+			}
+
 			std::string vdb_path =
 				vdb::node_is_vdb_loader( m_node, m_context.m_current_time );
 
