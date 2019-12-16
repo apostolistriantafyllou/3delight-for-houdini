@@ -111,7 +111,12 @@ void polygonmesh::assign_primitive_materials( void ) const
 		default_gt_primitive().get()->getUniformAttributes();
 
 	if( !uniforms )
-		return;
+	{
+		uniforms =
+			default_gt_primitive().get()->getDetailAttributes();
+		if( !uniforms )
+			return;
+	}
 
 	GT_DataArrayHandle materials = uniforms->get( "shop_materialpath" );
 	if( !materials || materials->getStorage()!=GT_STORE_STRING )
@@ -119,7 +124,31 @@ void polygonmesh::assign_primitive_materials( void ) const
 		return;
 	}
 
-	/* Build a material -> uniform/face number map */
+	if( materials->entries() == 1 )
+	{
+		/*
+			This could be a single faced geo OR a detail material assignment.
+			Deal with it using the usual attribute assignment.
+		*/
+		std::string shop = std::string( materials->getS(0) );
+		if( shop.empty() )
+			return;
+
+		std::string attribute_handle = m_handle + shop;
+
+		NSI::ArgumentList priority;
+		priority.Add(new NSI::IntegerArg("priority", 1));
+
+		m_nsi.Create( attribute_handle, "attributes" );
+		m_nsi.Connect( shop, "", attribute_handle, "surfaceshader", priority );
+		m_nsi.Connect( attribute_handle, "", m_handle, "geometryattributes" );
+
+		return;
+	}
+
+	/*
+		We will need per-face assignments.  Build a material -> uniform/face map
+	*/
 	std::unordered_map< std::string, std::vector<int> > all_materials;
 	for( GT_Offset i=0; i<materials->entries(); i++ )
 	{
