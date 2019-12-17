@@ -4,6 +4,9 @@
 #include "../scene.h"
 #include "../ROP_3Delight.h"
 
+#include "delight.h"
+#include "nsi_dynamic.hpp"
+
 #include <OBJ/OBJ_Node.h>
 #include <OP/OP_BundlePattern.h>
 #include <OP/OP_OperatorTable.h>
@@ -12,6 +15,7 @@
 #include <PRM/PRM_SpareData.h>
 #include <ROP/ROP_Node.h>
 #include <ROP/ROP_Templates.h>
+#include <SYS/SYS_Version.h>
 #include <UT/UT_String.h>
 
 static const float k_one_line = 0.267;
@@ -109,6 +113,7 @@ PRM_Template* settings::GetTemplates()
 	static PRM_Name separator4("separator4", "");
 	static PRM_Name separator5("separator5", "");
 	static PRM_Name separator6("separator6", "");
+	static PRM_Name separator7("separator7", "");
 
 	// Actions
 	static PRM_Name rendering(k_rendering, "Rendering");
@@ -496,11 +501,21 @@ PRM_Template* settings::GetTemplates()
 	static PRM_Default ipr_d(false);
 	static PRM_Conditional ipr_g(("{ " + std::string(k_export_nsi) + " != \"off\" }").c_str());
 
+	static PRM_Name hdk_version("hdk_version", "Built with HDK " SYS_VERSION_MAJOR "." SYS_VERSION_MINOR "." SYS_VERSION_BUILD "." SYS_VERSION_PATCH);
+	NSI::DynamicAPI api;
+	const char* (*get_dl_version)();
+	api.LoadFunction(get_dl_version, "DlGetLibNameAndVersionString");
+	static std::string dl_version_str = std::string("Rendering with ") + get_dl_version();
+	static PRM_Name dl_version("dl_version", dl_version_str.c_str());
+
 	static std::vector<PRM_Template> debug_templates =
 	{
 		PRM_Template(PRM_STRING, 1, &export_nsi, &export_nsi_d, &export_nsi_c),
 		PRM_Template(PRM_FILE, 1, &default_export_nsi_filename, &default_export_nsi_filename_d, 0, 0, nullptr, nullptr, 1, nullptr, &default_export_nsi_filename_g),
-		PRM_Template(PRM_TOGGLE, 1, &ipr, &ipr_d, 0, 0, nullptr, nullptr, 1, nullptr, &ipr_g)
+		PRM_Template(PRM_TOGGLE, 1, &ipr, &ipr_d, 0, 0, nullptr, nullptr, 1, nullptr, &ipr_g),
+		PRM_Template(PRM_SEPARATOR, 0, &separator7),
+		PRM_Template(PRM_LABEL, 0, &hdk_version),
+		PRM_Template(PRM_LABEL, 0, &dl_version)
 	};
 
 	// Put everything together
