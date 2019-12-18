@@ -298,28 +298,34 @@
 
 	DELIGHT_FULL_TITLE(_3dl_obj_light_contrib, "Contributions")
 
-	parm 
+	collection
 	{
-		SOHO_FLOAT(_3dl_diffuse_contribution, "Diffuse", "3Delight", 1)
-		range { 0! 1! }
-	}
+		name _3dl_contributions_group
+		parmtag	{ spare_category "3Delight" }
 
-	parm 
-	{
-		SOHO_FLOAT(_3dl_specular_contribution, "Specular", "3Delight", 1)
-		range { 0! 1! }
-	}
+		parm
+		{
+			SOHO_FLOAT(_3dl_diffuse_contribution, "Diffuse", "3Delight", 1)
+			range { 0! 1! }
+		}
 
-	parm 
-	{
-		SOHO_FLOAT(_3dl_hair_contribution, "Hair", "3Delight", 1)
-		range { 0! 1! }
-	}
+		parm
+		{
+			SOHO_FLOAT(_3dl_specular_contribution, "Specular", "3Delight", 1)
+			range { 0! 1! }
+		}
 
-	parm 
-	{
-		SOHO_FLOAT(_3dl_volume_contribution, "Volume", "3Delight", 1)
-		range { 0! 1! }
+		parm
+		{
+			SOHO_FLOAT(_3dl_hair_contribution, "Hair", "3Delight", 1)
+			range { 0! 1! }
+		}
+
+		parm
+		{
+			SOHO_FLOAT(_3dl_volume_contribution, "Volume", "3Delight", 1)
+			range { 0! 1! }
+		}
 	}
 
 	DELIGHT_FULL_TITLE(_3dl_shutter, "Shutter")

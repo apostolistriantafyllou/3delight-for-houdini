@@ -7,8 +7,5 @@ if ( "$arg1" != "" ) then
 # patch to move folder after the tab "Misc"
 	python $arg0.py $arg1
     opproperty -f $arg1 3Delight _3dl_obj_light_contrib_title
-    opproperty -f $arg1 3Delight _3dl_diffuse_contribution
-    opproperty -f $arg1 3Delight _3dl_specular_contribution
-    opproperty -f $arg1 3Delight _3dl_hair_contribution
-    opproperty -f $arg1 3Delight _3dl_volume_contribution
+    opproperty -f $arg1 3Delight _3dl_contributions_group
 endif
