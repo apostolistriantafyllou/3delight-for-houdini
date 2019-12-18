@@ -2,6 +2,7 @@
 
 #include "context.h"
 #include "null.h"
+#include "object_attributes.h"
 #include "shader_library.h"
 #include "time_sampler.h"
 #include "vop.h"
@@ -14,6 +15,22 @@
 #include <assert.h>
 #include <nsi.hpp>
 #include <iostream>
+
+namespace
+{
+
+	/**
+		Returns the handle of the NSI "attributes" node that has a "prelit"
+		attribute set to 1.
+	*/
+	const char* prelit_attribute_node_handle()
+	{
+		return
+			object_attributes::geo_attribute_node_handle(
+				object_attributes::e_prelit);
+	}
+
+}
 
 light::light( const context& i_ctx, OBJ_Node *i_object )
 :
@@ -291,6 +308,22 @@ void light::connect( void ) const
 		m_nsi.Connect(m_handle, "", parent_handle, "objects");
 	}
 
+	/*
+		We share object_attributes' "attributes" NSI node to set the prelit
+		attribute on our geometry. We can't use the whole object_attributes
+		system, however, because its meant for regular objects, which have a
+		3-value "_3dl_compositing" parameter, while lights have a
+		"_3dl_light_prelit" toggle (since they can't be mattes).
+	*/
+	const char* prelit = "_3dl_light_prelit";
+	if( m_object->hasParm(prelit) &&
+		m_object->evalInt(prelit, 0, m_context.m_current_time) )
+	{
+		m_nsi.Connect(
+			prelit_attribute_node_handle(), "",
+			m_handle, "geometryattributes");
+	}
+
 	export_override_attributes();
 }
 
@@ -323,7 +356,7 @@ void light::changed_cb(
 		PRM_Parm& parm = node.m_object->getParm(parm_index);
 		std::string name = parm.getToken();
 
-		if(name == "light_enable")
+		if(name == "light_enable" || name == "_3dl_light_prelit")
 		{
 			node.disconnect();
 			// Will connect only if required
@@ -355,6 +388,10 @@ void light::disconnect()const
 {
 	std::string parent_handle = m_object->getFullPath().c_str();
 	m_nsi.Disconnect(m_handle, "", parent_handle, "objects");
+
+	m_nsi.Disconnect(
+		prelit_attribute_node_handle(), "",
+		m_handle, "geometryattributes");
 }
 
 /*

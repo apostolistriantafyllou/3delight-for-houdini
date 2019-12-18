@@ -328,6 +328,13 @@
 		}
 	}
 
+	DELIGHT_FULL_TITLE(_3dl_compositing_group, "Compositing")
+
+	parm
+	{
+		SOHO_TOGGLE(_3dl_light_prelit, "Prelit", "3Delight", 0)
+	}
+
 	DELIGHT_FULL_TITLE(_3dl_shutter, "Shutter")
 
 	collection

@@ -51,11 +51,12 @@ public:
 		OBJ_Node* i_object,
 		const std::string& i_handle	);
 
-private:
 	/**
 		\brief The NSI handle of the global attribute node
 	*/
 	static const char* geo_attribute_node_handle( geo_attribute i_type );
+
+private:
 
 	/**
 		\brief Givem a geo_attribute, returns the name of the NSI attribute
