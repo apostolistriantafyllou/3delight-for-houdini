@@ -21,3 +21,14 @@ endif
 foreach node ( $cam_nodes )
 	obj/cam.cmd $node
 end
+
+set light_nodes = `run("opfind -S -p /obj -t hlight::2.0")`
+#message Light nodes are $light_nodes
+if( "$light_nodes" == "" ) then
+#	message No light nodes found!
+	exit
+endif
+
+foreach node ( $light_nodes )
+	obj/hlight-2.0_OnCreated.cmd $node
+end
