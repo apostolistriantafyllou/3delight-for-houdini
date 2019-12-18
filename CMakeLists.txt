@@ -86,7 +86,7 @@ install(
 	DESTINATION ${INSTALL_DIR}/scripts )
 
 install(
-	FILES scripts/obj/geo.cmd scripts/obj/cam.cmd scripts/obj/hlight-2.0_OnCreated.cmd scripts/obj/hlight-2.0_OnCreated.cmd.py
+	FILES scripts/obj/geo.cmd scripts/obj/cam.cmd scripts/obj/hlight-2.0_OnCreated.cmd
 	DESTINATION ${INSTALL_DIR}/scripts/obj )
 
 install(
