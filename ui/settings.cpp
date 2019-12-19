@@ -489,12 +489,13 @@ PRM_Template* settings::GetTemplates()
 
 	static PRM_Name ipr(k_ipr, "IPR");
 	static PRM_Default ipr_d(false);
+	static PRM_Conditional ipr_g(("{ " + std::string(k_export_nsi) + " != \"off\" }").c_str());
 
 	static std::vector<PRM_Template> debug_templates =
 	{
 		PRM_Template(PRM_STRING, 1, &export_nsi, &export_nsi_d, &export_nsi_c),
 		PRM_Template(PRM_FILE, 1, &default_export_nsi_filename, &default_export_nsi_filename_d, 0, 0, nullptr, nullptr, 1, nullptr, &default_export_nsi_filename_g),
-		PRM_Template(PRM_TOGGLE, 1, &ipr, &ipr_d)
+		PRM_Template(PRM_TOGGLE, 1, &ipr, &ipr_d, 0, 0, nullptr, nullptr, 1, nullptr, &ipr_g)
 	};
 
 	// Put everything together
