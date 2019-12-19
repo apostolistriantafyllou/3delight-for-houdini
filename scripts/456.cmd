@@ -32,3 +32,14 @@ endif
 foreach node ( $light_nodes )
 	obj/hlight-2.0_OnCreated.cmd $node
 end
+
+set envlight_nodes = `run("opfind -S -p /obj -t envlight")`
+#message Envlight nodes are $envlight_nodes
+if( "$envlight_nodes" == "" ) then
+#	message No envlight nodes found!
+	exit
+endif
+
+foreach node ( $envlight_nodes )
+	obj/envlight_OnCreated.cmd $node
+end
