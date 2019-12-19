@@ -5,11 +5,10 @@ node = hou.node(sys.argv[1])
 # get template group
 group = node.parmTemplateGroup()
 # get the folder to move
-f = group.findFolder(["Misc","3Delight"])
+dl_folder = group.containingFolder("_3dl_spread")
 # remove it
-group.remove(f.name())
-# move the folder at the correct place
-ind = group.findIndicesForFolder("Misc")
-group.insertAfter(ind,f)
+group.remove(dl_folder)
+# then insert it after the ever-present "Misc" folder
+group.insertAfter(group.findIndicesForFolder("Misc"), dl_folder)
 # update the node
 node.setParmTemplateGroup(group)
