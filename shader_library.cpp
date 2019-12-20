@@ -265,9 +265,11 @@ void shader_library::Register(OP_OperatorTable* io_table)const
 			const DlShaderInfo* info = get_shader_info( oso.second.c_str() );
 			if(!info)
 			{
+#ifdef NDEBUG
 				std::cerr
 					<< "3Delight for Houdini: unable to load " << g.m_name
 					<< " shader " << oso.first;
+#endif
 				continue;
 			}
 
