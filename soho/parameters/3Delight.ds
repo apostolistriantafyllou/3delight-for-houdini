@@ -293,7 +293,10 @@
 	{
 		SOHO_FLOAT(_3dl_spread, "Spread", "3Delight", 1)
 		range { 0! 1! }
-		hidewhen	  "{ light_type != "grid" light_type != "point" } { light_type == "point" coneenable == "off" }"
+		// Spread only makes sense on a single-face geometry
+		hidewhen	"{ light_type != "grid"  light_type != "point"  light_type != "disk" }"
+		// Spread needs direction, and point doesn't have a normal by default
+		disablewhen	"{ light_type == "point"  coneenable == "off" }"
 	}
 
 	DELIGHT_FULL_TITLE(_3dl_obj_light_contrib, "Contributions")
