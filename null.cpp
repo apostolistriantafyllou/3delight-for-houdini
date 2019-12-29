@@ -54,31 +54,30 @@ void null::set_attributes_at_time( double i_time ) const
 void null::connect( void ) const
 {
 	assert( m_object );
-	OP_Node *parent = m_object->getParentObject();
 
-	if( parent )
+	OP_Node *parent_node = m_object->getParent();
+	OP_Node *obj_node = OPgetDirector()->findNode("/obj");
+
+	if( parent_node && parent_node != obj_node )
 	{
 		m_nsi.Connect(
 			m_handle, "",
-			parent->getFullPath().buffer(), "objects" );
+			parent_node->getFullPath().c_str(), "objects" );
+		return;
+	}
+
+	OP_Node *parent_object = m_object->getParentObject();
+	if( parent_object && parent_object != obj_node )
+	{
+		m_nsi.Connect(
+			m_handle, "",
+			parent_object->getFullPath().toStdString(), "objects" );
 	}
 	else
 	{
-		OP_Node *obj_node = OPgetDirector()->findNode("/obj");
-		parent = m_object->getParent();
-		assert( parent );
-		if( parent == obj_node || parent == nullptr )
-		{
-			m_nsi.Connect(
-				m_handle, "",
-				NSI_SCENE_ROOT, "objects" );
-		}
-		else
-		{
-			m_nsi.Connect(
-				m_handle, "",
-				parent->getFullPath().c_str(), "objects" );
-		}
+		m_nsi.Connect(
+			m_handle, "",
+			NSI_SCENE_ROOT, "objects" );
 	}
 }
 
