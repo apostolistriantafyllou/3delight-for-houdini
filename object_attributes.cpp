@@ -76,11 +76,11 @@ const char* object_attributes::geo_attribute_houdini_name( geo_attribute i_type 
 	{
 		case e_matte:
 		case e_prelit: return "_3dl_compositing";
-		case e_visCamera: return "_3dl_vis_camera";
-		case e_visShadow: return "_3dl_vis_shadow";
-		case e_visDiffuse: return "_3dl_vis_diffuse";
-		case e_visReflection: return "_3dl_vis_reflection";
-		case e_visRefraction: return "_3dl_vis_refraction";
+		case e_visCamera: return "_3dl_visibility_camera";
+		case e_visShadow: return "_3dl_visibility_shadow";
+		case e_visDiffuse: return "_3dl_visibility_diffuse";
+		case e_visReflection: return "_3dl_visibility_reflection";
+		case e_visRefraction: return "_3dl_visibility_refraction";
 		case e_invalidAttribute:
 		default: assert( false );
 	}

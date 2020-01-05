@@ -348,6 +348,12 @@ void geometry::connect()const
 		p->connect();
 	}
 
+	// Connect geometry attributes for non-default values
+	object_attributes::connect_to_object_attributes_nodes(
+		m_context,
+		m_object,
+		m_handle);
+
 	// Do local material assignment
 
 	int index = m_object->getParmIndex( "shop_materialpath" );
@@ -371,10 +377,4 @@ void geometry::connect()const
 	m_nsi.Connect(
 		material_path.buffer(), "",
 		attributes, volume ? "volumeshader" : "surfaceshader" );
-
-	// Connect geometry attributes for non-default values
-	object_attributes::connect_to_object_attributes_nodes(
-		m_context,
-		m_object,
-		m_handle);
 }

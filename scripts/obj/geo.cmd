@@ -42,12 +42,16 @@ if ( "$arg1" != "" ) then
    opspare -d _3dl_over_vis_reflection_group $arg1
    opspare -d _3dl_over_vis_refraction_group $arg1
    opspare -d _3dl_override_ss $arg1
+   opspare -d _3dl_vis_diffuse $arg1
 
 # Add properties into tab 3Delight
    opproperty -f $arg1 3Delight _3dl_render_poly_as_subd
    opproperty -f $arg1 3Delight _3dl_smooth_curves
    opproperty -f $arg1 3Delight _3dl_obj_geo_label1_group
-   opproperty -f $arg1 3Delight _3dl_vis_diffuse
+   opproperty -f $arg1 3Delight _3dl_visibility_camera
+   opproperty -f $arg1 3Delight _3dl_visibility_diffuse
+   opproperty -f $arg1 3Delight _3dl_visibility_reflection
+   opproperty -f $arg1 3Delight _3dl_visibility_refraction
    opproperty -f $arg1 3Delight _3dl_compositing
    opproperty -f $arg1 3Delight _3dl_obj_geo_label2_group
    opproperty -f $arg1 3Delight _3dl_transformation_blur

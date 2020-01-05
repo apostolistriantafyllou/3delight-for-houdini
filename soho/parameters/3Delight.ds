@@ -92,8 +92,24 @@
 
 	parm
 	{
-		SOHO_TOGGLE(_3dl_vis_diffuse, "Visible in Diffuse", "3Delight", 1)
+		SOHO_TOGGLE(_3dl_visibility_camera, "Visible to Camera", "3Delight", 1)
 	}
+
+	parm
+	{
+		SOHO_TOGGLE(_3dl_visibility_diffuse, "Visible in Diffuse", "3Delight", 1)
+	}
+
+	parm
+	{
+		SOHO_TOGGLE(_3dl_visibility_reflection, "Visible in Reflections", "3Delight", 1)
+	}
+
+	parm
+	{
+		SOHO_TOGGLE(_3dl_visibility_refraction, "Visible in Refractions", "3Delight", 1)
+	}
+
 
 	parm
 	{
