@@ -6,12 +6,12 @@
 #include "geometry.h"
 #include "light.h"
 #include "null.h"
-#include "safe_interest.h"
 #include "vop.h"
 #include "vdb.h"
 /* } */
 
 #include "context.h"
+#include "safe_interest.h"
 
 #include <GEO/GEO_Normal.h>
 #include <OBJ/OBJ_Camera.h>

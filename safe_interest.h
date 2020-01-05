@@ -11,6 +11,8 @@ class OP_Node;
 
 	Ensures that the interest will be removed when the callback is not needed,
 	but also that we won't try to remove an interest on a deleted node.
+
+	Used in the context of an IPR session.
 */
 class safe_interest
 {
@@ -42,7 +44,7 @@ public:
 
 private:
 
-	/*
+	/**
 		Callback called by Houdini's interest system, simply calls callback() on
 		a safe_interest object.
 	*/
@@ -52,7 +54,7 @@ private:
 		OP_EventType i_type,
 		void* i_data);
 
-	// Calls the client callback, handling deletion event when they occur.
+	/// Calls the client callback, handling deletion event when they occur.
 	void callback(
 		OP_Node* i_caller,
 		OP_EventType i_type,
@@ -73,5 +75,3 @@ private:
 	void* m_callee;
 	OP_EventMethod m_cb;
 };
-
-
