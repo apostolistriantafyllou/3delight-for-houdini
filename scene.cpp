@@ -129,15 +129,6 @@ void scene::process_node(
 		return;
 	}
 
-	/**
-		Don't put this before cameras and lights have been detected
-		above as these should be output even if not displayed.
-	*/
-	if( !obj->getObjectDisplay(i_context.m_current_time) )
-	{
-		return;
-	}
-
 	if( obj->castToOBJGeometry() )
 	{
 		o_to_export.push_back( new geometry(i_context, obj) );
@@ -184,10 +175,17 @@ void scene::scan(
 				continue;
 
 			/*
-				If we the object is not displayed, don't get inside the SOP.
+				Our Objects To Render act like the "Force Objects" of Mantra. We
+				make sure to only filter out geo, and nothting else.
+
+				Note that light sources are dealt with a bit later since in
+				Houdini they are mixed with cameras (\ref process_node).
 			*/
 			OBJ_Node *obj = node->castToOBJNode();
-			if( obj && !obj->getObjectDisplay(i_context.m_current_time) )
+			const char* rop_path = i_context.m_rop_path.c_str();
+			if( obj && obj->castToOBJGeometry() &&
+				!i_context.m_objects_to_render_pattern->match(
+					obj, rop_path, true))
 			{
 				continue;
 			}
