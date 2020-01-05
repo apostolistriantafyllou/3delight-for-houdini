@@ -642,29 +642,32 @@ ROP_3Delight::loadFinished()
 	m_settings.UpdateLights();
 }
 
-void
-ROP_3Delight::ExportTransparentSurface(const context& i_ctx) const
+/**
+	This is needed by the Spatiaal Override feature to make the overriding
+	object transparent.
+*/
+void ROP_3Delight::ExportTransparentSurface(const context& i_ctx) const
 {
-	std::string shaderHandle = exporter::TransparentSurfaceHandle();
+	std::string shaderHandle = exporter::transparent_surface_handle();
 	shaderHandle =+ "|shader";
 
 	NSI::Context& nsi = i_ctx.m_nsi;
-	nsi.Create(exporter::TransparentSurfaceHandle(), "attributes");
-	nsi.Create(shaderHandle.c_str(), "shader");
+	nsi.Create(exporter::transparent_surface_handle(), "attributes");
+	nsi.Create(shaderHandle, "shader");
 
 	const shader_library& library = shader_library::get_instance();
 	std::string path = library.get_shader_path( "transparent" );
 
 	nsi.SetAttribute(
-		shaderHandle.c_str(),
-		NSI::CStringPArg("shaderfilename", path.c_str()));
+		shaderHandle,
+		NSI::StringArg("shaderfilename", path) );
 
-	NSI::ArgumentList argList;
-	argList.Add(new NSI::IntegerArg("priority", 60));
+	NSI::ArgumentList arguments;
+	arguments.Add(new NSI::IntegerArg("priority", 60));
 
 	nsi.Connect(
-		shaderHandle.c_str(), "",
-		exporter::TransparentSurfaceHandle(), "surfaceshader", argList );
+		shaderHandle, "",
+		exporter::transparent_surface_handle(), "surfaceshader", arguments );
 }
 
 std::string

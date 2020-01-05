@@ -5,7 +5,9 @@ source $HH/scripts/obj/geo.cmd
 
 \set noalias = 1
 if ( "$arg1" != "" ) then
-# Removed old names (without prefix)
+# Removed old names (without prefix) and badly named
+# space override names
+
    opspare -d obj_geo_separator1 $arg1
    opspare -d obj_geo_label1 $arg1
    opspare -d obj_geo_separator2 $arg1
@@ -33,6 +35,14 @@ if ( "$arg1" != "" ) then
    opspare -d over_vis_refraction_enable $arg1
    opspare -d over_vis_refraction $arg1
    opspare -d override_ss $arg1
+   opspare -d _3dl_override_vol $arg1
+   opspare -d _3dl_over_compositing_group $arg1
+   opspare -d _3dl_over_vis_camera_group $arg1
+   opspare -d _3dl_over_vis_diffuse_group $arg1
+   opspare -d _3dl_over_vis_reflection_group $arg1
+   opspare -d _3dl_over_vis_refraction_group $arg1
+   opspare -d _3dl_override_ss $arg1
+
 # Add properties into tab 3Delight
    opproperty -f $arg1 3Delight _3dl_render_poly_as_subd
    opproperty -f $arg1 3Delight _3dl_smooth_curves
@@ -45,11 +55,12 @@ if ( "$arg1" != "" ) then
    opproperty -f $arg1 3Delight _3dl_deformation
    opproperty -f $arg1 3Delight _3dl_add_samples
    opproperty -f $arg1 3Delight _3dl_obj_geo_label3_group
-   opproperty -f $arg1 3Delight _3dl_override_vol
-   opproperty -f $arg1 3Delight _3dl_over_compositing_group
-   opproperty -f $arg1 3Delight _3dl_over_vis_camera_group
-   opproperty -f $arg1 3Delight _3dl_over_vis_diffuse_group
-   opproperty -f $arg1 3Delight _3dl_over_vis_reflection_group
-   opproperty -f $arg1 3Delight _3dl_over_vis_refraction_group
-   opproperty -f $arg1 3Delight _3dl_override_ss
+
+   opproperty -f $arg1 3Delight _3dl_spatial_override
+   opproperty -f $arg1 3Delight _3dl_override_compositing_group
+   opproperty -f $arg1 3Delight _3dl_override_visibility_camera_group
+   opproperty -f $arg1 3Delight _3dl_override_visibility_diffuse_group
+   opproperty -f $arg1 3Delight _3dl_override_visibility_reflection_group
+   opproperty -f $arg1 3Delight _3dl_override_visibility_refraction_group
+   opproperty -f $arg1 3Delight _3dl_override_surface_shader
 endif

@@ -114,7 +114,7 @@ bool object_attributes::geo_attribute_has_houdini_default_value(
 		scripts are not run or if the user simply decides to remove
 		attributes.
 	*/
-	if(!i_object->hasParm(parm_name))
+	if( !i_object->hasParm(parm_name) )
 	{
 		return true;
 	}

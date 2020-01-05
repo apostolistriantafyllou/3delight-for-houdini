@@ -73,7 +73,7 @@ static NSIType_t gt_to_nsi_type( GT_Type i_type, GT_Storage i_storage )
 	}
 }
 
-const char* exporter::TransparentSurfaceHandle()
+const char* exporter::transparent_surface_handle()
 {
 	return "3delight_transparent_surface";
 }
@@ -216,7 +216,7 @@ void exporter::export_attributes(
 
 void exporter::export_override_attributes() const
 {
-	if ( !m_object->hasParm("override_vol") )
+	if ( !m_object->hasParm("_3dl_spatial_override") )
 	{
 		// We presume that our other attributes are not present
 		return;
@@ -225,190 +225,188 @@ void exporter::export_override_attributes() const
 	std::string	override_nsi_handle = m_handle;
 	override_nsi_handle += "|attributeOverrides";
 
-	m_nsi.Create( override_nsi_handle.c_str(), "attributes" );
+	m_nsi.Create( override_nsi_handle, "attributes" );
 
-	NSI::ArgumentList arg_list;
+	NSI::ArgumentList arguments;
 
 	float time = m_context.m_current_time;
 
 	// Visible to Camera override
-	if ( m_object->hasParm("_3dl_over_vis_camera_enable") )
+	if ( m_object->hasParm("_3dl_override_visibility_camera_enable") )
 	{
 		bool over_vis_camera_enable =
-			m_object->evalInt("_3dl_over_vis_camera_enable", 0, time);
+			m_object->evalInt("_3dl_override_visibility_camera_enable", 0, time);
 
 		if( over_vis_camera_enable )
 		{
 			bool vis_camera_over =
-				m_object->evalInt("_3dl_over_vis_camera", 0, time);
+				m_object->evalInt("_3dl_override_visibility_camera", 0, time);
 
-			arg_list.Add(
+			arguments.Add(
 				new NSI::IntegerArg("visibility.camera", vis_camera_over));
-			arg_list.Add(
+			arguments.Add(
 				new NSI::IntegerArg("visibility.camera.priority", 10));
 		}
 		else
 		{
+			m_nsi.DeleteAttribute( override_nsi_handle, "visibility.camera" );
 			m_nsi.DeleteAttribute(
-				override_nsi_handle.c_str(), "visibility.camera" );
-			m_nsi.DeleteAttribute(
-				override_nsi_handle.c_str(), "visibility.camera.priority" );
+				override_nsi_handle, "visibility.camera.priority" );
 		}
 	}
 
 	// Visible in Diffuse override
-	if ( m_object->hasParm("_3dl_over_vis_diffuse_enable") )
+	if ( m_object->hasParm("_3dl_override_visibility_diffuse_enable") )
 	{
 		bool over_vis_diffuse_enable =
-			m_object->evalInt("_3dl_over_vis_diffuse_enable", 0, time);
+			m_object->evalInt("_3dl_override_visibility_diffuse_enable", 0, time);
 
 		if( over_vis_diffuse_enable )
 		{
 			bool vis_diffuse_over = false;
-				m_object->evalInt("_3dl_over_vis_diffuse", 0, time);
+				m_object->evalInt("_3dl_override_visibility_diffuse", 0, time);
 
-			arg_list.Add(
+			arguments.Add(
 				new NSI::IntegerArg("visibility.diffuse", vis_diffuse_over));
-			arg_list.Add(
+			arguments.Add(
 				new NSI::IntegerArg("visibility.diffuse.priority", 10));
 		}
 		else
 		{
 			m_nsi.DeleteAttribute(
-				override_nsi_handle.c_str(), "visibility.diffuse" );
+				override_nsi_handle, "visibility.diffuse" );
 			m_nsi.DeleteAttribute(
-				override_nsi_handle.c_str(), "visibility.diffuse.priority" );
+				override_nsi_handle, "visibility.diffuse.priority" );
 		}
 	}
 
 	// Visible in Reflections override
-	if ( m_object->hasParm("_3dl_over_vis_reflection_enable") )
+	if ( m_object->hasParm("_3dl_override_visibility_reflection_enable") )
 	{
 		bool over_vis_reflection_enable =
-			m_object->evalInt("_3dl_over_vis_reflection_enable", 0, time);
+			m_object->evalInt(
+				"_3dl_override_visibility_reflection_enable", 0, time);
 
 		if( over_vis_reflection_enable )
 		{
 			bool over_vis_reflection =
-				m_object->evalInt("_3dl_over_vis_reflection", 0, time);
+				m_object->evalInt("_3dl_override_visibility_reflection", 0, time);
 
-			arg_list.Add(
+			arguments.Add(
 				new NSI::IntegerArg("visibility.reflection", over_vis_reflection));
-			arg_list.Add(
+			arguments.Add(
 				new NSI::IntegerArg("visibility.reflection.priority", 10));
 		}
 		else
 		{
 			m_nsi.DeleteAttribute(
-				override_nsi_handle.c_str(), "visibility.reflection" );
+				override_nsi_handle, "visibility.reflection" );
 			m_nsi.DeleteAttribute(
-				override_nsi_handle.c_str(), "visibility.reflection.priority" );
+				override_nsi_handle, "visibility.reflection.priority" );
 		}
 	}
 
 	// Visible in Refractions override
-	if ( m_object->hasParm("_3dl_over_vis_refraction_enable") )
+	if( m_object->hasParm("_3dl_override_visibility_refraction_enable") )
 	{
 		bool over_vis_refraction_enable =
-			m_object->evalInt("_3dl_over_vis_refraction_enable", 0, time);
+			m_object->evalInt("_3dl_override_visibility_refraction_enable", 0, time);
 
 		if( over_vis_refraction_enable )
 		{
 			bool over_vis_refraction =
-				m_object->evalInt("_3dl_over_vis_refraction", 0, time);
+				m_object->evalInt("_3dl_override_visibility_refraction", 0, time);
 
-			arg_list.Add(
+			arguments.Add(
 				new NSI::IntegerArg("visibility.refraction", over_vis_refraction));
-			arg_list.Add(
+			arguments.Add(
 				new NSI::IntegerArg("visibility.refraction.priority", 10));
 		}
 		else
 		{
 			m_nsi.DeleteAttribute(
-				override_nsi_handle.c_str(), "visibility.refraction" );
+				override_nsi_handle, "visibility.refraction" );
 			m_nsi.DeleteAttribute(
-				override_nsi_handle.c_str(), "visibility.refraction.priority" );
+				override_nsi_handle, "visibility.refraction.priority" );
 		}
 	}
 
 	// Compositing mode override
-	if ( m_object->hasParm("_3dl_over_compositing_enable") )
+	if ( m_object->hasParm("_3dl_override_compositing_enable") )
 	{
 		bool over_compositing_enable =
-			m_object->evalInt("_3dl_over_compositing_enable", 0, time);
+			m_object->evalInt("_3dl_override_compositing_enable", 0, time);
 
 		if( over_compositing_enable )
 		{
-			UT_String over_compositing;
-			m_object->evalString(over_compositing, "_3dl_over_compositing", 0, time);
+			UT_String override_compositing;
+			m_object->evalString(
+				override_compositing, "_3dl_override_compositing", 0, time);
 
-			bool matte = over_compositing == "matte";
-			bool prelit = over_compositing == "prelit";
+			bool matte = override_compositing == "matte";
+			bool prelit = override_compositing == "prelit";
 
-			arg_list.Add(new NSI::IntegerArg("matte", matte));
-			arg_list.Add(new NSI::IntegerArg("matte.priority", 10));
-			arg_list.Add(new NSI::IntegerArg("prelit", prelit));
-			arg_list.Add(new NSI::IntegerArg("prelit.priority", 10));
+			arguments.Add( new NSI::IntegerArg("matte", matte));
+			arguments.Add( new NSI::IntegerArg("matte.priority", 10));
+			arguments.Add( new NSI::IntegerArg("prelit", prelit));
+			arguments.Add( new NSI::IntegerArg("prelit.priority", 10));
 		}
 		else
 		{
-			m_nsi.DeleteAttribute(
-				override_nsi_handle.c_str(), "matte" );
-			m_nsi.DeleteAttribute(
-				override_nsi_handle.c_str(), "matte.priority" );
-			m_nsi.DeleteAttribute(
-				override_nsi_handle.c_str(), "prelit" );
-			m_nsi.DeleteAttribute(
-				override_nsi_handle.c_str(), "prelit.priority" );
+			m_nsi.DeleteAttribute( override_nsi_handle, "matte" );
+			m_nsi.DeleteAttribute( override_nsi_handle, "matte.priority" );
+			m_nsi.DeleteAttribute( override_nsi_handle, "prelit" );
+			m_nsi.DeleteAttribute( override_nsi_handle, "prelit.priority" );
 		}
 	}
 
 	// Set all override attributes defined above
-	if( arg_list.size() > 0 )
+	if( arguments.size() > 0 )
 	{
-		m_nsi.SetAttribute( override_nsi_handle.c_str(), arg_list );
+		m_nsi.SetAttribute( override_nsi_handle, arguments );
 	}
 
-	/**
+	/*
 		Adjust connections to make the override effective or not according to
 		its	main override toggle.
+
+		Note that the surface shader overrides doesn't need an [x] Enable
+		toggle.
 	*/
-	if ( m_object->hasParm("_3dl_override_vol") )
+	bool spatial_override = m_object->evalInt("_3dl_spatial_override", 0, time);
+	if( spatial_override )
 	{
-		bool override_vol =	m_object->evalInt("_3dl_override_vol", 0, time);
-		if( override_vol )
+		m_nsi.Connect( m_handle, "",
+			override_nsi_handle, "bounds" );
+		m_nsi.Connect( override_nsi_handle, "",
+			NSI_SCENE_ROOT, "geometryattributes" );
+
+		m_nsi.Connect(
+			transparent_surface_handle(), "",
+			m_handle, "geometryattributes" );
+
+		bool override_surface_shader = m_object->evalInt(
+			"_3dl_override_surface_shader", 0, time);
+
+		if( override_surface_shader )
 		{
-			m_nsi.Connect( m_handle.c_str(), "",
-				override_nsi_handle.c_str(), "bounds" );
-			m_nsi.Connect( override_nsi_handle.c_str(), "",
-				NSI_SCENE_ROOT, "geometryattributes" );
+			NSI::ArgumentList arguments;
+			arguments.Add(new NSI::IntegerArg("priority", 10));
+
+			std::string material;
+			get_assigned_material( material );
 
 			m_nsi.Connect(
-				TransparentSurfaceHandle(), "",
-				m_handle.c_str(), "geometryattributes" );
-#if 0
-			// FIXME - how to get surfaceShaderHandle?
-			bool override_ss = m_object->evalInt("_3dl_override_ss", 0, time);
-
-			if ( override_ss )
-			{
-				NSI::ArgumentList argList;
-				argList.Add(new NSI::IntegerArg("priority", 10));
-				std::string surfaceShaderHandle;
-				m_nsi.Connect(
-					surfaceShaderHandle.c_str(), "",
-					override_nsi_handle.c_str(), "surfaceshader",
-					argList );
-			}
-#endif
+				material, "", override_nsi_handle, "surfaceshader", arguments );
 		}
-		else
-		{
-			m_nsi.Disconnect( m_handle.c_str(), "",
-				override_nsi_handle.c_str(), "bounds" );
-			m_nsi.Disconnect( override_nsi_handle.c_str(), "",
-				NSI_SCENE_ROOT, "geometryattributes" );
-		}
+	}
+	else
+	{
+		/* NOTE: This is needed for IPR only */
+		m_nsi.Disconnect( m_handle, "",
+			override_nsi_handle, "bounds" );
+		m_nsi.Disconnect( override_nsi_handle, "",
+			NSI_SCENE_ROOT, "geometryattributes" );
 	}
 }
 

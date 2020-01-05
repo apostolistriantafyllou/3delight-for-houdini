@@ -58,7 +58,7 @@ public:
 	/**
 		\brief Returns the name of transparent shader attribute.
 	*/
-	static const char* TransparentSurfaceHandle();
+	static const char* transparent_surface_handle();
 
 protected:
 	/**

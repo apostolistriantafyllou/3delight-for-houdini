@@ -90,12 +90,12 @@
     	}
 	}
 
-	parm 
+	parm
 	{
 		SOHO_TOGGLE(_3dl_vis_diffuse, "Visible in Diffuse", "3Delight", 1)
 	}
 
-	parm 
+	parm
 	{
 		SOHO_PARM(_3dl_compositing, "Compositing", "3Delight", string, 1, "regular")
 		menu
@@ -184,7 +184,7 @@
     	}
 		parm
 		{
-			DELIGHT_TITLE(_3dl_obj_geo_label3, "3Delight", "Attributes Override Volume")
+			DELIGHT_TITLE(_3dl_obj_geo_label3, "3Delight", "Spatial Overrides")
     	}
 		parm
 		{
@@ -192,109 +192,116 @@
     	}
 	}
 
-	parm 
+	parm
 	{
-		SOHO_TOGGLE(_3dl_override_vol, "Render as an Attribute Override Volume", "3Delight", 0)
+		SOHO_TOGGLE(_3dl_spatial_override, "Use as a Spatial Attribute Override", "3Delight", 0)
 	}
 
 	collection
 	{
-	    name	_3dl_over_compositing_group
+	    name	_3dl_override_compositing_group
 		parmtag	{ spare_category "3Delight" }
 		parm
 		{
-			DELIGHT_CONTROL_NEXT_PARM(_3dl_over_compositing_enable, "3Delight", 0)
-			disablewhen  "{ _3dl_override_vol == 0 }"
+			DELIGHT_CONTROL_NEXT_PARM(_3dl_override_compositing_enable, "3Delight", 0)
+			disablewhen  "{ _3dl_spatial_override == 0 }"
 		}
-		parm 
+		parm
 		{
-			SOHO_PARM(_3dl_over_compositing, "Compositing", "3Delight", string, 1, "regular")
+			SOHO_PARM(_3dl_override_compositing, "Compositing", "3Delight", string, 1, "regular")
 			menu
 			{
 				"regular" "Regular"
 				"matte" "Matte"
 				"prelit" "Prelit"
 			}
-        	disablewhen  "{ _3dl_over_compositing_enable == 0 } { _3dl_override_vol == 0 }"
+			disablewhen  "{ _3dl_override_compositing_enable == 0 } { _3dl_spatial_override == 0 }"
 		}
 	}
 
 	collection
 	{
-		name	_3dl_over_vis_camera_group
+		name	_3dl_override_visibility_camera_group
 		parmtag	{ spare_category "3Delight" }
 		parm
 		{
-			DELIGHT_CONTROL_NEXT_PARM(_3dl_over_vis_camera_enable, "3Delight", 0)
-			disablewhen  "{ _3dl_override_vol == 0 }"
+			DELIGHT_CONTROL_NEXT_PARM(_3dl_override_visibility_camera_enable, "3Delight", 0)
+			disablewhen  "{ _3dl_spatial_override == 0 }"
 		}
-		parm 
+		parm
 		{
-			SOHO_TOGGLE(_3dl_over_vis_camera, "Visible to Camera", "3Delight", 0)
-        	disablewhen  "{ _3dl_over_vis_camera_enable == 0 } { _3dl_override_vol == 0 }"
+			SOHO_TOGGLE(_3dl_override_visibility_camera, "Visible to Camera", "3Delight", 0)
+			disablewhen  "{ _3dl_override_visibility_camera_enable == 0 } { _3dl_spatial_override == 0 }"
 		}
 	}
 
 	collection
 	{
-	    name	_3dl_over_vis_diffuse_group
+	    name	_3dl_override_visibility_diffuse_group
 		parmtag	{ spare_category "3Delight" }
 		parm
 		{
-			DELIGHT_CONTROL_NEXT_PARM(_3dl_over_vis_diffuse_enable, "3Delight", 0)
-			disablewhen  "{ _3dl_override_vol == 0 }"
+			DELIGHT_CONTROL_NEXT_PARM(_3dl_override_visibility_diffuse_enable, "3Delight", 0)
+			disablewhen  "{ _3dl_spatial_override == 0 }"
 		}
-		parm 
+		parm
 		{
-			SOHO_TOGGLE(_3dl_over_vis_diffuse, "Visible in Diffuse", "3Delight", 0)
-        	disablewhen  "{ _3dl_over_vis_diffuse_enable == 0 } { _3dl_override_vol == 0 }"
+			SOHO_TOGGLE(_3dl_override_visibility_diffuse, "Visible in Diffuse", "3Delight", 0)
+			disablewhen  "{ _3dl_override_visibility_diffuse_enable == 0 } { _3dl_spatial_override == 0 }"
 		}
 	}
 
 	collection
 	{
-	    name	_3dl_over_vis_reflection_group
+	    name	_3dl_override_visibility_reflection_group
 		parmtag	{ spare_category "3Delight" }
 		parm
 		{
-			DELIGHT_CONTROL_NEXT_PARM(_3dl_over_vis_reflection_enable, "3Delight", 0)
-			disablewhen  "{ _3dl_override_vol == 0 }"
+			DELIGHT_CONTROL_NEXT_PARM(_3dl_override_visibility_reflection_enable, "3Delight", 0)
+			disablewhen  "{ _3dl_spatial_override == 0 }"
 		}
-		parm 
+		parm
 		{
-			SOHO_TOGGLE(_3dl_over_vis_reflection, "Visible in Reflections", "3Delight", 0)
-        	disablewhen  "{ _3dl_over_vis_reflection_enable == 0 } { _3dl_override_vol == 0 }"
+			SOHO_TOGGLE(
+				_3dl_override_visibility_reflection,
+				"Visible in Reflections", "3Delight", 0)
+			disablewhen  "{ _3dl_override_visibility_reflection_enable == 0 } { _3dl_spatial_override == 0 }"
 		}
 	}
 
 	collection
 	{
-	    name	_3dl_over_vis_refraction_group
+	    name	_3dl_override_visibility_refraction_group
 		parmtag	{ spare_category "3Delight" }
 		parm
 		{
-			DELIGHT_CONTROL_NEXT_PARM(_3dl_over_vis_refraction_enable, "3Delight", 0)
-			disablewhen  "{ _3dl_override_vol == 0 }"
+			DELIGHT_CONTROL_NEXT_PARM(
+				_3dl_override_visibility_refraction_enable, "3Delight", 0)
+			disablewhen  "{ _3dl_spatial_override == 0 }"
 		}
-		parm 
+		parm
 		{
-			SOHO_TOGGLE(_3dl_over_vis_refraction, "Visible in Refractions", "3Delight", 0)
-        	disablewhen  "{ _3dl_over_vis_refraction_enable == 0 } { _3dl_override_vol == 0 }"
+			SOHO_TOGGLE(
+				_3dl_override_visibility_refraction,
+				"Visible in Refractions", "3Delight", 0)
+			disablewhen  "{ _3dl_override_visibility_refraction_enable == 0 } { _3dl_spatial_override == 0 }"
 		}
 	}
 
-	parm 
+	parm
 	{
-		SOHO_TOGGLE(_3dl_override_ss, "Override Surface Shader", "3Delight", 0)
-       	disablewhen  "{ _3dl_override_vol == 0 } { _3dl_override_ss == 0 }"
+		SOHO_TOGGLE(
+			_3dl_override_surface_shader,
+			"Override Surface Shader", "3Delight", 0)
+		disablewhen  "{ _3dl_spatial_override == 0 }"
 	}
 
-	parm 
+	parm
 	{
 		SOHO_FLOAT(_3dl_spread, "Spread", "3Delight", 1)
 		range { 0! 1! }
 		// Spread only makes sense on a single-face geometry
-		hidewhen	"{ light_type != "grid"  light_type != "point"  light_type != "disk" }"
+		hidewhen "{ light_type != "grid"  light_type != "point"  light_type != "disk" }"
 		// Spread needs direction, and point doesn't have a normal by default
 		disablewhen	"{ light_type == "point"  coneenable == "off" }"
 	}
@@ -470,7 +477,8 @@
 		{
 			SOHO_FLOAT(_3dl_fov, "Field of View", "3Delight", 45)
 			range { 0! 360! }
-			disablewhen  "{ _3dl_projection_type == "orthographiccamera" } { _3dl_projection_type == "sphericalcamera" }"
+			disablewhen
+				"{ _3dl_projection_type == "orthographiccamera" } { _3dl_projection_type == "sphericalcamera" }"
 		}
 
 		parm
