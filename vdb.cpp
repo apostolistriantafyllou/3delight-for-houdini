@@ -82,13 +82,15 @@ void vdb::set_attributes( void ) const
 
 	/*
 		Retrieve the required grid names from the material (see
-		GetVolumeParams() in VOP_ExternalOSL.cpp).
+		GetVolumeParams() in VOP_ExternalOSL.cpp), along with the velocity
+		scale.
 	*/
 
 	UT_String density_grid = VolumeGridParameters::density_default;
 	UT_String temperature_grid = VolumeGridParameters::temperature_default;
 	UT_String emissionintensity_grid = VolumeGridParameters::emission_default;
 	UT_String velocity_grid = VolumeGridParameters::velocity_default;
+	double velocity_scale = 1.0;
 
 	double time = m_context.m_current_time;
 	OP_Node* material = m_object->getMaterialNode(time);
@@ -111,6 +113,11 @@ void vdb::set_attributes( void ) const
 		if(material->hasParm(velocity_name))
 		{
 			material->evalString(velocity_grid, velocity_name, 0, time);
+		}
+
+		if(material->hasParm(velocity_scale_name))
+		{
+			velocity_scale = material->evalFloat(velocity_scale_name, 0, time);
 		}
 	}
 
@@ -138,14 +145,6 @@ void vdb::set_attributes( void ) const
 		{
 			arguments.Add( new NSI::StringArg( "velocitygrid", grid) );
 		}
-	}
-
-	double velocity_scale = 1;
-	if( material->hasParm(VolumeGridParameters::velocity_scale_name) )
-	{
-		velocity_scale =
-			material->evalFloat(
-				VolumeGridParameters::velocity_scale_name, 0, time );
 	}
 
 	arguments.Add( new NSI::DoubleArg( "velocityscale", velocity_scale ) );
