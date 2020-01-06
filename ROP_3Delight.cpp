@@ -857,13 +857,14 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 		const aov::description& desc = aov::getDescription(label.toStdString());
 
-		bool idisplay_output = evalInt(aov::getAovFrameBufferOutputToken(i), 0, 0.0f);
+		bool idisplay_output =
+			!i_ctx.m_batch && !i_ctx.m_export_nsi &&
+			evalInt(aov::getAovFrameBufferOutputToken(i), 0, 0.0f) != 0;
 		bool file_output = evalInt(aov::getAovFileOutputToken(i), 0, 0.0f);
 		bool png_output = file_output;
 		file_output = file_output && file_driver.toStdString() != "png";
 		png_output = png_output && file_driver.toStdString() == "png";
 		bool jpeg_output = evalInt(aov::getAovJpegOutputToken(i), 0, 0.0f);
-		idisplay_output = idisplay_output && !i_ctx.m_batch;
 
 		if (output_mode == e_disabled)
 		{
