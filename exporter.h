@@ -5,6 +5,8 @@
 #include <GT/GT_Handles.h>
 /* }  */
 
+#include <nsi.h>
+
 #include <string>
 #include <vector>
 
@@ -61,6 +63,35 @@ public:
 	static const char* transparent_surface_handle();
 
 protected:
+
+	/**
+		\brief Retrieves an Houdini attribute by name from a GT primitive.
+
+		\param i_primitive
+			The GT primitive where the attribute is to be searched for.
+		\param i_name
+			The name of the requested attribute.
+		\param o_data
+			Will be set to a data handle which will allow access to the
+			attribute's data.
+		\param o_nsi_type
+			Will be set to the NSI equivalent to the attribute's type.
+		\param o_nsi_flags
+			Will be set to NSI flags required when exporting the attribute.
+		\param o_point_attribute
+			Will be set to true if the attribute has been found in the
+			primitive's set of "point" attributes.
+		\return
+			True if the attribute was found, false otherwise.
+	*/
+	bool find_attribute(
+		const GT_Primitive& i_primitive,
+		const std::string& i_name,
+		GT_DataArrayHandle& o_data,
+		NSIType_t& o_nsi_type,
+		int& o_nsi_flags,
+		bool& o_point_attribute)const;
+
 	/**
 		\brief Helper to export vertex/point/primitive/detail attributes lists
 		to NSI.

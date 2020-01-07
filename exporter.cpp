@@ -78,6 +78,57 @@ const char* exporter::transparent_surface_handle()
 	return "3delight_transparent_surface";
 }
 
+bool exporter::find_attribute(
+	const GT_Primitive& i_primitive,
+	const std::string& i_name,
+	GT_DataArrayHandle& o_data,
+	NSIType_t& o_nsi_type,
+	int& o_nsi_flags,
+	bool& o_point_attribute)const
+{
+	// Scan the 4 attributes lists for one with the right name
+	for(unsigned a = GT_OWNER_VERTEX; a <= GT_OWNER_DETAIL; a++)
+	{
+		const GT_AttributeListHandle& attributes =
+			i_primitive.getAttributeList(GT_Owner(a));
+		if( !attributes )
+		{
+			continue;
+		}
+
+		o_data = attributes->get(i_name.c_str());
+		if( !o_data )
+		{
+			continue;
+		}
+
+		o_nsi_type = gt_to_nsi_type(o_data->getTypeInfo(), o_data->getStorage());
+
+		if( o_nsi_type == NSITypeInvalid || o_nsi_type == NSITypeString )
+		{
+			std::cerr
+				<< "unsupported attribute type " << o_data->getTypeInfo()
+				<< " of name " << i_name << " on " << m_handle;
+			continue;
+		}
+
+		/*
+			This flag is needed because of particles. If the number of
+			particles varies from one time step to the next, 3Delight might
+			not be able to guess that those attributes are assigned
+			per-vertex simply by looking at their count.
+		*/
+		o_nsi_flags = a == GT_OWNER_VERTEX ? NSIParamPerVertex : 0;
+
+		o_point_attribute = a == GT_OWNER_POINT;
+
+		return true;
+	}
+
+	return false;
+}
+	
+
 /**
 	gotchas:
 	- When we find a texture coordinate attribute, we output "st".
@@ -89,14 +140,6 @@ void exporter::export_attributes(
 	double i_time,
 	std::vector<std::string> &io_which_ones ) const
 {
-	GT_AttributeListHandle attributes[4] =
-	{
-		i_primitive.getVertexAttributes(),
-		i_primitive.getPointAttributes(),
-		i_primitive.getUniformAttributes(),
-		i_primitive.getDetailAttributes(),
-	};
-
 	/* Get the vertex_list if there is  poly/subdiv mesh */
 	GT_DataArrayHandle buffer_in_case_we_need_it;
 	const int *vertices = nullptr;
@@ -120,44 +163,13 @@ void exporter::export_attributes(
 		int nsi_flags = 0;
 		bool point_attribute = false;
 
-		// Scan the 4 attributes lists for one with the right name
-		for( int i=0; i<4; i++ )
-		{
-			if( !attributes[i] )
-			{
-				continue;
-			}
-
-			data = attributes[i]->get( name.c_str() );
-			if( !data )
-			{
-				continue;
-			}
-
-			nsi_type = gt_to_nsi_type(data->getTypeInfo(), data->getStorage());
-
-			if( nsi_type == NSITypeInvalid || nsi_type == NSITypeString )
-			{
-				std::cerr
-					<< "unsupported attribute type " << data->getTypeInfo()
-					<< " of name " << name << " on " << m_handle;
-				continue;
-			}
-
-			/*
-				This flag is needed because of particles. If the number of
-				particles varies from one time step to the next, 3Delight might
-				not be able to guess that those attributes are assigned
-				per-vertex simply by looking at their count.
-			*/
-			nsi_flags = i == 0 ? NSIParamPerVertex : 0;
-
-			point_attribute = i == 1;
-
-			break;
-		}
-
-		if(!data)
+		if(!find_attribute(
+				i_primitive,
+				name,
+				data,
+				nsi_type,
+				nsi_flags,
+				point_attribute))
 		{
 			continue;
 		}
