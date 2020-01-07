@@ -115,6 +115,12 @@ void exporter::export_attributes(
 	{
 		std::string name = io_which_ones[w];
 
+		GT_DataArrayHandle data;
+		NSIType_t nsi_type = NSITypeInvalid;
+		int nsi_flags = 0;
+		bool point_attribute = false;
+
+		// Scan the 4 attributes lists for one with the right name
 		for( int i=0; i<4; i++ )
 		{
 			if( !attributes[i] )
@@ -122,14 +128,13 @@ void exporter::export_attributes(
 				continue;
 			}
 
-			const GT_DataArrayHandle &data = attributes[i]->get( name.c_str() );
+			data = attributes[i]->get( name.c_str() );
 			if( !data )
 			{
 				continue;
 			}
 
-			NSIType_t nsi_type =
-				gt_to_nsi_type( data->getTypeInfo(), data->getStorage() );
+			nsi_type = gt_to_nsi_type(data->getTypeInfo(), data->getStorage());
 
 			if( nsi_type == NSITypeInvalid || nsi_type == NSITypeString )
 			{
@@ -145,69 +150,76 @@ void exporter::export_attributes(
 				not be able to guess that those attributes are assigned
 				per-vertex simply by looking at their count.
 			*/
-			int flags = i==0 ? NSIParamPerVertex : 0;
+			nsi_flags = i == 0 ? NSIParamPerVertex : 0;
 
-			io_which_ones.erase(io_which_ones.begin()+w);
+			point_attribute = i == 1;
 
-			if( name == "uv" )
-				name = "st";
+			break;
+		}
 
-			bool point_attributes = i==1;
-			if( point_attributes && vertex_list )
-			{
-				m_nsi.SetAttribute( m_handle,
-					*NSI::Argument( name + ".indices" )
-						.SetType( NSITypeInteger )
-						->SetCount( vertex_list->entries() )
-						->SetValuePointer( vertices ) );
-			}
+		if(!data)
+		{
+			continue;
+		}
 
-			GT_DataArrayHandle buffer_in_case_we_need_it_2;
-			if( data->getTypeInfo() == GT_TYPE_TEXTURE )
-			{
-				m_nsi.SetAttributeAtTime( m_handle, i_time,
-					*NSI::Argument(name)
-						.SetArrayType( NSITypeFloat, 3)
-						->SetCount( data->entries() )
-						->SetValuePointer(
-							data->getF32Array(buffer_in_case_we_need_it_2))
-						->SetFlags(flags));
-				continue;
-			}
+		io_which_ones.erase(io_which_ones.begin()+w);
 
-			const void* nsi_data = nullptr;
-			switch(nsi_type)
-			{
-				case NSITypeInteger:
-					nsi_data = data->getI32Array(buffer_in_case_we_need_it_2);
-					break;
-				case NSITypeDouble:
-				case NSITypeDoubleMatrix:
-					nsi_data = data->getF64Array(buffer_in_case_we_need_it_2);
-					break;
-				default:
-					nsi_data = data->getF32Array(buffer_in_case_we_need_it_2);
-			}
+		if( name == "uv" )
+			name = "st";
 
-			if( nsi_type == NSITypeFloat && data->getTupleSize()>1 )
-			{
-				m_nsi.SetAttributeAtTime( m_handle, i_time,
-					*NSI::Argument(name)
-						.SetArrayType( nsi_type, data->getTupleSize() )
-						->SetCount( data->entries() )
-						->SetValuePointer( nsi_data )
-						->SetFlags(flags));
-			}
-			else
-			{
-				m_nsi.SetAttributeAtTime( m_handle, i_time,
-					*NSI::Argument(name)
-						.SetType( nsi_type )
-						->SetCount( data->entries() )
-						->SetValuePointer( nsi_data )
-						->SetFlags(flags));
-			}
+		if( point_attribute && vertex_list )
+		{
+			m_nsi.SetAttribute( m_handle,
+				*NSI::Argument( name + ".indices" )
+					.SetType( NSITypeInteger )
+					->SetCount( vertex_list->entries() )
+					->SetValuePointer( vertices ) );
+		}
 
+		GT_DataArrayHandle buffer_in_case_we_need_it_2;
+		if( data->getTypeInfo() == GT_TYPE_TEXTURE )
+		{
+			m_nsi.SetAttributeAtTime( m_handle, i_time,
+				*NSI::Argument(name)
+					.SetArrayType( NSITypeFloat, 3)
+					->SetCount( data->entries() )
+					->SetValuePointer(
+						data->getF32Array(buffer_in_case_we_need_it_2))
+					->SetFlags(nsi_flags));
+			continue;
+		}
+
+		const void* nsi_data = nullptr;
+		switch(nsi_type)
+		{
+			case NSITypeInteger:
+				nsi_data = data->getI32Array(buffer_in_case_we_need_it_2);
+				break;
+			case NSITypeDouble:
+			case NSITypeDoubleMatrix:
+				nsi_data = data->getF64Array(buffer_in_case_we_need_it_2);
+				break;
+			default:
+				nsi_data = data->getF32Array(buffer_in_case_we_need_it_2);
+		}
+
+		if( nsi_type == NSITypeFloat && data->getTupleSize()>1 )
+		{
+			m_nsi.SetAttributeAtTime( m_handle, i_time,
+				*NSI::Argument(name)
+					.SetArrayType( nsi_type, data->getTupleSize() )
+					->SetCount( data->entries() )
+					->SetValuePointer( nsi_data )
+					->SetFlags(nsi_flags));
+		}
+		else
+		{
+			m_nsi.SetAttributeAtTime( m_handle, i_time,
+				*NSI::Argument(name)
+					.SetType( nsi_type )
+					->SetCount( data->entries() )
+					->SetValuePointer( nsi_data )
+					->SetFlags(nsi_flags));
 		}
 	}
 
