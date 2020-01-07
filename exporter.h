@@ -96,10 +96,6 @@ protected:
 		\brief Helper to export vertex/point/primitive/detail attributes lists
 		to NSI.
 
-		\param i_prmitive
-			The primitive for which attributes output is required.
-		\param i_time
-			The time to communicate to NSISetAttributeAtTime
 		\param io_which_ones
 			Which attribute names to output? Every time we find an attribute of
 			the given name, we remove it from the list. This means that on
@@ -107,16 +103,21 @@ protected:
 			that were not found in i_attributes. This allows the exporter to
 			take corrective measures (add some default attribute) or to issue
 			error messages.
-		\param i_vertex_list
+		\param i_primitive
+			The primitive for which attributes output is required.
+		\param i_time
+			The time to communicate to NSISetAttributeAtTime
+		\param i_vertices_list
 			A vertex list to use with point attributes.
 
 		\see pointmesh::set_attributes_at_time
 		\see curvemesh::set_attributes_at_time
 	*/
 	void export_attributes(
+		std::vector<std::string> &i_which_ones,
 		const GT_Primitive &i_primitive,
 		double i_time,
-		std::vector<std::string> &i_which_ones ) const;
+		GT_DataArrayHandle i_vertices_list = GT_DataArrayHandle()) const;
 
 	/**
 		\brief Export all the attributes that the user wishes to "bind".
@@ -126,8 +127,12 @@ protected:
 
 		\param i_primitive
 			The primitive for which to output the bind attributes.
+		\param i_vertices_list
+			A vertex list to use with point attributes.
 	*/
-	void export_bind_attributes( const GT_Primitive &i_primitive) const;
+	void export_bind_attributes(
+		const GT_Primitive &i_primitive,
+		GT_DataArrayHandle i_vertices_list = GT_DataArrayHandle()) const;
 
 	void export_override_attributes() const;
 

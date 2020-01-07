@@ -74,11 +74,13 @@ void polygonmesh::set_attributes( void ) const
 
 	m_nsi.SetAttribute( m_handle, mesh_args );
 
+	const GT_DataArrayHandle& vertices_list = polygon_mesh->getVertexList();
+
 	std::vector< std::string > to_export{ "uv" };
 	exporter::export_attributes(
-		*polygon_mesh, m_context.m_current_time, to_export );
+		to_export, *polygon_mesh, m_context.m_current_time, vertices_list );
 
-	exporter::export_bind_attributes( *polygon_mesh );
+	exporter::export_bind_attributes(*polygon_mesh, vertices_list );
 
 	primitive::set_attributes();
 }
@@ -99,7 +101,8 @@ void polygonmesh::set_attributes_at_time(
 	if( !m_is_subdiv )
 		to_export.push_back( "N" );
 
-	exporter::export_attributes( *polygon_mesh, i_time, to_export );
+	exporter::export_attributes(
+		to_export, *polygon_mesh, i_time, polygon_mesh->getVertexList() );
 }
 
 void polygonmesh::connect( void ) const

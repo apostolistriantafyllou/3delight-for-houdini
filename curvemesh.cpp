@@ -105,7 +105,7 @@ void curvemesh::set_attributes_at_time(
 	to_export.push_back("P");
 	to_export.push_back("width");
 
-	export_attributes( *curve, i_time, to_export);
+	export_attributes(to_export, *curve, i_time);
 
 	if( std::find(to_export.begin(), to_export.end(), "width") !=
 		to_export.end() )

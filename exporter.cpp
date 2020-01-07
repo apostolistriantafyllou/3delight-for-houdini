@@ -136,22 +136,17 @@ bool exporter::find_attribute(
 	  consistent with other packages.
 */
 void exporter::export_attributes(
+	std::vector<std::string> &io_which_ones,
 	const GT_Primitive &i_primitive,
 	double i_time,
-	std::vector<std::string> &io_which_ones ) const
+	GT_DataArrayHandle i_vertices_list) const
 {
-	/* Get the vertex_list if there is  poly/subdiv mesh */
+	/* Get the vertices list if it's provided */
 	GT_DataArrayHandle buffer_in_case_we_need_it;
 	const int *vertices = nullptr;
-	GT_DataArrayHandle vertex_list;
-	int type = i_primitive.getPrimitiveType();
-	if( type == GT_PRIM_SUBDIVISION_MESH || type == GT_PRIM_POLYGON_MESH )
+	if( i_vertices_list )
 	{
-		const GT_PrimPolygonMesh &poly =
-			static_cast<const GT_PrimPolygonMesh&>(i_primitive);
-
-		vertex_list = poly.getVertexList();
-		vertices = vertex_list->getI32Array( buffer_in_case_we_need_it );
+		vertices = i_vertices_list->getI32Array( buffer_in_case_we_need_it );
 	}
 
 	for(int w = io_which_ones.size()-1; w >= 0; w--)
@@ -179,12 +174,12 @@ void exporter::export_attributes(
 		if( name == "uv" )
 			name = "st";
 
-		if( point_attribute && vertex_list )
+		if( point_attribute && i_vertices_list )
 		{
 			m_nsi.SetAttribute( m_handle,
 				*NSI::Argument( name + ".indices" )
 					.SetType( NSITypeInteger )
-					->SetCount( vertex_list->entries() )
+					->SetCount( i_vertices_list->entries() )
 					->SetValuePointer( vertices ) );
 		}
 
@@ -435,7 +430,8 @@ void exporter::export_override_attributes() const
 }
 
 void exporter::export_bind_attributes(
-	const GT_Primitive &i_primitive ) const
+	const GT_Primitive &i_primitive,
+	GT_DataArrayHandle i_vertices_list ) const
 {
 	std::vector< std::string > binds;
 	get_bind_attributes( binds );
@@ -457,7 +453,8 @@ void exporter::export_bind_attributes(
 			} ),
 		binds.end() );
 
-	export_attributes( i_primitive, m_context.m_current_time, binds );
+	export_attributes(
+		binds, i_primitive, m_context.m_current_time, i_vertices_list );
 }
 
 VOP_Node *exporter::get_assigned_material( std::string &o_path ) const

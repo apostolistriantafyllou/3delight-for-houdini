@@ -168,7 +168,7 @@ void pointmesh::export_basic_attributes(
 	}
 	to_export.push_back("width");
 
-	export_attributes( *i_gt_primitive.get(), i_time, to_export );
+	export_attributes( to_export, *i_gt_primitive.get(), i_time );
 
 	if( std::find(to_export.begin(), to_export.end(), "width")
 		!= to_export.end() )
