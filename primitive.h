@@ -59,6 +59,14 @@ protected:
 		return m_gt_primitives.front();
 	}
 
+	/**
+		\brief Time associated to the default_gt_primitive.
+
+		This is convenient when the default GT primitive is used to export
+		extrapolated values for motion-blurred attributes, such as P+velocity.
+	*/
+	double default_time()const;
+
 private:
 
 	/// One GT primitive for each time sample
