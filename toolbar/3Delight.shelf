@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shelfDocument>
+  <!-- This file contains definitions of shelves, toolbars, and tools.
+       It should not be hand-edited when it is being used by the application.
+       Note, that two definitions of the same element are not allowed in a
+       single file.
+  -->
+  <!-- Use command hou.shelves.reloadShelfFiles() in a Python Shell to
+	   update any changes you want to test in this file.
+  -->
+  <shelfSet name="shelf_set_1" label="Create and Refine">
+    <memberToolshelf name="create"/>
+    <memberToolshelf name="modify"/>
+    <memberToolshelf name="model"/>
+    <memberToolshelf name="polygon"/>
+    <memberToolshelf name="deform"/>
+    <memberToolshelf name="texture"/>
+    <memberToolshelf name="rigging"/>
+    <memberToolshelf name="muscles"/>
+    <memberToolshelf name="characters"/>
+    <memberToolshelf name="constraints"/>
+    <memberToolshelf name="groomtools"/>
+    <memberToolshelf name="guidemodify"/>
+    <memberToolshelf name="grooming"/>
+    <memberToolshelf name="terrainfx"/>
+    <memberToolshelf name="cloud"/>
+    <memberToolshelf name="volume"/>
+    <memberToolshelf name="3delight"/>
+  </shelfSet>
+
+  <toolshelf name="3delight" label="3Delight">
+    <memberTool name="_3dl_object_pointlight"/>
+    <memberTool name="_3dl_object_spotlight"/>
+    <memberTool name="_3dl_object_arealight"/>
+    <memberTool name="_3dl_object_geolight"/>
+    <memberTool name="_3dl_object_distantlight"/>
+    <memberTool name="_3dl_object_envlight"/>
+  </toolshelf>
+
+  <tool name="_3dl_object_pointlight" label="Point Light" icon="OBJ_light_point">
+    <helpURL>tool:pointlight</helpURL>
+	<readOnly/>
+    <script scriptType="python"><![CDATA[
+import objecttoolutils
+
+kwargs['bbox_min'] = hou.Vector3(-1.5, -1.5, -1.5)
+kwargs['bbox_max'] = hou.Vector3(1.5, 1.5, 1.5)
+newnode = objecttoolutils.genericCameraLightTool(kwargs, 'hlight::2.0',
+	'pointlight1')
+objecttoolutils.setGoodLightExposure(kwargs, newnode)
+
+newnode.parm("light_type").set("point")
+group = newnode.parmTemplateGroup()
+group.hide("light_contrib", True)
+group.hide("vm_lpetag", True)
+group.hide("vm_samplingquality", True)
+group.hide("sepparm3", True)
+group.hide("areamap", True)
+group.hide("areamapspace", True)
+group.hide("areamapnull", True)
+group.hide("areamapblur", True)
+group.hide("areamapscale", True)
+group.hide("selfshadow", True)
+group.hide("edgeenable", True)
+group.hide("edgewidth", True)
+group.hide("edgerolloff", True)
+group.hide("sepparm4", True)
+group.hide("pc_enable", True)
+group.hide("pc_samples", True)
+group.hide("pc_file", True)
+group.hide("render_pointcloud", True)
+group.hide("vm_shadingfactor", True)
+group.hide("pc_camera_override", True)
+group.hide("pc_camera", True)
+group.hideFolder(("Light", "Attenuation Options"), True)
+group.hideFolder("Shadow", True)
+newnode.setParmTemplateGroup(group)]]></script>
+  </tool>
+
+  <tool name="_3dl_object_spotlight" label="Spot Light" icon="OBJ_light_spot">
+    <helpURL>tool:spotlight</helpURL>
+    <script scriptType="python"><![CDATA[
+import objecttoolutils
+
+kwargs['bbox_min'] = hou.Vector3(-1.5, -1.5, -1.5)
+kwargs['bbox_max'] = hou.Vector3(1.5, 1.5, 1.5)
+newnode = objecttoolutils.genericCameraLightTool(kwargs, 'hlight::2.0',
+    'spotlight1')
+objecttoolutils.setGoodLightExposure(kwargs, newnode)
+
+newnode.parm("light_type").set("point")
+newnode.parm("coneenable").set(1)
+group = newnode.parmTemplateGroup()
+group.hide("light_contrib", True)
+group.hide("vm_lpetag", True)
+group.hide("vm_samplingquality", True)
+group.hide("sepparm3", True)
+group.hide("areamap", True)
+group.hide("areamapspace", True)
+group.hide("areamapnull", True)
+group.hide("areamapblur", True)
+group.hide("areamapscale", True)
+group.hide("selfshadow", True)
+group.hide("edgeenable", True)
+group.hide("edgewidth", True)
+group.hide("edgerolloff", True)
+group.hide("sepparm4", True)
+group.hide("pc_enable", True)
+group.hide("pc_samples", True)
+group.hide("pc_file", True)
+group.hide("render_pointcloud", True)
+group.hide("vm_shadingfactor", True)
+group.hide("pc_camera_override", True)
+group.hide("pc_camera", True)
+group.hideFolder(("Light", "Attenuation Options"), True)
+group.hideFolder("Shadow", True)
+newnode.setParmTemplateGroup(group)]]></script>
+  </tool>
+
+  <tool name="_3dl_object_arealight" label="Area Light" icon="OBJ_light_area">
+    <helpURL>tool:arealight</helpURL>
+    <script scriptType="python"><![CDATA[
+import objecttoolutils
+kwargs['bbox'] = hou.BoundingBox(-0.5, -0.5, 0.0, 0.5, 0.5, 0.0)
+
+newnode   = objecttoolutils.genericCameraLightTool(kwargs, 'hlight::2.0',
+    'arealight1')
+newnode.parmTuple("stdswitcher4")[0].set(1)
+newnode.parmTuple("atten_folder_1")[0].set(1)
+objecttoolutils.setGoodLightExposure(kwargs, newnode)
+
+newnode.parm("light_type").set('grid')
+group = newnode.parmTemplateGroup()
+group.hide("light_contrib", True)
+group.hide("vm_lpetag", True)
+group.hide("vm_samplingquality", True)
+group.hide("sepparm3", True)
+group.hide("areamap", True)
+group.hide("areamapspace", True)
+group.hide("areamapnull", True)
+group.hide("areamapblur", True)
+group.hide("areamapscale", True)
+group.hide("selfshadow", True)
+group.hide("edgeenable", True)
+group.hide("edgewidth", True)
+group.hide("edgerolloff", True)
+group.hide("sepparm4", True)
+group.hide("pc_enable", True)
+group.hide("pc_samples", True)
+group.hide("pc_file", True)
+group.hide("render_pointcloud", True)
+group.hide("vm_shadingfactor", True)
+group.hide("pc_camera_override", True)
+group.hide("pc_camera", True)
+group.hideFolder(("Light", "Attenuation Options"), True)
+group.hideFolder("Shadow", True)
+newnode.setParmTemplateGroup(group)]]></script>
+  </tool>
+
+  <tool name="_3dl_object_geolight" label="Geometry Light" icon="OBJ_light_geo">
+    <helpURL>tool:geolight</helpURL>
+    <script scriptType="python"><![CDATA[
+import toolutils
+import objecttoolutils
+kwargs['bbox'] = hou.BoundingBox(-0.5, -0.5, 0.0, 0.5, 0.5, 0.0)
+
+# Get selection
+scene_viewer = toolutils.sceneViewer()
+targets = scene_viewer.selectObjects(
+    prompt = toolutils.selectionPrompt(hou.objNodeTypeCategory()),
+    allow_multisel = False,
+    allowed_types = ("geo",))
+newnode = objecttoolutils.genericTool(kwargs, 'hlight::2.0',
+    'geolight1', False)
+newnode.parmTuple("stdswitcher4")[0].set(1)
+newnode.parmTuple("atten_folder_1")[0].set(1)
+if len( targets ) > 0:
+	target = targets[0]
+	target_path = newnode.relativePathTo( target )
+	newnode.setWorldTransform( target.worldTransform() )
+	newnode.parm("areageometry").set( target_path )
+	target.setDisplayFlag( False )
+
+newnode.parm("light_type").set('geo')
+newnode.parm("normalizearea").set(0)
+group = newnode.parmTemplateGroup()
+group.hide("light_contrib", True)
+group.hide("vm_lpetag", True)
+group.hide("vm_samplingquality", True)
+group.hide("sepparm3", True)
+group.hide("areamap", True)
+group.hide("areamapspace", True)
+group.hide("areamapnull", True)
+group.hide("areamapblur", True)
+group.hide("areamapscale", True)
+group.hide("selfshadow", True)
+group.hide("edgeenable", True)
+group.hide("edgewidth", True)
+group.hide("edgerolloff", True)
+group.hide("sepparm4", True)
+group.hide("pc_enable", True)
+group.hide("pc_samples", True)
+group.hide("pc_file", True)
+group.hide("render_pointcloud", True)
+group.hide("vm_shadingfactor", True)
+group.hide("pc_camera_override", True)
+group.hide("pc_camera", True)
+group.hideFolder(("Light", "Attenuation Options"), True)
+group.hideFolder("Shadow", True)
+newnode.setParmTemplateGroup(group)]]></script>
+  </tool>
+
+  <tool name="_3dl_object_distantlight" label="Distant Light" icon="OBJ_light_directional">
+    <helpURL>tool:distantlight</helpURL>
+    <script scriptType="python"><![CDATA[
+import objecttoolutils
+
+kwargs['bbox_min'] = hou.Vector3(-1.5, -1.5, -1.5)
+kwargs['bbox_max'] = hou.Vector3(1.5, 1.5, 1.5)
+newnode = objecttoolutils.genericCameraLightTool(kwargs, 'hlight::2.0',
+    'distantlight1',
+    (not kwargs['ctrlclick'] and not kwargs['cmdclick']))
+
+newnode.parm("light_type").set('distant')
+group = newnode.parmTemplateGroup()
+group.hide("light_contrib", True)
+group.hide("vm_lpetag", True)
+group.hide("vm_samplingquality", True)
+group.hide("sepparm3", True)
+group.hide("areamap", True)
+group.hide("areamapspace", True)
+group.hide("areamapnull", True)
+group.hide("areamapblur", True)
+group.hide("areamapscale", True)
+group.hide("selfshadow", True)
+group.hide("edgeenable", True)
+group.hide("edgewidth", True)
+group.hide("edgerolloff", True)
+group.hide("sepparm4", True)
+group.hide("pc_enable", True)
+group.hide("pc_samples", True)
+group.hide("pc_file", True)
+group.hide("render_pointcloud", True)
+group.hide("vm_shadingfactor", True)
+group.hide("pc_camera_override", True)
+group.hide("pc_camera", True)
+group.hideFolder(("Light", "Attenuation Options"), True)
+group.hideFolder("Shadow", True)
+newnode.setParmTemplateGroup(group)]]></script>
+  </tool>
+
+  <tool name="_3dl_object_envlight" label="Environment Light" icon="OBJ_light_environment">
+    <helpURL>operator:Object/envlight</helpURL>
+    <script scriptType="python"><![CDATA[
+import objecttoolutils
+from objecttoolutils import OrientInfo
+
+newnode = objecttoolutils.genericTool(kwargs, 'envlight',
+	None, False, orient=OrientInfo('r'))
+group = newnode.parmTemplateGroup()
+group.hide("light_contrib", True)
+group.hide("vm_lpetag", True)
+group.hideFolder("Shadow", True)
+group.hideFolder(("Light", "Render Options"), True)
+group.hideFolder(("Light", "Sky Environment Map"), True)
+newnode.setParmTemplateGroup(group)]]></script>
+  </tool>
+</shelfDocument>

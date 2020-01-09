@@ -97,5 +97,9 @@ install(
 	FILES soho/parameters/3Delight.ds
 	DESTINATION ${INSTALL_DIR}/soho/parameters )
 
+install(
+	FILES toolbar/3Delight.shelf
+	DESTINATION ${INSTALL_DIR}/toolbar )
+
 # Configure several common target properties, such as its output directory.
 houdini_configure_target( ${library_name} "INSTDIR" "${INSTALL_DIR}/dso" )
