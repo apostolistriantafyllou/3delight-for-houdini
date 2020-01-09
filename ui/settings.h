@@ -113,8 +113,6 @@ private:
 
 	/// Called when the Abort button is pressed
 	static int StopRenderCB(void* i_node, int, double, const PRM_Template*);
-	/// Called when the Export button is pressed
-	static int ExportCB(void* i_node, int, double i_time, const PRM_Template*);
 
 	/** ROP containing all the parameters */
 	ROP_3Delight& m_parameters;

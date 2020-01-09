@@ -124,7 +124,12 @@ PRM_Template* settings::GetTemplates()
 	{
 		PRM_Template(PRM_TOGGLE|PRM_TYPE_JOIN_NEXT|PRM_TYPE_INVISIBLE, 1, &rendering, &rendering_d),
 		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &stop_render, nullptr, nullptr, nullptr, &settings::StopRenderCB, nullptr, 0, nullptr, &stop_render_h),
-		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &export_n, nullptr, nullptr, nullptr, &ExportCB, nullptr, 0, nullptr, &export_h)
+		/*
+			The ROP_Node::doRenderCback callback usually renders, but since the
+			Export button is only visible when the ROP is in export mode, it
+			will export an NSI stream instead.
+		*/
+		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &export_n, nullptr, nullptr, nullptr, &ROP_Node::doRenderCback, nullptr, 0, nullptr, &export_h)
 	};
 
 	// Quality
@@ -885,16 +890,5 @@ int settings::StopRenderCB(void* i_node, int, double, const PRM_Template*)
 {
 	ROP_3Delight* node = (ROP_3Delight*)i_node;
 	node->StopRender();
-	return 1;
-}
-
-int settings::ExportCB(void* i_node, int, double i_time, const PRM_Template*)
-{
-	ROP_3Delight* node = (ROP_3Delight*)i_node;
-	/*
-		This usually renders, but the Export button is only visible when the ROP
-		is in export mode, so it will export an NSI stream.
-	*/
-	node->execute(i_time);
 	return 1;
 }
