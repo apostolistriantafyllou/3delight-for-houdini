@@ -1044,7 +1044,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 			has_frame_buffer ? "circle" : "horizontal")
 	) );
 
-	/* Don't take too much CPU if we the Houdini UI is present */
+	/* Don't take too much CPU if the Houdini UI is present */
 	if( UTisUIAvailable() )
 	{
 		i_ctx.m_nsi.SetAttribute(
