@@ -64,6 +64,15 @@ ELSE()
 ENDIF()
 
 # This will get the destination directory for the installation.
+# WARNING: running houdini_get_default_install_dir will run "hyton" and
+# this can result in mayhem, at least on macOS (crashes on my system).
+# It also takes a Houdini license AND tries to load the 3Delight plugin
+# we are trying to compile ... So you can set the INSTALL_DIR manually,
+# like this:
+#   cmake -DINSTALL_DIR=/Users/aghiles/Library/Preferences/houdini/18.0/ ...
+# or even easier on Linux:
+#   cnake -DINSTALL_DIR=$HIH ..
+#
 if(NOT DEFINED INSTALL_DIR)
 	houdini_get_default_install_dir( INSTALL_DIR )
 ENDIF()
