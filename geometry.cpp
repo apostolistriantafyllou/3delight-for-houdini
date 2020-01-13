@@ -23,13 +23,31 @@
 namespace
 {
 
+/// Specifies which primitives are expected from the refinement process
+enum refine_mode
+{
+	/// We expect additional motion samples to be added to existing primitives
+	k_update_motion_samples = 0x1,
+	/**
+		We expect primitives that have to be sampled on an exact frame to be
+		created (ie : the OP_Context is initialized to an exact frame).
+	*/
+	k_frame_aligned_primitive_types = 0x2,
+	/**
+		We expect primitives that support regular multi-sampled motion blur to
+		be created or updated.
+	*/
+	k_multi_samples_primitive_types = 0x4
+};
+
 /// Refines i_primitive and puts the resulting primitives in io_result
 bool Refine(
 	const GT_PrimitiveHandle& i_primitive,
 	OBJ_Node& i_object,
 	const context& i_context,
 	std::vector<primitive*>& io_result,
-	bool i_add_time_samples,
+	bool& io_requires_frame_aligned_sample,
+	unsigned i_refine_mode,
 	int i_level = 0);
 
 
@@ -44,25 +62,28 @@ struct OBJ_Node_Refiner : public GT_Refine
 {
 	OBJ_Node *m_node;
 	std::vector<primitive*> &m_result;
+	bool& m_requires_frame_aligned_sample;
 	const context &m_context;
 	int m_level;
 	unsigned m_primitive_index;
-	bool m_add_time_samples;
+	unsigned m_refine_mode;
 	bool m_stop;
 
 	OBJ_Node_Refiner(
 		OBJ_Node *i_node,
 		const context &i_context,
 		std::vector<primitive*> &io_result,
-		bool i_add_time_samples,
-		int level )
+		bool& io_requires_frame_aligned_sample,
+		unsigned i_refine_mode,
+		int level)
 	:
-		m_result(io_result),
 		m_node(i_node),
+		m_result(io_result),
+		m_requires_frame_aligned_sample(io_requires_frame_aligned_sample),
 		m_context(i_context),
 		m_level(level),
 		m_primitive_index(0),
-		m_add_time_samples(i_add_time_samples),
+		m_refine_mode(i_refine_mode),
 		m_stop(false)
 	{
 	}
@@ -85,7 +106,11 @@ struct OBJ_Node_Refiner : public GT_Refine
 			return;
 		}
 
-		if(m_add_time_samples)
+		bool primitive_requires_frame_aligned_sample =
+			i_primitive->getPrimitiveType() == GT_PRIM_POINT_MESH;
+
+		if((m_refine_mode & k_update_motion_samples) != 0 &&
+			!primitive_requires_frame_aligned_sample)
 		{
 			// Update existing primitive exporters
 
@@ -124,11 +149,20 @@ struct OBJ_Node_Refiner : public GT_Refine
 						*m_node,
 						m_context,
 						m_result,
-						m_add_time_samples,
+						m_requires_frame_aligned_sample,
+						m_refine_mode,
 						m_level+1);
 			}
 
 			m_primitive_index++;
+			return;
+		}
+
+		// Avoid creating an additional primitive for types that don't need it
+		if((m_refine_mode & k_multi_samples_primitive_types) == 0 &&
+			!primitive_requires_frame_aligned_sample)
+		{
+			assert((m_refine_mode & k_frame_aligned_primitive_types) != 0);
 			return;
 		}
 
@@ -151,22 +185,28 @@ struct OBJ_Node_Refiner : public GT_Refine
 		}
 		case GT_PRIM_SUBDIVISION_MESH:
 			m_result.push_back(
-				new polygonmesh(m_context, m_node,i_primitive, index, true) );
+				new polygonmesh(m_context, m_node, i_primitive, index, true) );
 			break;
 
 		case GT_PRIM_POINT_MESH:
-			m_result.push_back(
-				new pointmesh(m_context, m_node,i_primitive, index) );
+			if((m_refine_mode & k_frame_aligned_primitive_types) == 0)
+			{
+				m_requires_frame_aligned_sample = true;
+			}
+			else
+			{
+				m_result.push_back(
+					new pointmesh(m_context, m_node, i_primitive, index) );
+			}
 			break;
-
 		case GT_PRIM_SUBDIVISION_CURVES:
 			m_result.push_back(
-				new curvemesh(m_context, m_node,i_primitive, index) );
+				new curvemesh(m_context, m_node, i_primitive, index) );
 			break;
 
 		case GT_PRIM_CURVE_MESH:
 			m_result.push_back(
-				new curvemesh(m_context, m_node,i_primitive, index) );
+				new curvemesh(m_context, m_node, i_primitive, index) );
 			break;
 
 		case GT_PRIM_INSTANCE:
@@ -203,7 +243,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 		case GT_PRIM_VDB_VOLUME:
 		{
 			/*
-				Houdini coucld call us once per grid! And this is not want we
+				Houdini could call us once per grid! And this is not what we
 				want.
 			*/
 			auto it = std::find_if(
@@ -237,7 +277,14 @@ struct OBJ_Node_Refiner : public GT_Refine
 			std::cout << "Refining " << m_node->getFullPath() <<
 				" to level " << m_level  << std::endl;
 #endif
-			if( !Refine( i_primitive, *m_node, m_context, m_result, m_add_time_samples, m_level+1 ) )
+			if(!Refine(
+					i_primitive,
+					*m_node,
+					m_context,
+					m_result,
+					m_requires_frame_aligned_sample,
+					m_refine_mode,
+					m_level+1))
 			{
 #ifdef VERBOSE
 				std::cerr << "3Delight for Houdini: unsupported object "
@@ -255,11 +302,17 @@ bool Refine(
 	OBJ_Node& i_object,
 	const context& i_context,
 	std::vector<primitive*>& io_result,
-	bool i_add_time_samples,
+	bool& io_requires_frame_aligned_sample,
+	unsigned i_refine_mode,
 	int i_level)
 {
 	OBJ_Node_Refiner refiner(
-		&i_object, i_context, io_result, i_add_time_samples, i_level );
+		&i_object,
+		i_context,
+		io_result,
+		io_requires_frame_aligned_sample,
+		i_refine_mode,
+		i_level);
 
 	GT_RefineParms params;
 	params.setAllowSubdivision( true );
@@ -276,11 +329,50 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 {
 	SOP_Node *sop = m_object->getRenderSopPtr();
 
-	// Refine the geometry once per time sample
-	bool update = false;
-	for(time_sampler t(i_context, *m_object, time_sampler::e_deformation); t; t++)
+	/*
+		Refine the geometry once per time sample, and maybe also at the current
+		time (if it contains primitives that require frame-aligned time samples
+		and such a sample is not part of the ones returned by the time_sampler).
+	*/
+	unsigned update = 0;
+	unsigned primitives_types = k_multi_samples_primitive_types;
+	bool requires_frame_aligned_sample = false;
+	bool exported_frame_aligned_sample = false;
+	for(time_sampler t(m_context, *m_object, time_sampler::e_deformation);
+		t || (requires_frame_aligned_sample && !exported_frame_aligned_sample);
+		t ? t++,0 : 0)
 	{
-		OP_Context context( *t );
+		double time;
+		if(t)
+		{
+			time = *t;
+			if(time == m_context.m_current_time)
+			{
+				/*
+					Seize the opportunity to create primitives that require
+					frame-aligned time samples.
+				*/
+				primitives_types |= k_frame_aligned_primitive_types;
+
+				// Avoid performing an extra iteration of the time sampling loop
+				exported_frame_aligned_sample = true;
+			}
+		}
+		else
+		{
+			/*
+				This is an extra time sample meant only for primitives that
+				require one that is aligned on a frame.
+			*/
+			assert(requires_frame_aligned_sample);
+			time = m_context.m_current_time;
+			primitives_types = k_frame_aligned_primitive_types;
+
+			// Ensure that the time sampling loop will exit
+			exported_frame_aligned_sample = true;
+		}
+
+		OP_Context context(time);
 		GU_DetailHandle detail_handle( sop->getCookedGeoHandle(context) );
 
 		if( !detail_handle.isValid() )
@@ -292,20 +384,27 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 		}
 
 		/*
-			This seems to be important in order to avoid overwriting previous
-			time sample's handles with the current one.
+			This seems to be important in order to avoid overwriting the handles
+			of previous time samples with the current one.
 		*/
 		detail_handle.addPreserveRequest();
 
 		GT_PrimitiveHandle gt( GT_GEODetail::makeDetail(detail_handle) );
-		Refine(gt, *m_object, m_context, m_primitives, update);
+		Refine(
+			gt,
+			*m_object,
+			m_context,
+			m_primitives,
+			requires_frame_aligned_sample,
+			update|primitives_types);
 
-		if(m_primitives.empty())
+		if(m_primitives.empty() && !requires_frame_aligned_sample)
 		{
 			break;
 		}
 
-		update = true;
+		update = k_update_motion_samples;
+		primitives_types = k_multi_samples_primitive_types;
 	}
 
 #ifdef VERBOSE

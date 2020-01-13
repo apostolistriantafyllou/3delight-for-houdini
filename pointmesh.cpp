@@ -83,41 +83,42 @@ void pointmesh::set_attributes( void ) const
 	}
 
 	/*
-		Generate 2 samples.  The first is the actual first sample, and the
-		second is computed from the first sample and the velocity attribute.
-		It's an asymmetric solution, in the sense that the first sample contains
-		accurate data while the second is only an approximation, but it's still
-		better than using two "accurate" samples from Houdini. The ideal
-		solution would probably have been extrapolating 2 approximation on
-		either side of accurate data sampled from the middle of the shutter
-		interval, but it would be a bit complicated with our actual GT
-		refinement setup.
+		Generate positions at 2 time samples using the position and velocity of
+		each particle.
 	*/
 
-	float time = default_time();
+	float time = m_context.m_current_time;
 
 	// Retrieve position data in a writable buffer
 	float* nsi_position_data = new float[nb_points*3];
 	position_data->fillArray(nsi_position_data, 0, nb_points, 3);
 
-	// Output first time sample's position
+	// Retrieve velocity data
+	GT_DataArrayHandle velocity_buffer;
+	const float* nsi_velocity_data = velocity_data->getF32Array(velocity_buffer);
+
+	// Compute pre-frame position from frame position (1 second earlier)
+	for(unsigned p = 0; p < 3*nb_points; p++)
+	{
+		nsi_position_data[p] -= nsi_velocity_data[p];
+	}
+
+	// Output pre-frame position
 	m_nsi.SetAttributeAtTime(
 		m_handle,
-		time,
+		time - 1.0,
 		*NSI::Argument("P")
 			.SetType(position_nsi_type)
 			->SetCount(nb_points)
 			->SetValuePointer(nsi_position_data));
 
-	// Retrieve velocity
-	GT_DataArrayHandle velocity_buffer;
-	const float* nsi_velocity_data = velocity_data->getF32Array(velocity_buffer);
+	// Compute post-frame position from the pre-frame position (2 seconds later)
 	for(unsigned p = 0; p < 3*nb_points; p++)
 	{
-		nsi_position_data[p] += nsi_velocity_data[p];
+		nsi_position_data[p] += 2.0f * nsi_velocity_data[p];
 	}
 
-	// Output second time sample's position
+	// Output post-frame position
 	m_nsi.SetAttributeAtTime(
 		m_handle,
 		time + 1.0,

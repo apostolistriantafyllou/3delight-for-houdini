@@ -89,8 +89,3 @@ bool primitive::is_volume()const
 {
 	return false;
 }
-
-double primitive::default_time()const
-{
-	return *time_sampler(m_context, *m_object, time_sampler::e_deformation);
-}

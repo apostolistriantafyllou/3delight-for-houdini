@@ -34,7 +34,7 @@ public:
 	void set_attributes()const override;
 
 	/**
-		\brief Declare this as an instnaced object. Such objects
+		\brief Declare this as an instanced object. Such objects
 		do not have to be connected to a parent transform because
 		they will be using the 'instance' exporter.
 	*/
@@ -58,14 +58,6 @@ protected:
 	{
 		return m_gt_primitives.front();
 	}
-
-	/**
-		\brief Time associated to the default_gt_primitive.
-
-		This is convenient when the default GT primitive is used to export
-		extrapolated values for motion-blurred attributes, such as P+velocity.
-	*/
-	double default_time()const;
 
 private:
 
