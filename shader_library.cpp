@@ -198,6 +198,8 @@ void shader_library::find_all_shaders( const char *i_root)
 		"dlAtmosphere",
 		"dlColorVariation",
 		"dlColorToFloat",
+		"dlFloatToColor",
+		"dlRamp",
 		"dlAttributeRead",
 		"dlFlakes",
 		"dlThin",
