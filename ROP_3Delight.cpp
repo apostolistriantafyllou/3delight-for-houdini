@@ -10,6 +10,7 @@
 #include "shader_library.h"
 #include "ui/select_layers_dialog.h"
 
+#include <HOM/HOM_Module.h>
 #include <OBJ/OBJ_Camera.h>
 #include <OBJ/OBJ_Light.h>
 #include <OP/OP_Director.h>
@@ -357,7 +358,15 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	StopRender();
 
 	bool render = m_idisplay_rendering || GetNSIExportFilename(tstart).empty();
-	fpreal fps = OPgetDirector()->getChannelManager()->getSamplesPerSec();
+
+	/*
+		Get the number of frames per second. This is equivalent to	
+		OPgetDirector()->getChannelManager()->getSamplesPerSec(), except it's
+		not inline, and so doesn't suffer from CH_Manager class layout changes
+		between versions.
+	*/
+	fpreal fps = HOM().fps();
+
 	bool batch = !UTisUIAvailable();
 	bool ipr =
 		m_idisplay_rendering
