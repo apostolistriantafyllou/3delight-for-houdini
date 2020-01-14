@@ -17,6 +17,7 @@
 #include <OP/OP_OperatorTable.h>
 #include <RE/RE_Light.h>
 #include <ROP/ROP_Templates.h>
+#include <SYS/SYS_Version.h>
 #include <UT/UT_Exit.h>
 #include <UT/UT_ReadWritePipe.h>
 #include <UT/UT_Spawn.h>
@@ -469,6 +470,19 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 		(
 			NSI::StringArg("streamfilename", export_file),
 			NSI::CStringPArg("streamformat", "nsi")
+		) );
+
+		// Add comments to the NSI stream, useful for debugging
+		m_nsi.Evaluate(
+		(
+			NSI::CStringPArg("1", "Output from 3Delight for Houdini"),
+			NSI::CStringPArg(
+				"2",
+				"Built with HDK " SYS_VERSION_MAJOR "." SYS_VERSION_MINOR
+				"." SYS_VERSION_BUILD "." SYS_VERSION_PATCH),
+			NSI::StringArg(
+				"3",
+				"Running on Houdini " + HOM().applicationVersionString())
 		) );
 	}
 	else if(m_renderdl)
