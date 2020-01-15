@@ -47,37 +47,35 @@ void null::set_attributes_at_time( double i_time ) const
 	if this null object has no parent.
 
 	Note that Scene Hierarchy in Houdini is a very murky concept. Here we
-	need to check both getParentObject(), which seems to be one way to
-	do scene hierarchies, and getParent(), which seems to be the other
-	way (OBJ-level nested hierarchies).
+	take the parent node that has the longest scene path. Why ? Because
+	it's the one closest to us.
 */
 void null::connect( void ) const
 {
 	assert( m_object );
 
 	OP_Node *parent_node = m_object->getParent();
+	OP_Node *parent_object = m_object->getParentObject();
 	OP_Node *obj_node = OPgetDirector()->findNode("/obj");
 
-	if( parent_node && parent_node != obj_node )
-	{
-		m_nsi.Connect(
-			m_handle, "",
-			parent_node->getFullPath().c_str(), "objects" );
-		return;
-	}
+	std::string parent_node_path(
+		parent_node ?
+			parent_node->getFullPath().toStdString() : std::string() );
 
-	OP_Node *parent_object = m_object->getParentObject();
-	if( parent_object && parent_object != obj_node )
+	std::string parent_object_path(
+		parent_object ?
+			parent_object->getFullPath().toStdString() : std::string() );
+
+	std::string parent = parent_object_path.size() > parent_node_path.size() ?
+		parent_object_path : parent_node_path;
+
+	if( parent != "/obj" )
 	{
-		m_nsi.Connect(
-			m_handle, "",
-			parent_object->getFullPath().toStdString(), "objects" );
+		m_nsi.Connect( m_handle, "", parent, "objects" );
 	}
 	else
 	{
-		m_nsi.Connect(
-			m_handle, "",
-			NSI_SCENE_ROOT, "objects" );
+		m_nsi.Connect( m_handle, "", NSI_SCENE_ROOT, "objects" );
 	}
 }
 
