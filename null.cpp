@@ -56,7 +56,6 @@ void null::connect( void ) const
 
 	OP_Node *parent_node = m_object->getParent();
 	OP_Node *parent_object = m_object->getParentObject();
-	OP_Node *obj_node = OPgetDirector()->findNode("/obj");
 
 	std::string parent_node_path(
 		parent_node ?
