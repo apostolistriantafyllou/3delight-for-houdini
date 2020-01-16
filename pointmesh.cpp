@@ -17,8 +17,12 @@ pointmesh::pointmesh(
 	const GT_PrimitiveHandle &i_gt_primitive,
 	unsigned i_primitive_index )
 :
-	primitive( i_ctx, i_object, i_time, i_gt_primitive, i_primitive_index )
+	primitive( i_ctx, i_object, i_time, i_gt_primitive, i_primitive_index ),
+	m_has_velocity(false)
 {
+	GT_Owner owner;
+	m_has_velocity =
+		(bool)i_gt_primitive->findAttribute(k_velocity_attribute, owner, 0);
 }
 
 void pointmesh::create( void ) const
@@ -135,7 +139,7 @@ void pointmesh::set_attributes( void ) const
 
 bool pointmesh::requires_frame_aligned_sample()const
 {
-	return true;
+	return m_has_velocity;
 }
 
 void pointmesh::set_attributes_at_time(

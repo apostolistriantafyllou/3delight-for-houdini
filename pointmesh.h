@@ -33,4 +33,6 @@ private:
 		double i_time,
 		const GT_PrimitiveHandle i_gt_primitive,
 		bool i_width_only)const;
+
+	bool m_has_velocity;
 };
