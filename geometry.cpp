@@ -151,13 +151,8 @@ struct OBJ_Node_Refiner : public GT_Refine
 		{
 		case GT_PRIM_POLYGON_MESH:
 		{
-			const char *k_subdiv = "_3dl_render_poly_as_subd";
-			bool subdiv =
-				m_node->hasParm(k_subdiv) &&
-				m_node->evalInt(k_subdiv, 0, m_context.m_current_time) != 0;
-
 			m_result.push_back(
-				new polygonmesh(m_context, m_node, m_time, i_primitive, index, subdiv) );
+				new polygonmesh(m_context, m_node, m_time, i_primitive, index, false) );
 			break;
 		}
 		case GT_PRIM_SUBDIVISION_MESH:

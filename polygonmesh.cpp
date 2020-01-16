@@ -15,11 +15,18 @@ polygonmesh::polygonmesh(
 	double i_time,
 	const GT_PrimitiveHandle &i_gt_primitive,
 	unsigned i_primitive_index,
-	bool is_subdivision )
+	bool i_force_subdivision )
 :
 	primitive( i_ctx, i_object, i_time, i_gt_primitive, i_primitive_index ),
-	m_is_subdiv(is_subdivision)
+	m_is_subdiv(i_force_subdivision)
 {
+	if(!m_is_subdiv)
+	{
+		const char *k_subdiv = "_3dl_render_poly_as_subd";
+		m_is_subdiv =
+			m_object->hasParm(k_subdiv) &&
+			m_object->evalInt(k_subdiv, 0, m_context.m_current_time) != 0;
+	}
 }
 
 void polygonmesh::create( void ) const

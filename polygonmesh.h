@@ -14,7 +14,7 @@ public:
 		double,
 		const GT_PrimitiveHandle &,
 		unsigned,
-		bool subdiv );
+		bool i_force_subdivision);
 
 	void create( void ) const override;
 	void set_attributes( void ) const override;
