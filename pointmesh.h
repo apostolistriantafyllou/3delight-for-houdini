@@ -14,6 +14,8 @@ public:
 	void create( void ) const override;
 	void set_attributes( void ) const override;
 
+	bool requires_frame_aligned_sample()const override;
+
 protected:
 	/// Exports time-dependent attributes to NSI
 	void set_attributes_at_time(

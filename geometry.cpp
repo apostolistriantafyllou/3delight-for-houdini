@@ -23,23 +23,6 @@
 namespace
 {
 
-/// Specifies which primitives are expected from the refinement process
-enum refine_mode
-{
-	/// We expect additional motion samples to be added to existing primitives
-	k_update_motion_samples = 0x1,
-	/**
-		We expect primitives that have to be sampled on an exact frame to be
-		created (ie : the OP_Context is initialized to an exact frame).
-	*/
-	k_frame_aligned_primitive_types = 0x2,
-	/**
-		We expect primitives that support regular multi-sampled motion blur to
-		be created or updated.
-	*/
-	k_multi_samples_primitive_types = 0x4
-};
-
 /// Refines i_primitive and puts the resulting primitives in io_result
 bool Refine(
 	const GT_PrimitiveHandle& i_primitive,
@@ -48,7 +31,7 @@ bool Refine(
 	double i_time,
 	std::vector<primitive*>& io_result,
 	bool& io_requires_frame_aligned_sample,
-	unsigned i_refine_mode,
+	bool i_add_time_samples,
 	int i_level = 0);
 
 
@@ -68,7 +51,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 	double m_time;
 	int m_level;
 	unsigned m_primitive_index;
-	unsigned m_refine_mode;
+	bool m_add_time_samples;
 	bool m_stop;
 
 	OBJ_Node_Refiner(
@@ -77,7 +60,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 		double i_time,
 		std::vector<primitive*> &io_result,
 		bool& io_requires_frame_aligned_sample,
-		unsigned i_refine_mode,
+		bool i_add_time_samples,
 		int level)
 	:
 		m_node(i_node),
@@ -87,7 +70,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 		m_time(i_time),
 		m_level(level),
 		m_primitive_index(0),
-		m_refine_mode(i_refine_mode),
+		m_add_time_samples(i_add_time_samples),
 		m_stop(false)
 	{
 	}
@@ -110,11 +93,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 			return;
 		}
 
-		bool primitive_requires_frame_aligned_sample =
-			i_primitive->getPrimitiveType() == GT_PRIM_POINT_MESH;
-
-		if((m_refine_mode & k_update_motion_samples) != 0 &&
-			!primitive_requires_frame_aligned_sample)
+		if(m_add_time_samples)
 		{
 			// Update existing primitive exporters
 
@@ -156,19 +135,11 @@ struct OBJ_Node_Refiner : public GT_Refine
 						m_time,
 						m_result,
 						m_requires_frame_aligned_sample,
-						m_refine_mode,
+						m_add_time_samples,
 						m_level+1);
 			}
 
 			m_primitive_index++;
-			return;
-		}
-
-		// Avoid creating an additional primitive for types that don't need it
-		if((m_refine_mode & k_multi_samples_primitive_types) == 0 &&
-			!primitive_requires_frame_aligned_sample)
-		{
-			assert((m_refine_mode & k_frame_aligned_primitive_types) != 0);
 			return;
 		}
 
@@ -195,16 +166,10 @@ struct OBJ_Node_Refiner : public GT_Refine
 			break;
 
 		case GT_PRIM_POINT_MESH:
-			if((m_refine_mode & k_frame_aligned_primitive_types) == 0)
-			{
-				m_requires_frame_aligned_sample = true;
-			}
-			else
-			{
-				m_result.push_back(
-					new pointmesh(m_context, m_node, m_time, i_primitive, index) );
-			}
+			m_result.push_back(
+				new pointmesh(m_context, m_node, m_time, i_primitive, index) );
 			break;
+
 		case GT_PRIM_SUBDIVISION_CURVES:
 			m_result.push_back(
 				new curvemesh(m_context, m_node, m_time, i_primitive, index) );
@@ -290,7 +255,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 					m_time,
 					m_result,
 					m_requires_frame_aligned_sample,
-					m_refine_mode,
+					m_add_time_samples,
 					m_level+1))
 			{
 #ifdef VERBOSE
@@ -300,6 +265,12 @@ struct OBJ_Node_Refiner : public GT_Refine
 					<< std::endl;
 #endif
 			}
+		}
+
+		if(m_result.empty())
+		{
+			m_requires_frame_aligned_sample =
+				m_result.back()->requires_frame_aligned_sample();
 		}
 	}
 };
@@ -311,7 +282,7 @@ bool Refine(
 	double i_time,
 	std::vector<primitive*>& io_result,
 	bool& io_requires_frame_aligned_sample,
-	unsigned i_refine_mode,
+	bool i_add_time_samples,
 	int i_level)
 {
 	OBJ_Node_Refiner refiner(
@@ -320,7 +291,7 @@ bool Refine(
 		i_time,
 		io_result,
 		io_requires_frame_aligned_sample,
-		i_refine_mode,
+		i_add_time_samples,
 		i_level);
 
 	GT_RefineParms params;
@@ -343,8 +314,7 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 		time (if it contains primitives that require frame-aligned time samples
 		and such a sample is not part of the ones returned by the time_sampler).
 	*/
-	unsigned update = 0;
-	unsigned primitives_types = k_multi_samples_primitive_types;
+	bool update = false;
 	bool requires_frame_aligned_sample = false;
 	bool exported_frame_aligned_sample = false;
 	for(time_sampler t(m_context, *m_object, time_sampler::e_deformation);
@@ -355,17 +325,6 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 		if(t)
 		{
 			time = *t;
-			if(time == m_context.m_current_time)
-			{
-				/*
-					Seize the opportunity to create primitives that require
-					frame-aligned time samples.
-				*/
-				primitives_types |= k_frame_aligned_primitive_types;
-
-				// Avoid performing an extra iteration of the time sampling loop
-				exported_frame_aligned_sample = true;
-			}
 		}
 		else
 		{
@@ -375,10 +334,6 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 			*/
 			assert(requires_frame_aligned_sample);
 			time = m_context.m_current_time;
-			primitives_types = k_frame_aligned_primitive_types;
-
-			// Ensure that the time sampling loop will exit
-			exported_frame_aligned_sample = true;
 		}
 
 		OP_Context context(time);
@@ -406,15 +361,15 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 			time,
 			m_primitives,
 			requires_frame_aligned_sample,
-			update|primitives_types);
+			update);
 
-		if(m_primitives.empty() && !requires_frame_aligned_sample)
+		if(m_primitives.empty())
 		{
 			break;
 		}
 
-		update = k_update_motion_samples;
-		primitives_types = k_multi_samples_primitive_types;
+		exported_frame_aligned_sample = time == m_context.m_current_time;
+		update = true;
 	}
 
 #ifdef VERBOSE

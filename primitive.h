@@ -49,6 +49,14 @@ public:
 	/// Returns true if the primitive should be rendered as a volume
 	virtual bool is_volume()const;
 
+	/**
+		Returns true when the primitive requires a single sample aligned on the
+		exact time of a frame, even when motion blur is enabled. Otherwise, it
+		will use as many samples as specified by a properly initialized
+		time_sampler object.
+	*/
+	virtual bool requires_frame_aligned_sample()const;
+
 protected:
 
 	/// Exports time-dependent attributes to NSI

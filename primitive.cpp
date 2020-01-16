@@ -12,9 +12,10 @@ primitive::primitive(
 	double i_time,
 	const GT_PrimitiveHandle& i_gt_primitive,
 	unsigned i_primitive_index)
-	:	exporter(i_context, i_object),
-		m_gt_primitives(1, TimedPrimitive(i_time, i_gt_primitive))
+	:	exporter(i_context, i_object)
 {
+	add_time_sample(i_time, i_gt_primitive);
+
 	/*
 		Geometry uses its full path + a prefix as a handle. So that
 		it leaves the full path handle to the parent transform.
@@ -73,14 +74,44 @@ bool primitive::add_time_sample(
 		m_gt_primitives.front().second->getPrimitiveType() !=
 			i_primitive->getPrimitiveType())
 	{
+		// All GT primitives must be of the same type. This is an error.
 		return false;
 	}
 
+	bool frame_aligned = requires_frame_aligned_sample();
+
+	if(i_time != m_context.m_current_time && frame_aligned)
+	{
+		// We simply don't need this time sample. Not an error.
+		return true;
+	}
+
+	if(!m_gt_primitives.empty() && i_time < m_gt_primitives.back().first)
+	{
+		/*
+			This sample arrived out of chronological order. This is supposed to
+			happen only when creating an additional time sample for primitives
+			that require one that is aligned on a frame. It can be safely
+			ignored by the others.
+		*/
+		assert(i_time == m_context.m_current_time);
+		if(!frame_aligned)
+		{
+			return true;
+		}
+	}
+
 	m_gt_primitives.push_back(TimedPrimitive(i_time, i_primitive));
+
 	return true;
 }
 
 bool primitive::is_volume()const
+{
+	return false;
+}
+
+bool primitive::requires_frame_aligned_sample()const
 {
 	return false;
 }

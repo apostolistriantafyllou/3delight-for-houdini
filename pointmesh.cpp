@@ -133,6 +133,11 @@ void pointmesh::set_attributes( void ) const
 	export_basic_attributes(time, default_gt_primitive(), true);
 }
 
+bool pointmesh::requires_frame_aligned_sample()const
+{
+	return true;
+}
+
 void pointmesh::set_attributes_at_time(
 	double i_time,
 	const GT_PrimitiveHandle i_gt_primitive) const
