@@ -8,7 +8,8 @@
 class pointmesh : public primitive
 {
 public:
-	pointmesh( const context&, OBJ_Node *, const GT_PrimitiveHandle &, unsigned );
+	pointmesh(
+		const context&, OBJ_Node*, double, const GT_PrimitiveHandle&, unsigned);
 
 	void create( void ) const override;
 	void set_attributes( void ) const override;

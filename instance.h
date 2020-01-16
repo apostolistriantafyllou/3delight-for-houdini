@@ -11,6 +11,7 @@ public:
 	instance(
 		const context&,
 		OBJ_Node *,
+		double,
 		const GT_PrimitiveHandle &,
 		unsigned i_primitive_index,
 		const std::string &i_geometry_handle );

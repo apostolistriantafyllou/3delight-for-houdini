@@ -16,6 +16,8 @@ public:
 			Current rendering context.
 		\param i_object
 			The object from which the GT primitive was retrieved.
+		\param i_time
+			The time at which i_object was sampled to get i_gt_primitive.
 		\param i_gt_primitive
 			One of the GT primitives obtained from successive refinement of
 			i_object.
@@ -26,6 +28,7 @@ public:
 	primitive(
 		const context& i_context,
 		OBJ_Node* i_object,
+		double i_time,
 		const GT_PrimitiveHandle& i_gt_primitive,
 		unsigned i_primitive_index);
 
@@ -41,7 +44,7 @@ public:
 	void set_as_instanced( void ) { m_instanced = true; }
 
 	/// Specifies the GT primitive to use when exporting one more time sample
-	bool add_time_sample(const GT_PrimitiveHandle& i_primitive);
+	bool add_time_sample(double i_time, const GT_PrimitiveHandle& i_primitive);
 
 	/// Returns true if the primitive should be rendered as a volume
 	virtual bool is_volume()const;
@@ -56,13 +59,15 @@ protected:
 	/// Returns the GT primitive to use when exporting constant attributes
 	const GT_PrimitiveHandle& default_gt_primitive()const
 	{
-		return m_gt_primitives.front();
+		return m_gt_primitives.front().second;
 	}
 
 private:
 
+	typedef std::pair<double, GT_PrimitiveHandle> TimedPrimitive;
+
 	/// One GT primitive for each time sample
-	std::vector<GT_PrimitiveHandle> m_gt_primitives;
+	std::vector<TimedPrimitive> m_gt_primitives;
 
 	/** =true if instanced geo */
 	bool m_instanced{false};

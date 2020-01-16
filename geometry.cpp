@@ -45,6 +45,7 @@ bool Refine(
 	const GT_PrimitiveHandle& i_primitive,
 	OBJ_Node& i_object,
 	const context& i_context,
+	double i_time,
 	std::vector<primitive*>& io_result,
 	bool& io_requires_frame_aligned_sample,
 	unsigned i_refine_mode,
@@ -64,6 +65,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 	std::vector<primitive*> &m_result;
 	bool& m_requires_frame_aligned_sample;
 	const context &m_context;
+	double m_time;
 	int m_level;
 	unsigned m_primitive_index;
 	unsigned m_refine_mode;
@@ -72,6 +74,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 	OBJ_Node_Refiner(
 		OBJ_Node *i_node,
 		const context &i_context,
+		double i_time,
 		std::vector<primitive*> &io_result,
 		bool& io_requires_frame_aligned_sample,
 		unsigned i_refine_mode,
@@ -81,6 +84,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 		m_result(io_result),
 		m_requires_frame_aligned_sample(io_requires_frame_aligned_sample),
 		m_context(i_context),
+		m_time(i_time),
 		m_level(level),
 		m_primitive_index(0),
 		m_refine_mode(i_refine_mode),
@@ -131,7 +135,8 @@ struct OBJ_Node_Refiner : public GT_Refine
 				case GT_PRIM_VDB_VOLUME:
 					assert(m_primitive_index < m_result.size());
 					if(m_primitive_index >= m_result.size() ||
-						!m_result[m_primitive_index]->add_time_sample(i_primitive))
+						!m_result[m_primitive_index]->
+							add_time_sample(m_time, i_primitive))
 					{
 						m_stop = true;
 						std::cerr
@@ -148,6 +153,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 						i_primitive,
 						*m_node,
 						m_context,
+						m_time,
 						m_result,
 						m_requires_frame_aligned_sample,
 						m_refine_mode,
@@ -180,12 +186,12 @@ struct OBJ_Node_Refiner : public GT_Refine
 				m_node->evalInt(k_subdiv, 0, m_context.m_current_time) != 0;
 
 			m_result.push_back(
-				new polygonmesh(m_context, m_node, i_primitive, index, subdiv) );
+				new polygonmesh(m_context, m_node, m_time, i_primitive, index, subdiv) );
 			break;
 		}
 		case GT_PRIM_SUBDIVISION_MESH:
 			m_result.push_back(
-				new polygonmesh(m_context, m_node, i_primitive, index, true) );
+				new polygonmesh(m_context, m_node, m_time, i_primitive, index, true) );
 			break;
 
 		case GT_PRIM_POINT_MESH:
@@ -196,17 +202,17 @@ struct OBJ_Node_Refiner : public GT_Refine
 			else
 			{
 				m_result.push_back(
-					new pointmesh(m_context, m_node, i_primitive, index) );
+					new pointmesh(m_context, m_node, m_time, i_primitive, index) );
 			}
 			break;
 		case GT_PRIM_SUBDIVISION_CURVES:
 			m_result.push_back(
-				new curvemesh(m_context, m_node, i_primitive, index) );
+				new curvemesh(m_context, m_node, m_time, i_primitive, index) );
 			break;
 
 		case GT_PRIM_CURVE_MESH:
 			m_result.push_back(
-				new curvemesh(m_context, m_node, i_primitive, index) );
+				new curvemesh(m_context, m_node, m_time, i_primitive, index) );
 			break;
 
 		case GT_PRIM_INSTANCE:
@@ -230,7 +236,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 			instanced->set_as_instanced();
 			m_result.push_back(
 				new instance(
-					m_context, m_node, i_primitive, index, instanced->handle()) );
+					m_context, m_node, m_time, i_primitive, index, instanced->handle()) );
 			break;
 		}
 
@@ -262,7 +268,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 			if( !vdb_path.empty() )
 			{
 				m_result.push_back(
-					new vdb( m_context, m_node, i_primitive, index, vdb_path) );
+					new vdb( m_context, m_node, m_time, i_primitive, index, vdb_path) );
 			}
 			else
 			{
@@ -281,6 +287,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 					i_primitive,
 					*m_node,
 					m_context,
+					m_time,
 					m_result,
 					m_requires_frame_aligned_sample,
 					m_refine_mode,
@@ -301,6 +308,7 @@ bool Refine(
 	const GT_PrimitiveHandle& i_primitive,
 	OBJ_Node& i_object,
 	const context& i_context,
+	double i_time,
 	std::vector<primitive*>& io_result,
 	bool& io_requires_frame_aligned_sample,
 	unsigned i_refine_mode,
@@ -309,6 +317,7 @@ bool Refine(
 	OBJ_Node_Refiner refiner(
 		&i_object,
 		i_context,
+		i_time,
 		io_result,
 		io_requires_frame_aligned_sample,
 		i_refine_mode,
@@ -394,6 +403,7 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 			gt,
 			*m_object,
 			m_context,
+			time,
 			m_primitives,
 			requires_frame_aligned_sample,
 			update|primitives_types);

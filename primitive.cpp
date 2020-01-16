@@ -9,10 +9,11 @@
 primitive::primitive(
 	const context& i_context,
 	OBJ_Node* i_object,
+	double i_time,
 	const GT_PrimitiveHandle& i_gt_primitive,
 	unsigned i_primitive_index)
 	:	exporter(i_context, i_object),
-		m_gt_primitives(1, i_gt_primitive)
+		m_gt_primitives(1, TimedPrimitive(i_time, i_gt_primitive))
 {
 	/*
 		Geometry uses its full path + a prefix as a handle. So that
@@ -58,30 +59,24 @@ primitive::connect()const
 
 void primitive::set_attributes()const
 {
-	time_sampler t(m_context, *m_object, time_sampler::e_deformation);
-	if(t.nb_samples() > m_gt_primitives.size())
+	for(const TimedPrimitive& prim : m_gt_primitives)
 	{
-		std::cerr
-			<< "3Delight for Houdini: missing motion blur samples for "
-			<< m_object->getFullPath() << std::endl;
-	}
-
-	for(const GT_PrimitiveHandle& prim : m_gt_primitives)
-	{
-		set_attributes_at_time(*t, prim);
-		t++;
+		set_attributes_at_time(prim.first, prim.second);
 	}
 }
 
-bool primitive::add_time_sample(const GT_PrimitiveHandle& i_primitive)
+bool primitive::add_time_sample(
+	double i_time,
+	const GT_PrimitiveHandle& i_primitive)
 {
 	if(!m_gt_primitives.empty() &&
-		m_gt_primitives[0]->getPrimitiveType() != i_primitive->getPrimitiveType())
+		m_gt_primitives.front().second->getPrimitiveType() !=
+			i_primitive->getPrimitiveType())
 	{
 		return false;
 	}
 
-	m_gt_primitives.push_back(i_primitive);
+	m_gt_primitives.push_back(TimedPrimitive(i_time, i_primitive));
 	return true;
 }
 

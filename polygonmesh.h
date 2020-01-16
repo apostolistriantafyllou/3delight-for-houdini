@@ -8,7 +8,13 @@
 class polygonmesh : public primitive
 {
 public:
-	polygonmesh( const context&, OBJ_Node *, const GT_PrimitiveHandle &, unsigned, bool subdiv );
+	polygonmesh(
+		const context&,
+		OBJ_Node *,
+		double,
+		const GT_PrimitiveHandle &,
+		unsigned,
+		bool subdiv );
 
 	void create( void ) const override;
 	void set_attributes( void ) const override;

@@ -5,7 +5,8 @@
 class curvemesh : public primitive
 {
 public:
-	curvemesh( const context&, OBJ_Node *, const GT_PrimitiveHandle &, unsigned);
+	curvemesh(
+		const context&, OBJ_Node*, double, const GT_PrimitiveHandle&, unsigned);
 
 	void create( void ) const override;
 	void set_attributes( void ) const override;

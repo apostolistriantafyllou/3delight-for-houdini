@@ -12,10 +12,11 @@
 curvemesh::curvemesh(
 	const context& i_ctx,
 	OBJ_Node *i_object,
+	double i_time,
 	const GT_PrimitiveHandle &i_gt_primitive,
 	unsigned i_primitive_index )
 :
-	primitive( i_ctx, i_object, i_gt_primitive, i_primitive_index )
+	primitive( i_ctx, i_object, i_time, i_gt_primitive, i_primitive_index )
 {
 }
 
