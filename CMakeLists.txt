@@ -87,6 +87,10 @@ install(
 	DESTINATION ${INSTALL_DIR}/config/Icons )
 
 install(
+	FILES toolbar/shelf_dlOpenVDBShape.png
+	DESTINATION ${INSTALL_DIR}/config/Icons )
+
+install(
 	FILES ui/select_layers_ui.ui
 	DESTINATION ${INSTALL_DIR}/config/Applications )
 

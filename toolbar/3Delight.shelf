@@ -37,6 +37,7 @@
     <memberTool name="_3dl_object_geolight"/>
     <memberTool name="_3dl_object_distantlight"/>
     <memberTool name="_3dl_object_envlight"/>
+    <memberTool name="_3dl_object_vdb"/>
   </toolshelf>
 
   <tool name="_3dl_object_pointlight" label="Point Light" icon="OBJ_light_point">
@@ -266,5 +267,33 @@ group.hideFolder("Shadow", True)
 group.hideFolder(("Light", "Render Options"), True)
 group.hideFolder(("Light", "Sky Environment Map"), True)
 newnode.setParmTemplateGroup(group)]]></script>
+  </tool>
+
+  <tool name="_3dl_object_vdb" label="Volume" icon="shelf_dlOpenVDBShape">
+    <script scriptType="python"><![CDATA[
+import os
+
+file = hou.ui.selectFile(title = "Choose VDB File",
+                         collapse_sequences = True,
+                         file_type = hou.fileType.Geometry,
+                         pattern = "*.vdb")
+if file:
+	name = os.path.splitext(os.path.basename(file))[0]
+	obj = hou.node("/obj")
+
+	newnode = obj.createNode("geo", name)
+	newfilenode = newnode.createNode("file", name)
+	newfilenode.setParms({"file": file, "loadtype": 4})
+	newtrsnode = newnode.createNode("xform", "transform")
+	newtrsnode.setInput(0, newfilenode)
+	newtrsnode.moveToGoodPosition()
+	newnode.moveToGoodPosition()
+	newnode.setCurrent(True)
+
+	mat = hou.node("/mat")
+	newmatnode = mat.createNode("3Delight::vdbVolume", "vdbVolume")
+	newmatnode.moveToGoodPosition()
+	newnode.setParms({"shop_materialpath": newmatnode.path()})
+]]></script>
   </tool>
 </shelfDocument>
