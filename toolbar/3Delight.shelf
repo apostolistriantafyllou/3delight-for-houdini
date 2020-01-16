@@ -8,23 +8,25 @@
   <!-- Use command hou.shelves.reloadShelfFiles() in a Python Shell to
 	   update any changes you want to test in this file.
   -->
-  <shelfSet name="shelf_set_1" label="Create and Refine">
-    <memberToolshelf name="create"/>
-    <memberToolshelf name="modify"/>
-    <memberToolshelf name="model"/>
-    <memberToolshelf name="polygon"/>
-    <memberToolshelf name="deform"/>
-    <memberToolshelf name="texture"/>
-    <memberToolshelf name="rigging"/>
-    <memberToolshelf name="muscles"/>
-    <memberToolshelf name="characters"/>
-    <memberToolshelf name="constraints"/>
-    <memberToolshelf name="groomtools"/>
-    <memberToolshelf name="guidemodify"/>
-    <memberToolshelf name="grooming"/>
-    <memberToolshelf name="terrainfx"/>
-    <memberToolshelf name="cloud"/>
-    <memberToolshelf name="volume"/>
+  <shelfSet name="shelf_set_2" label="Lights, Camera, Action">
+    <memberToolshelf name="lights_and_cameras"/>
+    <memberToolshelf name="collisions"/>
+    <memberToolshelf name="particles"/>
+    <memberToolshelf name="grains"/>
+    <memberToolshelf name="vellum"/>
+    <memberToolshelf name="rbd_dynamics"/>
+    <memberToolshelf name="liquid_dynamics"/>
+    <memberToolshelf name="melting_dynamics"/>
+    <memberToolshelf name="ocean"/>
+    <memberToolshelf name="volume_creation_dynamics"/>
+    <memberToolshelf name="volume_sourcing_dynamics"/>
+    <memberToolshelf name="volume_tools_dynamics"/>
+    <memberToolshelf name="pyro_dynamics"/>
+    <memberToolshelf name="sparse_pyro_dynamics"/>
+    <memberToolshelf name="solid_dynamics"/>
+    <memberToolshelf name="wire_dynamics"/>
+    <memberToolshelf name="crowds"/>
+    <memberToolshelf name="drive_simulation"/>
     <memberToolshelf name="3delight"/>
   </shelfSet>
 
