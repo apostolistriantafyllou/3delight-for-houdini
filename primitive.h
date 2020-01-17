@@ -80,8 +80,12 @@ protected:
 	/**
 		Generates and export "P" at 2 time samples, using the velocity attribute
 		to compute its value.
+
+		\param i_vertices_list
+			A optional vertex list used to export "P.indices".
 	*/
-	bool export_extrapolated_P()const;
+	bool export_extrapolated_P(
+		GT_DataArrayHandle i_vertices_list = GT_DataArrayHandle())const;
 
 	/// Returns true if i_gt_prim has a velocity attribute "v".
 	static bool has_velocity(const GT_PrimitiveHandle& i_gt_prim);

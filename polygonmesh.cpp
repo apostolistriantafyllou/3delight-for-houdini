@@ -1,5 +1,7 @@
 #include "polygonmesh.h"
+
 #include "context.h"
+#include "time_sampler.h"
 
 #include <GA/GA_Names.h>
 #include <GT/GT_PrimPolygonMesh.h>
@@ -17,7 +19,13 @@ polygonmesh::polygonmesh(
 	unsigned i_primitive_index,
 	bool i_force_subdivision )
 :
-	primitive( i_ctx, i_object, i_time, i_gt_primitive, i_primitive_index ),
+	primitive(
+		i_ctx,
+		i_object,
+		i_time,
+		i_gt_primitive,
+		i_primitive_index,
+		has_velocity(i_gt_primitive)),
 	m_is_subdiv(i_force_subdivision)
 {
 	if(!m_is_subdiv)
@@ -68,8 +76,7 @@ void polygonmesh::set_attributes( void ) const
 	if (m_is_subdiv)
 	{
 		mesh_args.Add(
-			new NSI::StringArg("subdivision.scheme",
-				"catmull-clark"));
+			new NSI::StringArg("subdivision.scheme", "catmull-clark") );
 	}
 
 	m_nsi.SetAttribute( m_handle, mesh_args );
@@ -82,7 +89,27 @@ void polygonmesh::set_attributes( void ) const
 
 	exporter::export_bind_attributes(*polygon_mesh, vertices_list );
 
-	primitive::set_attributes();
+	if(!requires_frame_aligned_sample() ||
+		time_sampler(
+			m_context,
+			*m_object, time_sampler::e_deformation).nb_samples() <= 1 ||
+		!export_extrapolated_P(polygon_mesh->getVertexList()))
+	{
+		// Export attributes at each time sample
+		primitive::set_attributes();
+		return;
+	}
+
+	// Export normals at a single time sample
+	if(!m_is_subdiv)
+	{
+		std::vector<std::string> to_export(1, "N");
+		exporter::export_attributes(
+			to_export,
+			*polygon_mesh,
+			m_context.m_current_time,
+			polygon_mesh->getVertexList());
+	}
 }
 
 /**

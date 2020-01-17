@@ -117,7 +117,7 @@ bool primitive::is_volume()const
 	return false;
 }
 
-bool primitive::export_extrapolated_P()const
+bool primitive::export_extrapolated_P(GT_DataArrayHandle i_vertices_list)const
 {
 	// Retrieve velocity data handle
 	GT_DataArrayHandle velocity_data;
@@ -185,10 +185,7 @@ bool primitive::export_extrapolated_P()const
 	m_nsi.SetAttributeAtTime(
 		m_handle,
 		time - 1.0,
-		*NSI::Argument("P")
-			.SetType(position_nsi_type)
-			->SetCount(nb_points)
-			->SetValuePointer(nsi_position_data));
+		NSI::PointsArg("P", nsi_position_data, nb_points));
 
 	// Compute post-frame position from the pre-frame position (2 seconds later)
 	for(unsigned p = 0; p < 3*nb_points; p++)
@@ -200,12 +197,19 @@ bool primitive::export_extrapolated_P()const
 	m_nsi.SetAttributeAtTime(
 		m_handle,
 		time + 1.0,
-		*NSI::Argument("P")
-			.SetType(position_nsi_type)
-			->SetCount(nb_points)
-			->SetValuePointer(nsi_position_data));
+		NSI::PointsArg("P", nsi_position_data, nb_points));
 
 	delete[] nsi_position_data;
+
+	// Output P.indices if necessary
+	if(position_point_attribute && i_vertices_list)
+	{
+		GT_DataArrayHandle vertices_buffer;
+		const int *vertices = i_vertices_list->getI32Array(vertices_buffer);
+		m_nsi.SetAttribute(
+			m_handle,
+			NSI::IntegersArg("P.indices", vertices, i_vertices_list->entries()));
+	}
 
 	return true;
 }
