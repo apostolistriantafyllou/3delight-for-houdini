@@ -6,6 +6,12 @@
 
 #include <OBJ/OBJ_Node.h>
 
+namespace
+{
+	const std::string k_position_attribute = "P";
+	const std::string k_velocity_attribute = "v";
+}
+
 primitive::primitive(
 	const context& i_context,
 	OBJ_Node* i_object,
@@ -109,4 +115,103 @@ bool primitive::add_time_sample(
 bool primitive::is_volume()const
 {
 	return false;
+}
+
+bool primitive::export_extrapolated_P()const
+{
+	// Retrieve velocity data handle
+	GT_DataArrayHandle velocity_data;
+	NSIType_t velocity_nsi_type;
+	int velocity_nsi_flags;
+	bool velocity_point_attribute;
+	if(!find_attribute(
+			*default_gt_primitive().get(),
+			k_velocity_attribute,
+			velocity_data,
+			velocity_nsi_type,
+			velocity_nsi_flags,
+			velocity_point_attribute) ||
+		velocity_nsi_type != NSITypeVector)
+	{
+		// Velocity is not available
+		return false;
+	}
+
+	unsigned nb_points = velocity_data->entries();
+
+	// Retrieve position data handle
+	GT_DataArrayHandle position_data;
+	NSIType_t position_nsi_type;
+	int position_nsi_flags;
+	bool position_point_attribute;
+	if(!find_attribute(
+			*default_gt_primitive().get(),
+			k_position_attribute,
+			position_data,
+			position_nsi_type,
+			position_nsi_flags,
+			position_point_attribute) ||
+		position_nsi_type != NSITypePoint ||
+		position_data->entries() != nb_points)
+	{
+		// Position is not available
+		// This is very weird, most likely impossible
+		assert(false);
+		return false;
+	}
+
+	/*
+		Generate positions at 2 time samples using the position and velocity of
+		each particle.
+	*/
+
+	float time = m_context.m_current_time;
+
+	// Retrieve position data in a writable buffer
+	float* nsi_position_data = new float[nb_points*3];
+	position_data->fillArray(nsi_position_data, 0, nb_points, 3);
+
+	// Retrieve velocity data
+	GT_DataArrayHandle velocity_buffer;
+	const float* nsi_velocity_data = velocity_data->getF32Array(velocity_buffer);
+
+	// Compute pre-frame position from frame position (1 second earlier)
+	for(unsigned p = 0; p < 3*nb_points; p++)
+	{
+		nsi_position_data[p] -= nsi_velocity_data[p];
+	}
+
+	// Output pre-frame position
+	m_nsi.SetAttributeAtTime(
+		m_handle,
+		time - 1.0,
+		*NSI::Argument("P")
+			.SetType(position_nsi_type)
+			->SetCount(nb_points)
+			->SetValuePointer(nsi_position_data));
+
+	// Compute post-frame position from the pre-frame position (2 seconds later)
+	for(unsigned p = 0; p < 3*nb_points; p++)
+	{
+		nsi_position_data[p] += 2.0f * nsi_velocity_data[p];
+	}
+
+	// Output post-frame position
+	m_nsi.SetAttributeAtTime(
+		m_handle,
+		time + 1.0,
+		*NSI::Argument("P")
+			.SetType(position_nsi_type)
+			->SetCount(nb_points)
+			->SetValuePointer(nsi_position_data));
+
+	delete[] nsi_position_data;
+
+	return true;
+}
+
+bool primitive::has_velocity(const GT_PrimitiveHandle& i_gt_prim)
+{
+	GT_Owner owner;
+	return (bool)i_gt_prim->findAttribute(k_velocity_attribute, owner, 0);
 }

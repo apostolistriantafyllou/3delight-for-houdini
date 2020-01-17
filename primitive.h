@@ -77,6 +77,15 @@ protected:
 		return m_gt_primitives.front().second;
 	}
 
+	/**
+		Generates and export "P" at 2 time samples, using the velocity attribute
+		to compute its value.
+	*/
+	bool export_extrapolated_P()const;
+
+	/// Returns true if i_gt_prim has a velocity attribute "v".
+	static bool has_velocity(const GT_PrimitiveHandle& i_gt_prim);
+
 private:
 
 	typedef std::pair<double, GT_PrimitiveHandle> TimedPrimitive;
