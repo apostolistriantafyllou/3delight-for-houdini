@@ -267,7 +267,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 			}
 		}
 
-		if(m_result.empty())
+		if(!m_result.empty())
 		{
 			m_requires_frame_aligned_sample =
 				m_result.back()->requires_frame_aligned_sample();
