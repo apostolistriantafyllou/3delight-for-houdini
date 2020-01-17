@@ -14,8 +14,6 @@ public:
 	void create( void ) const override;
 	void set_attributes( void ) const override;
 
-	bool requires_frame_aligned_sample()const override;
-
 protected:
 	/// Exports time-dependent attributes to NSI
 	void set_attributes_at_time(
@@ -33,6 +31,4 @@ private:
 		double i_time,
 		const GT_PrimitiveHandle i_gt_primitive,
 		bool i_width_only)const;
-
-	bool m_has_velocity;
 };

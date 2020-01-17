@@ -11,8 +11,10 @@ primitive::primitive(
 	OBJ_Node* i_object,
 	double i_time,
 	const GT_PrimitiveHandle& i_gt_primitive,
-	unsigned i_primitive_index)
-	:	exporter(i_context, i_object)
+	unsigned i_primitive_index,
+	bool i_requires_frame_aligned_sample)
+	:	exporter(i_context, i_object),
+		m_requires_frame_aligned_sample(i_requires_frame_aligned_sample)
 {
 	add_time_sample(i_time, i_gt_primitive);
 
@@ -78,9 +80,7 @@ bool primitive::add_time_sample(
 		return false;
 	}
 
-	bool frame_aligned = requires_frame_aligned_sample();
-
-	if(i_time != m_context.m_current_time && frame_aligned)
+	if(i_time != m_context.m_current_time && m_requires_frame_aligned_sample)
 	{
 		// We simply don't need this time sample. Not an error.
 		return true;
@@ -95,7 +95,7 @@ bool primitive::add_time_sample(
 			ignored by the others.
 		*/
 		assert(i_time == m_context.m_current_time);
-		if(!frame_aligned)
+		if(!m_requires_frame_aligned_sample)
 		{
 			return true;
 		}
@@ -107,11 +107,6 @@ bool primitive::add_time_sample(
 }
 
 bool primitive::is_volume()const
-{
-	return false;
-}
-
-bool primitive::requires_frame_aligned_sample()const
 {
 	return false;
 }

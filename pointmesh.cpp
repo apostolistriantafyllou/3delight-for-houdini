@@ -10,6 +10,15 @@
 const std::string k_position_attribute = "P";
 const std::string k_velocity_attribute = "v";
 
+namespace
+{
+	bool has_velocity(const GT_PrimitiveHandle& i_gt_prim)
+	{
+		GT_Owner owner;
+		return (bool)i_gt_prim->findAttribute(k_velocity_attribute, owner, 0);
+	}
+}
+
 pointmesh::pointmesh(
 	const context& i_ctx,
 	OBJ_Node *i_object,
@@ -17,12 +26,14 @@ pointmesh::pointmesh(
 	const GT_PrimitiveHandle &i_gt_primitive,
 	unsigned i_primitive_index )
 :
-	primitive( i_ctx, i_object, i_time, i_gt_primitive, i_primitive_index ),
-	m_has_velocity(false)
+	primitive(
+		i_ctx,
+		i_object,
+		i_time,
+		i_gt_primitive,
+		i_primitive_index,
+		has_velocity(i_gt_primitive))
 {
-	GT_Owner owner;
-	m_has_velocity =
-		(bool)i_gt_primitive->findAttribute(k_velocity_attribute, owner, 0);
 }
 
 void pointmesh::create( void ) const
@@ -135,11 +146,6 @@ void pointmesh::set_attributes( void ) const
 	delete[] nsi_position_data;
 
 	export_basic_attributes(time, default_gt_primitive(), true);
-}
-
-bool pointmesh::requires_frame_aligned_sample()const
-{
-	return m_has_velocity;
 }
 
 void pointmesh::set_attributes_at_time(

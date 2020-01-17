@@ -24,13 +24,17 @@ public:
 		\param i_primitive_index
 			The index of this primitive exporter inside the associated object's
 			geometry exporter.
+		\param i_requires_frame_aligned_sample
+			Indicates whether the primitive requires a single sample aligned on
+			the exact time of a frame, even when motion blur is enabled.
 	*/
 	primitive(
 		const context& i_context,
 		OBJ_Node* i_object,
 		double i_time,
 		const GT_PrimitiveHandle& i_gt_primitive,
-		unsigned i_primitive_index);
+		unsigned i_primitive_index,
+		bool i_requires_frame_aligned_sample = false);
 
 	void connect()const override;
 
@@ -55,7 +59,10 @@ public:
 		will use as many samples as specified by a properly initialized
 		time_sampler object.
 	*/
-	virtual bool requires_frame_aligned_sample()const;
+	bool requires_frame_aligned_sample()const
+	{
+		return m_requires_frame_aligned_sample;
+	}
 
 protected:
 
@@ -79,4 +86,6 @@ private:
 
 	/** =true if instanced geo */
 	bool m_instanced{false};
+
+	bool m_requires_frame_aligned_sample;
 };
