@@ -200,6 +200,7 @@ void shader_library::find_all_shaders( const char *i_root)
 		"dlColorToFloat",
 		"dlFloatToColor",
 		"dlRamp",
+		"dlTriplanar",
 		"dlAttributeRead",
 		"dlFlakes",
 		"dlThin",
