@@ -209,6 +209,7 @@ void shader_library::find_all_shaders( const char *i_root)
 		"dlFloatBlend",
 		"dlColorBlend",
 		"dlColorBlendMulti",
+		"dlColorCorrection",
 		"vdbVolume",
 		"transparent"
 	};
