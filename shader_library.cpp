@@ -205,6 +205,10 @@ void shader_library::find_all_shaders( const char *i_root)
 		"dlFlakes",
 		"dlThin",
 		"dlRandomInputColor",
+		"dlFloatMath",
+		"dlFloatBlend",
+		"dlColorBlend",
+		"dlColorBlendMulti",
 		"vdbVolume",
 		"transparent"
 	};
