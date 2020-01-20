@@ -23,7 +23,7 @@ namespace
 	{
 		OP_Context op_ctx(i_time);
 		return
-			i_type == time_sampler::e_deformation
+			i_type == time_sampler::e_deformation && i_node.getRenderSopPtr()
 			? i_node.getRenderSopPtr()->isTimeDependent(op_ctx)
 			: i_node.isTimeDependent(op_ctx);
 	}
