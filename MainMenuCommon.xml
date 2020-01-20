@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Please see ExampleMenu.xml for examples that customise the main menu -->
+<!-- Please see menu.xsd for the menu validation schema. -->
+<mainMenu>
+  <menuBar>
+
+    <!-- ======================== Render Menu ========================= -->
+    <subMenu id="render_menu">
+    <label>Render</label>
+
+      <subMenu id="render_create_submenu">
+      <label>Create Render Node</label>
+
+        <scriptItem id="h.create_3Delight">
+          <label>3Delight</label>
+		  <insertBefore>h.create_mantra</insertBefore>
+	  <scriptCode><![CDATA[import roptoolutils
+
+roptoolutils.createRenderNode('3Delight')]]></scriptCode>
+        </scriptItem>
+
+		<separatorItem>
+		  <insertBefore>h.create_mantra</insertBefore>
+		</separatorItem>
+	  </subMenu>
+    </subMenu>
+
+  </menuBar>
+</mainMenu>

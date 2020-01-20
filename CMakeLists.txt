@@ -114,5 +114,9 @@ install(
 	FILES toolbar/3Delight.shelf
 	DESTINATION ${INSTALL_DIR}/toolbar )
 
+install(
+	FILES MainMenuCommon.xml
+	DESTINATION ${INSTALL_DIR} )
+
 # Configure several common target properties, such as its output directory.
 houdini_configure_target( ${library_name} "INSTDIR" "${INSTALL_DIR}/dso" )
