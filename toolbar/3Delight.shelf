@@ -269,7 +269,7 @@ group.hideFolder(("Light", "Sky Environment Map"), True)
 newnode.setParmTemplateGroup(group)]]></script>
   </tool>
 
-  <tool name="_3dl_object_vdb" label="Volume" icon="shelf_dlOpenVDBShape">
+  <tool name="_3dl_object_vdb" label="VDB" icon="vdb_no_outline">
     <script scriptType="python"><![CDATA[
 import os
 

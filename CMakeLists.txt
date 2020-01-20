@@ -87,7 +87,7 @@ install(
 	DESTINATION ${INSTALL_DIR}/config/Icons )
 
 install(
-	FILES toolbar/shelf_dlOpenVDBShape.png
+	FILES toolbar/vdb_no_outline.png
 	DESTINATION ${INSTALL_DIR}/config/Icons )
 
 install(
