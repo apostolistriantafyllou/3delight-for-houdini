@@ -124,9 +124,12 @@ void polygonmesh::set_attributes_at_time(
 	const GT_PrimPolygonMesh *polygon_mesh =
 		static_cast<const GT_PrimPolygonMesh *>(i_gt_primitive.get());
 
-	std::vector< std::string > to_export{ "P" };
+	std::vector< std::string > to_export{ "P", "Pref" };
 	if( !m_is_subdiv )
+	{
 		to_export.push_back( "N" );
+		to_export.push_back( "Nref" );
+	}
 
 	exporter::export_attributes(
 		to_export, *polygon_mesh, i_time, polygon_mesh->getVertexList() );
