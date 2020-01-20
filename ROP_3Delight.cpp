@@ -138,7 +138,6 @@ void ROP_3Delight::onCreated()
 {
 	ROP_Node::onCreated();
 	m_settings.UpdateLights();
-	enableParm(settings::k_save_ids_as_cryptomatte, false);
 	std::vector<VOP_Node*> custom_aovs;
 	scene::find_custom_aovs(custom_aovs);
 	aov::updateCustomVariables(custom_aovs);
@@ -955,7 +954,8 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					i_ctx, layer_name, desc, scalar_format,
 					filter, filter_width,
 					k_screen_name, light_names[j],
-					idisplay_driver_name, sort_key);
+					idisplay_driver_name, idisplay_driver.toStdString(),
+					sort_key);
 
 				if( !m_current_render->m_export_nsi &&
 					!m_current_render->m_batch )
@@ -988,7 +988,8 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					i_ctx, file_layer_name, desc, scalar_format,
 					filter, filter_width,
 					k_screen_name, light_names[j],
-					file_driver_name, sort_key);
+					file_driver_name, file_driver.toStdString(),
+					sort_key);
 			}
 
 			if (png_output)
@@ -1017,7 +1018,8 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					i_ctx, png_layer_name, desc, "uint8",
 					filter, filter_width,
 					k_screen_name, light_names[j],
-					png_driver_name, sort_key);
+					png_driver_name, png_driver,
+					sort_key);
 			}
 
 			if (jpeg_output)
@@ -1046,7 +1048,8 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					i_ctx, jpeg_layer_name, desc, "uint8",
 					filter, filter_width,
 					k_screen_name, light_names[j],
-					jpeg_driver_name, sort_key);
+					jpeg_driver_name, jpeg_driver,
+					sort_key);
 			}
 		}
 	}
@@ -1082,6 +1085,7 @@ ROP_3Delight::ExportOneOutputLayer(
 	const std::string& i_screen_handle,
 	const std::string& i_light_handle,
 	const std::string& i_driver_handle,
+	const std::string& i_driver_name,
 	unsigned& io_sort_key) const
 {
 	i_ctx.m_nsi.Create(i_layer_handle, "outputlayer");
@@ -1104,6 +1108,18 @@ ROP_3Delight::ExportOneOutputLayer(
 			NSI::StringArg("colorprofile", "srgb"));
 	}
 
+	// Decide whether to output ID AOVs in Cryptomatte format.
+	bool save_cryptomatte =
+		evalInt(settings::k_save_ids_as_cryptomatte, 0, 0.0f);
+	unsigned cryptomatte_layers = 0;
+	if(i_desc.m_variable_name.substr(0, 3) == "id." &&
+		i_desc.m_variable_source == "builtin" &&
+		save_cryptomatte &&
+		i_driver_name == "exr")
+	{
+		cryptomatte_layers = 2;
+	}
+
 	i_ctx.m_nsi.Connect(
 		i_layer_handle, "",
 		i_screen_handle, "outputlayers");
@@ -1117,6 +1133,47 @@ ROP_3Delight::ExportOneOutputLayer(
 	i_ctx.m_nsi.Connect(
 		i_driver_handle, "",
 		i_layer_handle, "outputdrivers");
+
+	if(cryptomatte_layers > 0)
+	{
+		// Change the filter and output type to fit the Cryptomatte format
+		i_ctx.m_nsi.SetAttribute(
+			i_layer_handle,
+			(
+				NSI::StringArg( "layertype", "color" ),
+				NSI::StringArg( "scalarformat", "float" ),
+				NSI::IntegerArg( "withalpha", 0 ),
+				NSI::StringArg( "filter", "cryptomatteheader" )
+			) );
+
+		/*
+			Export one additional layer per Cryptomatte level. Each will
+			output 2 values from those present in each pixel's samples.
+		*/
+		for(unsigned cl = 0; cl < cryptomatte_layers; cl++)
+		{
+			std::string cl_handle = i_layer_handle + std::to_string(cl);
+			i_ctx.m_nsi.Create(cl_handle, "outputlayer");
+
+			std::string cl_filter = "cryptomattelayer" + std::to_string(cl*2);
+			i_ctx.m_nsi.SetAttribute(
+				cl_handle,
+				(
+					NSI::StringArg( "variablename", i_desc.m_variable_name ),
+					NSI::StringArg( "layertype", "quad" ),
+					NSI::StringArg( "scalarformat", "float" ),
+					NSI::IntegerArg( "withalpha", 0 ),
+					NSI::StringArg( "filter", cl_filter ),
+					NSI::DoubleArg( "filterwidth", i_filter_width ),
+					NSI::IntegerArg( "sortkey", io_sort_key++ ),
+					NSI::StringArg( "variablesource", "builtin" )
+				) );
+
+			i_ctx.m_nsi.Connect(cl_handle, "", i_screen_handle, "outputlayers");
+
+			i_ctx.m_nsi.Connect(i_driver_handle, "", cl_handle, "outputdrivers");
+		}
+	}
 }
 
 void

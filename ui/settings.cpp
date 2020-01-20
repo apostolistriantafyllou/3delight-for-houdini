@@ -315,6 +315,7 @@ PRM_Template* settings::GetTemplates()
 
 	static PRM_Name save_ids_as_cryptomatte(k_save_ids_as_cryptomatte, "Save IDs as Cryptomatte");
 	static PRM_Default save_ids_as_cryptomatte_d(false);
+	static PRM_Conditional save_ids_as_cryptomatte_g(("{ " + std::string(k_default_image_format) + " != \"exr\" }").c_str());
 
 	static PRM_Name aovs_titles1("aovs_titles1", "D   F   J                                  \t");
 	static PRM_Name aovs_titles2("aovs_titles2", "Layer Name                 ");
@@ -357,7 +358,7 @@ PRM_Template* settings::GetTemplates()
 		PRM_Template(PRM_FILE, 1, &default_image_filename, &default_image_filename_d),
 		PRM_Template(PRM_STRING|PRM_TYPE_JOIN_NEXT, 1, &default_image_format, &default_image_format_d, &default_image_format_c, 0, &settings::image_format_cb),
 		PRM_Template(PRM_STRING|PRM_TYPE_LABEL_NONE, 1, &default_image_bits, &default_image_bits_d, &default_image_bits_c),
-		PRM_Template(PRM_TOGGLE, 1, &save_ids_as_cryptomatte, &save_ids_as_cryptomatte_d),
+		PRM_Template(PRM_TOGGLE, 1, &save_ids_as_cryptomatte, &save_ids_as_cryptomatte_d, nullptr, 0, nullptr, nullptr, 1, nullptr, &save_ids_as_cryptomatte_g),
 		PRM_Template(PRM_ORD, 1, &batch_output_mode, &batch_output_mode_d, &batch_output_mode_c),
 		PRM_Template(PRM_ORD, 1, &interactive_output_mode, &interactive_output_mode_d, &interactive_output_mode_c),
 		PRM_Template(PRM_SEPARATOR, 0, &separator4),

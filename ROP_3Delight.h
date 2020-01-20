@@ -106,6 +106,7 @@ private:
 		const std::string& i_screen_handle,
 		const std::string& i_light_handle,
 		const std::string& i_driver_handle,
+		const std::string& i_driver_name,
 		unsigned& io_sort_key) const;
 
 	void ExportLayerFeedbackData(
