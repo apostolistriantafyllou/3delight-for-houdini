@@ -1108,6 +1108,7 @@ ROP_3Delight::ExportOneOutputLayer(
 				NSI::CStringPArg("filter", "box"),
 				NSI::DoubleArg("filterwidth", 1.0)
 			) );
+		// Setting "maximumvalue" is probably not a good idea in this case
 	}
 	else
 	{
@@ -1117,6 +1118,20 @@ ROP_3Delight::ExportOneOutputLayer(
 				NSI::CStringPArg("filter", i_filter.c_str()),
 				NSI::DoubleArg("filterwidth", i_filter_width)
 			) );
+
+		if(i_desc.m_layer_type == "color")
+		{
+			/*
+				Use 3Delight's fancy tonemapping technique. This allows
+				rendering of very high dynamic range images with no ugly
+				aliasing on the edges (think about area lights).
+				The value here can really be very high and things will still
+				work fine. Note that this also eliminates some fireflies.
+			*/
+			i_ctx.m_nsi.SetAttribute(
+				i_layer_handle,
+				NSI::DoubleArg("maximumvalue", 50));
+		}
 	}
 
 	if (i_scalar_format == "uint8")
