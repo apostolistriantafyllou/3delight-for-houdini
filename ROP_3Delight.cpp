@@ -702,12 +702,12 @@ ROP_3Delight::AtmosphereAttributesHandle() const
 void
 ROP_3Delight::ExportAtmosphere(const context& i_ctx)const
 {
-	UT_String atmHandle = m_settings.GetAtmosphere();
+	std::string atmHandle = m_settings.GetAtmosphere().toStdString();
 
 	if (atmHandle.length() == 0) return;
 
 	// This is the shader handle which has been created elsewhere
-	std::string shaderHandle = atmHandle.toStdString();
+	std::string shaderHandle = atmHandle;
 
 	// Test if the node still exist
 	OP_Node* op_node = OPgetDirector()->findNode(shaderHandle.c_str());
@@ -716,18 +716,18 @@ ROP_3Delight::ExportAtmosphere(const context& i_ctx)const
 
 	atmHandle += "_environment";
 
-	i_ctx.m_nsi.Create( atmHandle.c_str(), "environment" );
-	i_ctx.m_nsi.Connect( atmHandle.c_str(), "", NSI_SCENE_ROOT, "objects" );
+	i_ctx.m_nsi.Create( atmHandle, "environment" );
+	i_ctx.m_nsi.Connect( atmHandle, "", NSI_SCENE_ROOT, "objects" );
 
-	i_ctx.m_nsi.Create( AtmosphereAttributesHandle().c_str(), "attributes" );
-
-	i_ctx.m_nsi.Connect(
-		shaderHandle.c_str(), "",
-		AtmosphereAttributesHandle().c_str(), "volumeshader" );
+	i_ctx.m_nsi.Create( AtmosphereAttributesHandle(), "attributes" );
 
 	i_ctx.m_nsi.Connect(
-		AtmosphereAttributesHandle().c_str(), "",
-		atmHandle.c_str(), "geometryattributes" );
+		shaderHandle, "",
+		AtmosphereAttributesHandle(), "volumeshader" );
+
+	i_ctx.m_nsi.Connect(
+		AtmosphereAttributesHandle(), "",
+		atmHandle, "geometryattributes" );
 }
 
 void
@@ -825,8 +825,8 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		settings::k_default_image_format, 0,
 		current_time );
 
-	UT_String png_driver = "png";
-	UT_String jpeg_driver = "jpeg";
+	std::string png_driver = "png";
+	std::string jpeg_driver = "jpeg";
 
 	UT_String image_file_name;
 	evalString(
@@ -941,15 +941,14 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 				if (idisplay_driver_name.empty())
 				{
 					idisplay_driver_name = "idisplay_driver";
-					i_ctx.m_nsi.Create(
-						idisplay_driver_name.c_str(), "outputdriver");
+					i_ctx.m_nsi.Create(idisplay_driver_name, "outputdriver");
 					i_ctx.m_nsi.SetAttribute(
-						idisplay_driver_name.c_str(),
-					(
-						NSI::CStringPArg("drivername", idisplay_driver.c_str()),
-						NSI::CStringPArg("imagefilename", image_display_name.c_str()),
-						NSI::CStringPArg("ropname", getFullPath().c_str())
-					) );
+						idisplay_driver_name,
+						(
+							NSI::CStringPArg("drivername", idisplay_driver.c_str()),
+							NSI::StringArg("imagefilename", image_display_name),
+							NSI::CStringPArg("ropname", getFullPath().c_str())
+						) );
 				}
 
 				ExportOneOutputLayer(
@@ -976,13 +975,12 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 				if (file_driver_name.empty())
 				{
 					file_driver_name = "file_driver";
-					i_ctx.m_nsi.Create(
-						file_driver_name.c_str(), "outputdriver");
+					i_ctx.m_nsi.Create(file_driver_name, "outputdriver");
 					i_ctx.m_nsi.SetAttribute(
-						file_driver_name.c_str(),
+						file_driver_name,
 					(
 						NSI::CStringPArg("drivername", file_driver.c_str()),
-						NSI::CStringPArg("imagefilename", image_file_name.c_str())
+						NSI::StringArg("imagefilename", image_file_name)
 					) );
 				}
 
@@ -1007,14 +1005,13 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					image_file_name, light_names[j],
 					desc.m_filename_token, ".png", image_png_name);
 
-				i_ctx.m_nsi.Create(
-					png_driver_name.c_str(), "outputdriver");
+				i_ctx.m_nsi.Create(png_driver_name, "outputdriver");
 				i_ctx.m_nsi.SetAttribute(
-					png_driver_name.c_str(),
-				(
-					NSI::CStringPArg("drivername", png_driver.c_str()),
-					NSI::CStringPArg("imagefilename", image_png_name.c_str())
-				) );
+					png_driver_name,
+					(
+						NSI::StringArg("drivername", png_driver),
+						NSI::StringArg("imagefilename", image_png_name)
+					) );
 
 				ExportOneOutputLayer(
 					i_ctx, png_layer_name, desc, "uint8",
@@ -1037,13 +1034,12 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					image_file_name, light_names[j],
 					desc.m_filename_token, ".jpg", image_jpeg_name);
 
-				i_ctx.m_nsi.Create(
-					jpeg_driver_name.c_str(), "outputdriver");
+				i_ctx.m_nsi.Create(jpeg_driver_name, "outputdriver");
 				i_ctx.m_nsi.SetAttribute(
-					jpeg_driver_name.c_str(),
+					jpeg_driver_name,
 				(
-					NSI::CStringPArg("drivername", jpeg_driver.c_str()),
-					NSI::CStringPArg("imagefilename", image_jpeg_name.c_str())
+					NSI::StringArg("drivername", jpeg_driver),
+					NSI::StringArg("imagefilename", image_jpeg_name)
 				) );
 
 				ExportOneOutputLayer(
@@ -1088,39 +1084,39 @@ ROP_3Delight::ExportOneOutputLayer(
 	const std::string& i_driver_handle,
 	unsigned& io_sort_key) const
 {
-	i_ctx.m_nsi.Create(i_layer_handle.c_str(), "outputlayer");
+	i_ctx.m_nsi.Create(i_layer_handle, "outputlayer");
 	i_ctx.m_nsi.SetAttribute(
-		i_layer_handle.c_str(),
-	(
-		NSI::CStringPArg("variablename", i_desc.m_variable_name.c_str()),
-		NSI::CStringPArg("variablesource", i_desc.m_variable_source.c_str()),
-		NSI::CStringPArg("scalarformat", i_scalar_format.c_str()),
-		NSI::CStringPArg("layertype", i_desc.m_layer_type.c_str()),
-		NSI::IntegerArg("withalpha", (int)i_desc.m_with_alpha),
-		NSI::CStringPArg("filter", i_filter.c_str()),
-		NSI::DoubleArg("filterwidth", i_filter_width),
-		NSI::IntegerArg("sortkey", io_sort_key++)
-	) );
+		i_layer_handle,
+		(
+			NSI::StringArg("variablename", i_desc.m_variable_name),
+			NSI::StringArg("variablesource", i_desc.m_variable_source),
+			NSI::CStringPArg("scalarformat", i_scalar_format.c_str()),
+			NSI::StringArg("layertype", i_desc.m_layer_type),
+			NSI::IntegerArg("withalpha", (int)i_desc.m_with_alpha),
+			NSI::CStringPArg("filter", i_filter.c_str()),
+			NSI::DoubleArg("filterwidth", i_filter_width),
+			NSI::IntegerArg("sortkey", io_sort_key++)
+		) );
 
 	if (i_scalar_format == "uint8")
 	{
-		i_ctx.m_nsi.SetAttribute(i_layer_handle.c_str(),
+		i_ctx.m_nsi.SetAttribute(i_layer_handle,
 			NSI::StringArg("colorprofile", "srgb"));
 	}
 
 	i_ctx.m_nsi.Connect(
-		i_layer_handle.c_str(), "",
-		i_screen_handle.c_str(), "outputlayers");
+		i_layer_handle, "",
+		i_screen_handle, "outputlayers");
 
 	if (!i_light_handle.empty())
 	{
 		i_ctx.m_nsi.Connect(
-			i_light_handle.c_str(), "", i_layer_handle.c_str(), "lightset");
+			i_light_handle, "", i_layer_handle, "lightset");
 	}
 
 	i_ctx.m_nsi.Connect(
-		i_driver_handle.c_str(), "",
-		i_layer_handle.c_str(), "outputdrivers");
+		i_driver_handle, "",
+		i_layer_handle, "outputdrivers");
 }
 
 void
@@ -1136,10 +1132,10 @@ ROP_3Delight::ExportLayerFeedbackData(
 
 	if( i_light_handle.empty() )
 	{
-		i_ctx.m_nsi.SetAttribute( i_layer_handle.c_str(),
+		i_ctx.m_nsi.SetAttribute( i_layer_handle,
 			(
 				NSI::StringArg( "sourceapp", "Houdini" ),
-				NSI::StringArg( "feedbackhost", host.c_str() ),
+				NSI::StringArg( "feedbackhost", host ),
 				NSI::IntegerArg( "feedbackport", port )
 			));
 		return;
@@ -1177,10 +1173,10 @@ ROP_3Delight::ExportLayerFeedbackData(
 
 	if( re_light == 0 )
 	{
-		i_ctx.m_nsi.SetAttribute( i_layer_handle.c_str(),
+		i_ctx.m_nsi.SetAttribute( i_layer_handle,
 			(
 				NSI::StringArg( "sourceapp", "Houdini" ),
-				NSI::StringArg( "feedbackhost", host.c_str() ),
+				NSI::StringArg( "feedbackhost", host ),
 				NSI::IntegerArg( "feedbackport", port )
 			));
 		return;
@@ -1256,12 +1252,12 @@ ROP_3Delight::ExportLayerFeedbackData(
 	feedback_data += color_values;
 	feedback_data += "]}";
 
-	i_ctx.m_nsi.SetAttribute( i_layer_handle.c_str(),
+	i_ctx.m_nsi.SetAttribute( i_layer_handle,
 		(
 			NSI::StringArg( "sourceapp", "Houdini" ),
-			NSI::StringArg( "feedbackhost", host.c_str() ),
+			NSI::StringArg( "feedbackhost", host ),
 			NSI::IntegerArg( "feedbackport", port ),
-			NSI::StringArg( "feedbackdata", feedback_data.c_str() )
+			NSI::StringArg( "feedbackdata", feedback_data )
 		));
 }
 
