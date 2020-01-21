@@ -25,5 +25,7 @@ protected:
 		double i_time,
 		const GT_PrimitiveHandle i_gt_primitive)const override;
 
+	void set_attributes( void ) const override;
+
 	std::string m_geometry_handle;
 };

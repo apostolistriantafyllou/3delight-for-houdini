@@ -32,6 +32,17 @@ void instance::connect( void ) const
 	m_nsi.Connect( m_geometry_handle, "", m_handle, "sourcemodels" );
 }
 
+void instance::set_attributes( void ) const
+{
+	const GT_PrimInstance *instance =
+		static_cast<const GT_PrimInstance *>(default_gt_primitive().get());
+	std::vector< std::string > to_export{ "Cd" };
+	exporter::export_attributes(
+		to_export, *instance, m_context.m_current_time, GT_DataArrayHandle() );
+
+	primitive::set_attributes();
+}
+
 void instance::set_attributes_at_time(
 	double i_time,
 	const GT_PrimitiveHandle i_gt_primitive) const
