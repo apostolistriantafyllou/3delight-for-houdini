@@ -127,13 +127,16 @@ bool exporter::find_attribute(
 
 	return false;
 }
-	
 
 /**
 	gotchas:
 	- When we find a texture coordinate attribute, we output "st".
 	  regardless of the name we find (usually "uv"). This is to be
 	  consistent with other packages.
+	- We have a similar patch for "rest" and "rnml" that we tranform
+	  to "Pref" and "Nref". We also need to put them as point/normals
+	  for correct transform to object space (as they are defined as
+	  float[3]).
 */
 void exporter::export_attributes(
 	std::vector<std::string> &io_which_ones,
@@ -173,6 +176,18 @@ void exporter::export_attributes(
 
 		if( name == "uv" )
 			name = "st";
+
+		if( name == "rest" )
+		{
+			name = "Pref";
+			nsi_type = NSITypePoint;
+		}
+
+		if( name == "rnml" )
+		{
+			name = "Nref";
+			nsi_type = NSITypeNormal;
+		}
 
 		if( point_attribute && i_vertices_list )
 		{
@@ -449,7 +464,7 @@ void exporter::export_bind_attributes(
 			[](const std::string &a)
 			{
 				return a == "P" || a == "N" || a == "uv" || a == "width" ||
-				a == "id" || a == "pscale";
+				a == "id" || a == "pscale" || a == "rest" || a == "rnml";
 			} ),
 		binds.end() );
 
