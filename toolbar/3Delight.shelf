@@ -31,7 +31,7 @@
   </shelfSet>
 
   <toolshelf name="3delight" label="3Delight">
-    <memberTool name="_3dl_object_rop_3Delight"/>
+    <memberTool name="_3dl_rop_3Delight"/>
     <memberTool name="_3dl_object_pointlight"/>
     <memberTool name="_3dl_object_spotlight"/>
     <memberTool name="_3dl_object_arealight"/>
@@ -41,7 +41,7 @@
     <memberTool name="_3dl_object_vdb"/>
   </toolshelf>
 
-  <tool name="_3dl_object_rop_3Delight" label="ROP" icon="shelf_ROP_3Delight">
+  <tool name="_3dl_rop_3Delight" label="ROP" icon="shelf_ROP_3Delight">
     <helpText><![CDATA[Creates a render node 3Delight.]]></helpText>
     <script scriptType="python"><![CDATA[
 import roptoolutils
