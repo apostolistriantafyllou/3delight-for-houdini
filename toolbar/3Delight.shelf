@@ -31,6 +31,7 @@
   </shelfSet>
 
   <toolshelf name="3delight" label="3Delight">
+    <memberTool name="_3dl_object_rop_3Delight"/>
     <memberTool name="_3dl_object_pointlight"/>
     <memberTool name="_3dl_object_spotlight"/>
     <memberTool name="_3dl_object_arealight"/>
@@ -39,6 +40,36 @@
     <memberTool name="_3dl_object_envlight"/>
     <memberTool name="_3dl_object_vdb"/>
   </toolshelf>
+
+  <tool name="_3dl_object_rop_3Delight" label="ROP" icon="shelf_ROP_3Delight">
+    <helpText><![CDATA[Creates a render node 3Delight.]]></helpText>
+    <script scriptType="python"><![CDATA[
+import roptoolutils
+
+newnode = roptoolutils.createRenderNode('3Delight')
+camname = newnode.evalParm("camera")
+
+camnode = hou.node(camname)
+found = camnode != None
+if found:
+    nodetype = camnode.type()
+    found = nodetype.name() == "cam"
+if not found:
+    obj = hou.node("/obj")
+    # try to find another camera
+    for node in obj.children():
+        nodetype = node.type()
+        if nodetype.name() == "cam":
+            newnode.setParms({"camera": node.path()})
+            found = True
+            break
+# no camera found: creates one
+if not found:
+    obj = hou.node("/obj")
+    strs = camname.rsplit("/", 1)
+    newnode = obj.createNode("cam", strs[1])
+	]]></script>
+  </tool>
 
   <tool name="_3dl_object_pointlight" label="Point Light" icon="OBJ_light_point">
     <helpURL>tool:pointlight</helpURL>
@@ -270,6 +301,7 @@ newnode.setParmTemplateGroup(group)]]></script>
   </tool>
 
   <tool name="_3dl_object_vdb" label="VDB" icon="vdb_no_outline">
+    <helpText><![CDATA[Opens a file selector for choosing one vdb file.]]></helpText>
     <script scriptType="python"><![CDATA[
 import os
 
