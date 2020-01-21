@@ -66,7 +66,7 @@ const char* settings::k_resolution_factor = "resolution_factor";
 const char* settings::k_sampling_factor = "sampling_factor";
 const char* settings::k_default_export_nsi_filename = "default_export_nsi_filename";
 
-SelectLayersDialog* settings::sm_dialog = 0;
+SelectLayersDialog* settings::sm_dialog = nullptr;
 
 settings::settings( ROP_3Delight &i_rop )
 	:	m_parameters(i_rop)
@@ -97,7 +97,7 @@ settings::settings( ROP_3Delight &i_rop )
 
 settings::~settings()
 {
-	delete sm_dialog;
+	delete sm_dialog; sm_dialog = nullptr;
 }
 
 void settings::Rendering(bool i_render)
