@@ -36,6 +36,8 @@ dlg.gad = DIALOG "AOV Selector"
             TOGGLE_BUTTON "Geometry ID":LABEL_WIDTH VALUE(id.geometry.val);
             TOGGLE_BUTTON "Scene Path ID":LABEL_WIDTH VALUE(id.scenepath.val);
             TOGGLE_BUTTON "Surface Shader ID":LABEL_WIDTH VALUE(id.surfaceshader.val);
+            TOGGLE_BUTTON "Relighting Multiplier":LABEL_WIDTH VALUE(relighting_multiplier.val);
+            TOGGLE_BUTTON "Relighting Reference":LABEL_WIDTH VALUE(relighting_reference.val);
         }
         COL
         {

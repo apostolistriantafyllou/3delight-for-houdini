@@ -1097,10 +1097,27 @@ ROP_3Delight::ExportOneOutputLayer(
 			NSI::CStringPArg("scalarformat", i_scalar_format.c_str()),
 			NSI::StringArg("layertype", i_desc.m_layer_type),
 			NSI::IntegerArg("withalpha", (int)i_desc.m_with_alpha),
-			NSI::CStringPArg("filter", i_filter.c_str()),
-			NSI::DoubleArg("filterwidth", i_filter_width),
 			NSI::IntegerArg("sortkey", io_sort_key++)
 		) );
+
+	if(i_desc.m_variable_name == "relighting_multiplier")
+	{
+		i_ctx.m_nsi.SetAttribute(
+			i_layer_handle,
+			(
+				NSI::CStringPArg("filter", "box"),
+				NSI::DoubleArg("filterwidth", 1.0)
+			) );
+	}
+	else
+	{
+		i_ctx.m_nsi.SetAttribute(
+			i_layer_handle,
+			(
+				NSI::CStringPArg("filter", i_filter.c_str()),
+				NSI::DoubleArg("filterwidth", i_filter_width)
+			) );
+	}
 
 	if (i_scalar_format == "uint8")
 	{
