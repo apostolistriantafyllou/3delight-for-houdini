@@ -2,6 +2,9 @@
 
 #include <VOP/VOP_Node.h>
 
+namespace
+{
+
 std::vector<aov::description> descriptions =
 {
 	{ aov::e_shading, "Ci", "rgba", "Ci", "shader", "color", true, true },
@@ -19,6 +22,14 @@ std::vector<aov::description> descriptions =
 	{ aov::e_auxiliary, "Scene Path ID", "scenepathid", "id.scenepath", "builtin", "scalar", false, false },
 	{ aov::e_auxiliary, "Surface Shader ID", "surfaceid", "id.surfaceshader", "builtin", "scalar", false, false }
 };
+
+/*
+	The number of AOVs may change as custom ones are added, but the number of
+	predefined AOVs corresponds to the initial length of vector "descriptions".
+*/
+const unsigned predefined_aovs = descriptions.size();
+
+}
 
 void
 aov::updateCustomVariables(const std::vector<VOP_Node*>& i_custom_aovs)
@@ -42,12 +53,7 @@ aov::updateCustomVariables(const std::vector<VOP_Node*>& i_custom_aovs)
 void
 aov::removeAllCustomVariables()
 {
-	while (!descriptions.empty())
-	{
-		if (descriptions.back().m_type != aov::e_custom) break;
-
-		descriptions.pop_back();
-	}
+	descriptions.resize(predefined_aovs);
 }
 
 void
@@ -75,12 +81,9 @@ aov::addCustomVariable(
 bool
 aov::findCustomVariable(const std::string& i_aov_name)
 {
-	for (int i = descriptions.size()-1 ; i >= 0; i--)
+	for (int i = predefined_aovs ; i < descriptions.size(); i++)
 	{
-		if (descriptions[i].m_type != aov::e_custom)
-		{
-			break;
-		}
+		assert(descriptions[i].m_type == aov::e_custom);
 
 		if (descriptions[i].m_ui_name == i_aov_name)
 		{
@@ -89,6 +92,17 @@ aov::findCustomVariable(const std::string& i_aov_name)
 	}
 
 	return false;
+}
+
+unsigned aov::nbPredefined()
+{
+	return predefined_aovs;
+}
+
+const aov::description&
+aov::getDescription(unsigned i_index)
+{
+	return descriptions[i_index];
 }
 
 const aov::description&

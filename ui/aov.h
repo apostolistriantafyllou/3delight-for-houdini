@@ -44,6 +44,12 @@ namespace aov
 	// the aov's description
 	bool findCustomVariable(const std::string& i_aov_name);
 
+	/// Returns the number of predefined AOVs
+	unsigned nbPredefined();
+
+	/// Returns the description of the nth AOV
+	const description& getDescription(unsigned i_index);
+
 	// Returns the aov's description from the specified ui name
 	const description& getDescription(const std::string& i_ui_name);
 
