@@ -19,7 +19,7 @@ dlg.gad = DIALOG "AOV Selector"
 
         COL
         {
-            ci.gad = TOGGLE_BUTTON "Ci":LABEL_WIDTH VALUE(ci.val);
+            ci.gad = TOGGLE_BUTTON "Ci":LABEL_WIDTH VALUE(Ci.val);
             TOGGLE_BUTTON "Diffuse":LABEL_WIDTH VALUE(diffuse.val);
             TOGGLE_BUTTON "Subsurface scattering":LABEL_WIDTH VALUE(subsurface.val);
             TOGGLE_BUTTON "Reflection":LABEL_WIDTH VALUE(reflection.val);
@@ -29,11 +29,11 @@ dlg.gad = DIALOG "AOV Selector"
         }
         COL
         {
-            TOGGLE_BUTTON "Z (depth)":LABEL_WIDTH VALUE(zdepth.val);
-            TOGGLE_BUTTON "Camera space position":LABEL_WIDTH VALUE(cam_space_position.val);
-            TOGGLE_BUTTON "Camera space normal":LABEL_WIDTH VALUE(cam_space_normal.val);
+            TOGGLE_BUTTON "Z (depth)":LABEL_WIDTH VALUE(z.val);
+            TOGGLE_BUTTON "Camera space position":LABEL_WIDTH VALUE(P.camera.val);
+            TOGGLE_BUTTON "Camera space normal":LABEL_WIDTH VALUE(N.camera.val);
             TOGGLE_BUTTON "UV":LABEL_WIDTH VALUE(uv.val);
-            TOGGLE_BUTTON "Geometry ID":LABEL_WIDTH VALUE(geometry.val);
+            TOGGLE_BUTTON "Geometry ID":LABEL_WIDTH VALUE(id.geometry.val);
         }
         COL
         {

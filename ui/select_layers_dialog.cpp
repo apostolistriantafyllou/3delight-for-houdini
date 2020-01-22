@@ -15,18 +15,18 @@ static const char* k_aov = "aov";
 SelectLayersDialog::SelectLayersDialog()
 	: m_parsedDialog(false)
 {
-	m_values.push_back(new UI_Value()); // ci.val
+	m_values.push_back(new UI_Value()); // Ci.val
 	m_values.push_back(new UI_Value()); // diffuse.val
 	m_values.push_back(new UI_Value()); // subsurface.val
 	m_values.push_back(new UI_Value()); // reflection.val
 	m_values.push_back(new UI_Value()); // refraction.val
 	m_values.push_back(new UI_Value()); // volume.val
 	m_values.push_back(new UI_Value()); // incandescence.val
-	m_values.push_back(new UI_Value()); // zdepth.val
-	m_values.push_back(new UI_Value()); // cam_space_position.val
-	m_values.push_back(new UI_Value()); // cam_space_normal.val
+	m_values.push_back(new UI_Value()); // z.val
+	m_values.push_back(new UI_Value()); // P.camera.val
+	m_values.push_back(new UI_Value()); // N.camera.val
 	m_values.push_back(new UI_Value()); // uv.val
-	m_values.push_back(new UI_Value()); // geometry.val
+	m_values.push_back(new UI_Value()); // id.geometry.val
 
 	m_labels.push_back("Ci");
 	m_labels.push_back("Diffuse");
@@ -41,18 +41,18 @@ SelectLayersDialog::SelectLayersDialog()
 	m_labels.push_back("UV");
 	m_labels.push_back("Geometry ID");
 
-	m_symbols.push_back("ci.val");
+	m_symbols.push_back("Ci.val");
 	m_symbols.push_back("diffuse.val");
 	m_symbols.push_back("subsurface.val");
 	m_symbols.push_back("reflection.val");
 	m_symbols.push_back("refraction.val");
 	m_symbols.push_back("volume.val");
 	m_symbols.push_back("incandescence.val");
-	m_symbols.push_back("zdepth.val");
-	m_symbols.push_back("cam_space_position.val");
-	m_symbols.push_back("cam_space_normal.val");
+	m_symbols.push_back("z.val");
+	m_symbols.push_back("P.camera.val");
+	m_symbols.push_back("N.camera.val");
 	m_symbols.push_back("uv.val");
-	m_symbols.push_back("geometry.val");
+	m_symbols.push_back("id.geometry.val");
 
 	assert(m_values.size() == m_labels.size());
 	assert(m_labels.size() == m_symbols.size());
