@@ -103,6 +103,10 @@ install(
 	DESTINATION ${INSTALL_DIR}/scripts/obj )
 
 install(
+	FILES scripts/out/3Delight_OnCreated.py scripts/out/3DelightCloud_OnCreated.py
+	DESTINATION ${INSTALL_DIR}/scripts/out )
+
+install(
 	FILES soho/parameters/SOHOparameters
 	DESTINATION ${INSTALL_DIR}/soho/parameters )
 

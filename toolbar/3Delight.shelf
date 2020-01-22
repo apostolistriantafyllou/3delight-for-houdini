@@ -32,6 +32,8 @@
 
   <toolshelf name="3delight" label="3Delight">
     <memberTool name="_3dl_rop_3Delight"/>
+    <memberTool name="_3dl_rop_3DelightCloud"/>
+<!--    <memberTool name="_3dl_rop_render_3Delight"/> -->
     <memberTool name="_3dl_object_pointlight"/>
     <memberTool name="_3dl_object_spotlight"/>
     <memberTool name="_3dl_object_arealight"/>
@@ -47,30 +49,37 @@
 import roptoolutils
 
 newnode = roptoolutils.createRenderNode('3Delight')
-camname = newnode.evalParm("camera")
-
-camnode = hou.node(camname)
-found = camnode != None
-if found:
-    nodetype = camnode.type()
-    found = nodetype.name() == "cam"
-if not found:
-    obj = hou.node("/obj")
-    # try to find another camera
-    for node in obj.children():
-        nodetype = node.type()
-        if nodetype.name() == "cam":
-            newnode.setParms({"camera": node.path()})
-            found = True
-            break
-# no camera found: creates one
-if not found:
-    obj = hou.node("/obj")
-    strs = camname.rsplit("/", 1)
-    newnode = obj.createNode("cam", strs[1])
 	]]></script>
   </tool>
 
+  <tool name="_3dl_rop_3DelightCloud" label="ROP Cloud" icon="shelf_ROP_3Delight">
+    <helpText><![CDATA[Creates a render node 3DelightCloud.]]></helpText>
+    <script scriptType="python"><![CDATA[
+import roptoolutils
+
+newnode = roptoolutils.createRenderNode('3DelightCloud')
+	]]></script>
+  </tool>
+
+<!--  
+  <tool name="_3dl_rop_render_3Delight" label="Render" icon="shelf_ROP_render_3Delight">
+    <helpText><![CDATA[Launchs a render of the selected ROP 3Delight.]]></helpText>
+    <script scriptType="python"><![CDATA[
+import roptoolutils
+
+found = False
+out = hou.node("/out")
+# try to find another camera
+for node in out.children():
+    nodetype = node.type()
+    if nodetype.name() == "3Delight":
+        found = True
+        break
+if not found:
+    print "no ROP 3Delight found\n"
+	]]></script>
+  </tool>
+-->
   <tool name="_3dl_object_pointlight" label="Point Light" icon="OBJ_light_point">
     <helpURL>tool:pointlight</helpURL>
 	<readOnly/>
