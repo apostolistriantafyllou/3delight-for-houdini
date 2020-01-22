@@ -14,7 +14,7 @@
 
         <scriptItem id="h.create_3Delight">
           <label>3Delight</label>
-		  <insertBefore>h.create_mantra</insertBefore>
+		  <insertAtIndex>0</insertAtIndex>
 	  <scriptCode><![CDATA[import roptoolutils
 
 newnode = roptoolutils.createRenderNode('3Delight')
@@ -42,7 +42,7 @@ if not found:
         </scriptItem>
 
 		<separatorItem>
-		  <insertBefore>h.create_mantra</insertBefore>
+		  <insertAtIndex>1</insertAtIndex>
 		</separatorItem>
 	  </subMenu>
     </subMenu>
