@@ -5,6 +5,10 @@
 namespace
 {
 
+/*
+	This list of predefined AOVs should match the one defined in file
+	select_layers_ui.ui
+*/
 std::vector<aov::description> descriptions =
 {
 	{ aov::e_shading, "Ci", "rgba", "Ci", "shader", "color", true, true },

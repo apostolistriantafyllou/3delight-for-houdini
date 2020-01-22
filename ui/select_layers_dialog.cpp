@@ -15,53 +15,14 @@ static const char* k_aov = "aov";
 SelectLayersDialog::SelectLayersDialog()
 	: m_parsedDialog(false)
 {
-	m_values.push_back(new UI_Value()); // Ci.val
-	m_values.push_back(new UI_Value()); // diffuse.val
-	m_values.push_back(new UI_Value()); // subsurface.val
-	m_values.push_back(new UI_Value()); // reflection.val
-	m_values.push_back(new UI_Value()); // refraction.val
-	m_values.push_back(new UI_Value()); // volume.val
-	m_values.push_back(new UI_Value()); // incandescence.val
-	m_values.push_back(new UI_Value()); // z.val
-	m_values.push_back(new UI_Value()); // P.camera.val
-	m_values.push_back(new UI_Value()); // N.camera.val
-	m_values.push_back(new UI_Value()); // uv.val
-	m_values.push_back(new UI_Value()); // id.geometry.val
-	m_values.push_back(new UI_Value()); // id.scenepath.val
-	m_values.push_back(new UI_Value()); // id.surfaceshader.val
+	for(unsigned a = 0; a < aov::nbPredefined(); a++)
+	{
+		const aov::description& desc = aov::getDescription(a);
 
-	m_labels.push_back("Ci");
-	m_labels.push_back("Diffuse");
-	m_labels.push_back("Subsurface scattering");
-	m_labels.push_back("Reflection");
-	m_labels.push_back("Refraction");
-	m_labels.push_back("Volume scattering");
-	m_labels.push_back("Incandescence");
-	m_labels.push_back("Z (depth)");
-	m_labels.push_back("Camera space position");
-	m_labels.push_back("Camera space normal");
-	m_labels.push_back("UV");
-	m_labels.push_back("Geometry ID");
-	m_labels.push_back("Scene Path ID");
-	m_labels.push_back("Surface Shader ID");
-
-	m_symbols.push_back("Ci.val");
-	m_symbols.push_back("diffuse.val");
-	m_symbols.push_back("subsurface.val");
-	m_symbols.push_back("reflection.val");
-	m_symbols.push_back("refraction.val");
-	m_symbols.push_back("volume.val");
-	m_symbols.push_back("incandescence.val");
-	m_symbols.push_back("z.val");
-	m_symbols.push_back("P.camera.val");
-	m_symbols.push_back("N.camera.val");
-	m_symbols.push_back("uv.val");
-	m_symbols.push_back("id.geometry.val");
-	m_symbols.push_back("id.scenepath.val");
-	m_symbols.push_back("id.surfaceshader.val");
-
-	assert(m_values.size() == m_labels.size());
-	assert(m_labels.size() == m_symbols.size());
+		m_values.push_back(new UI_Value());
+		m_labels.push_back(desc.m_ui_name);
+		m_symbols.push_back(desc.m_variable_name + ".val");
+	}
 }
 
 bool
