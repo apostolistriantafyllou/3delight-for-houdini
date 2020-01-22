@@ -27,6 +27,8 @@ SelectLayersDialog::SelectLayersDialog()
 	m_values.push_back(new UI_Value()); // N.camera.val
 	m_values.push_back(new UI_Value()); // uv.val
 	m_values.push_back(new UI_Value()); // id.geometry.val
+	m_values.push_back(new UI_Value()); // id.scenepath.val
+	m_values.push_back(new UI_Value()); // id.surfaceshader.val
 
 	m_labels.push_back("Ci");
 	m_labels.push_back("Diffuse");
@@ -40,6 +42,8 @@ SelectLayersDialog::SelectLayersDialog()
 	m_labels.push_back("Camera space normal");
 	m_labels.push_back("UV");
 	m_labels.push_back("Geometry ID");
+	m_labels.push_back("Scene Path ID");
+	m_labels.push_back("Surface Shader ID");
 
 	m_symbols.push_back("Ci.val");
 	m_symbols.push_back("diffuse.val");
@@ -53,6 +57,8 @@ SelectLayersDialog::SelectLayersDialog()
 	m_symbols.push_back("N.camera.val");
 	m_symbols.push_back("uv.val");
 	m_symbols.push_back("id.geometry.val");
+	m_symbols.push_back("id.scenepath.val");
+	m_symbols.push_back("id.surfaceshader.val");
 
 	assert(m_values.size() == m_labels.size());
 	assert(m_labels.size() == m_symbols.size());
