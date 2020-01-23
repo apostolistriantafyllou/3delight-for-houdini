@@ -187,6 +187,7 @@ void shader_library::find_all_shaders( const char *i_root)
 	std::string plugin_osl = root + "/osl/";
 	const char *shaders[] =
 	{
+		"dlHairAndFur",
 		"dlPrincipled",
 		"dlMetal",
 		"dlSkin",
