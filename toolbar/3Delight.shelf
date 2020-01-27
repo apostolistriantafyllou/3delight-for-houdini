@@ -33,7 +33,7 @@
   <toolshelf name="3delight" label="3Delight">
     <memberTool name="_3dl_rop_3Delight"/>
     <memberTool name="_3dl_rop_3DelightCloud"/>
-<!--    <memberTool name="_3dl_rop_render_3Delight"/> -->
+    <memberTool name="_3dl_rop_render_3Delight"/>
     <memberTool name="_3dl_object_pointlight"/>
     <memberTool name="_3dl_object_spotlight"/>
     <memberTool name="_3dl_object_arealight"/>
@@ -61,28 +61,37 @@ newnode = roptoolutils.createRenderNode('3DelightCloud')
 	]]></script>
   </tool>
 
-<!--  
   <tool name="_3dl_rop_render_3Delight" label="Render" icon="shelf_ROP_render_3Delight">
-    <helpText><![CDATA[Launchs a render of the selected ROP 3Delight.]]></helpText>
+    <helpText><![CDATA[Launchs a render of the selected ROP 3Delight (or the first one found if no ROP is selected).]]></helpText>
     <script scriptType="python"><![CDATA[
 import roptoolutils
 
 found = False
 out = hou.node("/out")
-# try to find another camera
+nodeFound = None
+# try to find a selected ROP
 for node in out.children():
     nodetype = node.type()
-    if nodetype.name() == "3Delight":
-        found = True
+    if node.isCurrent() and (nodetype.name() == "3Delight" or nodetype.name() == "3DelightCloud"):
+        nodeFound = node
         break
-if not found:
-    print "no ROP 3Delight found\n"
+if nodeFound == None:
+    # take the first ROP found
+    for node in out.children():
+        nodetype = node.type()
+        if nodetype.name() == "3Delight" or nodetype.name() == "3DelightCloud":
+            nodeFound = node
+            break
+if nodeFound != None:
+    hou.node(nodeFound.path()).render()
+else:
+    hou.ui.displayMessage('Can not render: no ROP found.', title = '3Delight', severity = hou.severityType.Warning)
+
 	]]></script>
   </tool>
--->
+
   <tool name="_3dl_object_pointlight" label="Point Light" icon="OBJ_light_point">
     <helpURL>tool:pointlight</helpURL>
-	<readOnly/>
     <script scriptType="python"><![CDATA[
 import objecttoolutils
 
