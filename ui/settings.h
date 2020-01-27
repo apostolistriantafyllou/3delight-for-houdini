@@ -70,7 +70,6 @@ public:
 	static const char* k_default_image_filename;
 	static const char* k_default_image_format;
 	static const char* k_default_image_bits;
-	static const char* k_save_ids_as_cryptomatte;
 	static const char* k_batch_output_mode;
 	static const char* k_interactive_output_mode;
 	static const char* k_aovs;

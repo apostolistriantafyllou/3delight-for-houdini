@@ -22,9 +22,9 @@ std::vector<aov::description> descriptions =
 	{ aov::e_auxiliary, "Camera space position", "position", "P.camera", "builtin", "color", false, false },
 	{ aov::e_auxiliary, "Camera space normal", "normal", "N.camera", "builtin", "color", false, false },
 	{ aov::e_auxiliary, "UV", "uv", "uv", "builtin", "color", false, false },
-	{ aov::e_auxiliary, "Geometry ID", "geoid", "id.geometry", "builtin", "scalar", false, false },
-	{ aov::e_auxiliary, "Scene Path ID", "scenepathid", "id.scenepath", "builtin", "scalar", false, false },
-	{ aov::e_auxiliary, "Surface Shader ID", "surfaceid", "id.surfaceshader", "builtin", "scalar", false, false },
+	{ aov::e_auxiliary, "Geometry Cryptomatte", "geoid", "id.geometry", "builtin", "scalar", false, false },
+	{ aov::e_auxiliary, "Scene Path Cryptomatte", "scenepathid", "id.scenepath", "builtin", "scalar", false, false },
+	{ aov::e_auxiliary, "Surface Shader Cryptomatte", "surfaceid", "id.surfaceshader", "builtin", "scalar", false, false },
 	{ aov::e_auxiliary, "Relighting Multiplier", "relightingmultiplier", "relighting_multiplier", "shader", "color", false, false },
 	{ aov::e_auxiliary, "Relighting Reference", "relightingref", "relighting_reference", "shader", "color", false, false }
 };

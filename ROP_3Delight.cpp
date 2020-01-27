@@ -1141,12 +1141,9 @@ ROP_3Delight::ExportOneOutputLayer(
 	}
 
 	// Decide whether to output ID AOVs in Cryptomatte format.
-	bool save_cryptomatte =
-		evalInt(settings::k_save_ids_as_cryptomatte, 0, 0.0f);
 	unsigned cryptomatte_layers = 0;
 	if(i_desc.m_variable_name.substr(0, 3) == "id." &&
 		i_desc.m_variable_source == "builtin" &&
-		save_cryptomatte &&
 		i_driver_name == "exr")
 	{
 		cryptomatte_layers = 2;

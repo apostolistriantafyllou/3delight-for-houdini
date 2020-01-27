@@ -33,9 +33,9 @@ dlg.gad = DIALOG "AOV Selector"
             TOGGLE_BUTTON "Camera space position":LABEL_WIDTH VALUE(P.camera.val);
             TOGGLE_BUTTON "Camera space normal":LABEL_WIDTH VALUE(N.camera.val);
             TOGGLE_BUTTON "UV":LABEL_WIDTH VALUE(uv.val);
-            TOGGLE_BUTTON "Geometry ID":LABEL_WIDTH VALUE(id.geometry.val);
-            TOGGLE_BUTTON "Scene Path ID":LABEL_WIDTH VALUE(id.scenepath.val);
-            TOGGLE_BUTTON "Surface Shader ID":LABEL_WIDTH VALUE(id.surfaceshader.val);
+            TOGGLE_BUTTON "Geometry Cryptomatte":LABEL_WIDTH VALUE(id.geometry.val);
+            TOGGLE_BUTTON "Scene Path Cryptomatte":LABEL_WIDTH VALUE(id.scenepath.val);
+            TOGGLE_BUTTON "Surface Shader Cryptomatte":LABEL_WIDTH VALUE(id.surfaceshader.val);
             TOGGLE_BUTTON "Relighting Multiplier":LABEL_WIDTH VALUE(relighting_multiplier.val);
             TOGGLE_BUTTON "Relighting Reference":LABEL_WIDTH VALUE(relighting_reference.val);
         }
