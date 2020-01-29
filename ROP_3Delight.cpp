@@ -464,11 +464,13 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 		std::string export_file = GetNSIExportFilename(time);
 		assert(!export_file.empty());
 
+		const char* format = export_file == "stdout" ? "nsi" : "binarynsi";
+
 		// Output NSI commands to the specified file or standard output
 		m_nsi.Begin(
 		(
 			NSI::StringArg("streamfilename", export_file),
-			NSI::CStringPArg("streamformat", "nsi")
+			NSI::CStringPArg("streamformat", format)
 		) );
 
 		// Add comments to the NSI stream, useful for debugging
