@@ -1,8 +1,6 @@
 # Default script run when a geometry object is created
 # $arg1 is the name of the object to create
 
-source $HH/scripts/obj/geo.cmd
-
 \set noalias = 1
 if ( "$arg1" != "" ) then
 # Removed old names (without prefix) and badly named

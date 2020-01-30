@@ -25,6 +25,7 @@ set( library_name 3Delight_for_Houdini )
 add_library( ${library_name} SHARED
 	ROP_3Delight.cpp
 	VOP_ExternalOSL.cpp
+	attributes_callbacks.cpp
 	camera.cpp
 	curvemesh.cpp
 	exporter.cpp
@@ -95,12 +96,23 @@ install(
 	DESTINATION ${INSTALL_DIR}/config/Applications )
 
 install(
-	FILES scripts/456.cmd
-	DESTINATION ${INSTALL_DIR}/scripts )
+	FILES scripts/obj/geo.cmd
+	RENAME geo_OnCreated.cmd
+	DESTINATION ${INSTALL_DIR}/scripts/private )
 
 install(
-	FILES scripts/obj/geo.cmd scripts/obj/cam.cmd scripts/obj/hlight-2.0_OnCreated.cmd scripts/obj/envlight_OnCreated.cmd
-	DESTINATION ${INSTALL_DIR}/scripts/obj )
+	FILES scripts/obj/cam.cmd
+	RENAME cam_OnCreated.cmd
+	DESTINATION ${INSTALL_DIR}/scripts/private )
+
+install(
+	FILES scripts/obj/hlight-2.0_OnCreated.cmd
+	RENAME hlight--2.0_OnCreated.cmd
+	DESTINATION ${INSTALL_DIR}/scripts/private )
+
+install(
+	FILES scripts/obj/envlight_OnCreated.cmd
+	DESTINATION ${INSTALL_DIR}/scripts/private )
 
 install(
 	FILES scripts/out/3Delight_OnCreated.py
