@@ -301,6 +301,10 @@ void shader_library::Register(OP_OperatorTable* io_table)const
 
 #include <locale>
 
+/**
+	\brief This will return the filesystem path of the current library (which is
+	the 3Delight for Houdini plug-in).
+*/
 static std::string library_path( void )
 {
 	static int foo = 0;
