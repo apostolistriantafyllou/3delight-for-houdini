@@ -2,6 +2,9 @@
 
 #include "primitive.h"
 
+#include <vector>
+#include <string>
+
 /**
 	\brief exports Houdini's instance as an NSI instances node.
 */
@@ -14,7 +17,7 @@ public:
 		double,
 		const GT_PrimitiveHandle &,
 		unsigned i_primitive_index,
-		const std::string &i_geometry_handle );
+		const std::vector<std::string> & );
 
 	void create( void ) const override;
 	void connect( void ) const override;
@@ -27,5 +30,8 @@ protected:
 
 	void set_attributes( void ) const override;
 
-	std::string m_geometry_handle;
+private:
+	std::string merge_handle( void ) const;
+
+	std::vector<std::string> m_source_models;
 };

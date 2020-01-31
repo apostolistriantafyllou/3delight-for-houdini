@@ -20,11 +20,14 @@
 #include <iostream>
 #include <algorithm>
 
+
 namespace
 {
 
-/// Refines i_primitive and puts the resulting primitives in io_result
-bool Refine(
+/**
+	Refines i_primitive and appends the resulting primitives to io_result
+*/
+std::vector<primitive *> Refine(
 	const GT_PrimitiveHandle& i_primitive,
 	OBJ_Node& i_object,
 	const context& i_context,
@@ -45,7 +48,20 @@ bool Refine(
 struct OBJ_Node_Refiner : public GT_Refine
 {
 	OBJ_Node *m_node;
+
+	/**
+		All the refined objects
+	*/
 	std::vector<primitive*> &m_result;
+
+	/**
+		This has to be set at each addPrimitive run. It is necessary
+		for the easy implementation of instances. We need this variable
+		because addPrimitive() does't have a return value and we need
+		that value for instances (as we refine the instance models).
+	*/
+	std::vector<primitive*> m_return;
+
 	bool& m_requires_frame_aligned_sample;
 	const context &m_context;
 	double m_time;
@@ -78,7 +94,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 
 	/**
 		One interesting thing here is how we deal with instances. We first
-		addPrimitive() recursively to resolve the instanced geometry since we
+		refine() recursively to resolve the instanced geometry since we
 		need its handle to pass to the actual instancer. All the rest is 1 to 1
 		mapping with either one of our primitive exporters.
 
@@ -104,6 +120,12 @@ struct OBJ_Node_Refiner : public GT_Refine
 					const GT_PrimInstance* I =
 						static_cast<const GT_PrimInstance*>(i_primitive.get());
 					addPrimitive(I->geometry());
+					/*
+					Refine(
+						I->geometry(), *m_node, m_context, m_time, m_result,
+						m_requires_frame_aligned_sample, m_add_time_samples,
+						m_level+1);
+					*/
 				}
 				// Fall through so the instancer is updated, too
 				case GT_PRIM_POLYGON_MESH:
@@ -153,26 +175,31 @@ struct OBJ_Node_Refiner : public GT_Refine
 		{
 			m_result.push_back(
 				new polygonmesh(m_context, m_node, m_time, i_primitive, index, false) );
+			m_return.push_back( m_result.back() );
 			break;
 		}
 		case GT_PRIM_SUBDIVISION_MESH:
 			m_result.push_back(
 				new polygonmesh(m_context, m_node, m_time, i_primitive, index, true) );
+			m_return.push_back( m_result.back() );
 			break;
 
 		case GT_PRIM_POINT_MESH:
 			m_result.push_back(
 				new pointmesh(m_context, m_node, m_time, i_primitive, index) );
+			m_return.push_back( m_result.back() );
 			break;
 
 		case GT_PRIM_SUBDIVISION_CURVES:
 			m_result.push_back(
 				new curvemesh(m_context, m_node, m_time, i_primitive, index) );
+			m_return.push_back( m_result.back() );
 			break;
 
 		case GT_PRIM_CURVE_MESH:
 			m_result.push_back(
 				new curvemesh(m_context, m_node, m_time, i_primitive, index) );
+			m_return.push_back( m_result.back() );
 			break;
 
 		case GT_PRIM_INSTANCE:
@@ -180,30 +207,48 @@ struct OBJ_Node_Refiner : public GT_Refine
 			/* First add the primitive so that we can get its handle. */
 			const GT_PrimInstance *I =
 				static_cast<const GT_PrimInstance *>( i_primitive.get() );
-			addPrimitive( I->geometry() );
 
-			if( m_result.size() == index )
+			std::vector<primitive *> ret = Refine(
+				I->geometry(),
+				*m_node,
+				m_context,
+				m_time,
+				m_result,
+				m_requires_frame_aligned_sample,
+				m_add_time_samples,
+				m_level+1);
+
+			if(	ret.empty() )
 			{
+#ifdef VERBOSE
 				std::cerr
 					<< "3Delight for Houdini: unable to create instanced geometry for "
 					<< m_node->getFullPath() << std::endl;
+#endif
 				return;
 			}
 
-			index = m_result.size();
+			std::vector<std::string> source_models;
+			for( auto P : ret )
+			{
+				source_models.push_back( P->handle() );
+				P->set_as_instanced();
+			}
 
-			primitive *instanced = m_result.back();
-			instanced->set_as_instanced();
+			index = m_result.size();
 			m_result.push_back(
 				new instance(
-					m_context, m_node, m_time, i_primitive, index, instanced->handle()) );
+					m_context, m_node,m_time,i_primitive,index, source_models));
+			m_return.push_back( m_result.back() );
 			break;
 		}
 
 		case GT_PRIM_VOXEL_VOLUME:
+#ifdef VERBOSE
 			fprintf(
 				stderr, "3Delight for Houdini: unsupported VDB/Volume "
 					"workflow for %s\n", m_node->getName().c_str() );
+#endif
 			break;
 
 		case GT_PRIM_VDB_VOLUME:
@@ -229,29 +274,37 @@ struct OBJ_Node_Refiner : public GT_Refine
 			{
 				m_result.push_back(
 					new vdb( m_context, m_node, m_time, i_primitive, index, vdb_path) );
+				m_return.push_back( m_result.back() );
 			}
 			else
 			{
+#ifdef VERBOSE
 				fprintf( stderr, "3Delight for Houdini: unsupported VDB/Volume "
 					"workflow for %s\n", m_node->getName().c_str() );
+#endif
 			}
 			break;
 		}
 
 		default:
+		{
 #ifdef VERBOSE
-			std::cout << "Refining " << m_node->getFullPath() <<
-				" to level " << m_level  << std::endl;
+			fprintf( stderr, "%p: Opening %s and result is %d, return is %d (level %d)\n",
+				this,
+				i_primitive->className(), m_result.size(), m_return.size(), m_level );
 #endif
-			if(!Refine(
-					i_primitive,
-					*m_node,
-					m_context,
-					m_time,
-					m_result,
-					m_requires_frame_aligned_sample,
-					m_add_time_samples,
-					m_level+1))
+
+			std::vector<primitive *> ret = Refine(
+				i_primitive,
+				*m_node,
+				m_context,
+				m_time,
+				m_result,
+				m_requires_frame_aligned_sample,
+				m_add_time_samples,
+				m_level+1);
+
+			if( ret.empty() )
 			{
 #ifdef VERBOSE
 				std::cerr << "3Delight for Houdini: unsupported object "
@@ -260,6 +313,15 @@ struct OBJ_Node_Refiner : public GT_Refine
 					<< std::endl;
 #endif
 			}
+
+			/*
+				We need to add the return shapes from the recursive context
+				into the current one. The m_result doens't need to be updated
+				as it is passed by reference from one context to the other and
+				it has been updated in the recursive context.
+			*/
+			m_return.insert( m_return.end(), ret.begin(), ret.end() );
+		}
 		}
 
 		if(!m_result.empty())
@@ -270,7 +332,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 	}
 };
 
-bool Refine(
+std::vector<primitive *> Refine(
 	const GT_PrimitiveHandle& i_primitive,
 	OBJ_Node& i_object,
 	const context& i_context,
@@ -294,7 +356,9 @@ bool Refine(
 	params.setAddVertexNormals( true );
 	params.setCuspAngle( GEO_DEFAULT_ADJUSTED_CUSP_ANGLE );
 
-	return i_primitive->refine( refiner, &params );
+	i_primitive->refine( refiner, &params );
+
+	return refiner.m_return;
 }
 
 }

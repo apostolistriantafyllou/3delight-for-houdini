@@ -13,23 +13,35 @@ instance::instance(
 	double i_time,
 	const GT_PrimitiveHandle &i_gt_primitive,
 	unsigned i_primitive_index,
-	const std::string &i_geometry_handle )
+	const std::vector<std::string> &i_source_models )
 :
 	primitive( i_ctx, i_object, i_time, i_gt_primitive, i_primitive_index ),
-	m_geometry_handle(i_geometry_handle)
+	m_source_models(i_source_models)
 {
 }
 
 void instance::create( void ) const
 {
 	m_nsi.Create( m_handle.c_str(), "instances" );
+
+	/*
+		We need a parent transform in case there are many primitives
+		to instantiate.
+	*/
+	m_nsi.Create( merge_handle(), "transform" );
+	m_nsi.Connect( merge_handle(), "", m_handle, "objects" );
 }
 
 void instance::connect( void ) const
 {
 	primitive::connect();
 
-	m_nsi.Connect( m_geometry_handle, "", m_handle, "sourcemodels" );
+	for( auto sm : m_source_models )
+	{
+		m_nsi.Connect( sm, "", merge_handle(), "objects" );
+	}
+
+	m_nsi.Connect( merge_handle(), "", m_handle, "sourcemodels" );
 }
 
 void instance::set_attributes( void ) const
@@ -76,4 +88,9 @@ void instance::set_attributes_at_time(
 	m_nsi.SetAttributeAtTime( m_handle.c_str(), i_time, args );
 
 	delete [] matrices;
+}
+
+std::string instance::merge_handle( void ) const
+{
+	return m_handle + "|merge";
 }
