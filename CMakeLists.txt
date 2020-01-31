@@ -103,7 +103,12 @@ install(
 	DESTINATION ${INSTALL_DIR}/scripts/obj )
 
 install(
-	FILES scripts/out/3Delight_OnCreated.py scripts/out/3DelightCloud_OnCreated.py
+	FILES scripts/out/3Delight_OnCreated.py
+	DESTINATION ${INSTALL_DIR}/scripts/out )
+
+install(
+	FILES scripts/out/3Delight_OnCreated.py
+	RENAME 3DelightCloud_OnCreated.py
 	DESTINATION ${INSTALL_DIR}/scripts/out )
 
 install(
