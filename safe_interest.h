@@ -18,6 +18,9 @@ class safe_interest
 {
 public:
 
+	/// Constructor of inert interest
+	safe_interest();
+
 	/// Constructor with callback details
 	safe_interest(OP_Node* i_node, void* i_callee, OP_EventMethod i_cb);
 	/**

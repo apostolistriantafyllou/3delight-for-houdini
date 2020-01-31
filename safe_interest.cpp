@@ -2,6 +2,14 @@
 
 #include <OP/OP_Node.h>
 
+safe_interest::safe_interest()
+	:	m_node(nullptr),
+		m_callee(nullptr),
+		m_cb(nullptr)
+{
+}
+
+
 safe_interest::safe_interest(
 	OP_Node* i_node,
 	void* i_callee,
@@ -11,7 +19,6 @@ safe_interest::safe_interest(
 		m_cb(i_cb)
 {
 	assert(m_node);
-	assert(m_callee);
 	assert(m_cb);
 	m_node->addOpInterest(this, &static_callback);
 }
@@ -22,7 +29,6 @@ safe_interest::safe_interest(const safe_interest& i_source)
 		m_callee(i_source.m_callee),
 		m_cb(i_source.m_cb)
 {
-	assert(m_callee);
 	assert(m_cb);
 	if(m_node)
 	{
