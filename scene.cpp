@@ -169,6 +169,11 @@ void scene::scan(
 		for( int i=0; i< nkids; i++ )
 		{
 			OP_Node *node = network->getChild(i);
+
+			/* Don't get into SOP networks. Nothing to see there */
+			if( node->castToSOPNode() )
+				continue;
+
 			process_node( i_context, node, o_to_export, io_interests );
 
 			if( !node->isNetwork() )
@@ -446,5 +451,3 @@ void scene::export_light_categories(
 			NSI::IntegerArg("priority", 1)
 		) );
 }
-
-
