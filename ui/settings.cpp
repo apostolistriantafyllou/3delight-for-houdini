@@ -500,7 +500,17 @@ PRM_Template* settings::GetTemplates()
 	NSI::DynamicAPI api;
 	const char* (*get_dl_version)();
 	api.LoadFunction(get_dl_version, "DlGetLibNameAndVersionString");
-	static std::string dl_version_str = std::string("Rendering with ") + get_dl_version();
+	static std::string dl_version_str;
+
+	if( get_dl_version )
+	{
+		dl_version_str = std::string("Rendering with ") + get_dl_version();
+	}
+	else
+	{
+		dl_version_str = "** Installation error: unablble to load 3Delight NSI library **";
+	}
+
 	static PRM_Name dl_version("dl_version", dl_version_str.c_str());
 
 	static std::vector<PRM_Template> debug_templates =
