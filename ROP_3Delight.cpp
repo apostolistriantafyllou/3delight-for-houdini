@@ -1136,6 +1136,13 @@ ROP_3Delight::ExportOneOutputLayer(
 		}
 	}
 
+	if( i_desc.m_variable_name == "Ci" )
+	{
+		/* We only draw outlines on "Ci" */
+		i_ctx.m_nsi.SetAttribute( i_layer_handle,
+			NSI::IntegerArg( "drawoutlines", 1 ) );
+	}
+
 	if (i_scalar_format == "uint8")
 	{
 		i_ctx.m_nsi.SetAttribute(i_layer_handle,
