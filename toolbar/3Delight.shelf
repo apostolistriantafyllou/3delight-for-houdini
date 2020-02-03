@@ -329,6 +329,7 @@ file = hou.ui.selectFile(title = "Choose VDB File",
                          pattern = "*.vdb")
 if file:
 	name = os.path.splitext(os.path.basename(file))[0]
+	name = name.replace("$", "")
 	obj = hou.node("/obj")
 
 	newnode = obj.createNode("geo", name)
