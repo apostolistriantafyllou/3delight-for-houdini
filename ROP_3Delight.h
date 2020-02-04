@@ -165,6 +165,11 @@ private:
 		simply don't need to be exported again.
 	*/
 	NSI::Context m_static_nsi;
+	/*
+		Name of the file where m_static_nsi outputs its NSI stream, when it has
+		a different context handle than m_nsi.
+	*/
+	std::string m_static_nsi_file;
 
 	/*
 		List of interests (callbacks) created in IPR mode.

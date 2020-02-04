@@ -471,6 +471,24 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 				} );
 	}
 
+	/*
+		Initialize a file name for the NSI stream receiving non-animated
+		attributes.
+	*/
+	m_static_nsi_file.clear();
+	if(m_current_render->m_export_nsi)
+	{
+		std::string first_frame = GetNSIExportFilename(0.0);
+		if(first_frame != "stdout")
+		{
+			m_static_nsi_file = first_frame + ".static";
+		}
+	}
+	else if(m_renderdl)
+	{
+		m_static_nsi_file = UT_TempFileManager::getTempFilename();
+	}
+
 	if(error() < UT_ERROR_ABORT)
 	{
 		executePreRenderScript(tstart);
@@ -488,32 +506,14 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	m_current_render->m_current_time = time;
 
 	std::string frame_nsi_file;
-	std::string static_nsi_file;
 	if(m_current_render->m_export_nsi)
 	{
 		std::string export_file = GetNSIExportFilename(time);
 		assert(!export_file.empty());
-
-		if(export_file == "stdout")
-		{
-			InitNSIExport(m_nsi, "nsi", export_file);
-		}
-		else
-		{
-			/*
-				Initialize an output context for the scene structure and
-				animated attributes and, when exporting the first frame of the
-				sequence, a second one for non-animated attributes. Note that we
-				always compute the name of the static attributes NSI file
-				because it will have to be read for all frames.
-			*/
-			InitNSIExport(m_nsi, "binarynsi", export_file);
-			static_nsi_file = GetNSIExportFilename(0.0) + ".static";
-			if(time == m_current_render->m_start_time)
-			{
-				InitNSIExport(m_static_nsi, "binarynsi", static_nsi_file);
-			}
-		}
+		InitNSIExport(
+			m_nsi,
+			export_file == "stdout" ? "nsi" : "binarynsi",
+			export_file);
 	}
 	else if(m_renderdl)
 	{
@@ -534,13 +534,24 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 		m_nsi.Begin();
 	}
 
-	if(static_nsi_file.empty())
+	if(m_static_nsi_file.empty())
 	{
 		/*
 			Redirect static attributes into the main NSI stream if no separate
 			stream was opened for them.
 		*/
 		m_static_nsi.SetHandle(m_nsi.Handle());
+	}
+
+	/*
+		When exporting the first frame of a sequence, initialize a second
+		context for non-animated attributes.
+		Note that the file name is always computed when exporting, because it
+		will have to be read for all frames.
+	*/
+	if(!m_static_nsi_file.empty() && time == m_current_render->m_start_time)
+	{
+		InitNSIExport(m_static_nsi, "binarynsi", m_static_nsi_file);
 	}
 
 	executePreFrameScript(time);
@@ -572,12 +583,12 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	}
 
 	// Read the static attributes NSI file from the main stream
-	if(!static_nsi_file.empty())
+	if(!m_static_nsi_file.empty())
 	{
 		m_nsi.Evaluate(
 		(
 			NSI::CStringPArg("type", "apistream"),
-			NSI::StringArg("filename", static_nsi_file)
+			NSI::StringArg("filename", m_static_nsi_file)
 		) );
 	}
 
