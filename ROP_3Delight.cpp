@@ -61,14 +61,15 @@ namespace
 	/// Opens an NSI file stream for export and outputs header comments
 	void InitNSIExport(
 		NSI::Context& io_nsi,
-		const char* i_format,
 		const std::string& i_filename)
 	{
+		const char* format = i_filename == "stdout" ? "nsi" : "binarynsi";
+
 		// Output NSI commands to the specified file or standard output
 		io_nsi.Begin(
 		(
 			NSI::StringArg("streamfilename", i_filename),
-			NSI::CStringPArg("streamformat", i_format)
+			NSI::CStringPArg("streamformat", format)
 		) );
 
 		// Add comments to the NSI stream, useful for debugging
@@ -510,10 +511,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	{
 		std::string export_file = GetNSIExportFilename(time);
 		assert(!export_file.empty());
-		InitNSIExport(
-			m_nsi,
-			export_file == "stdout" ? "nsi" : "binarynsi",
-			export_file);
+		InitNSIExport(m_nsi, export_file);
 	}
 	else if(m_renderdl)
 	{
@@ -522,11 +520,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 			separate renderdl process.
 		*/
 		frame_nsi_file = UT_TempFileManager::getTempFilename();
-		m_nsi.Begin(
-		(
-			NSI::StringArg("streamfilename", frame_nsi_file),
-			NSI::CStringPArg("streamformat", "binarynsi")
-		) );
+		InitNSIExport(m_nsi, frame_nsi_file);
 	}
 	else
 	{
@@ -551,7 +545,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	*/
 	if(!m_static_nsi_file.empty() && time == m_current_render->m_start_time)
 	{
-		InitNSIExport(m_static_nsi, "binarynsi", m_static_nsi_file);
+		InitNSIExport(m_static_nsi, m_static_nsi_file);
 	}
 
 	executePreFrameScript(time);
