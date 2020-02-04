@@ -150,7 +150,23 @@ private:
 		std::vector< std::string > &o_to_export ) const;
 
 protected:
-	/** Depending on what we are exporting, an OBJ or a VOP node */
+	/**
+		Depending on what we are exporting, an OBJ or a VOP node.
+
+		FIXME : some functions in the exporter class use m_object
+		indiscriminately, without regard for the fact that it could actually
+		point to a VOP_Node.  This works, for now, because of two reasons :
+
+		- Both OBJ_Node and VOP_Node inherit directly from OP_Network, without
+		  multiple inheritance, so the pointer always points to an OP_Network
+		  object, which contains most of the API we use.
+		- The functions using m_object are actually called only when m_object
+		  points to an OBJ_Node.
+
+		It would be better to replace the union with a single OP_Network* and
+		call castToOBJNode() or castToVOPNode() in the few cases where it's
+		needed.
+	*/
 	union
 	{
 		VOP_Node *m_vop;
