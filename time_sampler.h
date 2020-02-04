@@ -19,6 +19,30 @@ public:
 	enum blur_source { e_transformation, e_deformation };
 
 	/**
+		\brief Returns true if i_node is animated.
+
+		It also simplifies the call to OP_Node::isTimeDependent, which requires
+		a non-const OP_Context.
+
+		\param i_node
+			The object which is to be sampled over time. The number of samples
+			may vary from one object to the other. In particular, some objects
+			are static and don't need motion blur at all.
+		\param i_time
+			A time value used to initialize an OP_Context. It really shouldn't
+			matter anyway, since were testing time-dependency, but it's
+			recommended to pass the time of the current frame, which we guess is
+			better that using 0.
+		\param i_type
+			Specifies whether we're checking for deformation or transformation
+			animation.
+	*/
+	static bool is_time_dependent(
+		OBJ_Node& i_node,
+		double i_time,
+		time_sampler::blur_source i_type);
+
+	/**
 		\brief Constructor.
 
 		\param i_context

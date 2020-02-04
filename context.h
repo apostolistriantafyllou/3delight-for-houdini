@@ -20,6 +20,7 @@ class context
 public:
 	context(
 		NSI::Context &i_nsi,
+		NSI::Context &i_static_nsi,
 		fpreal i_start_time,
 		fpreal i_end_time,
 		fpreal i_shutter_interval,
@@ -34,6 +35,7 @@ public:
 		const UT_String& i_lights_to_render)
 	:
 		m_nsi(i_nsi),
+		m_static_nsi(i_static_nsi),
 		m_start_time(i_start_time),
 		m_end_time(i_end_time),
 		m_current_time(i_start_time),
@@ -88,6 +90,7 @@ public:
 
 public:
 	NSI::Context &m_nsi;
+	NSI::Context &m_static_nsi;
 	fpreal m_start_time, m_end_time;
 	fpreal m_current_time;
 	fpreal m_frame_duration;

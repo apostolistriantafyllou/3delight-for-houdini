@@ -57,6 +57,33 @@ namespace
 		ROP_3Delight* rop = (ROP_3Delight*)i_data;
 		rop->StopRender();
 	}
+
+	/// Opens an NSI file stream for export and outputs header comments
+	void InitNSIExport(
+		NSI::Context& io_nsi,
+		const char* i_format,
+		const std::string& i_filename)
+	{
+		// Output NSI commands to the specified file or standard output
+		io_nsi.Begin(
+		(
+			NSI::StringArg("streamfilename", i_filename),
+			NSI::CStringPArg("streamformat", i_format)
+		) );
+
+		// Add comments to the NSI stream, useful for debugging
+		io_nsi.Evaluate(
+		(
+			NSI::CStringPArg("1", "Output from 3Delight for Houdini"),
+			NSI::CStringPArg(
+				"2",
+				"Built with HDK " SYS_VERSION_MAJOR "." SYS_VERSION_MINOR
+				"." SYS_VERSION_BUILD "." SYS_VERSION_PATCH),
+			NSI::StringArg(
+				"3",
+				"Running on Houdini " + HOM().applicationVersionString())
+		) );
+	}
 }
 
 void
@@ -114,6 +141,7 @@ ROP_3Delight::ROP_3Delight(
 		m_current_render(nullptr),
 		m_end_time(0.0),
 		m_nsi(GetNSIAPI()),
+		m_static_nsi(GetNSIAPI()),
 		m_renderdl(nullptr),
 		m_rendering(false),
 		m_idisplay_rendering(false),
@@ -375,6 +403,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 
 	m_current_render = new context(
 		m_nsi,
+		m_static_nsi,
 		tstart,
 		tend,
 		GetShutterInterval(tstart),
@@ -459,32 +488,32 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	m_current_render->m_current_time = time;
 
 	std::string frame_nsi_file;
+	std::string static_nsi_file;
 	if(m_current_render->m_export_nsi)
 	{
 		std::string export_file = GetNSIExportFilename(time);
 		assert(!export_file.empty());
 
-		const char* format = export_file == "stdout" ? "nsi" : "binarynsi";
-
-		// Output NSI commands to the specified file or standard output
-		m_nsi.Begin(
-		(
-			NSI::StringArg("streamfilename", export_file),
-			NSI::CStringPArg("streamformat", format)
-		) );
-
-		// Add comments to the NSI stream, useful for debugging
-		m_nsi.Evaluate(
-		(
-			NSI::CStringPArg("1", "Output from 3Delight for Houdini"),
-			NSI::CStringPArg(
-				"2",
-				"Built with HDK " SYS_VERSION_MAJOR "." SYS_VERSION_MINOR
-				"." SYS_VERSION_BUILD "." SYS_VERSION_PATCH),
-			NSI::StringArg(
-				"3",
-				"Running on Houdini " + HOM().applicationVersionString())
-		) );
+		if(export_file == "stdout")
+		{
+			InitNSIExport(m_nsi, "nsi", export_file);
+		}
+		else
+		{
+			/*
+				Initialize an output context for the scene structure and
+				animated attributes and, when exporting the first frame of the
+				sequence, a second one for non-animated attributes. Note that we
+				always compute the name of the static attributes NSI file
+				because it will have to be read for all frames.
+			*/
+			InitNSIExport(m_nsi, "binarynsi", export_file);
+			static_nsi_file = GetNSIExportFilename(0.0) + ".static";
+			if(time == m_current_render->m_start_time)
+			{
+				InitNSIExport(m_static_nsi, "binarynsi", static_nsi_file);
+			}
+		}
 	}
 	else if(m_renderdl)
 	{
@@ -505,6 +534,15 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 		m_nsi.Begin();
 	}
 
+	if(static_nsi_file.empty())
+	{
+		/*
+			Redirect static attributes into the main NSI stream if no separate
+			stream was opened for them.
+		*/
+		m_static_nsi.SetHandle(m_nsi.Handle());
+	}
+
 	executePreFrameScript(time);
 
 	object_attributes::export_object_attribute_nodes(*m_current_render);
@@ -517,6 +555,31 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 
 	ExportGlobals(*m_current_render);
 	ExportDefaultMaterial(*m_current_render);
+
+	/*
+		Stop redirecting static attributes to the main NSI stream. This is
+		important to avoid closing the main stream prematurely.
+	*/
+	if(m_static_nsi.Handle() == m_nsi.Handle())
+	{
+		m_static_nsi.SetHandle(NSI_BAD_CONTEXT);
+	}
+
+	// Close the static attributes file if one was opened
+	if(m_static_nsi.Handle() != NSI_BAD_CONTEXT)
+	{
+		m_static_nsi.End();
+	}
+
+	// Read the static attributes NSI file from the main stream
+	if(!static_nsi_file.empty())
+	{
+		m_nsi.Evaluate(
+		(
+			NSI::CStringPArg("type", "apistream"),
+			NSI::StringArg("filename", static_nsi_file)
+		) );
+	}
 
 	if(m_current_render->BackgroundThreadRendering())
 	{

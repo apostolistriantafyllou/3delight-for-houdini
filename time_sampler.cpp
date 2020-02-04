@@ -10,23 +10,18 @@ namespace
 	const char* k_nb_transformation_samples = "_3dl_transformation_extra_samples";
 	const char* k_add_deformation_samples = "_3dl_deformation";
 	const char* k_nb_deformation_samples = "_3dl_add_samples";
+}
 
-	/*
-		Calls OP_Node::isTimeDependent on i_node without using a temporary
-		OP_Context, which we can't because isTimeDependent's argument is
-		non-const.
-	*/
-	bool IsTimeDependent(
-		OBJ_Node& i_node,
-		double i_time,
-		time_sampler::blur_source i_type)
-	{
-		OP_Context op_ctx(i_time);
-		return
-			i_type == time_sampler::e_deformation && i_node.getRenderSopPtr()
-			? i_node.getRenderSopPtr()->isTimeDependent(op_ctx)
-			: i_node.isTimeDependent(op_ctx);
-	}
+bool time_sampler::is_time_dependent(
+	OBJ_Node& i_node,
+	double i_time,
+	time_sampler::blur_source i_type)
+{
+	OP_Context op_ctx(i_time);
+	return
+		i_type == time_sampler::e_deformation && i_node.getRenderSopPtr()
+		? i_node.getRenderSopPtr()->isTimeDependent(op_ctx)
+		: i_node.isTimeDependent(op_ctx);
 }
 
 time_sampler::time_sampler(
@@ -37,7 +32,7 @@ time_sampler::time_sampler(
 		m_last(i_context.ShutterClose()),
 		m_nb_intervals(
 			i_context.MotionBlur() &&
-				IsTimeDependent(i_node, i_context.m_current_time, i_type)
+				is_time_dependent(i_node, i_context.m_current_time, i_type)
 			? 1
 			: 0),
 		m_current_sample(0)

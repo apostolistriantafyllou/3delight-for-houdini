@@ -152,6 +152,15 @@ void exporter::export_attributes(
 		vertices = i_vertices_list->getI32Array( buffer_in_case_we_need_it );
 	}
 
+	// Retrieve a context that might redirect the attributes to a shared file
+	NSI::Context& nsi = static_attributes_context();
+
+	if(nsi.Handle() == NSI_BAD_CONTEXT)
+	{
+		// Those attributes have already been exported in a previous frame
+		return;
+	}
+
 	for(int w = io_which_ones.size()-1; w >= 0; w--)
 	{
 		std::string name = io_which_ones[w];
@@ -191,7 +200,7 @@ void exporter::export_attributes(
 
 		if( point_attribute && i_vertices_list )
 		{
-			m_nsi.SetAttribute( m_handle,
+			nsi.SetAttribute( m_handle,
 				*NSI::Argument( name + ".indices" )
 					.SetType( NSITypeInteger )
 					->SetCount( i_vertices_list->entries() )
@@ -201,7 +210,7 @@ void exporter::export_attributes(
 		GT_DataArrayHandle buffer_in_case_we_need_it_2;
 		if( data->getTypeInfo() == GT_TYPE_TEXTURE )
 		{
-			m_nsi.SetAttributeAtTime( m_handle, i_time,
+			nsi.SetAttributeAtTime( m_handle, i_time,
 				*NSI::Argument(name)
 					.SetArrayType( NSITypeFloat, 3)
 					->SetCount( data->entries() )
@@ -227,7 +236,7 @@ void exporter::export_attributes(
 
 		if( nsi_type == NSITypeFloat && data->getTupleSize()>1 )
 		{
-			m_nsi.SetAttributeAtTime( m_handle, i_time,
+			nsi.SetAttributeAtTime( m_handle, i_time,
 				*NSI::Argument(name)
 					.SetArrayType( nsi_type, data->getTupleSize() )
 					->SetCount( data->entries() )
@@ -236,7 +245,7 @@ void exporter::export_attributes(
 		}
 		else
 		{
-			m_nsi.SetAttributeAtTime( m_handle, i_time,
+			nsi.SetAttributeAtTime( m_handle, i_time,
 				*NSI::Argument(name)
 					.SetType( nsi_type )
 					->SetCount( data->entries() )
@@ -539,4 +548,16 @@ void exporter::get_bind_attributes(
 			}
 		}
 	}
+}
+
+NSI::Context&
+exporter::static_attributes_context(
+	time_sampler::blur_source i_type)const
+{
+	bool animated =
+		time_sampler::is_time_dependent(
+			*m_object,
+			m_context.m_current_time,
+			i_type);
+	return animated ? m_context.m_nsi : m_context.m_static_nsi;
 }

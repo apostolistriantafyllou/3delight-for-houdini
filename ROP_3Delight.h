@@ -158,6 +158,13 @@ private:
 		background thread).
 	*/
 	NSI::Context m_nsi;
+	/*
+		NSI context used to export non-animated attributes. It might use the
+		same internal context handle as m_nsi when static attributes don't need
+		to be exported separately. It might also be invalid when non-animated
+		simply don't need to be exported again.
+	*/
+	NSI::Context m_static_nsi;
 
 	/*
 		List of interests (callbacks) created in IPR mode.

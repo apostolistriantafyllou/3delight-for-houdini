@@ -1,5 +1,7 @@
 #pragma once
 
+#include "time_sampler.h"
+
 /* WARNING: The order of the following two includes is important  { */
 #include <GT/GT_Primitive.h>
 #include <GT/GT_Handles.h>
@@ -150,6 +152,28 @@ private:
 		std::vector< std::string > &o_to_export ) const;
 
 protected:
+
+	/**
+		\brief Returns the context where to export possibly static attributes.
+
+		This allows attributes that don't change from one frame to another to be
+		exported in a different file, shared among every frame's main NSI file.
+
+		The accessor itself choses whether to return m_context.m_nsi or
+		m_context.m_static_nsi, based on the time-dependency of m_object.
+
+		\param i_type
+			The source of animation that must be checked when computing
+			time-dependency.
+		\return
+			An NSI context to be used when exporting the node's attributes. It
+			could have an invalid handle, in which case it's safe to skip the
+			export of those attributes (because they have already have been
+			exported in a previous frame).
+	*/
+	NSI::Context& static_attributes_context(
+		time_sampler::blur_source i_type = time_sampler::e_deformation)const;
+
 	/**
 		Depending on what we are exporting, an OBJ or a VOP node.
 
