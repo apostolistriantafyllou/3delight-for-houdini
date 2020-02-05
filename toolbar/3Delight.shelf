@@ -34,6 +34,7 @@
     <memberTool name="_3dl_rop_3Delight"/>
     <memberTool name="_3dl_rop_3DelightCloud"/>
     <memberTool name="_3dl_rop_render_3Delight"/>
+    <memberTool name="_3dl_rop_select_3Delight"/>
     <memberTool name="_3dl_object_pointlight"/>
     <memberTool name="_3dl_object_spotlight"/>
     <memberTool name="_3dl_object_arealight"/>
@@ -66,7 +67,6 @@ newnode = roptoolutils.createRenderNode('3DelightCloud')
     <script scriptType="python"><![CDATA[
 import roptoolutils
 
-found = False
 out = hou.node("/out")
 nodeFound = None
 # try to find a selected ROP
@@ -87,6 +87,35 @@ if nodeFound != None:
 else:
     hou.ui.displayMessage('Can not render: no ROP found.', title = '3Delight', severity = hou.severityType.Warning)
 
+	]]></script>
+  </tool>
+
+  <tool name="_3dl_rop_select_3Delight" label="Select" icon="shelf_ROP_select_3Delight">
+    <helpText><![CDATA[Select one ROP 3Delight.]]></helpText>
+    <script scriptType="python"><![CDATA[
+import roptoolutils
+
+def custom_cb(node):
+    nodetype = node.type()
+    return nodetype.name() == "3Delight" or nodetype.name() == "3DelightCloud"
+
+found = False
+initNode = None
+out = hou.node("/out")
+# try to find a selected ROP
+for node in out.children():
+    nodetype = node.type()
+    if nodetype.name() == "3Delight" or nodetype.name() == "3DelightCloud":
+        found = True
+        if node.isCurrent():
+            initNode = node
+            break
+if not found:
+    hou.ui.displayMessage('No ROP found.', title = '3Delight', severity = hou.severityType.Warning)
+else:
+    nodeSel = hou.ui.selectNode(relative_to_node=out, node_type_filter=hou.nodeTypeFilter.Rop, initial_node=initNode, custom_node_filter_callback=custom_cb)
+    if nodeSel != None:
+        hou.node("/out/"+nodeSel).setCurrent(True)
 	]]></script>
   </tool>
 
@@ -329,6 +358,7 @@ file = hou.ui.selectFile(title = "Choose VDB File",
                          pattern = "*.vdb")
 if file:
 	name = os.path.splitext(os.path.basename(file))[0]
+    # Can't have special character $ (_$Fn if collapse_sequences) in node's name
 	name = name.replace("$", "")
 	obj = hou.node("/obj")
 

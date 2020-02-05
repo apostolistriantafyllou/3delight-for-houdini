@@ -88,7 +88,7 @@ install(
 	DESTINATION ${INSTALL_DIR}/config/Icons )
 
 install(
-	FILES toolbar/vdb_no_outline.png toolbar/shelf_ROP_3Delight.png toolbar/shelf_ROP_render_3Delight.png
+	FILES toolbar/vdb_no_outline.png toolbar/shelf_ROP_3Delight.png toolbar/shelf_ROP_render_3Delight.png toolbar/shelf_ROP_select_3Delight.png
 	DESTINATION ${INSTALL_DIR}/config/Icons )
 
 install(
