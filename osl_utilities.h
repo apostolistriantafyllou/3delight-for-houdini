@@ -23,6 +23,7 @@ namespace osl_utilities
 	/// Widget types
 	extern const std::string k_null;
 	extern const std::string k_check_box;
+	extern const std::string k_filename;
 
 	/// Sets o_value to the value of string-type metadata i_name, if it exists
 	void FindMetaData(

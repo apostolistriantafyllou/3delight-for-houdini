@@ -185,6 +185,10 @@ static PRM_Type GetPRMType(
 			return PRM_INT;
 
 		case NSITypeString:
+			if(i_meta.m_widget && i_meta.m_widget == osl_utilities::k_filename)
+			{
+				return PRM_PICFILE;
+			}
 			return PRM_STRING;
 
 		case NSITypeColor:

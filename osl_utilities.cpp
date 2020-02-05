@@ -6,6 +6,7 @@ static const std::string k_empty;
 
 const std::string osl_utilities::k_null = "null";
 const std::string osl_utilities::k_check_box = "checkBox";
+const std::string osl_utilities::k_filename = "filename";
 
 const std::string osl_utilities::ramp::k_maya_color = "maya_colorRamp";
 const std::string osl_utilities::ramp::k_maya_float = "maya_floatRamp";
