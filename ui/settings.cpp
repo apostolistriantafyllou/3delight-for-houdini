@@ -508,7 +508,7 @@ PRM_Template* settings::GetTemplates()
 	}
 	else
 	{
-		dl_version_str = "** Installation error: unablble to load 3Delight NSI library **";
+		dl_version_str = "** Installation error: unable to load 3Delight NSI library **";
 	}
 
 	static PRM_Name dl_version("dl_version", dl_version_str.c_str());
