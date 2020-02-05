@@ -350,20 +350,15 @@ newnode.setParmTemplateGroup(group)]]></script>
   <tool name="_3dl_object_vdb" label="VDB" icon="vdb_no_outline">
     <helpText><![CDATA[Opens a file selector for choosing one vdb file.]]></helpText>
     <script scriptType="python"><![CDATA[
-import os
-
 file = hou.ui.selectFile(title = "Choose VDB File",
                          collapse_sequences = True,
                          file_type = hou.fileType.Geometry,
                          pattern = "*.vdb")
 if file:
-	name = os.path.splitext(os.path.basename(file))[0]
-    # Can't have special character $ (_$Fn if collapse_sequences) in node's name
-	name = name.replace("$", "")
 	obj = hou.node("/obj")
 
-	newnode = obj.createNode("geo", name)
-	newfilenode = newnode.createNode("file", name)
+	newnode = obj.createNode("geo", "vdb")
+	newfilenode = newnode.createNode("file", "vdb_file")
 	newfilenode.setParms({"file": file, "loadtype": 4})
 	newtrsnode = newnode.createNode("xform", "transform")
 	newtrsnode.setInput(0, newfilenode)
