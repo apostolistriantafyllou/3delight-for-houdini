@@ -34,11 +34,16 @@ if ( "$arg1" != "" ) then
    opspare -d over_vis_refraction $arg1
    opspare -d override_ss $arg1
    opspare -d _3dl_override_vol $arg1
-   opspare -d _3dl_over_compositing_group $arg1
-   opspare -d _3dl_over_vis_camera_group $arg1
-   opspare -d _3dl_over_vis_diffuse_group $arg1
-   opspare -d _3dl_over_vis_reflection_group $arg1
-   opspare -d _3dl_over_vis_refraction_group $arg1
+   opspare -d _3dl_over_compositing_enable $arg1
+   opspare -d _3dl_over_compositing $arg1
+   opspare -d _3dl_over_vis_camera_enable $arg1
+   opspare -d _3dl_over_vis_camera $arg1
+   opspare -d _3dl_over_vis_diffuse_enable $arg1
+   opspare -d _3dl_over_vis_diffuse $arg1
+   opspare -d _3dl_over_vis_reflection_enable $arg1
+   opspare -d _3dl_over_vis_reflection $arg1
+   opspare -d _3dl_over_vis_refraction_enable $arg1
+   opspare -d _3dl_over_vis_refraction $arg1
    opspare -d _3dl_override_ss $arg1
    opspare -d _3dl_vis_diffuse $arg1
 
