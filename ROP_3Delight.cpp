@@ -26,6 +26,8 @@
 
 #include <nsi_dynamic.hpp>
 
+#include "delight.h"
+
 #include <iostream>
 
 
@@ -427,12 +429,21 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 
 	if(m_current_render->BackgroundProcessRendering())
 	{
+		// Find the directory containing the renderdl executable
+		decltype(&DlGetInstallRoot) get_install_root = nullptr;
+		GetNSIAPI().LoadFunction(get_install_root, "DlGetInstallRoot" );
+		std::string bin_dir;
+		if(get_install_root)
+		{
+			bin_dir = std::string(get_install_root()) + "/bin/";
+		}
+
 		/*
 			Start a renderdl process that will start rendering as soon as we
 			have exported the first frame of the sequence.
 		*/
 		m_renderdl = new UT_ReadWritePipe;
-		std::string renderdl_command = "renderdl -stdinfiles";
+		std::string renderdl_command = bin_dir + "renderdl -stdinfiles";
 
 		if(m_cloud)
 		{
