@@ -87,7 +87,7 @@ install(
 	DESTINATION ${INSTALL_DIR}/config/Icons )
 
 install(
-	FILES toolbar/vdb_no_outline.png toolbar/shelf_ROP_3Delight.png toolbar/shelf_ROP_render_3Delight.png toolbar/shelf_ROP_select_3Delight.png
+	FILES ui/vdb_no_outline.png ui/shelf_ROP_3Delight.png ui/shelf_ROP_render_3Delight.png ui/shelf_ROP_select_3Delight.png
 	DESTINATION ${INSTALL_DIR}/config/Icons )
 
 install(
@@ -95,47 +95,28 @@ install(
 	DESTINATION ${INSTALL_DIR}/config/Applications )
 
 install(
-	FILES scripts/obj/geo.cmd
-	RENAME geo_OnCreated.cmd
+	FILES ui/geo_OnCreated.cmd ui/cam_OnCreated.cmd ui/hlight--2.0_OnCreated.cmd ui/envlight_OnCreated.cmd
 	DESTINATION ${INSTALL_DIR}/scripts/private )
 
 install(
-	FILES scripts/obj/cam.cmd
-	RENAME cam_OnCreated.cmd
-	DESTINATION ${INSTALL_DIR}/scripts/private )
-
-install(
-	FILES scripts/obj/hlight-2.0_OnCreated.cmd
-	RENAME hlight--2.0_OnCreated.cmd
-	DESTINATION ${INSTALL_DIR}/scripts/private )
-
-install(
-	FILES scripts/obj/envlight_OnCreated.cmd
-	DESTINATION ${INSTALL_DIR}/scripts/private )
-
-install(
-	FILES scripts/out/3Delight_OnCreated.py
+	FILES ui/3Delight_OnCreated.py
 	DESTINATION ${INSTALL_DIR}/scripts/out )
 
 install(
-	FILES scripts/out/3Delight_OnCreated.py
+	FILES ui/3Delight_OnCreated.py
 	RENAME 3DelightCloud_OnCreated.py
 	DESTINATION ${INSTALL_DIR}/scripts/out )
 
 install(
-	FILES soho/parameters/SOHOparameters
+	FILES ui/SOHOparameters ui/3Delight.ds
 	DESTINATION ${INSTALL_DIR}/soho/parameters )
 
 install(
-	FILES soho/parameters/3Delight.ds
-	DESTINATION ${INSTALL_DIR}/soho/parameters )
-
-install(
-	FILES toolbar/3Delight.shelf
+	FILES ui/3Delight.shelf
 	DESTINATION ${INSTALL_DIR}/toolbar )
 
 install(
-	FILES MainMenuCommon.xml
+	FILES ui/MainMenuCommon.xml
 	DESTINATION ${INSTALL_DIR} )
 
 # Configure several common target properties, such as its output directory.
