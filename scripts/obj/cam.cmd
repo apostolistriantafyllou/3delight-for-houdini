@@ -8,6 +8,7 @@ if ( "$arg1" != "" ) then
 	# collections are added.
 	set fov_defined = `run("opparm -ql $arg1 _3dl_fov")`
 	set shutter_defined = `run("opparm -ql $arg1 _3dl_shutter_duration")`
+	set blades_defined = `run("opparm -ql $arg1 _3dl_aperture_blades")`
 	set focal_distance_defined = `run("opparm -ql $arg1 _3dl_focal_distance")`
 	set fstop_defined = `run("opparm -ql $arg1 _3dl_fstop")`
 	set projection_defined = `run("opparm -ql $arg1 _3dl_projection_type")`
@@ -15,8 +16,42 @@ if ( "$arg1" != "" ) then
 	# Add properties into tab 3Delight
 	opproperty -f $arg1 3Delight _3dl_shutter_title
 	opproperty -f $arg1 3Delight _3dl_shutter_group
-	opproperty -f $arg1 3Delight _3dl_aperture_title
-	opproperty -f $arg1 3Delight _3dl_aperture_group
+	if("$fstop_defined" == "" && "$blades_defined" != "") then
+		# Here, we want to add fstop and focal_distance in their proper
+		# position, but the other parameters of their collection were already
+		# there.
+
+		# Retrieve existing values in order to set them back at the end
+		set enable_dof = `ch("$arg1/_3dl_enable_dof")`
+		set enable_blades = `ch("$arg1/_3dl_enable_aperture_blades")`
+		set blades = `ch("$arg1/_3dl_aperture_blades")`
+		set blades_rotation = `ch("$arg1/_3dl_aperture_blades_rotation")`
+
+		# Remove all parameters from the aperture collection and its title
+		# collection.
+		opspare -d _3dl_aperture_space $arg1
+		opspare -d _3dl_aperture_separator1 $arg1
+		opspare -d _3dl_aperture_label1 $arg1
+		opspare -d _3dl_aperture_separator2 $arg1
+		opspare -d _3dl_enable_dof $arg1
+		opspare -d _3dl_enable_aperture_blades $arg1
+		opspare -d _3dl_aperture_blades $arg1
+		opspare -d _3dl_aperture_blades_rotation $arg1
+
+		# Add back whole aperture collection and its title collection
+		opproperty -f $arg1 3Delight _3dl_aperture_title
+		opproperty -f $arg1 3Delight _3dl_aperture_group
+
+		# Set back values of previously existing parameters
+		opparm -q $arg1 _3dl_enable_dof $enable_dof
+		opparm -q $arg1 _3dl_enable_aperture_blades $enable_blades
+		opparm -q $arg1 _3dl_aperture_blades $blades
+		opparm -q $arg1 _3dl_aperture_blades_rotation $blades_rotation
+	else
+		opproperty -f $arg1 3Delight _3dl_aperture_title
+		opproperty -f $arg1 3Delight _3dl_aperture_group
+	endif
+
 	opproperty -f $arg1 3Delight _3dl_lens_distortion_title
 	opproperty -f $arg1 3Delight _3dl_lens_distortion_group
 	opproperty -f $arg1 3Delight _3dl_projection_title
