@@ -90,8 +90,6 @@ protected:
 
 private:
 
-	static void register_mplay_driver( NSI::DynamicAPI &i_api );
-
 	void ExportTransparentSurface(const context& i_ctx) const;
 	std::string AtmosphereAttributesHandle() const;
 	void ExportAtmosphere(const context& i_ctx)const;

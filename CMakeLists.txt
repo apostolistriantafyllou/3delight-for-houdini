@@ -33,7 +33,6 @@ add_library( ${library_name} SHARED
 	idisplay_port.cpp
 	instance.cpp
 	light.cpp
-	mplay.cpp
 	polygonmesh.cpp
 	pointmesh.cpp
 	primitive.cpp

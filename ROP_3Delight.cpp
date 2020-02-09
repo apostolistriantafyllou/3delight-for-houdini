@@ -4,7 +4,6 @@
 #include "context.h"
 #include "exporter.h"
 #include "idisplay_port.h"
-#include "mplay.h"
 #include "object_attributes.h"
 #include "scene.h"
 #include "shader_library.h"
@@ -118,8 +117,6 @@ ROP_3Delight::Register(OP_OperatorTable* io_table)
 			nullptr,
 			0,
 			"Render"));
-
-	register_mplay_driver( GetNSIAPI() );
 }
 
 OP_Node*
@@ -1609,27 +1606,4 @@ ROP_3Delight::GetNSIExportFilename(double i_time)const
 	}
 
 	return export_file.toStdString();
-}
-
-void ROP_3Delight::register_mplay_driver( NSI::DynamicAPI &i_api )
-{
-	decltype( &DspyRegisterDriverTable) register_driver = nullptr;
-	i_api.LoadFunction(register_driver, "DspyRegisterDriverTable" );
-
-	if( !register_driver )
-	{
-		assert( !"Unable to register mplay driver" );
-		return;
-	}
-
-	PtDspyDriverFunctionTable table;
-	memset( &table, 0, sizeof(table) );
-
-	table.Version = k_PtDriverCurrentVersion;
-	table.pOpen = &MPlayDspyImageOpen;
-	table.pQuery = &MPlayDspyImageQuery;
-	table.pWrite = &MPlayDspyImageData;
-	table.pClose = &MPlayDspyImageClose;
-
-	register_driver( "mplay", &table );
 }
