@@ -140,7 +140,6 @@ protected:
 
 
 private:
-	VOP_Node *get_assigned_material( std::string &o_path ) const;
 
 	/**
 		\brief Returns attributes that are referenced by a "bind" or
@@ -152,6 +151,17 @@ private:
 		std::vector< std::string > &o_to_export ) const;
 
 protected:
+
+	/**
+		\brief Returns the material assigned to this exported.
+
+		\param o_path
+			Will contain the path of the assigned shader on successful
+			run
+
+		If successful, returns the pointer to the VOP node.
+	*/
+	VOP_Node *get_assigned_material( std::string &o_path ) const;
 
 	/**
 		\brief Returns the context where to export possibly static attributes.

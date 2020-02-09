@@ -477,27 +477,20 @@ void geometry::connect()const
 		m_object,
 		m_handle);
 
-	// Do local material assignment
+	/*
+		OBJ-level material assignment.
 
-	int index = m_object->getParmIndex( "shop_materialpath" );
-	if( index < 0 )
-	{
+		\see polygonmesh for SOP-level assignmens on polygonal faces
+	*/
+	std::string material_path;
+	if( get_assigned_material(material_path) == nullptr )
 		return;
-	}
-
-	UT_String material_path;
-	m_object->evalString( material_path, "shop_materialpath", 0, 0.f );
-
-	if( material_path.length() == 0 )
-	{
-		return;
-	}
 
 	std::string attributes = m_handle + "|attributes";
 	m_nsi.Create( attributes, "attributes" );
 	m_nsi.Connect( attributes, "", m_handle, "geometryattributes" );
 
 	m_nsi.Connect(
-		material_path.buffer(), "",
+		material_path, "",
 		attributes, volume ? "volumeshader" : "surfaceshader" );
 }
