@@ -179,22 +179,6 @@ void scene::scan(
 			if( !node->isNetwork() )
 				continue;
 
-			/*
-				Our Objects To Render act like the "Force Objects" of Mantra. We
-				make sure to only filter out geo, and nothting else.
-
-				Note that light sources are dealt with a bit later since in
-				Houdini they are mixed with cameras (\ref process_node).
-			*/
-			OBJ_Node *obj = node->castToOBJNode();
-			const char* rop_path = i_context.m_rop_path.c_str();
-			if( obj && obj->castToOBJGeometry() &&
-				!i_context.m_objects_to_render_pattern->match(
-					obj, rop_path, true))
-			{
-				continue;
-			}
-
 			OP_Network *kidnet = (OP_Network *)node;
 			if( kidnet->getNchildren() )
 			{
