@@ -198,6 +198,11 @@ void exporter::export_attributes(
 			nsi_type = NSITypeNormal;
 		}
 
+		if( name == "pscale" )
+		{
+			name = "width";
+		}
+
 		if( point_attribute && i_vertices_list )
 		{
 			nsi.SetAttribute( m_handle,
@@ -245,6 +250,16 @@ void exporter::export_attributes(
 		}
 		else
 		{
+			if( name == "width" )
+			{
+				/* To match Houdini/Mantra */
+				float *fdata = (float*)nsi_data;
+				for( int i=0; i<data->entries(); i++ )
+				{
+					fdata[i] *= 2.0f;
+				}
+			}
+
 			nsi.SetAttributeAtTime( m_handle, i_time,
 				*NSI::Argument(name)
 					.SetType( nsi_type )

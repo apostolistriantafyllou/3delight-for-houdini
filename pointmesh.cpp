@@ -56,7 +56,8 @@ void pointmesh::set_attributes( void ) const
 
 	// Export particle width
 	export_basic_attributes(
-		m_context.m_current_time, default_gt_primitive(), true);
+		m_context.m_current_time, default_gt_primitive(),
+		true /* width ony */ );
 }
 
 void pointmesh::set_attributes_at_time(
@@ -77,12 +78,18 @@ void pointmesh::export_basic_attributes(
 		to_export.push_back("P");
 		to_export.push_back("id");
 	}
+
+	/*
+		We ask for both, but only one of them should be set by users.
+	*/
 	to_export.push_back("width");
+	to_export.push_back("pscale");
 
 	export_attributes( to_export, *i_gt_primitive.get(), i_time );
 
-	if( std::find(to_export.begin(), to_export.end(), "width")
-		!= to_export.end() )
+	if( std::find(to_export.begin(),to_export.end(),"width")!=to_export.end() &&
+		std::find(to_export.begin(),to_export.end(),"pcale")!=to_export.end() )
+
 	{
 		// "width" not in attribute list. default to something.
 		m_nsi.SetAttributeAtTime(
