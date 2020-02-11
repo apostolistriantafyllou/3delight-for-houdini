@@ -414,6 +414,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		!render,
 		m_cloud,
 		getFullPath().toStdString(),
+		m_settings.OverrideDisplayFlags(),
 		m_settings.GetObjectsToRender(),
 		m_settings.GetLightsToRender());
 

@@ -31,6 +31,7 @@ public:
 		bool i_export_nsi,
 		bool i_cloud,
 		const std::string& i_rop_path,
+		bool i_override_display_flags,
 		const UT_String& i_objects_to_render,
 		const UT_String& i_lights_to_render)
 	:
@@ -48,17 +49,24 @@ public:
 		m_cloud(i_cloud),
 		m_rop_path(i_rop_path),
 		m_objects_to_render_pattern(
-			OP_BundlePattern::allocPattern(i_objects_to_render)),
+			i_override_display_flags
+			? OP_BundlePattern::allocPattern(i_objects_to_render)
+			: nullptr),
 		m_lights_to_render_pattern(
-			OP_BundlePattern::allocPattern(i_lights_to_render))
+			i_override_display_flags
+			? OP_BundlePattern::allocPattern(i_lights_to_render)
+			: nullptr)
 	{
 		assert(!m_ipr || !m_export_nsi);
 	}
 
 	~context()
 	{
-		OP_BundlePattern::freePattern(m_lights_to_render_pattern);
-		OP_BundlePattern::freePattern(m_objects_to_render_pattern);
+		if(m_lights_to_render_pattern && m_objects_to_render_pattern)
+		{
+			OP_BundlePattern::freePattern(m_lights_to_render_pattern);
+			OP_BundlePattern::freePattern(m_objects_to_render_pattern);
+		}
 	}
 
 	/// Returns true if motion blur is required for this render

@@ -38,6 +38,7 @@ const char* settings::k_max_hair_depth = "max_hair_depth";
 const char* settings::k_max_distance = "max_distance";
 const char* settings::k_camera = "camera";
 const char* settings::k_atmosphere = "atmosphere";
+const char* settings::k_override_display_flags = "override_display_flags";
 const char* settings::k_objects_to_render = "objects_to_render";
 const char* settings::k_lights_to_render = "lights_to_render";
 const char* settings::k_default_image_filename = "default_image_filename";
@@ -226,6 +227,10 @@ PRM_Template* settings::GetTemplates()
 	static PRM_Name atmosphere(k_atmosphere, "Atmosphere");
 	static PRM_Default atmosphere_d(0.0f, "");
 
+	static PRM_Name override_display_flags(k_override_display_flags, "Override Display Flags");
+	static PRM_Default override_display_flags_d(false);
+	static PRM_Conditional override_display_flags_g(("{ " + std::string(k_override_display_flags) + " == 0 }").c_str());
+
 	static PRM_Name objects_to_render(k_objects_to_render, "Objects to Render");
 	static PRM_Default objects_to_render_d(0.0f, "*");
 
@@ -236,8 +241,9 @@ PRM_Template* settings::GetTemplates()
 	{
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &camera, &camera_d, nullptr, nullptr, nullptr, &PRM_SpareData::objCameraPath),
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &atmosphere, &atmosphere_d, nullptr, nullptr, nullptr),
-		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &objects_to_render, &objects_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objGeometryPath),
-		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &lights_to_render, &lights_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objLightPath)
+		PRM_Template(PRM_TOGGLE, 1, &override_display_flags, &override_display_flags_d),
+		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &objects_to_render, &objects_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objGeometryPath, 1, nullptr, &override_display_flags_g),
+		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &lights_to_render, &lights_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objLightPath, 1, nullptr, &override_display_flags_g)
 	};
 
 /*
@@ -801,18 +807,23 @@ void settings::UpdateLights()
 {
 	m_lights.clear();
 
-	auto pattern = OP_BundlePattern::allocPattern(GetLightsToRender());
+	auto pattern =
+		OverrideDisplayFlags()
+		? OP_BundlePattern::allocPattern(GetLightsToRender())
+		: nullptr;
 
-	scene::find_lights(*pattern, m_parameters.getFullPath().c_str(), m_lights);
-
-	OP_BundlePattern::freePattern( pattern );
+	scene::find_lights(pattern, m_parameters.getFullPath().c_str(), m_lights);
+	if(pattern)
+	{
+		OP_BundlePattern::freePattern( pattern );
+	}
 
 	PRM_Parm& light_sets_parm = m_parameters.getParm(k_light_sets);
 	unsigned nb_lights = m_parameters.evalInt(k_light_sets, 0, 0.0f);
 
 	// The only way I know to modify the label of a specific toggle is to
-	// remove the multi item and rebuilds it! Using setLabel of an existing
-	// PRM_Name change the label but not what you see on the screen!
+	// remove the multi item and rebuild it! Using setLabel of an existing
+	// PRM_Name changes the internal label but not what you see on the screen!
 	UT_Map<std::string, bool> selectedLights;
 	for (int i = nb_lights-1; i >= 0; i--)
 	{
@@ -890,6 +901,11 @@ UT_String settings::GetAtmosphere() const
 	UT_String atmosphere;
 	m_parameters.evalString(atmosphere, settings::k_atmosphere, 0, 0.0f);
 	return atmosphere;
+}
+
+bool settings::OverrideDisplayFlags()const
+{
+	return m_parameters.evalInt(settings::k_override_display_flags, 0, 0.0f) != 0;
 }
 
 UT_String settings::GetObjectsToRender() const

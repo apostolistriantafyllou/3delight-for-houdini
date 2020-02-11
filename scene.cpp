@@ -25,6 +25,33 @@
 
 #include <set>
 
+/**
+	\brief Returns true if an object is to be rendered.
+
+	\param i_node
+		Object for which visibility must be tested.
+	\param i_pattern
+		If not null, the object's display flag will be ignored and only objects
+		that match this pattern will be considered as renderable. Otherwise (if
+		null), the object's display flag will be used.
+	\param i_rop_path
+		Path of the 3Delight ROP, to be used with i_pattern.
+	\param i_time
+		Time at which the display flag must be tested.
+*/
+static bool object_displayed(
+	const OBJ_Node& i_node,
+	const OP_BundlePattern* i_render_pattern,
+	const char* i_rop_path,
+	double i_time)
+{
+	if(i_render_pattern)
+	{
+		return i_render_pattern->match(&i_node, i_rop_path, true);
+	}
+
+	return i_node.getObjectDisplay(i_time);
+}
 
 /**
 	\brief Decide what to do with the given OP_Node.
@@ -85,7 +112,11 @@ void scene::process_node(
 
 	if( obj->castToOBJLight() )
 	{
-		if(i_context.m_lights_to_render_pattern->match(obj, rop_path, true))
+		if(object_displayed(
+				*obj,
+				i_context.m_lights_to_render_pattern,
+				rop_path,
+				i_context.m_current_time))
 		{
 			o_to_export.push_back( new light(i_context, obj) );
 			if(i_context.m_ipr)
@@ -117,7 +148,11 @@ void scene::process_node(
 		return;
 	}
 
-	if(!i_context.m_objects_to_render_pattern->match(obj, rop_path, true))
+	if(!object_displayed(
+			*obj,
+			i_context.m_objects_to_render_pattern,
+			rop_path,
+			i_context.m_current_time))
 	{
 		return;
 	}
@@ -246,7 +281,7 @@ void scene::convert_to_nsi(
 
 	std::vector<OBJ_Node*> lights_to_render;
 	find_lights(
-		*i_context.m_lights_to_render_pattern,
+		i_context.m_lights_to_render_pattern,
 		i_context.m_rop_path.c_str(),
 		lights_to_render );
 
@@ -260,8 +295,22 @@ void scene::convert_to_nsi(
 	}
 }
 
+/**
+	\brief Find all renderable lights in the scene.
+
+	\param i_light_pattern
+		If not null, only lights that match this pattern will be considered as
+		renderable.
+	\param i_rop_path
+		Path of the 3Delight ROP, to be used with i_light_pattern.
+	\param o_lights
+		Will be filled with the scene's renderable light sources.
+
+	Display flags are ignored in this function because they could be animated
+	and we want the result to be time-independent.
+*/
 void scene::find_lights(
-	const OP_BundlePattern &i_light_pattern,
+	const OP_BundlePattern* i_light_pattern,
 	const char* i_rop_path,
 	std::vector<OBJ_Node*>& o_lights )
 {
@@ -287,7 +336,8 @@ void scene::find_lights(
 				(obj->castToOBJLight() ||
 					!vdb::node_is_vdb_loader(obj, 0).empty()) )
 			{
-				if( i_light_pattern.match(obj, i_rop_path, true))
+				if(!i_light_pattern ||
+					i_light_pattern->match(obj, i_rop_path, true))
 				{
 					o_lights.push_back(obj);
 				}
