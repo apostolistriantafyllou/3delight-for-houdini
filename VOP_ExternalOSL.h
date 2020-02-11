@@ -118,12 +118,12 @@ public:
 		instead of method onCreated, which fails because no parameters
 		are created yet.
 	*/
-	virtual void opChanged(OP_EventType reason, void* data=0);
+	virtual void opChanged(OP_EventType reason, void* data) override;
 	/**
 		Called when a new node is created. We use this instead of method
 		onCreated, which fails because no parameters are created yet.
 	*/
-	virtual bool runCreateScript();
+	virtual bool runCreateScript() override;
 
 #if HDK_API_VERSION >= 18000000
 	/// From VOP_Node
