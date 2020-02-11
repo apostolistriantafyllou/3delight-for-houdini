@@ -112,6 +112,19 @@ public:
 	/// Returns the number of ordered (ie : non-indexed) inputs
 	virtual unsigned orderedInputs()const override;
 
+	/**
+		Called when something changes in node. When loading a scene, it
+		seems that an event OP_NAME_CHANGED is always sent. We use this
+		instead of method onCreated, which fails because no parameters
+		are created yet.
+	*/
+	virtual void opChanged(OP_EventType reason, void* data=0);
+	/**
+		Called when a new node is created. We use this instead of method
+		onCreated, which fails because no parameters are created yet.
+	*/
+	virtual bool runCreateScript();
+
 #if HDK_API_VERSION >= 18000000
 	/// From VOP_Node
 	virtual UT_StringHolder getShaderName(

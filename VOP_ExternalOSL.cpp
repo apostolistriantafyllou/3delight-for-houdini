@@ -780,6 +780,11 @@ VOP_ExternalOSL::VOP_ExternalOSL(
 		*/
 		setMaterialFlag(true);
 	}
+
+	// Execute the script with the node's full path as an argument
+//	std::string init_cmd = "private/3Delight--VOP_OnCreated.cmd " +
+//		getFullPath().toStdString();
+//	OPgetDirector()->getCommandManager()->execute(init_cmd.c_str());
 }
 
 VOP_ExternalOSL::~VOP_ExternalOSL()
@@ -820,6 +825,34 @@ unsigned
 VOP_ExternalOSL::orderedInputs() const
 {
 	return m_shader_info.NumInputs();
+}
+
+void
+VOP_ExternalOSL::opChanged(OP_EventType reason, void* data)
+{
+	VOP_Node::opChanged(reason, data);
+	if(reason != OP_NAME_CHANGED)
+	{
+		return;
+	}
+
+	// Execute the script with the node's full path as an argument
+	std::string init_cmd = "private/3Delight--VOP_OnCreated.cmd " +
+		getFullPath().toStdString();
+	OPgetDirector()->getCommandManager()->execute(init_cmd.c_str());
+}
+
+bool
+VOP_ExternalOSL::runCreateScript()
+{
+	bool ret = VOP_Node::runCreateScript();
+
+	// Execute the script with the node's full path as an argument
+	std::string init_cmd = "private/3Delight--VOP_OnCreated.cmd " +
+		getFullPath().toStdString();
+	OPgetDirector()->getCommandManager()->execute(init_cmd.c_str());
+
+	return ret;
 }
 
 #if HDK_API_VERSION >= 18000000
