@@ -17,6 +17,13 @@ if not found:
             break
 # no camera found: creates one
 if not found:
+    import toolutils
+    viewer = toolutils.sceneViewer()
+    # to get the current matrix of viewport
+    matrix = viewer.curViewport().viewTransform()
     obj = hou.node("/obj")
     strs = camname.rsplit("/", 1)
     newnode = obj.createNode("cam", strs[1])
+    newnode.moveToGoodPosition()
+    # we want cam to see objects in viewport
+    newnode.setWorldTransform(matrix)
