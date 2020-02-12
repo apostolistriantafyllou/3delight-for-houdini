@@ -34,4 +34,17 @@ if ( "$arg1" != "" ) then
 
 	endif
 
+	set metallic_def = `run("opparm -ql $arg1 metallic")`
+	if("$metallic_def" != "") then
+
+		set ogl_metallic_def = `run("opparm -ql $arg1 ogl_metallic")`
+		if("$ogl_metallic_def" == "") then
+			opproperty -f -F OpenGL $arg1 material* ogl_metallic
+		endif
+
+		chadd -t 0 0 $arg1 ogl_metallic
+		chkey -t 0 -F 'ch("metallic")' $arg1/ogl_metallic
+
+	endif
+
 endif
