@@ -279,7 +279,8 @@ void vop::list_shader_parameters(
 				parameter->metadata,
 				"default_connection" );
 
-			if( ::strcmp("uvCoord", default_connection) == 0 )
+			if( default_connection &&
+				::strcmp("uvCoord", default_connection) == 0 )
 			{
 				o_uv_connection = parameter->name.c_str();
 			}
