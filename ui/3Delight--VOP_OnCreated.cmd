@@ -1,4 +1,4 @@
-# Default script run when a dlPrincipled is created
+# Default script run when one of our VOP 3Delight is created
 # $arg1 is the name of the node
 
 \set noalias = 1
