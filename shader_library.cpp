@@ -249,6 +249,7 @@ void shader_library::find_all_shaders( const char *i_root)
 	m_shaders.emplace_back("3Delight for Maya", "3Delight/Maya");
 	std::string maya_path = root + "/maya/osl";
 	scan_dir( maya_path, m_shaders.back().m_osos );
+	remove_useless_maya_shaders( m_shaders.back().m_osos );
 
 #ifndef NDEBUG
 	if(UTisUIAvailable())
@@ -291,6 +292,40 @@ void shader_library::Register(OP_OperatorTable* io_table)const
 						StructuredShaderInfo(info),
 						g.m_menu));
 		}
+	}
+}
+
+void shader_library::remove_useless_maya_shaders(
+	std::unordered_map<std::string, std::string> &i_osos )
+{
+	for( auto it=i_osos.begin(); it!=i_osos.end(); )
+	{
+		const std::string &shader_name = it->first;
+
+		bool useless =
+			shader_name.find( "dl", 0) == 0 ||
+			shader_name.find( "uv", 0) == 0 ||
+			shader_name.find( "_", 0) == 0 ||
+			shader_name.find( "material", 0) == 0 ||
+			shader_name.find( "shadingEngine", 0) == 0 ||
+			shader_name.find( "Light", 0 ) != std::string::npos ||
+			shader_name == "file.oso" ||
+			shader_name == "psdFileTex.oso" ||
+			shader_name == "surfaceShader.oso" ||
+			shader_name == "NetworkMaterials_Surface.oso" ||
+			shader_name == "envChrome.oso" ||
+			shader_name == "samplerInfo.oso" ||
+			shader_name == "shader3DelightAtmosphere.oso" ||
+			shader_name == "displacementShader.oso" ||
+			shader_name == "delightEnvironment.oso" ||
+			shader_name == "texture3DelightSky.oso";
+
+		if( useless )
+		{
+			it = i_osos.erase(it);
+		}
+		else
+			++it;
 	}
 }
 
@@ -467,5 +502,3 @@ bool scan_dir(
 
 	return true;
 }
-
-

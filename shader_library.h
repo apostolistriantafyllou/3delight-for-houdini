@@ -42,6 +42,14 @@ public:
 private:
 	void find_all_shaders( const char *installation_root );
 
+	/**
+		This function only leaves utility Maya shaders and removes
+		everything else. We do this because we don't duplications
+		and weird Maya' shadingEngine* stuff in there.
+	*/
+	void remove_useless_maya_shaders(
+		std::unordered_map<std::string, std::string> &i_osos );
+
 public:
 	std::string m_plugin_path;
 
