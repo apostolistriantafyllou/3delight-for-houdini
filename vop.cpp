@@ -40,17 +40,32 @@ void vop::set_attributes( void ) const
 void vop::set_attributes_at_time( double i_time ) const
 {
 	NSI::ArgumentList list;
+	std::string uv_coord_connection;
 
 	list_shader_parameters(
 		m_vop,
 		m_vop->getOperator()->getName(),
 		i_time,
 		-1,
-		list );
+		list, uv_coord_connection );
 
 	if( !list.empty() )
 	{
 		m_nsi.SetAttributeAtTime( m_handle, i_time, list );
+	}
+
+	if( !uv_coord_connection.empty() )
+	{
+		const shader_library &library = shader_library::get_instance();
+		std::string uv_shader( library.get_shader_path( "uv_reader") );
+
+		m_nsi.Create( "__uv_coordinaates_reader", "shader" );
+		m_nsi.SetAttribute( "__uv_coordinaates_reader",
+			NSI::StringArg( "shaderfilename", uv_shader) );
+
+		m_nsi.Connect(
+			"__uv_coordinaates_reader", "uvs",
+			m_handle, uv_coord_connection );
 	}
 }
 
@@ -152,11 +167,12 @@ void vop::changed_cb(
 	need something better here but for now this will do.
 */
 void vop::list_shader_parameters(
-	const OP_Parameters *i_parameters,
+	const OP_Node *i_parameters,
 	const char *i_shader,
 	float i_time,
 	int i_parm_index,
-	NSI::ArgumentList &o_list )
+	NSI::ArgumentList &o_list,
+	std::string &o_uv_connection )
 {
 	assert( i_shader );
 	assert( i_parameters );
@@ -247,6 +263,29 @@ void vop::list_shader_parameters(
 
 		int index = i_parameters->getParmIndex( parameter->name.c_str() );
 
+		/*
+			Special check for uv coordinates.
+
+			We are looking for something like float uv[2] that
+			is not connected to anything.
+		*/
+		if( parameter->type.arraylen == 2 &&
+			i_parameters->getInput(index) == nullptr  )
+		{
+			/* Check for default uv coordintes */
+			const char *default_connection = nullptr;
+			osl_utilities::FindMetaData(
+				default_connection,
+				parameter->metadata,
+				"default_connection" );
+
+			if( ::strcmp("uvCoord", default_connection) == 0 )
+			{
+				o_uv_connection = parameter->name.c_str();
+			}
+		}
+
+
 		if( index < 0 || (i_parm_index >= 0 && index != i_parm_index))
 			continue;
 
@@ -257,6 +296,7 @@ void vop::list_shader_parameters(
 				new NSI::FloatArg(
 					parameter->name.c_str(),
 					i_parameters->evalFloat(index, 0, i_time)) );
+
 			break;
 
 		case NSITypeColor:
@@ -483,13 +523,14 @@ void vop::add_and_connect_aov_group() const
 bool vop::set_single_attribute(int i_parm_index)const
 {
 	NSI::ArgumentList list;
+	std::string dummy;
 
 	list_shader_parameters(
 		m_vop,
 		m_vop->getOperator()->getName(),
 		m_context.m_current_time,
 		i_parm_index,
-		list);
+		list, dummy );
 
 	if(list.empty())
 	{

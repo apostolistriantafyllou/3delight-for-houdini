@@ -287,10 +287,12 @@ void light::set_attributes( void ) const
 void light::set_attributes_at_time( double i_time ) const
 {
 	NSI::ArgumentList list;
+	std::string dummy;
+
 	vop::list_shader_parameters(
 		m_vop,
 		shader_name(),
-		i_time, -1, list );
+		i_time, -1, list, dummy );
 
 	std::string shader(m_handle); shader += "|shader";
 	m_nsi.SetAttributeAtTime( shader, i_time, list );
@@ -403,6 +405,7 @@ void light::disconnect()const
 bool light::set_single_shader_attribute(int i_parm_index)const
 {
 	NSI::ArgumentList list;
+	std::string dummy;
 
 	/*
 		Again, we use the light OBJ_Node as a VOP_Node
@@ -413,7 +416,7 @@ bool light::set_single_shader_attribute(int i_parm_index)const
 		shader_name(),
 		m_context.m_current_time,
 		i_parm_index,
-		list);
+		list, dummy);
 
 	if(list.empty())
 	{

@@ -1,0 +1,18 @@
+/**
+	Simple UV reader for Houdini.
+*/
+shader uv_reader(
+	output float uvs[2] = {0, 0} )
+{
+	float st[3] = {u, v, 0};
+	if( getattribute( "st", st ) )
+	{
+		uvs[0] = st[0];
+		uvs[1] = st[1];
+	}
+	else
+	{
+		uvs[0] = u;
+		uvs[1] = v;
+	}
+}

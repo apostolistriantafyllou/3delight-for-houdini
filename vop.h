@@ -69,13 +69,17 @@ protected:
 		\param o_list
 			The resulting NSI argument list that can be passed directly
 			to NSISetAttribute[AtTime]
+		\parama o_uv_connection
+			If this is a texture node, will return the name of the parameter
+			to which a uv attribute reader must be connected
 	*/
 	static void list_shader_parameters(
-		const OP_Parameters *i_parameters,
+		const OP_Node *i_parameters,
 		const char *i_shader,
 		float i_time,
 		int i_parm_index,
-		NSI::ArgumentList &o_list );
+		NSI::ArgumentList &o_list,
+		std::string &o_uv_connection );
 
 private:
 	/// Exports time-dependent attributes to NSI
