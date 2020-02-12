@@ -21,4 +21,17 @@ if ( "$arg1" != "" ) then
 
 	endif
 
+	set roughness_def = `run("opparm -ql $arg1 roughness")`
+	if("$roughness_def" != "") then
+
+		set ogl_diff_rough_def = `run("opparm -ql $arg1 ogl_diff_rough")`
+		if("$ogl_diff_rough_def" == "") then
+			opproperty -f -F OpenGL $arg1 material* ogl_diff_rough
+		endif
+
+		chadd -t 0 0 $arg1 ogl_diff_rough
+		chkey -t 0 -F 'ch("roughness")' $arg1/ogl_diff_rough
+
+	endif
+
 endif
