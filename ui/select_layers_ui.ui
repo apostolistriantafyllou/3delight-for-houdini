@@ -38,6 +38,7 @@ dlg.gad = DIALOG "AOV Selector"
             TOGGLE_BUTTON "Surface Shader Cryptomatte":LABEL_WIDTH VALUE(id.surfaceshader.val);
             TOGGLE_BUTTON "Relighting Multiplier":LABEL_WIDTH VALUE(relighting_multiplier.val);
             TOGGLE_BUTTON "Relighting Reference":LABEL_WIDTH VALUE(relighting_reference.val);
+            TOGGLE_BUTTON "Motion Vector":LABEL_WIDTH VALUE(motionvector.val);
         }
         COL
         {

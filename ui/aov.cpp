@@ -26,7 +26,8 @@ std::vector<aov::description> descriptions =
 	{ aov::e_auxiliary, "Scene Path Cryptomatte", "scenepathid", "id.scenepath", "builtin", "scalar", false, false },
 	{ aov::e_auxiliary, "Surface Shader Cryptomatte", "surfaceid", "id.surfaceshader", "builtin", "scalar", false, false },
 	{ aov::e_auxiliary, "Relighting Multiplier", "relightingmultiplier", "relighting_multiplier", "shader", "color", false, false },
-	{ aov::e_auxiliary, "Relighting Reference", "relightingref", "relighting_reference", "shader", "color", false, false }
+	{ aov::e_auxiliary, "Relighting Reference", "relightingref", "relighting_reference", "shader", "color", false, false },
+	{ aov::e_auxiliary, "Motion Vector", "motion", "motionvector", "builtin", "vector", false, false }
 };
 
 /*
