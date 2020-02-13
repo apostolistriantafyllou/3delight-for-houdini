@@ -77,4 +77,10 @@ if ( "$arg1" != "" ) then
 
 	endif
 
+	set ogl_spec_model_def = `run("opparm -ql $arg1 ogl_spec_model")`
+	if("$ogl_spec_model_def" == "") then
+		opproperty -f -F OpenGL $arg1 material* ogl_spec_model
+		opparm $arg1 ogl_spec_model ggx
+	endif
+
 endif
