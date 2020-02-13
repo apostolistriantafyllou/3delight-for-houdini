@@ -47,4 +47,21 @@ if ( "$arg1" != "" ) then
 
 	endif
 
+	set incandescence_def = `run("opparm -ql $arg1 incandescence")`
+	if("$incandescence_def" != "") then
+
+		set ogl_emit_def = `run("opparm -ql $arg1 ogl_emit")`
+		if("$ogl_emit_def" == "") then
+			opproperty -f -F OpenGL $arg1 material* ogl_emit
+		endif
+
+		chadd -t 0 0 $arg1 ogl_emitr
+		chkey -t 0 -F 'ch("incandescencer")' $arg1/ogl_emitr
+		chadd -t 0 0 $arg1 ogl_emitg
+		chkey -t 0 -F 'ch("incandescenceg")' $arg1/ogl_emitg
+		chadd -t 0 0 $arg1 ogl_emitb
+		chkey -t 0 -F 'ch("incandescenceb")' $arg1/ogl_emitb
+
+	endif
+
 endif
