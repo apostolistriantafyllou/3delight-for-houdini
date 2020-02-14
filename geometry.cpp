@@ -759,7 +759,6 @@ VOP_Node *geometry::get_assigned_material( std::string &o_path ) const
 	if( index < 0 )
 		return nullptr;
 
-	std::string attributes( m_handle + "|attributes" );
 	UT_String material_path;
 	m_object->evalString( material_path, "shop_materialpath", 0, 0.f );
 
