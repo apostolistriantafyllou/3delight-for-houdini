@@ -614,18 +614,10 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 			&ROP_3Delight::changed_cb);
 	}
 
-	/*
-		Stop redirecting static attributes to the main NSI stream. This is
-		important to avoid closing the main stream prematurely.
-	*/
-	if(m_static_nsi.Handle() == m_nsi.Handle())
-	{
-		m_static_nsi.SetHandle(NSI_BAD_CONTEXT);
-	}
-
 	// Close the static attributes file if one was opened
-	if(m_static_nsi.Handle() != NSI_BAD_CONTEXT)
+	if(!m_static_nsi_file.empty() && m_static_nsi.Handle() != NSI_BAD_CONTEXT)
 	{
+		assert(m_static_nsi.Handle() != m_nsi.Handle());
 		m_static_nsi.End();
 	}
 
@@ -670,7 +662,9 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 
 					// Notify the UI that rendering has stopped
 					rop->m_settings.Rendering(false);
-
+					// Avoid keeping a reference to a soon invalid context
+					rop->m_static_nsi.SetHandle(NSI_BAD_CONTEXT);
+					// Close the main rendering context
 					rop->m_nsi.End();
 				}
 
@@ -705,7 +699,15 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 			m_nsi.RenderControl(NSI::CStringPArg("action", "wait"));
 		}
 
-		// The frame has finished exporting or rendering, close the context
+		// The frame has finished exporting or rendering, close the contexts
+		
+		/*
+			This will either close the static NSI file context or simply prevent
+			m_static_nsi from keeping a reference to a soon invalid context
+			(depending on wwhether m_static_nsi own its context or not).
+		*/
+		m_static_nsi.SetHandle(NSI_BAD_CONTEXT);
+		// Close the main rendering/exporting context
 		m_nsi.End();
 	}
 
