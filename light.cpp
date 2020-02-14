@@ -295,8 +295,7 @@ void light::set_attributes_at_time( double i_time ) const
 		shader_name(),
 		i_time, -1, list, dummy );
 
-	std::string shader(m_handle); shader += "|shader";
-	m_nsi.SetAttributeAtTime( shader, i_time, list );
+	m_nsi.SetAttributeAtTime( shader_handle(), i_time, list );
 }
 
 void light::connect( void ) const
