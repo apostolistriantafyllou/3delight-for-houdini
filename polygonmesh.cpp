@@ -89,6 +89,11 @@ void polygonmesh::set_attributes( void ) const
 
 	exporter::export_bind_attributes(*polygon_mesh, vertices_list );
 
+	export_creases(
+		polygon_mesh->getVertexList(),
+		nvertices.get(),
+		count_array.entries() );
+
 	if(!requires_frame_aligned_sample() ||
 		time_sampler(
 			m_context,
@@ -218,5 +223,84 @@ void polygonmesh::assign_primitive_materials( void ) const
 				.SetType( NSITypeInteger )
 				->SetCount( material.second.size() )
 				->SetValuePointer( &material.second[0] ) );
+	}
+}
+
+/**
+	We export creases even when using polygon meshes as these could be usefull
+	for dlToon shaders.
+
+	We don't have an access to edge information here so we must build it
+	ourselves from the face structure.
+
+	FIXME: I have no idea if there is "corners" in Houdini specs as we have in
+	Maya.
+*/
+void polygonmesh::export_creases(
+	GT_DataArrayHandle i_indices, int *i_nvertices, size_t i_n ) const
+{
+	GT_AttributeListHandle vertex =
+		default_gt_primitive().get()->getVertexAttributes();
+
+	if( !vertex )
+		return;
+
+	const GT_DataArrayHandle &creaseweight = vertex->get("creaseweight");
+
+	if( !creaseweight )
+		return;
+
+	GT_DataArrayHandle buffer_in_case_we_need_it;
+	float *weights = (float *)creaseweight->getF32Array(buffer_in_case_we_need_it);
+
+	if( weights == nullptr )
+	{
+		assert( false );
+		return;
+	}
+
+	GT_DataArrayHandle buffer_in_case_we_need_it_2;
+	const int *indices = i_indices->getI32Array(buffer_in_case_we_need_it_2);
+
+	/** Build edges from consecutive vertices that have weights > 0 */
+	std::vector<int> crease_indices;
+	std::vector<float> crease_sharpness;
+
+	int current_vertex = 0;
+	for( size_t i=0; i<i_n; i++ )
+	{
+		for( int j=0; j<i_nvertices[i]; j++ )
+		{
+			int next_j = j+1;
+			if( next_j == i_nvertices[i] )
+				next_j = 0;
+
+			if( weights[current_vertex + j] != 0.0f &&
+				weights[current_vertex + next_j] != 0.0f )
+			{
+				crease_indices.push_back( indices[current_vertex+j] );
+				crease_indices.push_back( indices[current_vertex+next_j] );
+
+				crease_sharpness.push_back( weights[current_vertex+j] );
+			}
+		}
+
+		current_vertex += i_nvertices[i];
+	}
+
+	if( !crease_indices.empty() )
+	{
+		NSI::ArgumentList mesh_args;
+		mesh_args.Add( NSI::Argument::New( "subdivision.creasevertices" )
+			->SetType( NSITypeInteger )
+			->SetCount( crease_indices.size() )
+			->SetValuePointer( &crease_indices[0] ) );
+
+		mesh_args.Add( NSI::Argument::New( "subdivision.creasesharpness" )
+			->SetType( NSITypeFloat )
+			->SetCount( crease_sharpness.size() )
+			->SetValuePointer( &crease_sharpness[0] ) );
+
+		m_nsi.SetAttribute( m_handle, mesh_args );
 	}
 }

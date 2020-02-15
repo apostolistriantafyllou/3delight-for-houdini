@@ -29,5 +29,9 @@ protected:
 	void assign_primitive_materials( void ) const;
 
 private:
+	void export_creases(
+		GT_DataArrayHandle i_indices, int *i_nvertices, size_t i_n ) const;
+
+private:
 	bool m_is_subdiv{false};
 };
