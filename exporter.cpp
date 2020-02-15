@@ -515,7 +515,15 @@ VOP_Node *exporter::get_assigned_material( std::string &o_path ) const
 	VOP_Node *vop_node = op_node->castToVOPNode();
 
 	if( !vop_node )
-		return nullptr;
+	{
+		/* Try a relative search */
+		vop_node = m_object->findVOPNode( material_path );
+		if( !vop_node )
+		{
+			return nullptr;
+		}
+	}
+
 
 	o_path = vop_node->getFullPath().toStdString();
 	return vop_node;
