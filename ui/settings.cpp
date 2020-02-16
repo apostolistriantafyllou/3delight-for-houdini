@@ -118,7 +118,7 @@ PRM_Template* settings::GetTemplates()
 	// Actions
 	static PRM_Name rendering(k_rendering, "Rendering");
 	static PRM_Default rendering_d(false);
-	
+
 	static PRM_Name stop_render(k_stop_render, "Abort");
 	static PRM_Conditional stop_render_h(("{ " + std::string(k_rendering) + " == 0 }").c_str(), PRM_CONDTYPE_HIDE);
 
@@ -127,14 +127,21 @@ PRM_Template* settings::GetTemplates()
 
 	static std::vector<PRM_Template> actions_templates =
 	{
-		PRM_Template(PRM_TOGGLE|PRM_TYPE_JOIN_NEXT|PRM_TYPE_INVISIBLE, 1, &rendering, &rendering_d),
-		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &stop_render, nullptr, nullptr, nullptr, &settings::StopRenderCB, nullptr, 0, nullptr, &stop_render_h),
+		PRM_Template(
+			PRM_TOGGLE|PRM_TYPE_JOIN_NEXT|PRM_TYPE_INVISIBLE, 1,
+			&rendering, &rendering_d),
+		PRM_Template(
+			PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &stop_render, nullptr, nullptr,
+			nullptr, &settings::StopRenderCB, nullptr, 0, nullptr,
+			&stop_render_h),
 		/*
 			The ROP_Node::doRenderCback callback usually renders, but since the
 			Export button is only visible when the ROP is in export mode, it
 			will export an NSI stream instead.
 		*/
-		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &export_n, nullptr, nullptr, nullptr, &ROP_Node::doRenderCback, nullptr, 0, nullptr, &export_h)
+		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &export_n, nullptr,
+			nullptr, nullptr,
+			&ROP_Node::doRenderCback, nullptr, 0, nullptr, &export_h)
 	};
 
 	// Quality
