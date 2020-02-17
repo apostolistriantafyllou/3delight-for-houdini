@@ -117,7 +117,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 		but we add the resulting GT primitives to previously creates primitive
 		exporters instead of creating new ones.
 	*/
-	void addPrimitive( const GT_PrimitiveHandle &i_primitive )
+	void addPrimitive( const GT_PrimitiveHandle &i_primitive ) override
 	{
 		if(m_stop)
 		{
