@@ -63,7 +63,8 @@ if nodeFound == None:
 if nodeFound != None:
     hou.node(nodeFound.path()).render()
 else:
-    hou.ui.displayMessage('Can not render: no ROP found.', title = '3Delight', severity = hou.severityType.Warning)
+    newnode = roptoolutils.createRenderNode('3Delight')
+    hou.node(newnode.path()).render()
 
 	]]></script>
   </tool>
