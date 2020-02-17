@@ -27,3 +27,5 @@ if not found:
     newnode.moveToGoodPosition()
     # we want cam to see objects in viewport
     newnode.setWorldTransform(matrix)
+    settings = viewer.curViewport().settings()
+    settings.setCamera(newnode)
