@@ -9,9 +9,9 @@
 	   update any changes you want to test in this file.
   -->
   <toolshelf name="3delight" label="3Delight">
+    <memberTool name="_3dl_rop_render_3Delight"/>
     <memberTool name="_3dl_rop_3Delight"/>
     <memberTool name="_3dl_rop_3DelightCloud"/>
-    <memberTool name="_3dl_rop_render_3Delight"/>
     <memberTool name="_3dl_rop_select_3Delight"/>
     <memberTool name="_3dl_object_pointlight"/>
     <memberTool name="_3dl_object_spotlight"/>
