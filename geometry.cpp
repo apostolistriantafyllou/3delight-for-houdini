@@ -437,6 +437,8 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 			requires_frame_aligned_sample,
 			update);
 
+		detail_handle.removePreserveRequest();
+
 		if(m_primitives.empty())
 		{
 			break;
