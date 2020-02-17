@@ -31,7 +31,7 @@ newnode = roptoolutils.createRenderNode('3Delight')
 	]]></script>
   </tool>
 
-  <tool name="_3dl_rop_3DelightCloud" label="ROP Cloud" icon="shelf_ROP_3Delight">
+  <tool name="_3dl_rop_3DelightCloud" label="ROP Cloud" icon="shelf_ROP_3Delight_cloud">
     <helpText><![CDATA[Creates a render node 3DelightCloud.]]></helpText>
     <script scriptType="python"><![CDATA[
 import roptoolutils
