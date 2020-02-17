@@ -93,6 +93,21 @@ struct OBJ_Node_Refiner : public GT_Refine
 
 
 	/**
+
+		Diable threadig at this level: no gain and all pain!
+
+		Allowing threading means that we receive geo out-of-order.  This
+		is impossible to manage in the situation where we have motion
+		blur for example. Not only that, but we would have to disable it
+		when we have instances, as the order of primitives comes randomly.
+		Note sure how this can work really.
+	*/
+	virtual bool allowThreading( void ) const override
+	{
+		return false;
+	}
+
+	/**
 		One interesting thing here is how we deal with instances. We first
 		refine() recursively to resolve the instanced geometry since we
 		need its handle to pass to the actual instancer. All the rest is 1 to 1
