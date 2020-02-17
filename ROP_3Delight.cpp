@@ -380,6 +380,16 @@ void ROP_3Delight::StopRender()
 	m_settings.Rendering(false);
 }
 
+unsigned ROP_3Delight::maxOutputs() const
+{
+	return 1;
+}
+
+unsigned ROP_3Delight::getNumVisibleOutputs() const
+{
+	return 1;
+}
+
 int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 {
 	// If we still have a render going on, kill it first.

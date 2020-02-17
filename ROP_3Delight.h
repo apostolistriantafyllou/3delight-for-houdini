@@ -70,6 +70,9 @@ public:
 	/// Stops any current rendering session from this ROP
 	void StopRender();
 
+	virtual unsigned maxOutputs() const;
+	virtual unsigned getNumVisibleOutputs() const;
+
 protected:
 
 	ROP_3Delight(
