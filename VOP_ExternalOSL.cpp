@@ -949,6 +949,26 @@ VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
 	osl_utilities::FindMetaData(name, i_shader_info.m_dl.metadata(), "niceName");
 	setEnglish(name);
 
+	// Set default icon name for those that are not already defined by
+	// VOP_3Delight-xxx in ui
+	const DlShaderInfo::conststring& shadername =
+		i_shader_info.m_dl.shadername();
+	if (shadername != "dlColorToFloat" &&
+		shadername != "dlFloatToColor" &&
+		shadername != "dlGlass" &&
+		shadername != "dlHairAndFur" &&
+		shadername != "dlMetal" &&
+		shadername != "dlPrincipled" &&
+		shadername != "dlRamp" &&
+		shadername != "dlSkin" &&
+		shadername != "dlSubstance" &&
+		shadername != "dlThin" &&
+		shadername != "dlToon" &&
+		shadername != "vdbVolume")
+	{
+		setIconName("ROP_3Delight");
+	}
+
 	setOpTabSubMenuPath(i_menu_name.c_str());
 
 	VOP_OperatorInfo* vop_info =
