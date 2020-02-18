@@ -248,14 +248,12 @@ void vop::list_shader_parameters(
 		// Process ramp parameters differently
 		const char* widget = "";
 		osl_utilities::FindMetaData(widget, parameter->metadata, "widget");
-		osl_utilities::ramp::eType ramp_type =
-			osl_utilities::ramp::GetType(widget);
-		if(osl_utilities::ramp::IsRamp(ramp_type))
+		if(osl_utilities::ramp::IsRampWidget(widget))
 		{
 			list_ramp_parameters(
 				i_parameters,
+				*shader_info,
 				*parameter,
-				ramp_type,
 				i_time,
 				o_list);
 			continue;
@@ -543,31 +541,34 @@ bool vop::set_single_attribute(int i_parm_index)const
 	return true;
 }
 
+
 void vop::list_ramp_parameters(
 	const OP_Parameters* i_opp,
+	const DlShaderInfo& i_shader,
 	const DlShaderInfo::Parameter& i_param,
-	osl_utilities::ramp::eType i_type,
 	float i_time,
 	NSI::ArgumentList& o_list)
 {
 	using namespace osl_utilities::ramp;
 
-	// Remove the value suffix from the variable name
-	const std::string& value_suffix = GetValueSuffix(i_type);
-	std::string root_name = RemoveSuffix(i_param.name.string(), value_suffix);
+	const DlShaderInfo::Parameter* knots = nullptr;
+	const DlShaderInfo::Parameter* interpolation = nullptr;
+	std::string base_name;
+	if(!FindMatchingRampParameters(i_shader, i_param, knots, interpolation, base_name))
+	{
+		return;
+	}
 
 	// Create the names of the other shader parameters
-	const std::string& position_suffix = GetPositionSuffix(i_type);
-	std::string pos_string = root_name + position_suffix;
-	std::string value_string = root_name + value_suffix;
-	std::string inter_string = root_name + k_interpolation_suffix;
+	std::string pos_string = knots->name.string();
+	std::string value_string = i_param.name.string();
+	std::string inter_string = interpolation->name.string();
 
 	/*
 		Re-create arrays of values, since Houdini's "arrays" are actually just
 		numbered parameters.
 	*/
-	bool color = IsColor(i_type);
-	int num_points = i_opp->evalInt(root_name.c_str(), 0, i_time);
+	int num_points = i_opp->evalInt(base_name.c_str(), 0, i_time);
 	std::vector<float> positions;
 	std::vector<float> values;
 	std::vector<int> interpolations;
@@ -580,11 +581,9 @@ void vop::list_ramp_parameters(
 		positions.push_back(i_opp->evalFloat(pos_item.c_str(), 0, i_time));
 
 		std::string value_item = value_string + index_buffer;
-		values.push_back(i_opp->evalFloat(value_item.c_str(), 0, i_time));
-		if(color)
+		for(unsigned c = 0; c < (i_param.type.type == NSITypeColor ? 3 : 1); c++)
 		{
-			values.push_back(i_opp->evalFloat(value_item.c_str(), 1, i_time));
-			values.push_back(i_opp->evalFloat(value_item.c_str(), 2, i_time));
+			values.push_back(i_opp->evalFloat(value_item.c_str(), c, i_time));
 		}
 
 		std::string inter_item = inter_string + index_buffer;
@@ -626,7 +625,7 @@ void vop::list_ramp_parameters(
 		->SetArrayType(NSITypeFloat, num_points)
 		->CopyValue(&positions[0], positions.size()*sizeof(positions[0])));
 	o_list.Add(NSI::Argument::New(value_string)
-		->SetArrayType(color ? NSITypeColor : NSITypeFloat, num_points)
+		->SetArrayType((NSIType_t)i_param.type.type, num_points)
 		->CopyValue(&values[0], values.size()*sizeof(values[0])));
 	o_list.Add(NSI::Argument::New(inter_string)
 		->SetArrayType(NSITypeInteger, num_points)

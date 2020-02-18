@@ -117,8 +117,8 @@ private:
 	*/
 	static void list_ramp_parameters(
 		const OP_Parameters* i_opp,
+		const DlShaderInfo& i_shader,
 		const DlShaderInfo::Parameter& i_param,
-		osl_utilities::ramp::eType i_type,
 		float i_time,
 		NSI::ArgumentList& o_list );
 

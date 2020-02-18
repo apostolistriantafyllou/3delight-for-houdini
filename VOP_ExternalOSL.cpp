@@ -506,28 +506,29 @@ AddParameterTemplate(
 static void
 AddRampParameterTemplate(
 	std::vector<PRM_Template>& io_templates,
+	const DlShaderInfo& i_shader,
 	const DlShaderInfo::Parameter& i_param,
 	const osl_utilities::ParameterMetaData& i_meta)
 {
 	using namespace osl_utilities;
 	using namespace osl_utilities::ramp;
 
-	assert(i_meta.m_widget);
-
-	// Remove the value suffix from the variable name
-	eType ramp_type = GetType(i_meta.m_widget);
-	const std::string& value_suffix = GetValueSuffix(ramp_type);
-	std::string root_name = RemoveSuffix(i_param.name.string(), value_suffix);
+	const DlShaderInfo::Parameter* knots = nullptr;
+	const DlShaderInfo::Parameter* interpolation = nullptr;
+	std::string base_name;
+	if(!FindMatchingRampParameters(i_shader, i_param, knots, interpolation, base_name))
+	{
+		return;
+	}
 
 	// Create the names of the other variables controlled by the ramp widget
-	const std::string& position_suffix = GetPositionSuffix(ramp_type);
 	char* pos_string =
-		LEAKED(strdup((root_name + position_suffix + k_index_suffix).c_str()));
+		LEAKED(strdup((knots->name.string() + k_index_suffix).c_str()));
 	char* value_string =
-		LEAKED(strdup((root_name + value_suffix + k_index_suffix).c_str()));
+		LEAKED(strdup((i_param.name.string() + k_index_suffix).c_str()));
 	char* inter_string =
-		LEAKED(strdup((root_name + k_interpolation_suffix + k_index_suffix).c_str()));
-	bool color = IsColor(ramp_type);
+		LEAKED(strdup((interpolation->name.string() + k_index_suffix).c_str()));
+	bool color = i_param.type.type == NSITypeColor;
 	PRM_Name* pos = LEAKED(new PRM_Name(pos_string, k_position));
 	PRM_Name* value = LEAKED(new PRM_Name(value_string, color ? k_color : k_value));
 	PRM_Name* inter = LEAKED(new PRM_Name(inter_string, k_interpolation));
@@ -548,7 +549,7 @@ AddRampParameterTemplate(
 	// Create the main ramp template
 	PRM_MultiType multi_type =
 		color ? PRM_MULTITYPE_RAMP_RGB : PRM_MULTITYPE_RAMP_FLT;
-	char* name_string = LEAKED(strdup(root_name.c_str()));
+	char* name_string = LEAKED(strdup(base_name.c_str()));
 	PRM_Name* name = LEAKED(new PRM_Name(name_string, i_meta.m_label));
 	io_templates.push_back(
 		PRM_Template(
@@ -659,7 +660,7 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 
 		// FIXME : support variable length arrays
 		if(param.type.arraylen < 0 &&
-			!osl_utilities::ramp::IsRamp(osl_utilities::ramp::GetType(widget)))
+			!osl_utilities::ramp::IsRampWidget(widget))
 		{
 			continue;
 		}
@@ -784,10 +785,10 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 			meta.m_label = param->name.c_str();
 			osl_utilities::GetParameterMetaData(meta, param->metadata);
 
-			if(osl_utilities::ramp::IsRamp(
-				osl_utilities::ramp::GetType(meta.m_widget)))
+			if(osl_utilities::ramp::IsRampWidget(meta.m_widget))
 			{
-				AddRampParameterTemplate(*templates, *param, meta);
+				AddRampParameterTemplate(
+					*templates, i_shader_info.m_dl, *param, meta);
 			}
 			else
 			{

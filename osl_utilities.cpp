@@ -3,24 +3,11 @@
 #include <assert.h>
 
 static const std::string k_empty;
+static const std::string k_ramp = "Ramp";
 
 const std::string osl_utilities::k_null = "null";
 const std::string osl_utilities::k_check_box = "checkBox";
 const std::string osl_utilities::k_filename = "filename";
-
-const std::string osl_utilities::ramp::k_maya_color = "maya_colorRamp";
-const std::string osl_utilities::ramp::k_maya_float = "maya_floatRamp";
-const std::string osl_utilities::ramp::k_katana_color = "colorRamp";
-const std::string osl_utilities::ramp::k_katana_float = "floatRamp";
-
-const std::string osl_utilities::ramp::k_maya_position_suffix = "_Position";
-const std::string osl_utilities::ramp::k_maya_color_suffix = "_ColorValue";
-const std::string osl_utilities::ramp::k_maya_float_suffix = "_FloatValue";
-const std::string osl_utilities::ramp::k_katana_position_suffix = "_Knots";
-const std::string osl_utilities::ramp::k_katana_color_suffix = "_Colors";
-const std::string osl_utilities::ramp::k_katana_float_suffix = "_Floats";
-
-const std::string osl_utilities::ramp::k_interpolation_suffix = "_Interp";
 
 const std::string osl_utilities::ramp::k_index_suffix = "_#_";
 const std::string osl_utilities::ramp::k_index_format = "_%u_";
@@ -116,77 +103,75 @@ osl_utilities::GetParameterMetaData(
 	}
 }
 
-osl_utilities::ramp::eType
-osl_utilities::ramp::GetType(const char* i_widget)
+bool
+osl_utilities::ramp::IsRampWidget(const char* i_widget)
 {
-	if(!i_widget)
-	{
-		return kNotRamp;
-	}
-
-	if(i_widget == k_maya_color)
-	{
-		return kMayaColor;
-	}
-
-	if(i_widget == k_maya_float)
-	{
-		return kMayaFloat;
-	}
-
-	if(i_widget == k_katana_color)
-	{
-		return kKatanaColor;
-	}
-
-	if(i_widget == k_katana_float)
-	{
-		return kKatanaFloat;
-	}
-
-	return kNotRamp;
+	return i_widget && std::string(i_widget).find(k_ramp) != std::string::npos;
 }
 
-const std::string&
-osl_utilities::ramp::GetPositionSuffix(osl_utilities::ramp::eType i_type)
+bool
+osl_utilities::ramp::FindMatchingRampParameters(
+	const DlShaderInfo& i_shader,
+	const DlShaderInfo::Parameter& i_value,
+	const DlShaderInfo::Parameter*& o_knots,
+	const DlShaderInfo::Parameter*& o_interpolation,
+	std::string& o_base_name)
 {
-	assert(i_type != kNotRamp);
-	return
-		(i_type & kMayaBit) != 0
-		? k_maya_position_suffix
-		: k_katana_position_suffix;
-}
+	o_knots = nullptr;
+	o_interpolation = nullptr;
+	o_base_name.clear();
 
-const std::string&
-osl_utilities::ramp::GetValueSuffix(osl_utilities::ramp::eType i_type)
-{
-	assert(i_type != kNotRamp);
-	switch(i_type)
+	if(!i_value.type.is_array())
 	{
-		case kMayaColor:
-			return k_maya_color_suffix;
-		case kMayaFloat:
-			return k_maya_float_suffix;
-		case kKatanaColor:
-			return k_katana_color_suffix;
-		case kKatanaFloat:
-			return k_katana_float_suffix;
-		default:
-			assert(false);
-			return k_empty;
-	}
-}
-
-std::string
-osl_utilities::ramp::RemoveSuffix(
-	const std::string& i_name,
-	const std::string& i_suffix)
-{
-	int root_length = int(i_name.length()) - int(i_suffix.length());
-	if(root_length > 0 && i_name.substr(root_length) == i_suffix)
-	{
-		return i_name.substr(0, root_length);
+		return false;
 	}
 
-	return i_name;
+	/*
+		Extract the common prefix of all the ramp's parameters by removing the
+		"value" parameter's suffix, separated by an underscore, which we keep.
+	*/
+	std::string name = i_value.name.string();
+	size_t end = name.rfind('_');
+	if(end == std::string::npos || end == 0)
+	{
+		return false;
+	}
+	std::string prefix = name.substr(0, end+1);
+	o_base_name = name.substr(0, end);
+
+	/*
+		Search for "knots" and "interpolation" parameters among the other shader
+		parameters.
+	*/
+	unsigned nparams = i_shader.nparams();
+	for(unsigned p = 0; p < nparams; p++)
+	{
+		const DlShaderInfo::Parameter* param = i_shader.getparam(p);
+		assert(param);
+		if(param == &i_value || !param->type.is_array() ||
+			param->isoutput != i_value.isoutput ||
+			param->name.string().substr(0, prefix.length()) != prefix)
+		{
+			continue;
+		}
+
+		if(!o_knots && param->type.type == NSITypeFloat)
+		{
+			o_knots = param;
+			if(o_interpolation)
+			{
+				break;
+			}
+		}
+		else if(!o_interpolation && param->type.type == NSITypeInteger)
+		{
+			o_interpolation = param;
+			if(o_knots)
+			{
+				break;
+			}
+		}
+	}
+
+	return true;
 }

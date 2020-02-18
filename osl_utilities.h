@@ -38,50 +38,32 @@ namespace osl_utilities
 
 	namespace ramp
 	{
-		/// Widget types
-		extern const std::string k_maya_color;
-		extern const std::string k_maya_float;
-		extern const std::string k_katana_color;
-		extern const std::string k_katana_float;
-
 		/// Parameter name suffixes
-		extern const std::string k_maya_position_suffix;
-		extern const std::string k_maya_color_suffix;
-		extern const std::string k_maya_float_suffix;
-		extern const std::string k_katana_position_suffix;
-		extern const std::string k_katana_color_suffix;
-		extern const std::string k_katana_float_suffix;
-		extern const std::string k_interpolation_suffix;
 		extern const std::string k_index_suffix;
 		extern const std::string k_index_format;
 
-		/// Describes a ramp widget
-		enum eType
-		{
-			kMayaBit = 0x01,
-			kColorBit = 0x02,
-			kRampBit = 0x04,
+		/// Returns true if the string describes a ramp-type widget
+		bool IsRampWidget(const char* i_widget);
 
-			kMayaColor = kRampBit | kMayaBit | kColorBit,
-			kMayaFloat = kRampBit | kMayaBit,
-			kKatanaColor = kRampBit | kColorBit,
-			kKatanaFloat = kRampBit,
+		/**
+			\brief Finds the knots and interpolation 
 
-			kNotRamp = 0x0
-		};
+			Given the main "value" parameter of a "ramp" contraption in a
+			shader, this function identifies the other related parameters of the
+			shader, based only on their name and type.
 
-		/// Returns the type of ramp widget described by i_widget
-		eType GetType(const char* i_widget);
-		/// Returns true if i_type is a valid ramp type
-		inline bool IsRamp(eType i_type) { return  (i_type & kRampBit) != 0; }
-		/// Returns true if i_type is a color (ie : not scalar) ramp type
-		inline bool IsColor(eType i_type) { return (i_type & kColorBit) != 0; }
-		/// Returns the appropriate suffix for the "position" parameter
-		const std::string& GetPositionSuffix(eType i_type);
-		/// Returns the appropriate suffix for the "value" parameter
-		const std::string& GetValueSuffix(eType i_type);
-		std::string RemoveSuffix(
-			const std::string& i_name,
-			const std::string& i_suffix);
+			\param i_shader
+			\param i_value
+			\param o_knots
+			\param o_interpolation
+			\param o_base_name
+			\return
+		*/
+		bool FindMatchingRampParameters(
+			const DlShaderInfo& i_shader,
+			const DlShaderInfo::Parameter& i_value,
+			const DlShaderInfo::Parameter*& o_knots,
+			const DlShaderInfo::Parameter*& o_interpolation,
+			std::string& o_base_name);
 	}
 }
