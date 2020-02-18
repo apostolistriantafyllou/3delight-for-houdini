@@ -59,12 +59,12 @@ void vop::set_attributes_at_time( double i_time ) const
 		const shader_library &library = shader_library::get_instance();
 		std::string uv_shader( library.get_shader_path( "uv_reader") );
 
-		m_nsi.Create( "__uv_coordinaates_reader", "shader" );
-		m_nsi.SetAttribute( "__uv_coordinaates_reader",
+		m_nsi.Create( "__uv_coordinates_reader", "shader" );
+		m_nsi.SetAttribute( "__uv_coordinates_reader",
 			NSI::StringArg( "shaderfilename", uv_shader) );
 
 		m_nsi.Connect(
-			"__uv_coordinaates_reader", "uvs",
+			"__uv_coordinates_reader", "uvs",
 			m_handle, uv_coord_connection );
 	}
 }
