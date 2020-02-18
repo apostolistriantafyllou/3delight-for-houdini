@@ -178,7 +178,9 @@ void polygonmesh::assign_primitive_materials( void ) const
 			This could be a single faced geo OR a detail material assignment.
 			Deal with it using the usual attribute assignment.
 		*/
-		std::string shop = std::string( materials->getS(0) );
+		std::string shop;
+		resolve_material_path( materials->getS(0), shop );
+
 		if( shop.empty() )
 			return;
 
@@ -200,7 +202,9 @@ void polygonmesh::assign_primitive_materials( void ) const
 	std::unordered_map< std::string, std::vector<int> > all_materials;
 	for( GT_Offset i=0; i<materials->entries(); i++ )
 	{
-		std::string shop = std::string( materials->getS(i) );
+		std::string shop;
+		resolve_material_path( materials->getS(i), shop );
+
 		if( shop.empty() )
 			continue;
 		all_materials[ shop ].push_back( i );

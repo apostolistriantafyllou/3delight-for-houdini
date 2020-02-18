@@ -511,19 +511,24 @@ VOP_Node *exporter::get_assigned_material( std::string &o_path ) const
 		return nullptr;
 	}
 
-	OP_Node* op_node = OPgetDirector()->findNode( material_path );
+	return resolve_material_path( material_path.c_str(), o_path );
+}
+
+VOP_Node *exporter::resolve_material_path(
+	const char *i_path,  std::string &o_path ) const
+{
+	OP_Node* op_node = OPgetDirector()->findNode( i_path );
 	VOP_Node *vop_node = op_node->castToVOPNode();
 
 	if( !vop_node )
 	{
 		/* Try a relative search */
-		vop_node = m_object->findVOPNode( material_path );
+		vop_node = m_object->findVOPNode( i_path );
 		if( !vop_node )
 		{
 			return nullptr;
 		}
 	}
-
 
 	o_path = vop_node->getFullPath().toStdString();
 	return vop_node;

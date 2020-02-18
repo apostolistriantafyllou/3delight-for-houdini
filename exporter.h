@@ -164,6 +164,13 @@ protected:
 	VOP_Node *get_assigned_material( std::string &o_path ) const;
 
 	/**
+		\brief Resolves the [relaative] material path to an absolute
+		path and a VOP node.
+	*/
+	VOP_Node *resolve_material_path(
+		const char *i_path,  std::string &o_path ) const;
+
+	/**
 		\brief Returns the context where to export possibly static attributes.
 
 		This allows attributes that don't change from one frame to another to be
