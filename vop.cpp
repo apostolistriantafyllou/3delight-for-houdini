@@ -588,35 +588,8 @@ void vop::list_ramp_parameters(
 
 		std::string inter_item = inter_string + index_buffer;
 		int inter = i_opp->evalInt(inter_item.c_str(), 0, i_time);
-
-		// Try remapping Houdini's interpolation mode to Maya's
-		switch(inter)
-		{
-			case PRM_RAMP_INTERP_CONSTANT:
-				// None
-				inter = 0;
-				break;
-			case PRM_RAMP_INTERP_LINEAR:
-				// Linear
-				inter = 1;
-				break;
-			case PRM_RAMP_INTERP_MONOTONECUBIC:
-				// Smooth
-				inter = 2;
-				break;
-			case PRM_RAMP_INTERP_CATMULLROM:
-			case PRM_RAMP_INTERP_BEZIER:
-			case PRM_RAMP_INTERP_BSPLINE:
-			case PRM_RAMP_INTERP_HERMITE:
-				// Spline
-				inter = 3;
-				break;
-			default:
-				assert(false);
-				inter = 1;
-		}
-
-		interpolations.push_back(inter);
+		interpolations.push_back(
+			FromHoudiniInterpolation((PRM_RampInterpType)inter));
 	}
 	delete[] index_buffer;
 

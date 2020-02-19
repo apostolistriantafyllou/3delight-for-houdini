@@ -12,6 +12,15 @@ const std::string osl_utilities::k_filename = "filename";
 const std::string osl_utilities::ramp::k_index_suffix = "_#_";
 const std::string osl_utilities::ramp::k_index_format = "_%u_";
 
+static const PRM_RampInterpType k_3delight_interpolation_to_houdini[] =
+{
+	PRM_RAMP_INTERP_CONSTANT,
+	PRM_RAMP_INTERP_LINEAR,
+	PRM_RAMP_INTERP_MONOTONECUBIC,
+	PRM_RAMP_INTERP_CATMULLROM
+};
+
+
 void
 osl_utilities::FindMetaData(
 	const char*& o_value,
@@ -107,6 +116,46 @@ bool
 osl_utilities::ramp::IsRampWidget(const char* i_widget)
 {
 	return i_widget && std::string(i_widget).find(k_ramp) != std::string::npos;
+}
+
+int
+osl_utilities::ramp::FromHoudiniInterpolation(
+	PRM_RampInterpType i_houdini_interpolation)
+{
+	switch(i_houdini_interpolation)
+	{
+		case PRM_RAMP_INTERP_CONSTANT:
+			// None
+			return 0;
+		case PRM_RAMP_INTERP_LINEAR:
+			// Linear
+			return 1;
+		case PRM_RAMP_INTERP_MONOTONECUBIC:
+			// Smooth
+			return 2;
+		case PRM_RAMP_INTERP_CATMULLROM:
+		case PRM_RAMP_INTERP_BEZIER:
+		case PRM_RAMP_INTERP_BSPLINE:
+		case PRM_RAMP_INTERP_HERMITE:
+			// Spline
+			return 3;
+		default:
+			assert(false);
+			return 1;
+	}
+}
+
+PRM_RampInterpType
+osl_utilities::ramp::ToHoudiniInterpolation(int i_3delight_interpolation)
+{
+	unsigned nb_3delight_interpolations =
+		sizeof(k_3delight_interpolation_to_houdini) /
+		sizeof(k_3delight_interpolation_to_houdini[0]);
+	return
+		0 <= i_3delight_interpolation &&
+			i_3delight_interpolation < nb_3delight_interpolations
+		? k_3delight_interpolation_to_houdini[i_3delight_interpolation]
+		: PRM_RAMP_INTERP_CONSTANT;
 }
 
 bool

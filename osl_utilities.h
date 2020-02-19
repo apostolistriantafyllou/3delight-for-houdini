@@ -2,6 +2,8 @@
 
 #include <3Delight/ShaderQuery.h>
 
+#include <PRM/PRM_Type.h>
+
 namespace osl_utilities
 {
 	/// Contains pointers to some useful meta-data in the shader's description
@@ -44,6 +46,11 @@ namespace osl_utilities
 
 		/// Returns true if the string describes a ramp-type widget
 		bool IsRampWidget(const char* i_widget);
+
+		/// Converts Houdini's ramp interpolation into ours (used in our OSLs).
+		int FromHoudiniInterpolation(PRM_RampInterpType i_houdini_interpolation);
+		/// Converts our ramp interpolation (used in our OSLs) into Houdini's.
+		PRM_RampInterpType ToHoudiniInterpolation(int i_3delight_interpolation);
 
 		/**
 			\brief Finds the knots and interpolation 
