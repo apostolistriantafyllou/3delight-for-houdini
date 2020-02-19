@@ -70,6 +70,9 @@ public:
 	/// Stops any current rendering session from this ROP
 	void StopRender();
 
+	virtual unsigned maxInputs() const;
+	virtual unsigned getNumVisibleInputs() const;
+
 	virtual unsigned maxOutputs() const;
 	virtual unsigned getNumVisibleOutputs() const;
 

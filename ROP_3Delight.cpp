@@ -380,6 +380,16 @@ void ROP_3Delight::StopRender()
 	m_settings.Rendering(false);
 }
 
+unsigned ROP_3Delight::maxInputs() const
+{
+	return OP_MAX_INDIRECT_INPUTS;
+}
+
+unsigned ROP_3Delight::getNumVisibleInputs() const
+{
+	return OP_MAX_INDIRECT_INPUTS;
+}
+
 unsigned ROP_3Delight::maxOutputs() const
 {
 	return 1;
