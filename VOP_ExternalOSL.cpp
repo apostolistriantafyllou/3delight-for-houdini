@@ -908,6 +908,8 @@ VOP_ExternalOSL::runCreateScript()
 		getFullPath().toStdString();
 	OPgetDirector()->getCommandManager()->execute(init_cmd.c_str());
 
+	SetRampParametersDefaults();
+
 	return ret;
 }
 
@@ -979,6 +981,78 @@ VOP_ExternalOSL::getOutputTypeInfoSubclass(VOP_TypeInfo& o_type_info, int i_idx)
 	assert(param.isoutput);
 	o_type_info.setType(GetVOPType(param.type));
 }
+
+void
+VOP_ExternalOSL::SetRampParametersDefaults()
+{
+	using namespace osl_utilities;
+	using namespace osl_utilities::ramp;
+
+	for(unsigned p = 0; p < m_shader_info.NumInputs(); p++)
+	{
+		const DlShaderInfo::Parameter& param = m_shader_info.GetInput(p);
+		const char* widget = "";
+		FindMetaData(widget, param.metadata, "widget");
+		if(!IsRampWidget(widget))
+		{
+			continue;
+		}
+
+		const DlShaderInfo::Parameter* knots = nullptr;
+		const DlShaderInfo::Parameter* interpolation = nullptr;
+		std::string base_name;
+		if(!FindMatchingRampParameters(
+				m_shader_info.m_dl, param, knots, interpolation, base_name))
+		{
+			continue;
+		}
+
+		// Retrieve the default parameters values
+		const DlShaderInfo::constvector<float>& default_values = param.fdefault;
+		bool color = param.type.type == NSITypeColor;
+		unsigned value_size = color ? 3 : 1;
+		unsigned nb_default_values = default_values.size() / value_size;
+		const DlShaderInfo::constvector<float>& default_knots = knots->fdefault;
+		const DlShaderInfo::constvector<int>& default_inter =
+			interpolation->idefault;
+		unsigned nb_defaults =
+			std::min(
+				nb_default_values,
+				std::min<unsigned>(default_knots.size(), default_inter.size()));
+
+		if(nb_defaults == 0)
+		{
+			continue;
+		}
+
+		// Set the number of points in the curve
+		setInt(base_name.c_str(), 0, 0.0, nb_defaults);
+
+		// Set the parameters for each point on the curve
+		std::string pos_string = knots->name.string();
+		std::string value_string = param.name.string();
+		std::string inter_string = interpolation->name.string();
+		for(unsigned d = 0; d < nb_defaults; d++)
+		{
+			std::string index = ExpandedIndexSuffix(d);
+
+			std::string pos_item = pos_string + index;
+			setFloat(pos_item.c_str(), 0, 0.0, default_knots[d]);
+
+			const float* v = &default_values[d*value_size];
+			std::string value_item = value_string + index;
+			for(unsigned c = 0; c < value_size; c++)
+			{
+				setFloat(value_item.c_str(), c, 0.0, v[c]);
+			}
+
+			std::string inter_item = inter_string + index;
+			PRM_RampInterpType i = ToHoudiniInterpolation(default_inter[d]);
+			setInt(inter_item.c_str(), 0, 0.0, i);
+		}
+	}
+}
+
 
 VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
 	const StructuredShaderInfo& i_shader_info,

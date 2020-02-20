@@ -171,6 +171,17 @@ protected:
 
 private:
 
+	/**
+		\brief Initializes ramp parameters to their default value.
+
+		It seems impossible to initialize the default values of ramp parameter,
+		at the time of their template's creation, while still being able to
+		specify their name (which we want to keep for backward compatibility
+		with existing scenes). So, we set the default values manually, on each
+		node that contains ramps.
+	*/
+	void SetRampParametersDefaults();
+
 	// Description of the shader this node stands for
 	StructuredShaderInfo m_shader_info;
 };
