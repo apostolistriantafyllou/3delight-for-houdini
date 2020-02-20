@@ -10,7 +10,6 @@ const std::string osl_utilities::k_check_box = "checkBox";
 const std::string osl_utilities::k_filename = "filename";
 
 const std::string osl_utilities::ramp::k_index_suffix = "_#_";
-const std::string osl_utilities::ramp::k_index_format = "_%u_";
 
 static const PRM_RampInterpType k_3delight_interpolation_to_houdini[] =
 {
@@ -110,6 +109,12 @@ osl_utilities::GetParameterMetaData(
 			}
 		}
 	}
+}
+
+std::string
+osl_utilities::ramp::ExpandedIndexSuffix(unsigned i_index)
+{
+	return "_" + std::to_string(i_index) + "_";
 }
 
 bool

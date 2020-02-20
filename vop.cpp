@@ -572,26 +572,24 @@ void vop::list_ramp_parameters(
 	std::vector<float> positions;
 	std::vector<float> values;
 	std::vector<int> interpolations;
-	char* index_buffer = new char[k_index_format.length() + 10];
 	for(int p = 0; p < num_points; p++)
 	{
-		sprintf(index_buffer, k_index_format.c_str(), p);
+		std::string index = ExpandedIndexSuffix(p);
 
-		std::string pos_item = pos_string + index_buffer;
+		std::string pos_item = pos_string + index;
 		positions.push_back(i_opp->evalFloat(pos_item.c_str(), 0, i_time));
 
-		std::string value_item = value_string + index_buffer;
+		std::string value_item = value_string + index;
 		for(unsigned c = 0; c < (i_param.type.type == NSITypeColor ? 3 : 1); c++)
 		{
 			values.push_back(i_opp->evalFloat(value_item.c_str(), c, i_time));
 		}
 
-		std::string inter_item = inter_string + index_buffer;
+		std::string inter_item = inter_string + index;
 		int inter = i_opp->evalInt(inter_item.c_str(), 0, i_time);
 		interpolations.push_back(
 			FromHoudiniInterpolation((PRM_RampInterpType)inter));
 	}
-	delete[] index_buffer;
 
 	// Add new arguments to the list
 	o_list.Add(NSI::Argument::New(pos_string)

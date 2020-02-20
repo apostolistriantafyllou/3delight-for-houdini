@@ -42,7 +42,9 @@ namespace osl_utilities
 	{
 		/// Parameter name suffixes
 		extern const std::string k_index_suffix;
-		extern const std::string k_index_format;
+
+		/// Returns the parameter name's suffix at a specific index
+		std::string ExpandedIndexSuffix(unsigned i_index);
 
 		/// Returns true if the string describes a ramp-type widget
 		bool IsRampWidget(const char* i_widget);
