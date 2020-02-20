@@ -20,6 +20,11 @@ exporter::exporter(
 	m_handle = m_object->getFullPath();
 }
 
+exporter::~exporter()
+{
+}
+
+
 exporter::exporter( const context &i_context, VOP_Node *i_node )
 :
 	m_context(i_context),

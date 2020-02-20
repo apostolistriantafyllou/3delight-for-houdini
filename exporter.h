@@ -30,6 +30,8 @@ public:
 
 	exporter( const context &, VOP_Node * );
 
+	virtual ~exporter();
+
 	/**
 		\brief Create the NSI node that corresponds to this object's handle.
 

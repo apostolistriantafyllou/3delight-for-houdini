@@ -293,6 +293,11 @@ void scene::convert_to_nsi(
 			exported_lights_categories,
 			lights_to_render );
 	}
+
+	for( auto &exporter : to_export )
+	{
+		delete exporter;
+	}
 }
 
 /**
