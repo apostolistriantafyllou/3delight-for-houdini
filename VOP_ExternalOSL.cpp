@@ -884,7 +884,11 @@ VOP_ExternalOSL::opChanged(OP_EventType reason, void* data)
 		return;
 	}
 
-	// Execute the script with the node's full path as an argument
+	/*
+		Execute the script with the node's full path as an argument.
+		This callbacks traps nodes loaded from an existing scene (unlike
+		runCreateScript), allowing us to add our OpenGL attributes to them.
+	*/
 	std::string init_cmd = "private/3Delight--VOP_OnCreated.cmd " +
 		getFullPath().toStdString();
 	OPgetDirector()->getCommandManager()->execute(init_cmd.c_str());
@@ -895,7 +899,11 @@ VOP_ExternalOSL::runCreateScript()
 {
 	bool ret = VOP_Node::runCreateScript();
 
-	// Execute the script with the node's full path as an argument
+	/*
+		Execute the script with the node's full path as an argument.
+		This is only called when a node is first created, not when it's loaded
+		from a scene.
+	*/
 	std::string init_cmd = "private/3Delight--VOP_OnCreated.cmd " +
 		getFullPath().toStdString();
 	OPgetDirector()->getCommandManager()->execute(init_cmd.c_str());
