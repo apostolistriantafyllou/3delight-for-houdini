@@ -452,6 +452,14 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 #endif
 }
 
+geometry::~geometry()
+{
+	for( primitive* p : m_primitives )
+	{
+		delete p;
+	}
+}
+
 void geometry::create()const
 {
 	for(primitive* p : m_primitives)

@@ -25,6 +25,7 @@ public:
 			The object from which the GT primitives should be retrieved.
 	*/
 	geometry(const context& i_context, OBJ_Node* i_object);
+	~geometry();
 
 	void create()const override;
 	void set_attributes()const override;
