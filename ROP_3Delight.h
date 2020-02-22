@@ -95,6 +95,7 @@ protected:
 	virtual void loadFinished();
 
 private:
+	void export_render_notes( const context &i_context ) const;
 
 	void ExportTransparentSurface(const context& i_ctx) const;
 	std::string AtmosphereAttributesHandle() const;

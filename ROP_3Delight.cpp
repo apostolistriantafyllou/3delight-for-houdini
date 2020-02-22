@@ -9,11 +9,13 @@
 #include "shader_library.h"
 #include "ui/select_layers_dialog.h"
 
+#include <CH/CH_Manager.h>
 #include <HOM/HOM_Module.h>
 #include <OBJ/OBJ_Camera.h>
 #include <OBJ/OBJ_Light.h>
 #include <OP/OP_Director.h>
 #include <OP/OP_OperatorTable.h>
+#include <MOT/MOT_Director.h>
 #include <RE/RE_Light.h>
 #include <ROP/ROP_Templates.h>
 #include <SYS/SYS_Version.h>
@@ -589,6 +591,8 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 
 	ExportGlobals(*m_current_render);
 	ExportDefaultMaterial(*m_current_render);
+
+	export_render_notes( *m_current_render );
 
 	/*
 		Stop redirecting static attributes to the main NSI stream. This is
@@ -1627,4 +1631,56 @@ ROP_3Delight::GetNSIExportFilename(double i_time)const
 	}
 
 	return export_file.toStdString();
+}
+
+/**
+	\brief Sets the differents IDs needed for 3Delight Cloud.
+
+	notes
+		Is needed on 3delight.com -> 3Delight Cloud -> Activities
+
+	frameid and project
+		Both are passed back to 3Delight Display and shown in the 3Delight
+		Cloud Dashboard.
+
+	ATTENTION: do not do arbitrary cahges to formatting is this might affect
+	the layout of the UI and website.
+*/
+void ROP_3Delight::export_render_notes( const context &i_context ) const
+{
+	MOT_Director *mot = dynamic_cast<MOT_Director *>( OPgetDirector() );
+
+	std::string scene_name = mot->getFileName().toStdString();
+	std::string project{ mot->getFileName().fileName() };
+
+	int frame = OPgetDirector()->getChannelManager()->getFrame(
+		i_context.m_current_time );
+
+	char frameid[5] = {0};
+	snprintf( frameid, 5, "%04d", frame );
+
+	i_context.m_nsi.SetAttribute(
+		NSI_SCENE_GLOBAL,
+		(
+			NSI::CStringPArg("statistics.frameid", frameid),
+			NSI::StringArg("statistics.project", project)
+		) );
+
+	if( i_context.m_export_nsi )
+	{
+		/* renderdl will inject its own notes. */
+		return;
+	}
+
+	std::string notes = scene_name.empty() ? "No scene name" : scene_name;
+	notes += "\n";
+	notes += i_context.m_rop_path;
+	notes += "  |  ";
+	notes += frameid;
+
+	i_context.m_nsi.SetAttribute(
+		NSI_SCENE_GLOBAL,
+		(
+			NSI::StringArg("statistics.notes", notes)
+		) );
 }
