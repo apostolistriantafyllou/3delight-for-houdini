@@ -1065,7 +1065,8 @@ VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
 			VOP_ExternalOSL::theChildTableName,
 			i_shader_info.NumInputs(),
 			i_shader_info.NumInputs(),
-			"*",
+			// Put nsi here so Material Builder won't see our VOP nodes
+			"nsi",
 			nullptr,
 			/*
 				FIXME : this might be useless. We probably meant to set the

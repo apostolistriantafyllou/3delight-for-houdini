@@ -24,6 +24,7 @@ ENDIF()
 set( library_name 3Delight_for_Houdini )
 add_library( ${library_name} SHARED
 	ROP_3Delight.cpp
+	VOP_3DelightMaterialBuilder.cpp
 	VOP_ExternalOSL.cpp
 	attributes_callbacks.cpp
 	camera.cpp

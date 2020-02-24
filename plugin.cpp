@@ -1,4 +1,5 @@
 #include "ROP_3Delight.h"
+#include "VOP_3DelightMaterialBuilder.h"
 #include "attributes_callbacks.h"
 #include "shader_library.h"
 
@@ -15,6 +16,7 @@ newDriverOperator(OP_OperatorTable* io_table)
 extern "C" SYS_VISIBILITY_EXPORT void
 newVopOperator(OP_OperatorTable* io_table)
 {
+	VOP_3DelightMaterialBuilder::Register(io_table);
 	shader_library::get_instance().Register(io_table);
 }
 
