@@ -73,6 +73,7 @@ namespace
 		if(!obj_node ||
 			(obj_node->getObjectType() != OBJ_GEOMETRY &&
 			obj_node->getObjectType() != OBJ_CAMERA &&
+			obj_node->getObjectType() != OBJ_STD_NULL &&
 			obj_node->getObjectType() != OBJ_STD_LIGHT))
 		{
 			return;
