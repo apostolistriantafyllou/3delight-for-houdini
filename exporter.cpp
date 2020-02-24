@@ -523,7 +523,12 @@ VOP_Node *exporter::resolve_material_path(
 	const char *i_path,  std::string &o_path ) const
 {
 	OP_Node* op_node = OPgetDirector()->findNode( i_path );
-	VOP_Node *vop_node = op_node->castToVOPNode();
+	VOP_Node *vop_node = nullptr;
+
+	if( op_node )
+	{
+		vop_node = op_node->castToVOPNode();
+	}
 
 	if( !vop_node )
 	{
