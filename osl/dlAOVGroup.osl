@@ -7,7 +7,7 @@
 shader dlAOVGroup(
 	color colorAOVValues[] = { color( 0, 0, 0) },
 	string colorAOVNames[] = { "" },
-	output closure color outColor = color( 0, 0, 0 ) )
+	output closure color outColor = 0 )
 {
 	if( !raytype("camera") )
 	{
