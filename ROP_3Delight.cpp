@@ -765,6 +765,9 @@ ROP_3Delight::loadFinished()
 {
 	ROP_Node::loadFinished();
 	m_settings.UpdateLights();
+
+	// Ensure that the ROP's initial rendering state is reflected in the UI
+	m_settings.Rendering(false);
 }
 
 /**
