@@ -342,6 +342,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 		if(!m_result.empty())
 		{
 			m_requires_frame_aligned_sample =
+				m_requires_frame_aligned_sample ||
 				m_result.back()->requires_frame_aligned_sample();
 		}
 	}
@@ -442,7 +443,9 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 			break;
 		}
 
-		exported_frame_aligned_sample = time == m_context.m_current_time;
+		exported_frame_aligned_sample =
+			exported_frame_aligned_sample ||
+			time == m_context.m_current_time;
 		update = true;
 	}
 
