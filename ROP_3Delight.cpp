@@ -1178,6 +1178,10 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		i_ctx.m_nsi.SetAttribute(
 			NSI_SCENE_GLOBAL, NSI::IntegerArg("renderatlowpriority", 1) );
 	}
+
+	/* Set frame, it is reponsible of per frame noise patterns. */
+	i_ctx.m_nsi.SetAttribute(
+		NSI_SCENE_GLOBAL, NSI::DoubleArg("frame", i_ctx.m_current_time) );
 }
 
 void
