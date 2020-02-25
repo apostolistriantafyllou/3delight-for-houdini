@@ -59,6 +59,14 @@ void instance::set_attributes_at_time(
 	double i_time,
 	const GT_PrimitiveHandle i_gt_primitive) const
 {
+	// Retrieve a context that might redirect the attributes to a shared file
+	NSI::Context& nsi = static_attributes_context();
+	if(nsi.Handle() == NSI_BAD_CONTEXT)
+	{
+		// Those attributes have already been exported in a previous frame
+		return;
+	}
+
 	const GT_PrimInstance *instance =
 		static_cast<const GT_PrimInstance *>(i_gt_primitive.get());
 
@@ -85,7 +93,7 @@ void instance::set_attributes_at_time(
 			->SetCount( transforms->entries() )
 			->SetValuePointer(matrices) );
 
-	m_nsi.SetAttributeAtTime( m_handle.c_str(), i_time, args );
+	nsi.SetAttributeAtTime( m_handle.c_str(), i_time, args );
 
 	delete [] matrices;
 }

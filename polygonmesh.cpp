@@ -79,7 +79,13 @@ void polygonmesh::set_attributes( void ) const
 			new NSI::StringArg("subdivision.scheme", "catmull-clark") );
 	}
 
-	m_nsi.SetAttribute( m_handle, mesh_args );
+	// Retrieve a context that might redirect the attributes to a shared file
+	NSI::Context& nsi = static_attributes_context();
+	// Those attributes may already have been exported in a previous frame
+	if(nsi.Handle() != NSI_BAD_CONTEXT)
+	{
+		nsi.SetAttribute( m_handle, mesh_args );
+	}
 
 	const GT_DataArrayHandle& vertices_list = polygon_mesh->getVertexList();
 
@@ -196,6 +202,9 @@ void polygonmesh::assign_primitive_materials( void ) const
 		return;
 	}
 
+	// Retrieve a context that might redirect the attributes to a shared file
+	NSI::Context& static_nsi = static_attributes_context();
+
 	/*
 		We will need per-face assignments.  Build a material -> uniform/face map
 	*/
@@ -222,11 +231,15 @@ void polygonmesh::assign_primitive_materials( void ) const
 		m_nsi.Connect( attribute_handle, "", set_handle, "geometryattributes" );
 		m_nsi.Connect( set_handle, "", m_handle, "facesets" );
 
-		m_nsi.SetAttribute( set_handle,
-			*NSI::Argument( "faces" )
-				.SetType( NSITypeInteger )
-				->SetCount( material.second.size() )
-				->SetValuePointer( &material.second[0] ) );
+		// This attribute may already have been exported in a previous frame
+		if(static_nsi.Handle() != NSI_BAD_CONTEXT)
+		{
+			static_nsi.SetAttribute( set_handle,
+				*NSI::Argument( "faces" )
+					.SetType( NSITypeInteger )
+					->SetCount( material.second.size() )
+					->SetValuePointer( &material.second[0] ) );
+		}
 	}
 }
 
@@ -243,6 +256,14 @@ void polygonmesh::assign_primitive_materials( void ) const
 void polygonmesh::export_creases(
 	GT_DataArrayHandle i_indices, int *i_nvertices, size_t i_n ) const
 {
+	// Retrieve a context that might redirect the attributes to a shared file
+	NSI::Context& nsi = static_attributes_context();
+	if(nsi.Handle() == NSI_BAD_CONTEXT)
+	{
+		// Those attributes have already been exported in a previous frame
+		return;
+	}
+
 	GT_AttributeListHandle vertex =
 		default_gt_primitive().get()->getVertexAttributes();
 
@@ -305,6 +326,6 @@ void polygonmesh::export_creases(
 			->SetCount( crease_sharpness.size() )
 			->SetValuePointer( &crease_sharpness[0] ) );
 
-		m_nsi.SetAttribute( m_handle, mesh_args );
+		nsi.SetAttribute( m_handle, mesh_args );
 	}
 }
