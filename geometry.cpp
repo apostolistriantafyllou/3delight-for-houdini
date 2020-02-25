@@ -33,6 +33,7 @@ std::vector<primitive *> Refine(
 	const context& i_context,
 	double i_time,
 	std::vector<primitive*>& io_result,
+	unsigned& io_primitive_index,
 	bool& io_requires_frame_aligned_sample,
 	bool i_add_time_samples,
 	int i_level = 0);
@@ -66,7 +67,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 	const context &m_context;
 	double m_time;
 	int m_level;
-	unsigned m_primitive_index;
+	unsigned& m_primitive_index;
 	bool m_add_time_samples;
 	bool m_stop;
 
@@ -75,6 +76,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 		const context &i_context,
 		double i_time,
 		std::vector<primitive*> &io_result,
+		unsigned& io_primitive_index,
 		bool& io_requires_frame_aligned_sample,
 		bool i_add_time_samples,
 		int level)
@@ -85,7 +87,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 		m_context(i_context),
 		m_time(i_time),
 		m_level(level),
-		m_primitive_index(0),
+		m_primitive_index(io_primitive_index),
 		m_add_time_samples(i_add_time_samples),
 		m_stop(false)
 	{
@@ -150,9 +152,15 @@ struct OBJ_Node_Refiner : public GT_Refine
 				case GT_PRIM_CURVE_MESH:
 				case GT_PRIM_VDB_VOLUME:
 					assert(m_primitive_index < m_result.size());
-					if(m_primitive_index >= m_result.size() ||
-						!m_result[m_primitive_index]->
+
+
+					if(m_primitive_index < m_result.size() &&
+						m_result[m_primitive_index]->
 							add_time_sample(m_time, i_primitive))
+					{
+						m_primitive_index++;
+					}
+					else
 					{
 						m_stop = true;
 						std::cerr
@@ -171,12 +179,12 @@ struct OBJ_Node_Refiner : public GT_Refine
 						m_context,
 						m_time,
 						m_result,
+						m_primitive_index,
 						m_requires_frame_aligned_sample,
 						m_add_time_samples,
 						m_level+1);
 			}
 
-			m_primitive_index++;
 			return;
 		}
 
@@ -229,6 +237,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 				m_context,
 				m_time,
 				m_result,
+				m_primitive_index,
 				m_requires_frame_aligned_sample,
 				m_add_time_samples,
 				m_level+1);
@@ -315,6 +324,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 				m_context,
 				m_time,
 				m_result,
+				m_primitive_index,
 				m_requires_frame_aligned_sample,
 				m_add_time_samples,
 				m_level+1);
@@ -354,6 +364,7 @@ std::vector<primitive *> Refine(
 	const context& i_context,
 	double i_time,
 	std::vector<primitive*>& io_result,
+	unsigned& io_primitive_index,
 	bool& io_requires_frame_aligned_sample,
 	bool i_add_time_samples,
 	int i_level)
@@ -363,6 +374,7 @@ std::vector<primitive *> Refine(
 		i_context,
 		i_time,
 		io_result,
+		io_primitive_index,
 		io_requires_frame_aligned_sample,
 		i_add_time_samples,
 		i_level);
@@ -429,12 +441,14 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 		detail_handle.addPreserveRequest();
 
 		GT_PrimitiveHandle gt( GT_GEODetail::makeDetail(detail_handle) );
+		unsigned primitive_index = 0;
 		Refine(
 			gt,
 			*m_object,
 			m_context,
 			time,
 			m_primitives,
+			primitive_index,
 			requires_frame_aligned_sample,
 			update);
 
