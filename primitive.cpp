@@ -137,7 +137,7 @@ bool primitive::export_extrapolated_P(GT_DataArrayHandle i_vertices_list)const
 		return false;
 	}
 
-	unsigned nb_points = velocity_data->entries();
+	unsigned nb_velocities = velocity_data->entries();
 
 	// Retrieve position data handle
 	GT_DataArrayHandle position_data;
@@ -151,10 +151,19 @@ bool primitive::export_extrapolated_P(GT_DataArrayHandle i_vertices_list)const
 			position_nsi_type,
 			position_nsi_flags,
 			position_point_attribute) ||
-		position_nsi_type != NSITypePoint ||
-		position_data->entries() != nb_points)
+		position_nsi_type != NSITypePoint)
 	{
 		// Position is not available
+		// This is very weird, most likely impossible
+		assert(false);
+		return false;
+	}
+
+	unsigned nb_points = position_data->entries();
+
+	if(nb_velocities != 1 && nb_points != nb_velocities)
+	{
+		// The number of velocities don't match the number of points
 		// This is very weird, most likely impossible
 		assert(false);
 		return false;
@@ -167,6 +176,9 @@ bool primitive::export_extrapolated_P(GT_DataArrayHandle i_vertices_list)const
 
 	float time = m_context.m_current_time;
 
+	// Increment for velocity indexing. Allows support for uniform velocity.
+	unsigned v_inc = nb_velocities == 1 ? 0 : 1;
+
 	// Retrieve position data in a writable buffer
 	float* nsi_position_data = new float[nb_points*3];
 	position_data->fillArray(nsi_position_data, 0, nb_points, 3);
@@ -176,9 +188,9 @@ bool primitive::export_extrapolated_P(GT_DataArrayHandle i_vertices_list)const
 	const float* nsi_velocity_data = velocity_data->getF32Array(velocity_buffer);
 
 	// Compute pre-frame position from frame position (1 second earlier)
-	for(unsigned p = 0; p < 3*nb_points; p++)
+	for(unsigned p = 0, v = 0; p < 3*nb_points; p++, v += v_inc)
 	{
-		nsi_position_data[p] -= nsi_velocity_data[p];
+		nsi_position_data[p] -= nsi_velocity_data[v];
 	}
 
 	// Output pre-frame position
@@ -188,9 +200,9 @@ bool primitive::export_extrapolated_P(GT_DataArrayHandle i_vertices_list)const
 		NSI::PointsArg("P", nsi_position_data, nb_points));
 
 	// Compute post-frame position from the pre-frame position (2 seconds later)
-	for(unsigned p = 0; p < 3*nb_points; p++)
+	for(unsigned p = 0, v = 0; p < 3*nb_points; p++, v += v_inc)
 	{
-		nsi_position_data[p] += 2.0f * nsi_velocity_data[p];
+		nsi_position_data[p] += 2.0f * nsi_velocity_data[v];
 	}
 
 	// Output post-frame position
