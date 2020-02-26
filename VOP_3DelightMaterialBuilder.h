@@ -29,7 +29,7 @@ public:
 
     /// Override this to provide custom behaviour for what is allowed in the
     /// tab menu.
-    virtual OP_OperatorFilter* getOperatorFilter();
+    virtual OP_OperatorFilter* getOperatorFilter() override;
 
 	/// Minimum inputs that must be connected to a node for it to cook.
 	virtual unsigned minInputs() const override;
