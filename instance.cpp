@@ -7,6 +7,8 @@
 #include <GT/GT_PrimInstance.h>
 #include <OBJ/OBJ_Node.h>
 
+#include <unordered_map>
+
 instance::instance(
 	const context& i_ctx,
 	OBJ_Node *i_object,
@@ -23,25 +25,93 @@ instance::instance(
 void instance::create( void ) const
 {
 	m_nsi.Create( m_handle.c_str(), "instances" );
-
-	/*
-		We need a parent transform in case there are many primitives
-		to instantiate.
-	*/
-	m_nsi.Create( merge_handle(), "transform" );
-	m_nsi.Connect( merge_handle(), "", m_handle, "objects" );
 }
 
 void instance::connect( void ) const
 {
 	primitive::connect();
 
-	for( auto sm : m_source_models )
+	/*
+		We need a parent transform in case there are many primitives
+		to instantiate.
+
+		We also use the merge point to enable a different shader per instance.
+		In NSI-speak, each <material, sourcemodel> pair will become a "model"
+		that we can select using sourcemodels plug of the instance node.
+	*/
+	std::vector< std::string > materials;
+	std::vector< int > sourcemodel_index_per;
+	get_sop_materials( materials  );
+
+	std::unordered_map<std::string, int> unique_materials;
+	for( const auto &m : materials )
 	{
-		m_nsi.Connect( sm, "", merge_handle(), "objects" );
+		if( unique_materials.find(m) == unique_materials.end() )
+			unique_materials[m] = 0;
 	}
 
-	m_nsi.Connect( merge_handle(), "", m_handle, "sourcemodels" );
+	/* We need at least one merge point, even without materials. */
+	if( unique_materials.empty() )
+		unique_materials[std::string("")] = 0;
+
+	auto it = unique_materials.begin();
+	int modelindex = 0;
+
+	/*
+		Create a merge point for each material, connect source models to it
+		and create/assign the correct material for each such merge point.
+	*/
+	while( it != unique_materials.end() )
+	{
+		const std::string &material_handle = it->first;
+		std::string merge_h = merge_handle( material_handle );
+
+		m_nsi.Create( merge_h, "transform" );
+		for( auto sm : m_source_models )
+		{
+			m_nsi.Connect( sm, "", merge_h, "objects" );
+		}
+
+		if( materials.empty() )
+		{
+			/*
+				There are no SOP materials assignments for this instancer.
+				Our job is done!
+			*/
+			m_nsi.Connect( merge_h, "", m_handle, "sourcemodels" );
+			assert( unique_materials.size() == 1 );
+			return;
+		}
+
+		m_nsi.Connect( merge_h, "", m_handle, "sourcemodels",
+			NSI::IntegerArg( "index", modelindex ) );
+
+		std::string attribute_handle = merge_h + "|attribute";
+		m_nsi.Create( attribute_handle, "attributes" );
+		m_nsi.Connect( attribute_handle, "", merge_h,"geometryattributes");
+		m_nsi.Connect( material_handle, "", attribute_handle, "surfaceshader",
+			NSI::IntegerArg("priority", 2) );
+
+		/* Opportune moment to store the index. */
+		it->second = modelindex++;
+		++it;
+	}
+
+	/*
+		For each instance, create the model index depending on which material
+		it is attached to. This will allow 3DelightNSI to instantiate the
+		correct merge point with the correctly assigned material.
+	*/
+	std::vector<int> modelindices; modelindices.reserve( materials.size() );
+	for( const auto &m : materials )
+	{
+		modelindices.push_back( unique_materials[m] );
+	}
+
+	m_nsi.SetAttribute( m_handle,
+		*NSI::Argument("modelindices").SetType(NSITypeInteger)
+			->SetCount(modelindices.size())
+			->SetValuePointer(&modelindices[0]) );
 }
 
 void instance::set_attributes( void ) const
@@ -98,7 +168,7 @@ void instance::set_attributes_at_time(
 	delete [] matrices;
 }
 
-std::string instance::merge_handle( void ) const
+std::string instance::merge_handle( const std::string &i_material ) const
 {
-	return m_handle + "|merge";
+	return m_handle + i_material + "|merge";
 }

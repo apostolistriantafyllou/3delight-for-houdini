@@ -31,7 +31,7 @@ protected:
 	void set_attributes( void ) const override;
 
 private:
-	std::string merge_handle( void ) const;
+	std::string merge_handle( const std::string & ) const;
 
 	std::vector<std::string> m_source_models;
 };

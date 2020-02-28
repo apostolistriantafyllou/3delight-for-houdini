@@ -1,10 +1,9 @@
 #include "primitive.h"
-
 #include "time_sampler.h"
 
-#include <nsi.hpp>
-
 #include <OBJ/OBJ_Node.h>
+
+#include <nsi.hpp>
 
 namespace
 {
@@ -230,4 +229,53 @@ bool primitive::has_velocity(const GT_PrimitiveHandle& i_gt_prim)
 {
 	GT_Owner owner;
 	return (bool)i_gt_prim->findAttribute(k_velocity_attribute, owner, 0);
+}
+
+
+/**
+	\brief returnss SOP-level materials. This could be either 1 for detail or
+	N for uniform assignments.
+
+	Note that inexistat materials will produce empty NSI handles. It's up to the
+	caller to decide what to do.
+*/
+void primitive::get_sop_materials(
+	std::vector<std::string> &o_materials ) const
+{
+	GT_AttributeListHandle uniforms =
+		default_gt_primitive().get()->getUniformAttributes();
+	GT_AttributeListHandle details =
+		default_gt_primitive().get()->getDetailAttributes();
+
+	GT_DataArrayHandle uniform_materials(
+		uniforms ? uniforms->get("shop_materialpath") : nullptr);
+	GT_DataArrayHandle detail_materials(
+		details ? details->get("shop_materialpath") : nullptr);
+
+	/* Priority to uniform/primitive materials */
+	GT_DataArrayHandle materials =
+		uniform_materials ? uniform_materials : detail_materials;
+
+	if( !materials || materials->getStorage()!=GT_STORE_STRING )
+	{
+		return;
+	}
+
+	/* Find out a default material when thre is no primitive assigment */
+	std::string default_shader = "__default_shader__";
+	if( detail_materials )
+	{
+		const char *m = detail_materials->getS(0);
+		std::string shop;
+		exporter::resolve_material_path( m, shop );
+		if( !shop.empty() )
+			default_shader = shop;
+	}
+
+	std::string shop;
+	for( int i=0; i<materials->entries(); i++ )
+	{
+		exporter::resolve_material_path( materials->getS(i), shop );
+		o_materials.push_back( !shop.empty() ? shop : default_shader );
+	}
 }

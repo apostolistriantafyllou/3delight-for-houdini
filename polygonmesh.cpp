@@ -159,34 +159,17 @@ void polygonmesh::connect( void ) const
 
 void polygonmesh::assign_primitive_materials( void ) const
 {
-	GT_AttributeListHandle uniforms =
-		default_gt_primitive().get()->getUniformAttributes();
-	GT_AttributeListHandle details =
-		default_gt_primitive().get()->getDetailAttributes();
+	std::vector< std::string > materials;
+	get_sop_materials( materials );
 
-	GT_DataArrayHandle uniform_materials(
-		uniforms ? uniforms->get("shop_materialpath") : nullptr);
-	GT_DataArrayHandle detail_materials(
-		details ? details->get("shop_materialpath") : nullptr);
-
-	/* Priority to uniform/primitive materials */
-	GT_DataArrayHandle materials =
-		uniform_materials ? uniform_materials : detail_materials;
-
-	if( !materials || materials->getStorage()!=GT_STORE_STRING )
+	if( materials.empty() )
 	{
 		return;
 	}
 
-	if( materials->entries() == 1 )
+	if( materials.size() == 1u )
 	{
-		/*
-			This could be a single faced geo OR a detail material assignment.
-			Deal with it using the usual attribute assignment.
-		*/
-		std::string shop;
-		resolve_material_path( materials->getS(0), shop );
-
+		const std::string &shop = materials[0];
 		if( shop.empty() )
 			return;
 
@@ -209,13 +192,13 @@ void polygonmesh::assign_primitive_materials( void ) const
 		We will need per-face assignments.  Build a material -> uniform/face map
 	*/
 	std::unordered_map< std::string, std::vector<int> > all_materials;
-	for( GT_Offset i=0; i<materials->entries(); i++ )
+	for( int i=0; i<materials.size(); i++ )
 	{
-		std::string shop;
-		resolve_material_path( materials->getS(i), shop );
+		const std::string &shop = materials[i];
 
 		if( shop.empty() )
 			continue;
+
 		all_materials[ shop ].push_back( i );
 	}
 

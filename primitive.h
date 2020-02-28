@@ -90,6 +90,9 @@ protected:
 	/// Returns true if i_gt_prim has a velocity attribute "v".
 	static bool has_velocity(const GT_PrimitiveHandle& i_gt_prim);
 
+	void get_sop_materials(
+		std::vector<std::string> &o_materials ) const;
+
 private:
 
 	typedef std::pair<double, GT_PrimitiveHandle> TimedPrimitive;
