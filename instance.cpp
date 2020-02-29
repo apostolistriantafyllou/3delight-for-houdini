@@ -114,11 +114,47 @@ void instance::connect( void ) const
 			->SetValuePointer(&modelindices[0]) );
 }
 
+/**
+	For the instance, we simply output all the attributes that are attached.
+	These attributes will be propagated by 3Delight to the instanced geometry.
+	This means that vertex/point/uniform/detail attributes on the intancer will
+	become indiviual *detail* attribute on the instances.
+*/
 void instance::set_attributes( void ) const
 {
 	const GT_PrimInstance *instance =
 		static_cast<const GT_PrimInstance *>(default_gt_primitive().get());
-	std::vector< std::string > to_export{ "Cd" };
+
+	std::vector< std::string > to_export;
+
+	for( int i=GT_OWNER_VERTEX; i<=GT_OWNER_DETAIL; i++ )
+	{
+		const GT_AttributeListHandle& attributes =
+			instance->getAttributeList( GT_Owner(i) );
+
+		if( !attributes )
+			continue;
+
+		UT_StringArray names = attributes->getNames();
+
+		for( int j=0; j<names.entries(); j++ )
+		{
+			std::string name = names[j].toStdString();
+
+			/* Yes, O(N) complexity but doen't matter here */
+			if( std::find(to_export.begin(), to_export.end(), name) ==
+				to_export.end() )
+			{
+				to_export.push_back( name );
+			}
+		}
+	}
+
+	/* Remove useless attributes. */
+	to_export.erase( std::remove_if(
+		to_export.begin(), to_export.end(), [](const std::string &a)
+		{ return a == "P"; }), to_export.end() );
+
 	exporter::export_attributes(
 		to_export, *instance, m_context.m_current_time, GT_DataArrayHandle() );
 
