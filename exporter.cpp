@@ -83,6 +83,12 @@ const char* exporter::transparent_surface_handle()
 	return "3delight_transparent_surface";
 }
 
+/**
+	We scan the 4 attributes lists for one with the right name.
+	Note that the order is important here as Houdini has
+	priorities for attributes: vertex, point, uniform and then
+	detail.
+*/
 bool exporter::find_attribute(
 	const GT_Primitive& i_primitive,
 	const std::string& i_name,
@@ -91,7 +97,10 @@ bool exporter::find_attribute(
 	int& o_nsi_flags,
 	bool& o_point_attribute)const
 {
-	// Scan the 4 attributes lists for one with the right name
+	assert( GT_OWNER_VERTEX < GT_OWNER_POINT );
+	assert( GT_OWNER_POINT < GT_OWNER_UNIFORM );
+	assert( GT_OWNER_UNIFORM < GT_OWNER_DETAIL );
+
 	for(unsigned a = GT_OWNER_VERTEX; a <= GT_OWNER_DETAIL; a++)
 	{
 		const GT_AttributeListHandle& attributes =
@@ -144,6 +153,8 @@ bool exporter::find_attribute(
 	  to "Pref" and "Nref". We also need to put them as point/normals
 	  for correct transform to object space (as they are defined as
 	  float[3]).
+	- \ref find_attribute() will scan the attibutes in the right order
+	  so to respect Houdini's attribute priorities.
 */
 void exporter::export_attributes(
 	std::vector<std::string> &io_which_ones,
