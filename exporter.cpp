@@ -111,9 +111,11 @@ bool exporter::find_attribute(
 
 		if( o_nsi_type == NSITypeInvalid || o_nsi_type == NSITypeString )
 		{
+#if 0
 			std::cerr
 				<< "unsupported attribute type " << o_data->getTypeInfo()
 				<< " of name " << i_name << " on " << m_handle;
+#endif
 			continue;
 		}
 
