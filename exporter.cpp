@@ -149,13 +149,6 @@ void exporter::export_attributes(
 	double i_time,
 	GT_DataArrayHandle i_vertices_list) const
 {
-	/* Get the vertices list if it's provided */
-	GT_DataArrayHandle buffer_in_case_we_need_it;
-	const int *vertices = nullptr;
-	if( i_vertices_list )
-	{
-		vertices = i_vertices_list->getI32Array( buffer_in_case_we_need_it );
-	}
 
 	// Retrieve a context that might redirect the attributes to a shared file
 	NSI::Context& nsi = static_attributes_context();
@@ -164,6 +157,14 @@ void exporter::export_attributes(
 	{
 		// Those attributes have already been exported in a previous frame
 		return;
+	}
+
+	/* Get the vertices list if it's provided */
+	GT_DataArrayHandle buffer_in_case_we_need_it;
+	const int *vertices = nullptr;
+	if( i_vertices_list )
+	{
+		vertices = i_vertices_list->getI32Array( buffer_in_case_we_need_it );
 	}
 
 	for(int w = io_which_ones.size()-1; w >= 0; w--)
