@@ -6,6 +6,7 @@
 
 #include <GT/GT_PrimInstance.h>
 #include <OBJ/OBJ_Node.h>
+#include <OP/OP_Operator.h>
 
 #include <unordered_map>
 
@@ -32,12 +33,13 @@ void instance::connect( void ) const
 	primitive::connect();
 
 	/*
-		We need a parent transform in case there are many primitives
-		to instantiate.
+		We need a parent transform (which we call a merge point) in case there
+		are many primitives to instantiate.
 
 		We also use the merge point to enable a different shader per instance.
-		In NSI-speak, each <material, sourcemodel> pair will become a "model"
-		that we can select using sourcemodels plug of the instance node.
+		In NSI-speak, each <material, sourcemodel> pair will become a
+		"sourcemodel" that we can select using sourcemodels plug of the
+		instance node.
 	*/
 	std::vector< std::string > materials;
 	std::vector< int > sourcemodel_index_per;
@@ -173,30 +175,81 @@ void instance::set_attributes_at_time(
 		return;
 	}
 
-	const GT_PrimInstance *instance =
-		static_cast<const GT_PrimInstance *>(i_gt_primitive.get());
+	double *matrices = nullptr;
+	int num_matrices = 0;
 
-	const GT_TransformArrayHandle transforms = instance->transforms();
-
-	double *matrices = new double[ transforms->entries() * 16 ];
-	double *it = matrices;
-
-	static_assert( sizeof(UT_Matrix4D) == 16*sizeof(double), "check 4D matrix" );
-
-	for( int i=0; i<transforms->entries(); i++ )
+	const UT_StringRef &op_name = m_object->getOperator()->getName();
+	if( op_name == "instance" )
 	{
-		const GT_TransformHandle &handle = transforms->get(i);
-		UT_Matrix4D matrix;
-		handle->getMatrix( matrix );
-		memcpy( it, matrix.data(), sizeof(UT_Matrix4D) );
-		it += 16;
+		int mode = 1;
+		if( m_object->getParmIndex("ptinstance")>=0  )
+			mode = m_object->evalInt("ptinstance", 0, m_context.m_current_time);
+
+		if( mode == 0 )
+		{
+			/* Intancing off (a totally needless parameter btw) */
+			double *M = matrices = new double[16];
+			//double *M = matrices;
+			*M++ = 1.0; *M++= 0.0; *M++ = 0.0;  *M++ = 0.0;
+			*M++ = 0.0; *M++= 1.0; *M++ = 0.0;  *M++ = 0.0;
+			*M++ = 0.0; *M++= 0.0; *M++ = 1.0;  *M++ = 0.0;
+			*M++ = 0.0; *M++= 0.0; *M++ = 0.0;  *M++ = 1.0;
+			num_matrices = 1;
+		}
+		else
+		{
+			GT_Owner type;
+			GT_DataArrayHandle P =
+				i_gt_primitive->findAttribute( "P", type, 0 /* segment */ );
+
+			matrices = new double[P->entries() * 16 ];
+
+			GT_DataArrayHandle buffer_in_case_we_need_it;
+			const float *pos = P->getF32Array( buffer_in_case_we_need_it );
+
+			double *M = matrices;
+			for( int i=0; i<P->entries(); i++, pos+=3 )
+			{
+				*M++ = 1.0; *M++= 0.0; *M++ = 0.0;  *M++ = 0.0;
+				*M++ = 0.0; *M++= 1.0; *M++ = 0.0;  *M++ = 0.0;
+				*M++ = 0.0; *M++= 0.0; *M++ = 1.0;  *M++ = 0.0;
+				*M++=pos[0]; *M++=pos[1]; *M++=pos[2]; *M++=1.0;
+			}
+			num_matrices = P->entries();
+		}
+
+		assert( num_matrices > 0 );
+	}
+	else
+	{
+		const GT_PrimInstance *instance =
+			static_cast<const GT_PrimInstance *>(i_gt_primitive.get());
+
+		assert( instance );
+
+		const GT_TransformArrayHandle transforms = instance->transforms();
+		matrices = new double[ transforms->entries() * 16 ];
+		double *it = matrices;
+
+		static_assert(
+			sizeof(UT_Matrix4D) == 16*sizeof(double), "check 4D matrix" );
+
+		for( int i=0; i<transforms->entries(); i++ )
+		{
+			const GT_TransformHandle &handle = transforms->get(i);
+			UT_Matrix4D matrix;
+			handle->getMatrix( matrix );
+			memcpy( it, matrix.data(), sizeof(UT_Matrix4D) );
+			it += 16;
+		}
+		num_matrices = transforms->entries();
 	}
 
 	NSI::ArgumentList args;
 
 	args.Add( NSI::Argument::New( "transformationmatrices" )
 			->SetType( NSITypeDoubleMatrix )
-			->SetCount( transforms->entries() )
+			->SetCount( num_matrices )
 			->SetValuePointer(matrices) );
 
 	nsi.SetAttributeAtTime( m_handle.c_str(), i_time, args );

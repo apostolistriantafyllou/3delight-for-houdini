@@ -7,6 +7,8 @@
 
 /**
 	\brief exports Houdini's instance as an NSI instances node.
+
+	This deals with both SOP-level and OBJ-level instancers.
 */
 class instance : public primitive
 {

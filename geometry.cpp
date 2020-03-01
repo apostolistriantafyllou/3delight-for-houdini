@@ -208,10 +208,30 @@ struct OBJ_Node_Refiner : public GT_Refine
 			break;
 
 		case GT_PRIM_POINT_MESH:
-			m_result.push_back(
-				new pointmesh(m_context, m_node, m_time, i_primitive, index) );
+		{
+			const UT_StringRef &op_name = m_node->getOperator()->getName();
+			if( op_name == "instance" &&
+				m_node->getParmIndex("instancepath")>=0 )
+			{
+				/* OBJ-level instancer */
+				UT_String path;
+				m_node->evalString( path, "instancepath", 0, m_time );
+
+				std::vector<std::string> models;
+				models.push_back( path.toStdString() );
+
+				m_result.push_back(
+					new instance(
+						m_context, m_node, m_time, i_primitive, index, models));
+			}
+			else
+			{
+				m_result.push_back(
+					new pointmesh(m_context, m_node, m_time, i_primitive, index) );
+			}
 			m_return.push_back( m_result.back() );
 			break;
+		}
 
 		case GT_PRIM_SUBDIVISION_CURVES:
 			m_result.push_back(
