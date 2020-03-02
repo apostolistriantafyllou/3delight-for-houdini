@@ -290,6 +290,7 @@ void light::set_attributes_at_time( double i_time ) const
 	std::string dummy;
 
 	vop::list_shader_parameters(
+		m_context,
 		m_vop,
 		shader_name(),
 		i_time, -1, list, dummy );
@@ -412,6 +413,7 @@ bool light::set_single_shader_attribute(int i_parm_index)const
 		(see set_attributes_at_time).
 	*/
 	vop::list_shader_parameters(
+		m_context,
 		m_vop,
 		shader_name(),
 		m_context.m_current_time,

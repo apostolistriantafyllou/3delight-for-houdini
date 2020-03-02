@@ -26,6 +26,8 @@ class exporter;
 class ROP_3Delight : public ROP_Node
 {
 	friend class settings; // UI related.
+	friend struct cop_utilities; // for OP texture generation
+
 public:
 
 	/**
@@ -94,6 +96,14 @@ protected:
 
 	virtual void loadFinished();
 
+	/**
+		\brief Returns the name of the file into which to export an NSI stream.
+
+		It might also return "stdout", which is valid in NSI, or an empty
+		string, which means to render instead of exporting.
+	*/
+	std::string GetNSIExportFilename( double i_time ) const;
+
 private:
 	void export_render_notes( const context &i_context ) const;
 
@@ -142,14 +152,6 @@ private:
 	OBJ_Camera* GetCamera()const;
 	double GetShutterInterval(double i_time)const;
 	bool HasDepthOfField()const;
-	/**
-		\brief Returns the name of the file into which to export an NSI stream.
-
-		It might also return "stdout", which is valid in NSI, or an empty
-		string, which means to render instead of exporting.
-	*/
-	std::string GetNSIExportFilename(double i_time)const;
-
 	std::vector<OBJ_Node*> m_lights;
 	bool m_cloud;
 

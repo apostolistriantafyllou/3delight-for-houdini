@@ -1,4 +1,5 @@
 #include "vop.h"
+#include "cop_utilities.h"
 #include "context.h"
 #include "osl_utilities.h"
 #include "3Delight/ShaderQuery.h"
@@ -43,6 +44,7 @@ void vop::set_attributes_at_time( double i_time ) const
 	std::string uv_coord_connection;
 
 	list_shader_parameters(
+		m_context,
 		m_vop,
 		m_vop->getOperator()->getName(),
 		i_time,
@@ -167,6 +169,7 @@ void vop::changed_cb(
 	need something better here but for now this will do.
 */
 void vop::list_shader_parameters(
+	const context &i_context,
 	const OP_Node *i_parameters,
 	const char *i_shader,
 	float i_time,
@@ -325,6 +328,23 @@ void vop::list_shader_parameters(
 		{
 			UT_String str;
 			i_parameters->evalString( str, parameter->name.c_str(), 0, i_time);
+
+			std::string potential_cop( str.toStdString() );
+			if( potential_cop.find("op:", 0) == 0 )
+			{
+				str = cop_utilities::convert_to_texture(
+					i_context,
+					potential_cop.substr(3) /* remove ":op" prefix */ );
+
+				if( str.length() == 0 )
+				{
+					/*
+						Something is wrong or we are doing stdout NSI export,
+						put back original string.
+					*/
+					str = potential_cop;
+				}
+			}
 
 			o_list.Add(
 				new NSI::StringArg( parameter->name.c_str(), str.buffer()) );
@@ -525,6 +545,7 @@ bool vop::set_single_attribute(int i_parm_index)const
 	std::string dummy;
 
 	list_shader_parameters(
+		m_context,
 		m_vop,
 		m_vop->getOperator()->getName(),
 		m_context.m_current_time,

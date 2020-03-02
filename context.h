@@ -4,8 +4,11 @@
 
 #include <OP/OP_BundlePattern.h>
 #include <SYS/SYS_Types.h>
+#include <UT/UT_TempFileManager.h>
 
 #include <assert.h>
+#include <string>
+#include <vector>
 
 class OBJ_Node;
 
@@ -67,6 +70,11 @@ public:
 			OP_BundlePattern::freePattern(m_lights_to_render_pattern);
 			OP_BundlePattern::freePattern(m_objects_to_render_pattern);
 		}
+
+		for( const auto &f : m_temp_filenames )
+		{
+			UT_TempFileManager::removeTempFile( f.data() );
+		}
 	}
 
 	/// Returns true if motion blur is required for this render
@@ -117,4 +125,7 @@ public:
 	OP_BundlePattern* m_objects_to_render_pattern;
 	// Lights export filter
 	OP_BundlePattern* m_lights_to_render_pattern;
+
+	/** files to be deleted at render end. */
+	mutable std::vector< std::string > m_temp_filenames;
 };

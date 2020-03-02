@@ -28,7 +28,9 @@ add_library( ${library_name} SHARED
 	VOP_ExternalOSL.cpp
 	attributes_callbacks.cpp
 	camera.cpp
+	cop_utilities.cpp
 	curvemesh.cpp
+	dl_system.cpp
 	exporter.cpp
 	geometry.cpp
 	idisplay_port.cpp

@@ -64,12 +64,16 @@ protected:
 		Set all parameters of 'i_shader' by finding their values pairs
 		in 'i_parameters'.
 
+		\param i_context
+			The current rendering context. Needed in case where COP image
+			generation occur.
 		\param i_parameters
 			The node where to get parameter values.
 		\param i_shader
 			The OSL shader from where to get parameter names.
 		\param i_time
-			The time to use for the parameter's eval.
+			The time to use for the parameter's eval. Note that this can be
+			different from i_context.m_current_time.
 		\param i_parm_index
 			If non-negative, index of the only node parameter to be exported.
 		\param o_list
@@ -78,8 +82,12 @@ protected:
 		\parama o_uv_connection
 			If this is a texture node, will return the name of the parameter
 			to which a uv attribute reader must be connected
+
+		Note that some more involved work is required if texture parameter
+		link to an OP. In this case we will generate images.
 	*/
 	static void list_shader_parameters(
+		const context &i_context,
 		const OP_Node *i_parameters,
 		const char *i_shader,
 		float i_time,
