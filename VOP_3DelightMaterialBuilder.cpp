@@ -87,7 +87,7 @@ VOP_3DelightMaterialBuilder::initializeOperatorTable()
 
 VOP_External3DelightMaterialBuilderOperator::VOP_External3DelightMaterialBuilderOperator()
 	:	VOP_Operator(
-			"dlMaterialBuilder",
+			"3Delight::dlMaterialBuilder",
 			"3Delight Material Builder",
 			VOP_3DelightMaterialBuilder::alloc,
 			VOP_3DelightMaterialBuilder::myTemplateList,
