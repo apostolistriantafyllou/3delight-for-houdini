@@ -828,11 +828,6 @@ VOP_ExternalOSL::VOP_ExternalOSL(
 		*/
 		setMaterialFlag(true);
 	}
-
-	// Execute the script with the node's full path as an argument
-//	std::string init_cmd = "private/3Delight--VOP_OnCreated.cmd " +
-//		getFullPath().toStdString();
-//	OPgetDirector()->getCommandManager()->execute(init_cmd.c_str());
 }
 
 VOP_ExternalOSL::~VOP_ExternalOSL()
