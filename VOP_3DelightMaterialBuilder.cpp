@@ -41,7 +41,8 @@ VOP_3DelightMaterialBuilder::VOP_3DelightMaterialBuilder(
 	OP_Network* parent, const char* name, VOP_External3DelightMaterialBuilderOperator* entry)
     :	VOP_SubnetBase(parent, name, entry)
 {
-	createAndGetOperatorTable();
+	// Updates a shared table, may be dangerous
+	initializeOperatorTable();
 }
 
 VOP_3DelightMaterialBuilder::~VOP_3DelightMaterialBuilder()
@@ -60,8 +61,8 @@ VOP_3DelightMaterialBuilder::getNumVisibleInputs() const
 	return 0;
 }
 
-OP_OperatorTable *
-VOP_3DelightMaterialBuilder::createAndGetOperatorTable()
+void
+VOP_3DelightMaterialBuilder::initializeOperatorTable()
 {
     OP_OperatorTable& global_ot = *OP_Network::getOperatorTable(VOP_TABLE_NAME);
     OP_OperatorTable& ot = *getOperatorTable();
@@ -82,8 +83,6 @@ VOP_3DelightMaterialBuilder::createAndGetOperatorTable()
 	}
     // Notify observers of the operator table that it has been changed.
     ot.notifyUpdateTableSinksOfUpdate();
-	
-    return &ot;
 }
 
 VOP_External3DelightMaterialBuilderOperator::VOP_External3DelightMaterialBuilderOperator()

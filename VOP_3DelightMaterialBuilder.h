@@ -51,7 +51,7 @@ protected:
 	virtual ~VOP_3DelightMaterialBuilder();
 
 private:
-    OP_OperatorTable* createAndGetOperatorTable();
+    void initializeOperatorTable();
 
     VOP_3DelightOperatorFilter myOperatorFilter;
 };
