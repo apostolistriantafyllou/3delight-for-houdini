@@ -41,6 +41,7 @@ VOP_3DelightMaterialBuilder::VOP_3DelightMaterialBuilder(
 	OP_Network* parent, const char* name, VOP_External3DelightMaterialBuilderOperator* entry)
     :	VOP_SubnetBase(parent, name, entry)
 {
+	createAndGetOperatorTable();
 }
 
 VOP_3DelightMaterialBuilder::~VOP_3DelightMaterialBuilder()
@@ -57,6 +58,32 @@ unsigned
 VOP_3DelightMaterialBuilder::getNumVisibleInputs() const
 {
 	return 0;
+}
+
+OP_OperatorTable *
+VOP_3DelightMaterialBuilder::createAndGetOperatorTable()
+{
+    OP_OperatorTable& global_ot = *OP_Network::getOperatorTable(VOP_TABLE_NAME);
+    OP_OperatorTable& ot = *getOperatorTable();
+
+	OP_OperatorList global_ol;
+	global_ot.getOperators(global_ol);
+
+	// Updates "ot" from our filter apply from those into global_ot
+	VOP_3DelightOperatorFilter ourFilter;
+	for(int o = 0; o < global_ol.size(); o++)
+	{
+		OP_Operator* op = global_ot.getOperator(global_ol[o]->getName());
+		assert(op);
+		if (ourFilter.allowOperatorAsChild(op))
+		{	
+			ot.addOperator(op);
+		}
+	}
+    // Notify observers of the operator table that it has been changed.
+    ot.notifyUpdateTableSinksOfUpdate();
+	
+    return &ot;
 }
 
 VOP_External3DelightMaterialBuilderOperator::VOP_External3DelightMaterialBuilderOperator()
