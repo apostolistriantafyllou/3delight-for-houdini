@@ -45,6 +45,17 @@ void instance::connect( void ) const
 	std::vector< int > sourcemodel_index_per;
 	get_sop_materials( materials  );
 
+	if( materials.size() == 1 )
+	{
+		/* Assign material to the entire instancer */
+		std::string attribute_handle = m_handle + "|attribute";
+		m_nsi.Create( attribute_handle, "attributes" );
+		m_nsi.Connect( attribute_handle, "", m_handle, "geometryattributes");
+		m_nsi.Connect( materials[0], "", attribute_handle, "surfaceshader",
+			NSI::IntegerArg("priority", 2) );
+		materials.clear();
+	}
+
 	std::unordered_map<std::string, int> unique_materials;
 	for( const auto &m : materials )
 	{
