@@ -7,7 +7,8 @@ const char* VOP_3DelightMaterialBuilder::theChildTableName = VOPNET_TABLE_NAME;
 bool
 VOP_3DelightOperatorFilter::allowOperatorAsChild(OP_Operator* i_op)
 {
-    return dynamic_cast<VOP_ExternalOSLOperator*>(i_op) != NULL;
+    return dynamic_cast<VOP_ExternalOSLOperator*>(i_op) != NULL ||
+			i_op->getName().toStdString() == "bind";
 }
 
 void
