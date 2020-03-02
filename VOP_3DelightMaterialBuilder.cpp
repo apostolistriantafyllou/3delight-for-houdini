@@ -61,7 +61,7 @@ VOP_3DelightMaterialBuilder::getNumVisibleInputs() const
 
 VOP_External3DelightMaterialBuilderOperator::VOP_External3DelightMaterialBuilderOperator()
 	:	VOP_Operator(
-			"3DelightMaterialBuilder",
+			"dlMaterialBuilder",
 			"3Delight Material Builder",
 			VOP_3DelightMaterialBuilder::alloc,
 			VOP_3DelightMaterialBuilder::myTemplateList,

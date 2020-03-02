@@ -69,6 +69,13 @@ void scene::process_node(
 	if( i_node->castToVOPNode() )
 	{
 		/*
+			The material builder is just a container, we don't need to generate
+			any node for it.
+		*/
+		if( i_node->getOperator()->getName() == "dlMaterialBuilder" )
+			return;
+
+		/*
 		   Our material network connections is done :) The connection
 		   between nodes is done in \ref vop::connect
 		   Read vop.cpp if you are bewildered by this simplicity.
@@ -208,6 +215,13 @@ void scene::scan(
 			/* Don't get into SOP networks. Nothing to see there */
 			if( node->castToSOPNode() )
 				continue;
+
+			if( node->castToVOPNode() &&
+				!vop::is_renderable(node->castToVOPNode()) )
+			{
+				/* Don't go inide VOPs we can't render */
+				continue;
+			}
 
 			process_node( i_context, node, o_to_export, io_interests );
 

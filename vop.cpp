@@ -629,3 +629,17 @@ bool vop::is_aov_definition( VOP_Node *i_vop )
 
 	return false;
 }
+
+
+bool vop::is_renderable( VOP_Node *i_vop )
+{
+	const shader_library &library = shader_library::get_instance();
+	std::string vop_name( i_vop->getOperator()->getName().toStdString() );
+
+	if( vop_name == "dlMaterialBuilder" )
+		return true;
+
+	std::string path = library.get_shader_path( vop_name.c_str() );
+
+	return !path.empty();
+}

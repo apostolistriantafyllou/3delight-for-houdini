@@ -47,6 +47,12 @@ public:
 	*/
 	std::string vop_name( void ) const;
 
+	/**
+		Returns true if the VOP node has a corresponding
+		OSL shader.
+	*/
+	static bool is_renderable( VOP_Node *i_vop );
+
 	static void changed_cb(
 		OP_Node* i_caller,
 		void* i_callee,
