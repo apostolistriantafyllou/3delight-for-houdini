@@ -44,6 +44,16 @@ VOP_3DelightMaterialBuilder::VOP_3DelightMaterialBuilder(
 {
 	// Updates a shared table, may be dangerous
 	initializeOperatorTable();
+	/*
+		Tell Houdini that this shader can be used as a material.  It allows
+		it to appear in the "Choose Operator" window that is displayed when
+		one clicks on the associated button near an geometry object's
+		"Material" parameter field.
+		We were told to call this in an override of
+		VOP_Node::initMaterialFlag(), but it works just fine here. After
+		all, here is the earliest time we can call it.
+	*/
+	setMaterialFlag(true);
 }
 
 VOP_3DelightMaterialBuilder::~VOP_3DelightMaterialBuilder()
