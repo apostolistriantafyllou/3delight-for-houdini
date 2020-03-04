@@ -40,13 +40,6 @@ public:
 
 	void set_attributes()const override;
 
-	/**
-		\brief Declare this as an instanced object. Such objects
-		do not have to be connected to a parent transform because
-		they will be using the 'instance' exporter.
-	*/
-	void set_as_instanced( void ) { m_instanced = true; }
-
 	/// Specifies the GT primitive to use when exporting one more time sample
 	bool add_time_sample(double i_time, const GT_PrimitiveHandle& i_primitive);
 
@@ -95,9 +88,6 @@ private:
 
 	/// One GT primitive for each time sample
 	std::vector<TimedPrimitive> m_gt_primitives;
-
-	/** =true if instanced geo */
-	bool m_instanced{false};
 
 	bool m_requires_frame_aligned_sample;
 };

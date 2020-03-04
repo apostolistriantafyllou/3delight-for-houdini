@@ -533,6 +533,20 @@ VOP_Node *exporter::get_assigned_material( std::string &o_path ) const
 	return resolve_material_path( material_path.c_str(), o_path );
 }
 
+std::string exporter::absolute_path(
+	OP_Node *i_node, const char *i_path )
+{
+	OP_Node* op_node = OPgetDirector()->findNode( i_path );
+	if( op_node )
+		return i_path;
+
+	op_node = i_node->findNode( i_path );
+	if( !op_node )
+		return {};
+
+	return op_node->getFullPath().toStdString();
+}
+
 VOP_Node *exporter::resolve_material_path(
 	const char *i_path,  std::string &o_path ) const
 {

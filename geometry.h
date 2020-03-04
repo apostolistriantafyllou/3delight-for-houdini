@@ -5,6 +5,7 @@
 #include <vector>
 
 class primitive;
+class instance;
 
 /**
 	\brief Exporter of geometry based on GT primitives.
@@ -30,6 +31,9 @@ public:
 	void create()const override;
 	void set_attributes()const override;
 	void connect()const override;
+
+	/** \ref scene::scan_for_instanced */
+	void get_instances( std::vector<const instance *> & ) const;
 
 private:
 

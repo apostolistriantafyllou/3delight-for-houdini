@@ -44,9 +44,15 @@ private:
 		std::vector< exporter * > &o_to_export,
 		std::deque<safe_interest>& io_interests );
 
+	static void scan_for_instanced(
+		const context &i_context,
+		std::vector<exporter *> &io_to_export,
+		std::deque<safe_interest>& io_interests );
+
 	static void process_node(
 		const context &i_context,
 		OP_Node *i_node,
+		bool i_check_visibility,
 		std::vector<exporter *> &o_to_export,
 		std::deque<safe_interest>& io_interests );
 

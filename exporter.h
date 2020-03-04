@@ -62,9 +62,19 @@ public:
 	OBJ_Node *obj( void ) { return m_object; }
 
 	/**
+		\brief Declare this as an instanced object. Such objects
+		do not have to be connected to a parent transform because
+		they will be using the 'instance' exporter.
+	*/
+	void set_as_instanced( void ) { m_instanced = true; }
+
+	/**
 		\brief Returns the name of transparent shader attribute.
 	*/
 	static const char* transparent_surface_handle();
+
+	/** utility to resolve relative paths */
+	static std::string absolute_path( OP_Node *i_node, const char *i_path );
 
 protected:
 
@@ -224,4 +234,7 @@ protected:
 
 	/** The NSI handle */
 	std::string m_handle;
+
+	/** =true if instanced geo */
+	bool m_instanced{false};
 };

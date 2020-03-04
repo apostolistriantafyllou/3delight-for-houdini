@@ -4,6 +4,7 @@
 #include "camera.h"
 #include "exporter.h"
 #include "geometry.h"
+#include "instance.h"
 #include "light.h"
 #include "null.h"
 #include "vop.h"
@@ -56,13 +57,20 @@ static bool object_displayed(
 /**
 	\brief Decide what to do with the given OP_Node.
 
-	NULLs are output, always. They are the internal nodes of our scene
-	tree. Other than that, we output any obj that is a OBJ_GEOMETRY
-	and that is renderable in the current frame range.
+	\param i_check_visibility
+		= true if must check Display flag / Objects to Render.
+
+	Houdini's OBJ nodes will correspond to NSI transform. So we insert
+	a null exported for each one of these.
+
+	Other than that, we output any obj that is a OBJ_GEOMETRY
+	and that is renderable in the current frame range and obey to Display
+	flag / Objects to Render.
 */
 void scene::process_node(
 	const context &i_context,
 	OP_Node *i_node,
+	bool i_check_visibility,
 	std::vector<exporter *> &o_to_export,
 	std::deque<safe_interest>& io_interests )
 {
@@ -97,9 +105,8 @@ void scene::process_node(
 		return;
 
 	/*
-		Each object is its own null transform. This could produce useless
-		transforms if we decide not to output the node after all but I am
-		aiming for code simplicity here.
+		Each object is its own null transform. Note that this null transform
+		could be removed down below if object export doesn't occur.
 	*/
 	o_to_export.push_back( new null(i_context, obj) );
 	if(i_context.m_ipr)
@@ -155,27 +162,27 @@ void scene::process_node(
 		return;
 	}
 
-	if(!object_displayed(
+	if( i_check_visibility &&
+		!object_displayed(
 			*obj,
 			i_context.m_objects_to_render_pattern,
 			rop_path,
 			i_context.m_current_time))
 	{
+		/* Delete the useless null exporter. */
+		delete o_to_export.back(); o_to_export.pop_back();
 		return;
 	}
 
 	SOP_Node *sop = obj->getRenderSopPtr();
 
-	if( !sop )
+	if( !sop || !obj->castToOBJGeometry() )
 	{
+		delete o_to_export.back(); o_to_export.pop_back();
 		return;
 	}
 
-	if( obj->castToOBJGeometry() )
-	{
-		o_to_export.push_back( new geometry(i_context, obj) );
-		return;
-	}
+	o_to_export.push_back( new geometry(i_context, obj) );
 }
 
 /**
@@ -223,7 +230,7 @@ void scene::scan(
 				continue;
 			}
 
-			process_node( i_context, node, o_to_export, io_interests );
+			process_node( i_context, node, true, o_to_export, io_interests );
 
 			if( !node->isNetwork() )
 				continue;
@@ -233,6 +240,72 @@ void scene::scan(
 			{
 				traversal.push_back( kidnet );
 			}
+		}
+	}
+}
+
+/**
+	\brief Export instanced objects that might have been skipped because
+	of visiblity.
+*/
+void scene::scan_for_instanced(
+	const context &i_context,
+	std::vector<exporter *> &io_to_export,
+	std::deque<safe_interest>& io_interests )
+{
+	std::unordered_set< std::string > instanced;
+
+	/*
+		For each geometry, gather its instances and from there
+		gather the instanced geometries.
+	*/
+	for( const auto &E : io_to_export )
+	{
+		geometry *G = dynamic_cast<geometry *>( E );
+		if( !G )
+			continue;
+
+		std::vector< const instance * > instances;
+		G->get_instances( instances );
+
+		for( auto I : instances )
+			I->get_instanced( instanced );
+	}
+
+	if( instanced.empty() )
+		return;
+
+	for( const auto E : io_to_export )
+	{
+		auto it = instanced.find( E->handle() );
+		if( it == instanced.end() )
+			continue;
+
+		instanced.erase( it );
+	}
+
+	/*
+		"instanced" now contains all the objects that are instanced but which
+		have not been exported (due to the Display flag or Scene Elements ->
+		Objects to Render).
+	*/
+	for( auto E : instanced )
+	{
+		OP_Node *o = OPgetDirector()->findNode( E.data() );
+		if( !o )
+			continue;
+
+		int s = io_to_export.size(); assert( s>0 );
+		process_node( i_context, o, false, io_to_export, io_interests );
+
+		/*
+		   Finally, make sure we don't render the source geometry as its
+		   only rendered through instancing.
+		*/
+		for( int i=s-1; i<io_to_export.size(); i++ )
+		{
+			if( io_to_export[i]->handle() == E )
+				io_to_export[i]->set_as_instanced();
 		}
 	}
 }
@@ -250,6 +323,12 @@ void scene::convert_to_nsi(
 	/* Start be getting the list of exporter for the scene */
 	std::vector<exporter *> to_export;
 	scan( i_context, to_export, io_interests );
+
+	/*
+		Make sure instanced geometry is included in the list, regardless of
+		display flag or scene elements.
+	*/
+	scan_for_instanced( i_context, to_export, io_interests );
 
 	/*
 		Create phase. This will create all the main NSI nodes from the Houdini

@@ -52,6 +52,12 @@ void null::set_attributes_at_time( double i_time ) const
 */
 void null::connect( void ) const
 {
+	if( m_instanced )
+	{
+		/* This tansform is used by the OBJ-level instancer. Don't connect. */
+		return;
+	}
+
 	assert( m_object );
 
 	OP_Node *parent_node = m_object->getParent();

@@ -213,12 +213,16 @@ struct OBJ_Node_Refiner : public GT_Refine
 			if( op_name == "instance" &&
 				m_node->getParmIndex("instancepath")>=0 )
 			{
-				/* OBJ-level instancer */
+				/*
+					OBJ-level instancer. Note that "instancepath" will always
+					return "" if there is a s@instance on the geo.
+				*/
 				UT_String path;
 				m_node->evalString( path, "instancepath", 0, m_time );
+				std::string absolute = exporter::absolute_path( m_node, path );
 
 				std::vector<std::string> models;
-				models.push_back( path.toStdString() );
+				models.push_back( absolute );
 
 				m_result.push_back(
 					new instance(
@@ -553,4 +557,17 @@ void geometry::connect()const
 	m_nsi.Connect(
 		material_path, "",
 		attributes, volume ? "volumeshader" : "surfaceshader" );
+}
+
+/**
+	\brief Return any instance exported in this geometry.
+*/
+void geometry::get_instances( std::vector<const instance *> &o_instances ) const
+{
+	for( auto P : m_primitives )
+	{
+		instance *I = dynamic_cast<instance *>( P );
+		if( I )
+			o_instances.push_back( I );
+	}
 }
