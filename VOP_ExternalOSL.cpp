@@ -596,8 +596,7 @@ StructuredShaderInfo::StructuredShaderInfo(const DlShaderInfo* i_info)
 
 		for(const DlShaderInfo::conststring& tag : param.sdefault)
 		{
-			// The only tag that interests us for now is "surface"
-			if(tag == "surface")
+			if(tag == "surface" || tag == "volume" )
 			{
 				m_terminal = true;
 				break;
