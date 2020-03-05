@@ -30,7 +30,7 @@ namespace VolumeGridParameters
 	/// Default value of the "emission" hardcoded parameter
 	const char emission_default[] = "heat";
 	/// Default value of the "velocity" hardcoded parameter
-	const char velocity_default[] = "v";
+	const char velocity_default[] = "vel";
 	/// Default value of the "velocity_scale" hardcoded parameter
 	const float velocity_scale_default = 1.0f;
 }
