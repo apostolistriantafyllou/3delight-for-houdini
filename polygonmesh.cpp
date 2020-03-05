@@ -159,28 +159,35 @@ void polygonmesh::connect( void ) const
 
 void polygonmesh::assign_primitive_materials( void ) const
 {
-	std::vector< std::string > materials;
-	get_sop_materials( materials );
+	/* Priority to uniform/primitive materials */
+	GT_Owner type;
+	GT_DataArrayHandle materials = default_gt_primitive().get()->findAttribute(
+		"shop_materialpath", type, 0);
 
-	if( materials.empty() )
+	if( !materials || materials->getStorage()!=GT_STORE_STRING )
 	{
 		return;
 	}
 
-	if( materials.size() == 1u )
+	if( materials->entries() == 1u )
 	{
-		const std::string &shop = materials[0];
-		if( shop.empty() )
-			return;
+		/*
+			Could be a detail attribute or just one-faced poly, no need
+			to go further as we can just create one attirbute node.
+		*/
+		const std::string shop( materials->getS(0) );
 
-		std::string attribute_handle = m_handle + shop;
+		if( !shop.empty() )
+		{
+			std::string attribute_handle = m_handle + shop;
 
-		NSI::ArgumentList priority;
-		priority.Add(new NSI::IntegerArg("priority", 1));
+			NSI::ArgumentList priority;
+			priority.Add(new NSI::IntegerArg("priority", 1));
 
-		m_nsi.Create( attribute_handle, "attributes" );
-		m_nsi.Connect( shop, "", attribute_handle, "surfaceshader", priority );
-		m_nsi.Connect( attribute_handle, "", m_handle, "geometryattributes" );
+			m_nsi.Create( attribute_handle, "attributes" );
+			m_nsi.Connect( shop, "", attribute_handle, "surfaceshader", priority );
+			m_nsi.Connect(attribute_handle, "", m_handle, "geometryattributes" );
+		}
 
 		return;
 	}
@@ -192,14 +199,12 @@ void polygonmesh::assign_primitive_materials( void ) const
 		We will need per-face assignments.  Build a material -> uniform/face map
 	*/
 	std::unordered_map< std::string, std::vector<int> > all_materials;
-	for( int i=0; i<materials.size(); i++ )
+	for( int i=0; i<materials->entries(); i++ )
 	{
-		const std::string &shop = materials[i];
+		const std::string shop( materials->getS(i) );
 
-		if( shop.empty() )
-			continue;
-
-		all_materials[ shop ].push_back( i );
+		if( !shop.empty() )
+			all_materials[ shop ].push_back( i );
 	}
 
 	/* Create the NSI face sets + attributes and connect to geo */
