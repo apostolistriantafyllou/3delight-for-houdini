@@ -1510,6 +1510,9 @@ ROP_3Delight::HasSpeedBoost()const
 		return false;
 	}
 
+	if( m_current_render && m_current_render->m_export_nsi )
+		return false;
+
 	int speed_boost = evalInt(settings::k_speed_boost, 0, 0.0f);
 	return speed_boost;
 }
