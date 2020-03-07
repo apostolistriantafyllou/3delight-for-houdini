@@ -41,6 +41,8 @@ const char* settings::k_atmosphere = "atmosphere";
 const char* settings::k_override_display_flags = "override_display_flags";
 const char* settings::k_objects_to_render = "objects_to_render";
 const char* settings::k_lights_to_render = "lights_to_render";
+//const char* settings::k_ignore_matte_attribute = "ignore_matte_attribute";
+const char* settings::k_matte_objects = "matte_objects";
 const char* settings::k_default_image_filename = "default_image_filename";
 const char* settings::k_default_image_format = "default_image_format";
 const char* settings::k_default_image_bits = "default_image_bits";
@@ -51,8 +53,6 @@ const char* settings::k_aov = "aov";
 const char* settings::k_aov_clear = "aov_clear_#";
 const char* settings::k_add_layer = "add_layer";
 const char* settings::k_view_layer = "view_layer";
-const char* settings::k_ignore_matte_attribute = "ignore_matte_attribute";
-const char* settings::k_matte_sets = "matte_sets";
 const char* settings::k_light_sets = "light_sets";
 const char* settings::k_use_light_set = "use_light_set_#";
 const char* settings::k_light_set = "light_set_#";
@@ -244,13 +244,20 @@ PRM_Template* settings::GetTemplates()
 	static PRM_Name lights_to_render(k_lights_to_render, "Lights to Render");
 	static PRM_Default lights_to_render_d(0.0f, "*");
 
+	static PRM_Name matte_objects(k_matte_objects, "Matte Objects");
+	static PRM_Default matte_objects_d(0.0f, ""); /* none */
+
 	static std::vector<PRM_Template> scene_elements_templates =
 	{
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &camera, &camera_d, nullptr, nullptr, nullptr, &PRM_SpareData::objCameraPath),
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &atmosphere, &atmosphere_d, nullptr, nullptr, nullptr),
 		PRM_Template(PRM_TOGGLE, 1, &override_display_flags, &override_display_flags_d),
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &objects_to_render, &objects_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objGeometryPath, 1, nullptr, &override_display_flags_g),
-		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &lights_to_render, &lights_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objLightPath, 1, nullptr, &override_display_flags_g)
+		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &lights_to_render, &lights_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objLightPath, 1, nullptr, &override_display_flags_g),
+		PRM_Template(
+			PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &matte_objects,
+			&matte_objects_d, nullptr, nullptr, nullptr,
+			&PRM_SpareData::objGeometryPath, 1, nullptr, nullptr)
 	};
 
 /*
@@ -379,17 +386,7 @@ PRM_Template* settings::GetTemplates()
 		PRM_Template(PRM_SEPARATOR, 0, &separator5)
 	};
 
-	//// Matte
-
-	static PRM_Name ignore_matte_attribute(k_ignore_matte_attribute, "Ignore Matte Attribute");
-	static PRM_Default ignore_matte_attribute_d(false);
-	static PRM_Name matte_sets(k_matte_sets, "Matte Sets");
-
-	static std::vector<PRM_Template> matte_templates =
-	{
-		PRM_Template(PRM_TOGGLE, 1, &ignore_matte_attribute),
-		PRM_Template(PRM_STRING, 1, &matte_sets)
-	};
+	;
 
 	//// Multi-Light
 
@@ -421,7 +418,6 @@ PRM_Template* settings::GetTemplates()
 	static PRM_Name image_layers_tabs_name("image_layers_tabs");
 	static std::vector<PRM_Default> image_layers_tabs =
 	{
-		PRM_Default(matte_templates.size(), "Matte"),
 		PRM_Default(multi_light_templates.size(), "Multi-Light")
 	};
 
@@ -596,10 +592,6 @@ PRM_Template* settings::GetTemplates()
 					image_layers_tabs.size(),
 					&image_layers_tabs_name,
 					&image_layers_tabs[0]));
-				templates.insert(
-					templates.end(),
-					matte_templates.begin(),
-					matte_templates.end());
 				templates.insert(
 					templates.end(),
 					multi_light_templates.begin(),
@@ -819,7 +811,13 @@ void settings::UpdateLights()
 		? OP_BundlePattern::allocPattern(GetLightsToRender())
 		: nullptr;
 
-	scene::find_lights(pattern, m_parameters.getFullPath().c_str(), m_lights);
+	std::vector<OBJ_Node *> dummy;
+
+	scene::find_lights_and_mattes(
+		pattern,
+		nullptr, /* no mattes needed */
+		m_parameters.getFullPath().c_str(), m_lights, dummy );
+
 	if(pattern)
 	{
 		OP_BundlePattern::freePattern( pattern );
@@ -927,6 +925,17 @@ UT_String settings::GetLightsToRender() const
 	UT_String lights_pattern("*");
 	m_parameters.evalString(lights_pattern, settings::k_lights_to_render, 0, 0.0f);
 	return lights_pattern;
+}
+
+UT_String settings::get_matte_objects( void ) const
+{
+	UT_String matte_pattern;
+	if( m_parameters.getParmIndex(settings::k_matte_objects) != -1 )
+	{
+		m_parameters.evalString(
+			matte_pattern, settings::k_matte_objects, 0, 0.0f );
+	}
+	return matte_pattern;
 }
 
 int settings::StopRenderCB(void* i_node, int, double, const PRM_Template*)

@@ -438,7 +438,8 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		getFullPath().toStdString(),
 		m_settings.OverrideDisplayFlags(),
 		m_settings.GetObjectsToRender(),
-		m_settings.GetLightsToRender());
+		m_settings.GetLightsToRender(),
+		m_settings.get_matte_objects() );
 
 	m_end_time = tend;
 

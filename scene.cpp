@@ -12,6 +12,7 @@
 /* } */
 
 #include "context.h"
+#include "object_attributes.h"
 #include "safe_interest.h"
 
 #include <GEO/GEO_Normal.h>
@@ -360,7 +361,8 @@ void scene::convert_to_nsi(
 	}
 
 	/*
-		Scene export is done, with the exception of light linking.
+		Scene export is done, with the exception of light linking and matte
+		objects
 
 		Remember "lightcategories" expressions that already have a matching NSI
 		"set" node in the scene. All lights are on by default, so light linking
@@ -372,11 +374,13 @@ void scene::convert_to_nsi(
 	*/
 	std::set<std::string> exported_lights_categories;
 
-	std::vector<OBJ_Node*> lights_to_render;
-	find_lights(
+	std::vector<OBJ_Node*> lights_to_render, mattes;
+
+	find_lights_and_mattes(
 		i_context.m_lights_to_render_pattern,
+		i_context.m_mattes_pattern,
 		i_context.m_rop_path.c_str(),
-		lights_to_render );
+		lights_to_render, mattes );
 
 	for( auto &exporter : to_export )
 	{
@@ -387,6 +391,17 @@ void scene::convert_to_nsi(
 			lights_to_render );
 	}
 
+	const char *matte_handle =
+		object_attributes::geo_attribute_node_handle(
+			object_attributes::e_matte );
+
+	for( auto &matte : mattes )
+	{
+		i_context.m_nsi.Connect(
+			matte_handle, "",
+			matte->getFullPath().c_str(), "geometryattributes");
+	}
+
 	for( auto &exporter : to_export )
 	{
 		delete exporter;
@@ -394,7 +409,8 @@ void scene::convert_to_nsi(
 }
 
 /**
-	\brief Find all renderable lights in the scene.
+	\brief Find all renderable lights in the scene, as well as matte
+	objects.
 
 	\param i_light_pattern
 		If not null, only lights that match this pattern will be considered as
@@ -404,13 +420,15 @@ void scene::convert_to_nsi(
 	\param o_lights
 		Will be filled with the scene's renderable light sources.
 
-	Display flags are ignored in this function because they could be animated
-	and we want the result to be time-independent.
+	Arguably, doing lights and matte objects in the same function appears
+	weird. Our aim here is performance: why scan the scene N times ?
 */
-void scene::find_lights(
+void scene::find_lights_and_mattes(
 	const OP_BundlePattern* i_light_pattern,
+	const OP_BundlePattern* i_matte_pattern,
 	const char* i_rop_path,
-	std::vector<OBJ_Node*>& o_lights )
+	std::vector<OBJ_Node*>& o_lights,
+	std::vector<OBJ_Node*>& o_mattes )
 {
 	/* A traversal stack to avoid recursion */
 	std::vector< OP_Node * > traversal;
@@ -430,6 +448,14 @@ void scene::find_lights(
 		{
 			OP_Node *node = network->getChild(i);
 			OBJ_Node *obj = node->castToOBJNode();
+
+			if( obj &&
+				(!i_matte_pattern ||
+				i_matte_pattern->match(obj, i_rop_path, true)) )
+			{
+				o_mattes.push_back( obj );
+			}
+
 			if( obj &&
 				(obj->castToOBJLight() ||
 					!vdb::node_is_vdb_loader(obj, 0).empty()) )

@@ -68,6 +68,7 @@ public:
 	static const char* k_override_display_flags;
 	static const char* k_objects_to_render;
 	static const char* k_lights_to_render;
+	static const char* k_matte_objects;
 	static const char* k_default_image_filename;
 	static const char* k_default_image_format;
 	static const char* k_default_image_bits;
@@ -78,8 +79,6 @@ public:
 	static const char* k_aov_clear;
 	static const char* k_add_layer;
 	static const char* k_view_layer;
-	static const char* k_ignore_matte_attribute;
-	static const char* k_matte_sets;
 	static const char* k_light_sets;
 	static const char* k_use_light_set;
 	static const char* k_light_set;
@@ -111,6 +110,7 @@ private:
 	bool OverrideDisplayFlags()const;
 	UT_String GetObjectsToRender() const;
 	UT_String GetLightsToRender() const;
+	UT_String get_matte_objects( void ) const;
 
 	/// Called when the Abort button is pressed
 	static int StopRenderCB(void* i_node, int, double, const PRM_Template*);

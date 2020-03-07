@@ -28,10 +28,12 @@ public:
 		const context &,
 		std::deque<safe_interest>& io_interests );
 
-	static void find_lights(
-		const OP_BundlePattern* i_pattern,
+	static void find_lights_and_mattes(
+		const OP_BundlePattern* i_lights,
+		const OP_BundlePattern* i_mattes,
 		const char* i_rop_path,
-		std::vector<OBJ_Node*>& o_lights );
+		std::vector<OBJ_Node*>& o_lights,
+		std::vector<OBJ_Node*>& o_mattes );
 
 	/**
 		\brief Find the bind export nodes that can produce custom AOVs

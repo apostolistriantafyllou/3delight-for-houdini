@@ -36,7 +36,8 @@ public:
 		const std::string& i_rop_path,
 		bool i_override_display_flags,
 		const UT_String& i_objects_to_render,
-		const UT_String& i_lights_to_render)
+		const UT_String& i_lights_to_render,
+		const UT_String& i_matte_objects )
 	:
 		m_nsi(i_nsi),
 		m_static_nsi(i_static_nsi),
@@ -58,17 +59,21 @@ public:
 		m_lights_to_render_pattern(
 			i_override_display_flags
 			? OP_BundlePattern::allocPattern(i_lights_to_render)
-			: nullptr)
+			: nullptr),
+		m_mattes_pattern( OP_BundlePattern::allocPattern(i_matte_objects) )
 	{
 		assert(!m_ipr || !m_export_nsi);
 	}
 
 	~context()
 	{
-		if(m_lights_to_render_pattern && m_objects_to_render_pattern)
+		if( m_lights_to_render_pattern &&
+			m_objects_to_render_pattern &&
+			m_mattes_pattern )
 		{
 			OP_BundlePattern::freePattern(m_lights_to_render_pattern);
 			OP_BundlePattern::freePattern(m_objects_to_render_pattern);
+			OP_BundlePattern::freePattern(m_mattes_pattern);
 		}
 
 		for( const auto &f : m_temp_filenames )
@@ -125,6 +130,9 @@ public:
 	OP_BundlePattern* m_objects_to_render_pattern;
 	// Lights export filter
 	OP_BundlePattern* m_lights_to_render_pattern;
+
+	/** All these objects will be tagged as matte */
+	OP_BundlePattern* m_mattes_pattern;
 
 	/** files to be deleted at render end. */
 	mutable std::vector< std::string > m_temp_filenames;
