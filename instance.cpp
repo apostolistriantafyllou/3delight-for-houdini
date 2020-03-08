@@ -297,10 +297,11 @@ void instance::get_merge_points(
 
 	for( int i=0; i<max_count; i ++ )
 	{
+
 		std::string I = (instance && i<instance->entries()) ?
-					instance->getS(i).c_str() : "";
+					(const char *)(instance->getS(i)) : "";
 		std::string M =	(material && i<material->entries()) ?
-					material->getS(i).c_str() : "";
+					(const char*)(material->getS(i)) : "";
 
 		std::pair< std::string, std::string > m = std::make_pair(I, M);
 
@@ -443,8 +444,9 @@ void instance::get_instanced(
 
 	if( instance && instance->getStorage()==GT_STORE_STRING )
 	{
+
 		for( int i=0; i<instance->entries(); i++ )
-			o_instanced.insert( instance->getS(i).toStdString() );
+			o_instanced.insert( (const char *)instance->getS(i) );
 
 		return;
 	}
