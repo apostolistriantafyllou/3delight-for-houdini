@@ -2,6 +2,9 @@
 #include "time_sampler.h"
 
 #include <OBJ/OBJ_Node.h>
+#include <VOP/VOP_Node.h>
+#include <OP/OP_Node.h>
+#include <GT/GT_PrimPolygonMesh.h>
 
 #include <nsi.hpp>
 
@@ -61,8 +64,6 @@ primitive::connect()const
 	m_nsi.Connect( parent, "", m_object->getFullPath().c_str(), "objects" );
 
 	m_nsi.Connect( m_handle, "", parent, "objects" );
-
-	export_override_attributes();
 }
 
 void primitive::set_attributes()const
@@ -230,3 +231,113 @@ bool primitive::has_velocity(const GT_PrimitiveHandle& i_gt_prim)
 	GT_Owner owner;
 	return (bool)i_gt_prim->findAttribute(k_velocity_attribute, owner, 0);
 }
+
+/**
+	We scan for all assigned shaders on this primitive. If we don't
+	have attribute-level assignments (SOP assignment) then  we scan
+	the OBJ-level shader.
+*/
+void primitive::export_bind_attributes( OP_Node *i_obj_level_material ) const
+{
+	GT_DataArrayHandle i_vertices_list;
+	GT_Primitive *primitive = default_gt_primitive().get();
+	int type = primitive->getPrimitiveType();
+	if( type == GT_PRIM_POLYGON_MESH ||
+		type == GT_PRIM_SUBDIVISION_MESH )
+	{
+		const GT_PrimPolygonMesh *polygon_mesh =
+			static_cast<const GT_PrimPolygonMesh *>(primitive);
+
+		i_vertices_list = polygon_mesh->getVertexList();
+	}
+
+	GT_Owner owner;
+	GT_DataArrayHandle materials = default_gt_primitive().get()->findAttribute(
+		"shop_materialpath", owner, 0);
+
+	std::vector< OP_Node * > to_scan;
+	if( materials )
+	{
+		for( int i=0; i<materials->entries(); i++ )
+		{
+			std::string resolved;
+			VOP_Node *vop = exporter::resolve_material_path(
+				(const char *)materials->getS(i), resolved );
+			to_scan.push_back( vop );
+		}
+	}
+	else
+	{
+		/* Revert to object level */
+		to_scan.push_back( i_obj_level_material );
+	}
+
+	std::vector< std::string > binds;
+	get_bind_attributes( to_scan, binds );
+
+	std::sort( binds.begin(), binds.end() );
+	binds.erase( std::unique(binds.begin(), binds.end()), binds.end() );
+
+	/*
+		Remove attributes that are exported anyway.
+	*/
+	binds.erase(
+		std::remove_if(
+			binds.begin(),
+			binds.end(),
+			[](const std::string &a)
+			{
+				return a == "P" || a == "N" || a == "uv" || a == "width" ||
+				a == "id" || a == "pscale" || a == "rest" || a == "rnml";
+			} ),
+		binds.end() );
+
+	export_attributes(
+		binds,
+		*default_gt_primitive().get(),
+		m_context.m_current_time, i_vertices_list );
+}
+
+void primitive::get_bind_attributes(
+	std::vector< OP_Node * > &i_materials,
+	std::vector< std::string > &o_to_export ) const
+{
+	std::vector<VOP_Node*> aov_export_nodes;
+
+	std::vector<OP_Node*> traversal = i_materials;
+	while( traversal.size() )
+	{
+		OP_Node* node = traversal.back();
+		traversal.pop_back();
+
+		if( !node )
+			continue;
+
+		int ninputs = node->nInputs();
+		for( int i = 0; i < ninputs; i++ )
+		{
+			VOP_Node *input = CAST_VOPNODE( node->getInput(i) );
+			if( !input )
+				continue;
+
+			OP_Operator* op = input->getOperator();
+			if( !op )
+				continue;
+
+			if( op->getName() == "3Delight::dlPrimitiveAttribute" ||
+				op->getName() == "3Delight::dlAttributeRead")
+			{
+				UT_String primvar;
+				input->evalString(
+					primvar, "attribute_name", 0, m_context.m_current_time );
+				o_to_export.push_back( primvar.toStdString() );
+			}
+			else
+			{
+				traversal.push_back( input );
+			}
+		}
+	}
+}
+
+

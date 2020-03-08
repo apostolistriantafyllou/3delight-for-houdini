@@ -8,11 +8,11 @@ class primitive;
 class instance;
 
 /**
-	\brief Exporter of geometry based on GT primitives.
+	\brief An exporter for an OBJGeometry Houdini node.
 
-	It manages a list of primitives obtained through recursive refinement of the
-	object's main GT primitive. It simply forwards calls to the exporter's
-	interface to each primitive in its list.
+	It manages a list of primitives obtained through recursive refinement, using
+	the GT library, of the object's main GT primitive. It simply forwards calls
+	to the exporter's interface to each primitive in its list.
 */
 class geometry : public exporter
 {
@@ -34,6 +34,25 @@ public:
 
 	/** \ref scene::scan_for_instanced */
 	void get_instances( std::vector<const instance *> & ) const;
+
+private:
+	/**
+		\brief Returns the material assigned to this geometry, either as an OBJ
+		property or as a detail attribute.
+
+		\param o_path
+			Will contain the path of the assigned shader on successful
+			run
+
+		If successful, returns the pointer to the VOP node. Note that primitive
+		level assignments are done in each sepcific exporter.
+	*/
+	VOP_Node *get_assigned_material( std::string &o_path ) const;
+
+	/**
+		\brief When this geometry is used as an NSI space override.
+	*/
+	void export_override_attributes( void ) const;
 
 private:
 

@@ -133,47 +133,10 @@ protected:
 		double i_time,
 		GT_DataArrayHandle i_vertices_list = GT_DataArrayHandle()) const;
 
-	/**
-		\brief Export all the attributes that the user wishes to "bind".
-
-		We use the word bind here quiet liberaely as we don't really support
-		bind :) We use dlAttributeRead.
-
-		\param i_primitive
-			The primitive for which to output the bind attributes.
-		\param i_vertices_list
-			A vertex list to use with point attributes.
-	*/
-	void export_bind_attributes(
-		const GT_Primitive &i_primitive,
-		GT_DataArrayHandle i_vertices_list = GT_DataArrayHandle()) const;
-
-	void export_override_attributes() const;
-
-
 private:
 
-	/**
-		\brief Returns attributes that are referenced by a "bind" or
-		a PrimitiveAttribute VOP node.
-
-		These attributes will be exported alongside with the geometry.
-	*/
-	void get_bind_attributes(
-		std::vector< std::string > &o_to_export ) const;
 
 protected:
-
-	/**
-		\brief Returns the material assigned to this exported.
-
-		\param o_path
-			Will contain the path of the assigned shader on successful
-			run
-
-		If successful, returns the pointer to the VOP node.
-	*/
-	VOP_Node *get_assigned_material( std::string &o_path ) const;
 
 	/**
 		\brief Resolves the [relaative] material path to an absolute

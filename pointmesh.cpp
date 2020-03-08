@@ -31,8 +31,6 @@ void pointmesh::create( void ) const
 
 void pointmesh::set_attributes( void ) const
 {
-	exporter::export_bind_attributes( *default_gt_primitive().get() );
-
 	/*
 		If the point mesh is not motion-blurred (ie : it needs only one time
 		sample or if it has no velocity attribute) we simply output the

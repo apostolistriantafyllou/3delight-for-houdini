@@ -326,8 +326,6 @@ void light::connect( void ) const
 			prelit_attribute_node_handle(), "",
 			m_handle, "geometryattributes");
 	}
-
-	export_override_attributes();
 }
 
 /**

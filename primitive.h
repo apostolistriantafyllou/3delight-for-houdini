@@ -7,6 +7,8 @@
 /// Base class for exporters of refined GT primitives.
 class primitive : public exporter
 {
+	friend class geometry;
+
 public:
 
 	/**
@@ -82,6 +84,24 @@ protected:
 
 	/// Returns true if i_gt_prim has a velocity attribute "v".
 	static bool has_velocity(const GT_PrimitiveHandle& i_gt_prim);
+
+	/**
+		\brief Export all the attributes that the user wishes to "bind".
+
+		We use the word bind here quiet liberaely as we don't really support
+		bind. We use dlAttributeRead.
+	*/
+	void export_bind_attributes( OP_Node *i_obj_level_material ) const;
+
+private:
+	/**
+		\brief Returns attributes that are needed by the given materials.
+		\ref export_bind_attributes
+	*/
+	void get_bind_attributes(
+		std::vector<OP_Node *> &i_to_scan,
+		std::vector< std::string > &o_to_export ) const;
+
 private:
 
 	typedef std::pair<double, GT_PrimitiveHandle> TimedPrimitive;

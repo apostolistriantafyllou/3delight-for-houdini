@@ -93,8 +93,6 @@ void polygonmesh::set_attributes( void ) const
 	exporter::export_attributes(
 		to_export, *polygon_mesh, m_context.m_current_time, vertices_list );
 
-	exporter::export_bind_attributes(*polygon_mesh, vertices_list );
-
 	export_creases(
 		polygon_mesh->getVertexList(),
 		nvertices.get(),

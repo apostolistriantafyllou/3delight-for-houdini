@@ -90,8 +90,6 @@ void curvemesh::set_attributes( void ) const
 		m_nsi.SetAttribute( m_handle, NSI::CStringPArg("basis", "linear") );
 	}
 
-	exporter::export_bind_attributes( *curve );
-
 	primitive::set_attributes();
 }
 
