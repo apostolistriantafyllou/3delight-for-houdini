@@ -93,4 +93,8 @@ if ( "$arg1" != "" ) then
 		opparm -q $arg1 _3dl_projection_type '`ifs(strcmp(chs("projection"),"ortho")==0,"orthographiccamera",ifs(strcmp(chs("projection"),"cylinder")==0,"cylindricalcamera",ifs(strcmp(chs("projection"),"sphere")==0,"sphericalcamera","perspectivecamera")))`'
 	endif
 
+   opproperty -f $arg1 3Delight _3dl_obj_geo_label2_group
+   opproperty -f $arg1 3Delight _3dl_transformation_blur
+   opproperty -f $arg1 3Delight _3dl_transformation_extra_samples
+
 endif
