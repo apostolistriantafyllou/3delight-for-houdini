@@ -141,7 +141,11 @@ void scene::process_obj_node(
 			rop_path,
 			i_context.m_current_time))
 	{
-		/* Delete the useless null exporter. */
+		/*
+			Delete the useless null exporter. This is important
+			as our instanced geometry detection relies on invsible
+			objects handles not being output.
+		*/
 		delete o_to_export.back(); o_to_export.pop_back();
 		return;
 	}
@@ -150,7 +154,6 @@ void scene::process_obj_node(
 
 	if( !sop || !obj->castToOBJGeometry() )
 	{
-		delete o_to_export.back(); o_to_export.pop_back();
 		return;
 	}
 
@@ -227,6 +230,10 @@ void scene::vop_scan(
 
 /**
 	\brief Scans for geometry, cameras, lights and produces a list of exporters.
+
+	We just scan the scene recursively, looking for objects.
+	FIXME: can we do better and avoid scanning through unnecessary nodes ?
+
 	\ref geometry
 */
 void scene::obj_scan(
@@ -234,28 +241,28 @@ void scene::obj_scan(
 	std::vector<exporter *> &o_to_export,
 	std::deque<safe_interest>& io_interests )
 {
-	/* A traversal stack to avoid recursion */
-	std::vector< OP_Node * > traversal;
+	std::vector<OP_Node *> traversal;
+	traversal.push_back( OPgetDirector()->findNode("/obj") );
 
-	OP_Node *root = OPgetDirector()->findNode( "/obj" );
-
-	/*
-		After this while loop, to_export will be filled with the OBJs
-		and the VOPs to convert to NSI.
-	*/
-	int nkids = root->getNchildren();
-	for( int i=0; i< nkids; i++ )
+	while( traversal.size() )
 	{
-		OP_Node *node = root->getChild(i);
-		OBJ_Node *obj = node->castToOBJNode();
+		OP_Node *current = traversal.back();
+		traversal.pop_back();
 
-		if( !obj )
+		int nkids = current->getNchildren();
+		for( int i=0; i< nkids; i++ )
 		{
-			assert( false );
-			continue;
-		}
+			OP_Node *node = current->getChild(i);
+			OBJ_Node *obj = node->castToOBJNode();
 
-		process_obj_node( i_context, obj, true, o_to_export, io_interests );
+			if( obj )
+			{
+				process_obj_node(
+					i_context, obj, true, o_to_export, io_interests );
+			}
+
+			traversal.push_back( node );
+		}
 	}
 }
 
