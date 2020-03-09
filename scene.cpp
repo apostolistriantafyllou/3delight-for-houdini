@@ -68,52 +68,23 @@ static bool object_displayed(
 	and that is renderable in the current frame range and obey to Display
 	flag / Objects to Render.
 */
-void scene::process_node(
+void scene::process_obj_node(
 	const context &i_context,
-	OP_Node *i_node,
+	OBJ_Node *obj,
 	bool i_check_visibility,
 	std::vector<exporter *> &o_to_export,
 	std::deque<safe_interest>& io_interests )
 {
-	if( i_node->castToVOPNode() )
-	{
-		/*
-			The material builder is just a container, we don't need to generate
-			any node for it.
-		*/
-		if( i_node->getOperator()->getName() == "dlMaterialBuilder" )
-			return;
-
-		/*
-		   Our material network connections is done :) The connection
-		   between nodes is done in \ref vop::connect
-		   Read vop.cpp if you are bewildered by this simplicity.
-		*/
-		o_to_export.push_back(
-			new vop(i_context, i_node->castToVOPNode()) );
-		if(i_context.m_ipr)
-		{
-			io_interests.emplace_back(
-				i_node,
-				const_cast<context*>(&i_context),
-				&vop::changed_cb);
-		}
-		return;
-	}
-
-	OBJ_Node *obj = i_node->castToOBJNode();
-	if( !obj )
-		return;
-
 	/*
 		Each object is its own null transform. Note that this null transform
 		could be removed down below if object export doesn't occur.
 	*/
 	o_to_export.push_back( new null(i_context, obj) );
+
 	if(i_context.m_ipr)
 	{
 		io_interests.emplace_back(
-			i_node,
+			obj,
 			const_cast<context*>(&i_context),
 			&null::changed_cb);
 	}
@@ -137,7 +108,7 @@ void scene::process_node(
 			if(i_context.m_ipr)
 			{
 				io_interests.emplace_back(
-					i_node,
+					obj,
 					const_cast<context*>(&i_context),
 					&light::changed_cb);
 			}
@@ -156,7 +127,7 @@ void scene::process_node(
 		if(i_context.m_ipr)
 		{
 			io_interests.emplace_back(
-				i_node,
+				obj,
 				const_cast<context*>(&i_context),
 				&camera::changed_cb);
 		}
@@ -187,12 +158,78 @@ void scene::process_node(
 }
 
 /**
-	\brief Scans for geometry, cameras, lights, vops etc... and produces
-	a list of exporters.
-
-	\ref exporter
+	\brief Go through all used materials and produce VOPs exporters.
 */
-void scene::scan(
+void scene::vop_scan(
+	const context &i_context,
+	std::vector<exporter *> &io_to_export,
+	std::deque<safe_interest>& io_interests )
+{
+	std::unordered_set< std::string > materials;
+	for( auto E : io_to_export )
+	{
+		geometry *geo = dynamic_cast<geometry*>( E );
+		if( !geo )
+			continue;
+		geo->get_all_material_paths( materials );
+	}
+
+	std::unordered_set<VOP_Node *> vops;
+	for( const auto &M : materials )
+	{
+		VOP_Node *mat = OPgetDirector()->findVOPNode( M.data() );
+
+		if( !mat )
+			continue;
+
+		vops.insert( mat );
+	}
+
+	std::vector<VOP_Node*> traversal;
+	for( auto V : vops )
+		traversal.push_back( V );
+
+	/* re-purpose this set for de-duplication of VOPs */
+	vops.clear();
+
+	while( traversal.size() )
+	{
+		VOP_Node* node = traversal.back();
+		traversal.pop_back();
+
+		if( !node )
+			continue;
+
+		if( vops.find(node) == vops.end() )
+		{
+			io_to_export.push_back( new vop(i_context, node) );
+			if(i_context.m_ipr)
+			{
+				io_interests.emplace_back(
+					node, const_cast<context*>(&i_context), &vop::changed_cb);
+			}
+			vops.insert( node );
+		}
+
+		int ninputs = node->nInputs();
+		for( int i = 0; i < ninputs; i++ )
+		{
+			VOP_Node *input = CAST_VOPNODE( node->getInput(i) );
+			if( !input )
+				continue;
+			traversal.push_back( input );
+		}
+	}
+
+	//printf( "Exported %lu materials\n", vops.size() );
+	return;
+}
+
+/**
+	\brief Scans for geometry, cameras, lights and produces a list of exporters.
+	\ref geometry
+*/
+void scene::obj_scan(
 	const context &i_context,
 	std::vector<exporter *> &o_to_export,
 	std::deque<safe_interest>& io_interests )
@@ -200,48 +237,25 @@ void scene::scan(
 	/* A traversal stack to avoid recursion */
 	std::vector< OP_Node * > traversal;
 
-	OP_Node *our_dear_leader = OPgetDirector();
-	traversal.push_back( our_dear_leader->findNode( "/obj") );
-	traversal.push_back( our_dear_leader->findNode( "/mat") );
+	OP_Node *root = OPgetDirector()->findNode( "/obj" );
 
 	/*
 		After this while loop, to_export will be filled with the OBJs
 		and the VOPs to convert to NSI.
 	*/
-	while( traversal.size() )
+	int nkids = root->getNchildren();
+	for( int i=0; i< nkids; i++ )
 	{
-		OP_Node *network = traversal.back();
-		traversal.pop_back();
+		OP_Node *node = root->getChild(i);
+		OBJ_Node *obj = node->castToOBJNode();
 
-		assert( network->isNetwork() );
-
-		int nkids = network->getNchildren();
-		for( int i=0; i< nkids; i++ )
+		if( !obj )
 		{
-			OP_Node *node = network->getChild(i);
-
-			/* Don't get into SOP networks. Nothing to see there */
-			if( node->castToSOPNode() )
-				continue;
-
-			if( node->castToVOPNode() &&
-				!vop::is_renderable(node->castToVOPNode()) )
-			{
-				/* Don't go inide VOPs we can't render */
-				continue;
-			}
-
-			process_node( i_context, node, true, o_to_export, io_interests );
-
-			if( !node->isNetwork() )
-				continue;
-
-			OP_Network *kidnet = (OP_Network *)node;
-			if( kidnet->getNchildren() )
-			{
-				traversal.push_back( kidnet );
-			}
+			assert( false );
+			continue;
 		}
+
+		process_obj_node( i_context, obj, true, o_to_export, io_interests );
 	}
 }
 
@@ -292,12 +306,12 @@ void scene::scan_for_instanced(
 	*/
 	for( auto E : instanced )
 	{
-		OP_Node *o = OPgetDirector()->findNode( E.data() );
+		OBJ_Node *o = OPgetDirector()->findOBJNode( E.data() );
 		if( !o )
 			continue;
 
 		int s = io_to_export.size(); assert( s>0 );
-		process_node( i_context, o, false, io_to_export, io_interests );
+		process_obj_node( i_context, o, false, io_to_export, io_interests );
 
 		/*
 		   Finally, make sure we don't render the source geometry as its
@@ -315,21 +329,29 @@ void scene::scan_for_instanced(
 	\brief Contains the high-level logic of scene conversion to
 	a NSI representation.
 
-	\see process_node
+	\see process_obj_node
 */
 void scene::convert_to_nsi(
 	const context &i_context,
 	std::deque<safe_interest>& io_interests )
 {
-	/* Start be getting the list of exporter for the scene */
+	/*
+		Start be getting the list of all OBJ exporters.
+	*/
 	std::vector<exporter *> to_export;
-	scan( i_context, to_export, io_interests );
+	obj_scan( i_context, to_export, io_interests );
 
 	/*
 		Make sure instanced geometry is included in the list, regardless of
 		display flag or scene elements.
 	*/
 	scan_for_instanced( i_context, to_export, io_interests );
+
+	/*
+		Now, for the OBJs that are geometries, gather the list of materials and
+		build a list of VOP exporters for these.
+	*/
+	vop_scan( i_context, to_export, io_interests );
 
 	/*
 		Create phase. This will create all the main NSI nodes from the Houdini

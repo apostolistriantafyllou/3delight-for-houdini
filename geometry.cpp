@@ -800,3 +800,19 @@ VOP_Node *geometry::get_assigned_material( std::string &o_path ) const
 	return resolve_material_path( material_path.c_str(), o_path );
 }
 
+/**
+	Return all the materials needed by this geometry.
+*/
+void geometry::get_all_material_paths(
+	std::unordered_set< std::string > &o_materials ) const
+{
+	for( auto P : m_primitives )
+	{
+		P->get_all_material_paths( o_materials );
+	}
+
+	std::string obj_mat;
+	get_assigned_material( obj_mat );
+
+	o_materials.insert( obj_mat );
+}

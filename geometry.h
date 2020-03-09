@@ -3,6 +3,8 @@
 #include "exporter.h"
 
 #include <vector>
+#include <string>
+#include <unordered_set>
 
 class primitive;
 class instance;
@@ -34,6 +36,10 @@ public:
 
 	/** \ref scene::scan_for_instanced */
 	void get_instances( std::vector<const instance *> & ) const;
+
+	/** \brief Return all the materials needed by this geometry. */
+	void get_all_material_paths(
+		std::unordered_set< std::string > &o_materials ) const;
 
 private:
 	/**

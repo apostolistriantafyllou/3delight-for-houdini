@@ -41,7 +41,12 @@ public:
 	static void find_custom_aovs( std::vector<VOP_Node*>& o_custom_aovs );
 
 private:
-	static void scan(
+	static void obj_scan(
+		const context &i_context,
+		std::vector< exporter * > &o_to_export,
+		std::deque<safe_interest>& io_interests );
+
+	static void vop_scan(
 		const context &i_context,
 		std::vector< exporter * > &o_to_export,
 		std::deque<safe_interest>& io_interests );
@@ -51,9 +56,9 @@ private:
 		std::vector<exporter *> &io_to_export,
 		std::deque<safe_interest>& io_interests );
 
-	static void process_node(
+	static void process_obj_node(
 		const context &i_context,
-		OP_Node *i_node,
+		OBJ_Node *,
 		bool i_check_visibility,
 		std::vector<exporter *> &o_to_export,
 		std::deque<safe_interest>& io_interests );

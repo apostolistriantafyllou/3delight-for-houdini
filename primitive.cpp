@@ -340,4 +340,23 @@ void primitive::get_bind_attributes(
 	}
 }
 
+void primitive::get_all_material_paths(
+	std::unordered_set< std::string > &o_materials ) const
+{
+	GT_Owner owner;
+	GT_DataArrayHandle materials = default_gt_primitive().get()->findAttribute(
+		"shop_materialpath", owner, 0);
 
+	if( !materials )
+		return;
+
+	for( int i=0; i<materials->entries() ; i++ )
+	{
+		const char *path = materials->getS( i );
+		std::string resolved;
+		exporter::resolve_material_path( path, resolved );
+
+		if( !resolved.empty() )
+			o_materials.insert( resolved );
+	}
+}

@@ -3,6 +3,8 @@
 #include "exporter.h"
 
 #include <vector>
+#include <unordered_set>
+#include <string>
 
 /// Base class for exporters of refined GT primitives.
 class primitive : public exporter
@@ -93,6 +95,11 @@ protected:
 	*/
 	void export_bind_attributes( OP_Node *i_obj_level_material ) const;
 
+	/**
+		Return all the materials needed by this geometry.
+	*/
+	void get_all_material_paths(
+		std::unordered_set< std::string > &o_materials ) const;
 private:
 	/**
 		\brief Returns attributes that are needed by the given materials.
