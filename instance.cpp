@@ -209,11 +209,12 @@ void instance::set_attributes_at_time(
 		{
 			GT_Owner type;
 			GT_DataArrayHandle P = i_gt_primitive->findAttribute( "P", type, 0);
-			matrices = new double[ P->entries() * 16 ];
-
-			get_transforms( i_gt_primitive, (UT_Matrix4D *) matrices );
-
-			num_matrices = P->entries();
+			if( P )
+			{
+				matrices = new double[ P->entries() * 16 ];
+				get_transforms( i_gt_primitive, (UT_Matrix4D *) matrices );
+				num_matrices = P->entries();
+			}
 		}
 
 		assert( num_matrices > 0 );
