@@ -119,19 +119,12 @@ bool primitive::is_volume()const
 
 bool primitive::export_extrapolated_P(GT_DataArrayHandle i_vertices_list)const
 {
-	// Retrieve velocity data handle
-	GT_DataArrayHandle velocity_data;
-	NSIType_t velocity_nsi_type;
-	int velocity_nsi_flags;
-	bool velocity_point_attribute;
-	if(!find_attribute(
-			*default_gt_primitive().get(),
-			k_velocity_attribute,
-			velocity_data,
-			velocity_nsi_type,
-			velocity_nsi_flags,
-			velocity_point_attribute) ||
-		velocity_nsi_type != NSITypeVector)
+	GT_Owner owner;
+	GT_DataArrayHandle velocity_data =
+		default_gt_primitive()->findAttribute(
+			k_velocity_attribute, owner, 0 /* segment */ );
+
+	if( !velocity_data || velocity_data->getTupleSize()!=3 )
 	{
 		// Velocity is not available
 		return false;
@@ -140,22 +133,18 @@ bool primitive::export_extrapolated_P(GT_DataArrayHandle i_vertices_list)const
 	unsigned nb_velocities = velocity_data->entries();
 
 	// Retrieve position data handle
-	GT_DataArrayHandle position_data;
-	NSIType_t position_nsi_type;
-	int position_nsi_flags;
-	bool position_point_attribute;
-	if(!find_attribute(
-			*default_gt_primitive().get(),
-			k_position_attribute,
-			position_data,
-			position_nsi_type,
-			position_nsi_flags,
-			position_point_attribute) ||
-		position_nsi_type != NSITypePoint)
+	GT_Owner p_owner;
+	GT_DataArrayHandle position_data =
+		default_gt_primitive()->findAttribute(
+			k_position_attribute, p_owner, 0 /* segment */ );
+
+	if( !position_data || position_data->getTupleSize()!=3 )
 	{
-		// Position is not available
-		// This is very weird, most likely impossible
-		assert(false);
+		/*
+			Position is not available. This is very weird, most likely
+			impossible.
+		*/
+		assert( false );
 		return false;
 	}
 
@@ -163,8 +152,10 @@ bool primitive::export_extrapolated_P(GT_DataArrayHandle i_vertices_list)const
 
 	if(nb_velocities != 1 && nb_points != nb_velocities)
 	{
-		// The number of velocities don't match the number of points
-		// This is very weird, most likely impossible
+		/*
+			The number of velocities don't match the number of points. This
+			is very weird, most likely impossible.
+		*/
 		assert(false);
 		return false;
 	}
@@ -214,7 +205,7 @@ bool primitive::export_extrapolated_P(GT_DataArrayHandle i_vertices_list)const
 	delete[] nsi_position_data;
 
 	// Output P.indices if necessary
-	if(position_point_attribute && i_vertices_list)
+	if( p_owner==GT_OWNER_POINT && i_vertices_list)
 	{
 		GT_DataArrayHandle vertices_buffer;
 		const int *vertices = i_vertices_list->getI32Array(vertices_buffer);

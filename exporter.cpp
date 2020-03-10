@@ -84,67 +84,6 @@ const char* exporter::transparent_surface_handle()
 }
 
 /**
-	We scan the 4 attributes lists for one with the right name.
-	Note that the order is important here as Houdini has
-	priorities for attributes: vertex, point, uniform and then
-	detail.
-*/
-bool exporter::find_attribute(
-	const GT_Primitive& i_primitive,
-	const std::string& i_name,
-	GT_DataArrayHandle& o_data,
-	NSIType_t& o_nsi_type,
-	int& o_nsi_flags,
-	bool& o_point_attribute)const
-{
-	assert( GT_OWNER_VERTEX < GT_OWNER_POINT );
-	assert( GT_OWNER_POINT < GT_OWNER_UNIFORM );
-	assert( GT_OWNER_UNIFORM < GT_OWNER_DETAIL );
-
-	for(unsigned a = GT_OWNER_VERTEX; a <= GT_OWNER_DETAIL; a++)
-	{
-		const GT_AttributeListHandle& attributes =
-			i_primitive.getAttributeList(GT_Owner(a));
-		if( !attributes )
-		{
-			continue;
-		}
-
-		o_data = attributes->get(i_name.c_str());
-		if( !o_data )
-		{
-			continue;
-		}
-
-		o_nsi_type = gt_to_nsi_type(o_data->getTypeInfo(), o_data->getStorage());
-
-		if( o_nsi_type == NSITypeInvalid || o_nsi_type == NSITypeString )
-		{
-#if 0
-			std::cerr
-				<< "unsupported attribute type " << o_data->getTypeInfo()
-				<< " of name " << i_name << " on " << m_handle;
-#endif
-			continue;
-		}
-
-		/*
-			This flag is needed because of particles. If the number of
-			particles varies from one time step to the next, 3Delight might
-			not be able to guess that those attributes are assigned
-			per-vertex simply by looking at their count.
-		*/
-		o_nsi_flags = a == GT_OWNER_VERTEX ? NSIParamPerVertex : 0;
-
-		o_point_attribute = a == GT_OWNER_POINT;
-
-		return true;
-	}
-
-	return false;
-}
-
-/**
 	gotchas:
 	- When we find a texture coordinate attribute, we output "st".
 	  regardless of the name we find (usually "uv"). This is to be
@@ -184,18 +123,14 @@ void exporter::export_attributes(
 	{
 		std::string name = io_which_ones[w];
 
-		GT_DataArrayHandle data;
-		NSIType_t nsi_type = NSITypeInvalid;
-		int nsi_flags = 0;
-		bool point_attribute = false;
+		GT_Owner owner;
+		GT_DataArrayHandle data = i_primitive.findAttribute( name, owner, 0 );
+		if( !data )
+			continue;
 
-		if(!find_attribute(
-				i_primitive,
-				name,
-				data,
-				nsi_type,
-				nsi_flags,
-				point_attribute))
+		int nsi_flags = owner == GT_OWNER_VERTEX ? NSIParamPerVertex : 0;
+		NSIType_t nsi_type = gt_to_nsi_type( data->getTypeInfo(), data->getStorage());
+		if( nsi_type == NSITypeInvalid || nsi_type == NSITypeString )
 		{
 			continue;
 		}
@@ -222,7 +157,7 @@ void exporter::export_attributes(
 			name = "width";
 		}
 
-		if( point_attribute && i_vertices_list )
+		if( owner==GT_OWNER_POINT && i_vertices_list )
 		{
 			nsi.SetAttribute( m_handle,
 				*NSI::Argument( name + ".indices" )
