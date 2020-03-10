@@ -5,6 +5,7 @@
 /* WARNING: The order of the following two includes is important  { */
 #include <GT/GT_Primitive.h>
 #include <GT/GT_Handles.h>
+#include <OBJ/OBJ_Node.h>
 /* }  */
 
 #include <nsi.h>
@@ -13,7 +14,6 @@
 #include <vector>
 
 class context;
-class OBJ_Node;
 class VOP_Node;
 namespace NSI { class Context; }
 
@@ -59,7 +59,7 @@ public:
 	*/
 	const std::string &handle( void ) const;
 
-	OBJ_Node *obj( void ) { return m_object; }
+	OP_Node *node( void ) { return m_object; }
 
 	/**
 		\brief Declare this as an instanced object. Such objects

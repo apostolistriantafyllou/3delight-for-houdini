@@ -77,7 +77,8 @@ void scene::process_obj_node(
 {
 	/*
 		Each object is its own null transform. Note that this null transform
-		could be removed down below if object export doesn't occur.
+		is *needed* if object is invisible because it could potentially have
+		visible children.
 	*/
 	o_to_export.push_back( new null(i_context, obj) );
 
@@ -141,12 +142,6 @@ void scene::process_obj_node(
 			rop_path,
 			i_context.m_current_time))
 	{
-		/*
-			Delete the useless null exporter. This is important
-			as our instanced geometry detection relies on invsible
-			objects handles not being output.
-		*/
-		delete o_to_export.back(); o_to_export.pop_back();
 		return;
 	}
 
@@ -303,7 +298,23 @@ void scene::scan_for_instanced(
 		if( it == instanced.end() )
 			continue;
 
-		instanced.erase( it );
+		OP_Node *node = E->node();
+		OBJ_Node *obj = CAST_OBJNODE( node );
+		if( !obj )
+		{
+			/* shouldn't be part of instanced! */
+			assert( false );
+			continue;
+		}
+
+		if( object_displayed(
+				*obj,
+				i_context.m_lights_to_render_pattern,
+				i_context.m_rop_path.data(),
+				i_context.m_current_time))
+		{
+			instanced.erase( it );
+		}
 	}
 
 	/*
@@ -556,7 +567,13 @@ void scene::export_light_categories(
 {
 	assert( i_exporter );
 
-	OBJ_Node *i_object = i_exporter->obj();
+	OP_Node *node = i_exporter->node();
+
+	OBJ_Node *i_object = CAST_OBJNODE( node );
+	if( !i_object )
+	{
+		return;
+	}
 
 	UT_String categories;
 	int lightcategories_index = i_object->getParmIndex("lightcategories");
