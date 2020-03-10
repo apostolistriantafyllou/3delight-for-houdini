@@ -115,13 +115,12 @@ protected:
 		const char *i_path,  std::string &o_path ) const;
 
 	/**
-		\brief Returns the context where to export possibly static attributes.
+		\brief Returns the context where to export (possibly static) attributes.
 
-		This allows attributes that don't change from one frame to another to be
+		The accessor chooses whether to return m_context.m_nsi or
+		m_context.m_static_nsi, based on the time-dependency of m_object. This
+		allows attributes that don't change from one frame to another to be
 		exported in a different file, shared among every frame's main NSI file.
-
-		The accessor itself choses whether to return m_context.m_nsi or
-		m_context.m_static_nsi, based on the time-dependency of m_object.
 
 		\param i_type
 			The source of animation that must be checked when computing
@@ -132,7 +131,7 @@ protected:
 			export of those attributes (because they have already have been
 			exported in a previous frame).
 	*/
-	NSI::Context& static_attributes_context(
+	NSI::Context& attributes_context(
 		time_sampler::blur_source i_type = time_sampler::e_deformation)const;
 
 	/**

@@ -80,7 +80,7 @@ void polygonmesh::set_attributes( void ) const
 	}
 
 	// Retrieve a context that might redirect the attributes to a shared file
-	NSI::Context& nsi = static_attributes_context();
+	NSI::Context& nsi = attributes_context();
 	// Those attributes may already have been exported in a previous frame
 	if(nsi.Handle() != NSI_BAD_CONTEXT)
 	{
@@ -191,7 +191,7 @@ void polygonmesh::assign_primitive_materials( void ) const
 	}
 
 	// Retrieve a context that might redirect the attributes to a shared file
-	NSI::Context& static_nsi = static_attributes_context();
+	NSI::Context& static_nsi = attributes_context();
 
 	/*
 		We will need per-face assignments.  Build a material -> uniform/face map
@@ -243,7 +243,7 @@ void polygonmesh::export_creases(
 	GT_DataArrayHandle i_indices, int *i_nvertices, size_t i_n ) const
 {
 	// Retrieve a context that might redirect the attributes to a shared file
-	NSI::Context& nsi = static_attributes_context();
+	NSI::Context& nsi = attributes_context();
 	if(nsi.Handle() == NSI_BAD_CONTEXT)
 	{
 		// Those attributes have already been exported in a previous frame

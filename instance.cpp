@@ -178,7 +178,7 @@ void instance::set_attributes_at_time(
 	const GT_PrimitiveHandle i_gt_primitive) const
 {
 	// Retrieve a context that might redirect the attributes to a shared file
-	NSI::Context& nsi = static_attributes_context();
+	NSI::Context& nsi = attributes_context();
 	if(nsi.Handle() == NSI_BAD_CONTEXT)
 	{
 		// Those attributes have already been exported in a previous frame

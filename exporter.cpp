@@ -103,7 +103,7 @@ void exporter::export_attributes(
 {
 
 	// Retrieve a context that might redirect the attributes to a shared file
-	NSI::Context& nsi = static_attributes_context();
+	NSI::Context& nsi = attributes_context();
 
 	if(nsi.Handle() == NSI_BAD_CONTEXT)
 	{
@@ -267,7 +267,7 @@ VOP_Node *exporter::resolve_material_path(
 /**
 */
 NSI::Context&
-exporter::static_attributes_context(
+exporter::attributes_context(
 	time_sampler::blur_source i_type)const
 {
 	bool animated =
