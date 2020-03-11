@@ -14,6 +14,7 @@
 #include "context.h"
 #include "object_attributes.h"
 #include "safe_interest.h"
+#include "ROP_3Delight.h"
 
 #include <GEO/GEO_Normal.h>
 #include <OBJ/OBJ_Camera.h>
@@ -473,8 +474,17 @@ void scene::find_lights_and_mattes(
 	/* A traversal stack to avoid recursion */
 	std::vector< OP_Node * > traversal;
 
-	OP_Node *our_dear_leader = OPgetDirector();
-	traversal.push_back( our_dear_leader->findNode( "/obj") );
+	OP_Node *director = OPgetDirector();
+	traversal.push_back( director->findNode( "/obj") );
+
+	/* FIXME: not a nice way to access current time. */
+	double time = 0;
+	OP_Node *rop = director->findNode( i_rop_path );
+	if( rop )
+	{
+		ROP_3Delight *r3 = (ROP_3Delight *) CAST_ROPNODE( rop );
+		time = r3 ? r3->current_time() : 0.0;
+	}
 
 	while( traversal.size() )
 	{
@@ -498,7 +508,7 @@ void scene::find_lights_and_mattes(
 
 			if( obj &&
 				(obj->castToOBJLight() ||
-					!vdb::node_is_vdb_loader(obj, 0).empty()) )
+					!vdb::node_is_vdb_loader(obj, time).empty()) )
 			{
 				if(!i_light_pattern ||
 					i_light_pattern->match(obj, i_rop_path, true))

@@ -78,6 +78,11 @@ public:
 	virtual unsigned maxOutputs() const;
 	virtual unsigned getNumVisibleOutputs() const;
 
+	/**
+		\brief Returns the current time.
+	*/
+	double current_time( void ) const;
+
 protected:
 
 	ROP_3Delight(
@@ -155,7 +160,7 @@ private:
 	std::vector<OBJ_Node*> m_lights;
 	bool m_cloud;
 
-	context* m_current_render;
+	context* m_current_render{nullptr};
 
 	/// "end time" parameter of the last call to startRender()
 	double m_end_time;

@@ -1695,3 +1695,8 @@ void ROP_3Delight::export_render_notes( const context &i_context ) const
 			NSI::StringArg("statistics.notes", notes)
 		) );
 }
+
+double ROP_3Delight::current_time( void ) const
+{
+	return m_current_render ? m_current_render->m_current_time : 0.0;
+}
