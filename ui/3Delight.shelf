@@ -79,7 +79,7 @@ def custom_cb(node):
     nodetype = node.type()
     return nodetype.name() == "3Delight" or nodetype.name() == "3DelightCloud"
 
-matcher = nodesearch.NodeType("3Delight")
+matcher = nodesearch.NodeType("3Delight", hou.ropNodeTypeCategory())
 nodes = matcher.nodes(hou.root(), recursive=True)
 
 if len(nodes) == 0:
