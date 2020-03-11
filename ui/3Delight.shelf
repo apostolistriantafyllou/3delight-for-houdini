@@ -73,28 +73,25 @@ else:
     <helpText><![CDATA[Select one ROP 3Delight.]]></helpText>
     <script scriptType="python"><![CDATA[
 import roptoolutils
+import nodesearch
 
 def custom_cb(node):
     nodetype = node.type()
     return nodetype.name() == "3Delight" or nodetype.name() == "3DelightCloud"
 
-found = False
-initNode = None
-out = hou.node("/out")
-# try to find a selected ROP
-for node in out.children():
-    nodetype = node.type()
-    if nodetype.name() == "3Delight" or nodetype.name() == "3DelightCloud":
-        found = True
-        if node.isCurrent():
-            initNode = node
-            break
-if not found:
-    hou.ui.displayMessage('No ROP found.', title = '3Delight', severity = hou.severityType.Warning)
+matcher = nodesearch.NodeType("3Delight")
+nodes = matcher.nodes(hou.root(), recursive=True)
+
+if len(nodes) == 0:
+    newnode = roptoolutils.createRenderNode('3Delight')
+    newnode.moveToGoodPosition()
+    newnode.setCurrent(True)
+elif len(nodes) == 1:
+    nodes[0].setCurrent(True)
 else:
-    nodeSel = hou.ui.selectNode(relative_to_node=out, node_type_filter=hou.nodeTypeFilter.Rop, initial_node=initNode, custom_node_filter_callback=custom_cb)
+    nodeSel = hou.ui.selectNode(node_type_filter=hou.nodeTypeFilter.Rop, custom_node_filter_callback=custom_cb, title="Choose ROP 3Delight")
     if nodeSel != None:
-        hou.node("/out/"+nodeSel).setCurrent(True)
+        hou.node(nodeSel).setCurrent(True)
 	]]></script>
   </tool>
 
