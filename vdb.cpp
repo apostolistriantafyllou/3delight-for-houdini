@@ -170,6 +170,12 @@ void vdb::set_attributes_at_time(
 	double i_time,
 	const GT_PrimitiveHandle i_gt_primitive) const
 {
+	/*
+		FIXME: hopefull this will always be idenityt as the instancer takes
+		care of the transform. If not we are in trouble.
+	*/
+
+#if 0
 	const GT_TransformHandle &handle = i_gt_primitive->getPrimitiveTransform();
 	UT_Matrix4D local;
 	handle->getMatrix( local );
@@ -185,6 +191,7 @@ void vdb::set_attributes_at_time(
 		m_handle,
 		i_time,
 		NSI::DoubleMatrixArg( "transformationmatrix", local.data() ) );
+#endif
 }
 
 /**

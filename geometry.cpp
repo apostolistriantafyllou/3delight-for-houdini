@@ -186,16 +186,36 @@ struct OBJ_Node_Refiner : public GT_Refine
 			const GT_PrimInstance *I =
 				static_cast<const GT_PrimInstance *>( i_primitive.get() );
 
-			std::vector<primitive *> ret = Refine(
-				I->geometry(),
-				*m_node,
-				m_context,
-				m_time,
-				m_result,
-				m_primitive_index,
-				m_requires_frame_aligned_sample,
-				m_add_time_samples,
-				m_level+1);
+			std::string vdb_path =
+				vdb::node_is_vdb_loader( m_node, m_context.m_current_time );
+
+			std::vector<primitive *> ret;
+			if( !vdb_path.empty() )
+			{
+				/*
+					We got ourselves an instancer of VDBs. This happens anytime
+					you have a packed disk file read with some transform.  If
+					we enter the refine below we will still get a correct
+					render but with loaded VDBs in memory; and we don't want
+					that.
+				*/
+				m_result.push_back( new vdb(
+					m_context, m_node, m_time, i_primitive, index, vdb_path) );
+				ret.push_back( m_result.back () );
+				m_return.push_back( m_result.back() );
+			}
+			else
+			{
+				ret = Refine(
+					I->geometry(),
+					*m_node,
+					m_context,
+					m_time,
+					m_result,
+					m_primitive_index,
+					m_requires_frame_aligned_sample,
+					m_level+1);
+			}
 
 			if(	ret.empty() )
 			{
