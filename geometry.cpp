@@ -36,8 +36,7 @@ std::vector<primitive *> Refine(
 	std::vector<primitive*>& io_result,
 	unsigned& io_primitive_index,
 	bool& io_requires_frame_aligned_sample,
-	bool i_add_time_samples,
-	int i_level = 0);
+	int i_level = 0 );
 
 
 /**
@@ -69,7 +68,6 @@ struct OBJ_Node_Refiner : public GT_Refine
 	double m_time;
 	int m_level;
 	unsigned& m_primitive_index;
-	bool m_add_time_samples;
 	bool m_stop;
 
 	OBJ_Node_Refiner(
@@ -79,7 +77,6 @@ struct OBJ_Node_Refiner : public GT_Refine
 		std::vector<primitive*> &io_result,
 		unsigned& io_primitive_index,
 		bool& io_requires_frame_aligned_sample,
-		bool i_add_time_samples,
 		int level)
 	:
 		m_node(i_node),
@@ -89,7 +86,6 @@ struct OBJ_Node_Refiner : public GT_Refine
 		m_time(i_time),
 		m_level(level),
 		m_primitive_index(io_primitive_index),
-		m_add_time_samples(i_add_time_samples),
 		m_stop(false)
 	{
 	}
@@ -115,77 +111,11 @@ struct OBJ_Node_Refiner : public GT_Refine
 		refine() recursively to resolve the instanced geometry since we
 		need its handle to pass to the actual instancer. All the rest is 1 to 1
 		mapping with either one of our primitive exporters.
-
-		When m_add_time_samples is true, we follow the same refinement logic,
-		but we add the resulting GT primitives to previously creates primitive
-		exporters instead of creating new ones.
 	*/
 	void addPrimitive( const GT_PrimitiveHandle &i_primitive ) override
 	{
 		if(m_stop)
 		{
-			return;
-		}
-
-		if(m_add_time_samples)
-		{
-			// Update existing primitive exporters
-
-			switch( i_primitive->getPrimitiveType() )
-			{
-				case GT_PRIM_INSTANCE:
-				{
-					const GT_PrimInstance* I =
-						static_cast<const GT_PrimInstance*>(i_primitive.get());
-					addPrimitive(I->geometry());
-					/*
-					Refine(
-						I->geometry(), *m_node, m_context, m_time, m_result,
-						m_requires_frame_aligned_sample, m_add_time_samples,
-						m_level+1);
-					*/
-				}
-				// Fall through so the instancer is updated, too
-				case GT_PRIM_POLYGON_MESH:
-				case GT_PRIM_SUBDIVISION_MESH:
-				case GT_PRIM_POINT_MESH:
-				case GT_PRIM_SUBDIVISION_CURVES:
-				case GT_PRIM_CURVE_MESH:
-				case GT_PRIM_VDB_VOLUME:
-					assert(m_primitive_index < m_result.size());
-
-
-					if(m_primitive_index < m_result.size() &&
-						m_result[m_primitive_index]->
-							add_time_sample(m_time, i_primitive))
-					{
-						m_primitive_index++;
-					}
-					else
-					{
-						m_stop = true;
-						std::cerr
-							<< "3Delight for Houdini: unable to create motion-"
-								"blurred geometry for "
-							<< m_node->getFullPath() << std::endl;
-					}
-					break;
-				case GT_PRIM_VOXEL_VOLUME:
-					// Unsupported
-					break;
-				default:
-					Refine(
-						i_primitive,
-						*m_node,
-						m_context,
-						m_time,
-						m_result,
-						m_primitive_index,
-						m_requires_frame_aligned_sample,
-						m_add_time_samples,
-						m_level+1);
-			}
-
 			return;
 		}
 
@@ -351,7 +281,6 @@ struct OBJ_Node_Refiner : public GT_Refine
 				m_result,
 				m_primitive_index,
 				m_requires_frame_aligned_sample,
-				m_add_time_samples,
 				m_level+1);
 
 			if( ret.empty() )
@@ -391,7 +320,6 @@ std::vector<primitive *> Refine(
 	std::vector<primitive*>& io_result,
 	unsigned& io_primitive_index,
 	bool& io_requires_frame_aligned_sample,
-	bool i_add_time_samples,
 	int i_level)
 {
 	OBJ_Node_Refiner refiner(
@@ -401,7 +329,6 @@ std::vector<primitive *> Refine(
 		io_result,
 		io_primitive_index,
 		io_requires_frame_aligned_sample,
-		i_add_time_samples,
 		i_level);
 
 	GT_RefineParms params;
@@ -421,12 +348,12 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 {
 	SOP_Node *sop = m_object->getRenderSopPtr();
 
+	assert( sop );
 	/*
 		Refine the geometry once per time sample, and maybe also at the current
 		time (if it contains primitives that require frame-aligned time samples
 		and such a sample is not part of the ones returned by the time_sampler).
 	*/
-	bool update = false;
 	bool requires_frame_aligned_sample = false;
 	bool exported_frame_aligned_sample = false;
 	for(time_sampler t(m_context, *m_object, time_sampler::e_deformation);
@@ -465,6 +392,8 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 		*/
 		detail_handle.addPreserveRequest();
 
+		std::vector<primitive *> result;
+
 		GT_PrimitiveHandle gt( GT_GEODetail::makeDetail(detail_handle) );
 		unsigned primitive_index = 0;
 		Refine(
@@ -472,20 +401,42 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 			*m_object,
 			m_context,
 			time,
-			m_primitives,
+			result,
 			primitive_index,
-			requires_frame_aligned_sample,
-			update);
+			requires_frame_aligned_sample );
 
-		if(m_primitives.empty())
-		{
+
+		if( result.empty() )
 			break;
+
+		if( m_primitives.empty() )
+		{
+			m_primitives = result;
+		}
+		else if( result.size() == m_primitives.size() )
+		{
+			int i = 0;
+			for( auto E : m_primitives )
+			{
+				if( !E->add_time_sample( time, result[i]->default_gt_primitive()) )
+				{
+					#if 0
+					fprintf( stderr, "Error (%s %s) (%d %d)\n",
+						E->handle().c_str(), result[i]->handle().c_str(),
+						E->default_gt_primitive()->getPrimitiveType(),
+						result[i]->default_gt_primitive()->getPrimitiveType() );
+					#endif
+				}
+				i++;
+			}
+
+			for( auto R : result )
+				delete R;
 		}
 
 		exported_frame_aligned_sample =
 			exported_frame_aligned_sample ||
 			time == m_context.m_current_time;
-		update = true;
 	}
 
 #ifdef VERBOSE
