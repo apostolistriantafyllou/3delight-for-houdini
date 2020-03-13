@@ -109,7 +109,13 @@ protected:
 	*/
 	std::string GetNSIExportFilename( double i_time ) const;
 
+    virtual void resolveObsoleteParms(PRM_ParmList*);
+
 private:
+
+	/// Sets "render_mode" parameter based on "export_nsi" and "ipr"
+	void resolve_obsolete_render_mode(PRM_ParmList* i_old_parms);
+
 	void export_render_notes( const context &i_context ) const;
 
 	void ExportTransparentSurface(const context& i_ctx) const;

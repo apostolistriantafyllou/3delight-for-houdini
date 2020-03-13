@@ -93,7 +93,7 @@ namespace
 void
 ROP_3Delight::Register(OP_OperatorTable* io_table)
 {
-	io_table->addOperator(
+	OP_Operator* rop =
 		new OP_Operator(
 			"3Delight",
 			"3Delight",
@@ -105,8 +105,11 @@ ROP_3Delight::Register(OP_OperatorTable* io_table)
 			0u,
 			nullptr,
 			0,
-			"Render"));
-	io_table->addOperator(
+			"Render");
+	rop->setObsoleteTemplates(settings::GetObsoleteParameters());
+	io_table->addOperator(rop);
+
+	OP_Operator* cloud_rop =
 		new OP_Operator(
 			"3DelightCloud",
 			"3Delight Cloud",
@@ -118,7 +121,9 @@ ROP_3Delight::Register(OP_OperatorTable* io_table)
 			0u,
 			nullptr,
 			0,
-			"Render"));
+			"Render");
+	cloud_rop->setObsoleteTemplates(settings::GetObsoleteParameters());
+	io_table->addOperator(cloud_rop);
 }
 
 OP_Node*
@@ -421,7 +426,8 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	bool ipr =
 		m_idisplay_rendering
 		?	m_idisplay_ipr
-		:	render && evalInt(settings::k_ipr, 0, 0.0f);
+		:	m_settings.get_render_mode().toStdString() ==
+			settings::k_rm_live_render;
 
 	m_current_render = new context(
 		m_nsi,
@@ -771,8 +777,57 @@ ROP_3Delight::loadFinished()
 	m_settings.Rendering(false);
 }
 
+void
+ROP_3Delight::resolveObsoleteParms(PRM_ParmList* i_old_parms)
+{
+	resolve_obsolete_render_mode(i_old_parms);
+}
+
+void
+ROP_3Delight::resolve_obsolete_render_mode(PRM_ParmList* i_old_parms)
+{
+	PRM_Parm* export_nsi = i_old_parms->getParmPtr(settings::k_old_export_nsi);
+	if(export_nsi)
+	{
+		UT_String export_mode;
+		i_old_parms->evalString(export_mode, settings::k_old_export_nsi, 0, 0.0);
+		if(export_mode == "stdout")
+		{
+			setString(
+				settings::k_rm_export_stdout,
+				CH_STRING_LITERAL,
+				settings::k_render_mode,
+				0, 0.0f);
+			return;
+		}
+		if(export_mode != "off")
+		{
+			setString(
+				settings::k_rm_export_file,
+				CH_STRING_LITERAL,
+				settings::k_render_mode,
+				0, 0.0f);
+			return;
+		}
+	}
+
+	PRM_Parm* ipr = i_old_parms->getParmPtr(settings::k_old_ipr);
+	if(ipr)
+	{
+		if(i_old_parms->evalInt(settings::k_old_ipr, 0, 0.0))
+		{
+			setString(
+				settings::k_rm_live_render,
+				CH_STRING_LITERAL,
+				settings::k_render_mode,
+				0, 0.0f);
+			return;
+		}
+	}
+}
+
 /**
-	This is needed by the Spatiaal Override feature to make the overriding
+	This is needed by the Spatial Override feature to make the overriding
 	object transparent.
 */
 void ROP_3Delight::ExportTransparentSurface(const context& i_ctx) const
@@ -1618,18 +1673,18 @@ ROP_3Delight::HasDepthOfField()const
 std::string
 ROP_3Delight::GetNSIExportFilename(double i_time)const
 {
-	UT_String export_mode;
-	evalString(export_mode, settings::k_export_nsi, 0, i_time);
+	std::string render_mode = m_settings.get_render_mode().toStdString();
 
-	if(export_mode == "off")
+	if(render_mode == settings::k_rm_render ||
+		render_mode == settings::k_rm_live_render)
 	{
 		return {};
 	}
 
-	if(export_mode == "stdout")
+	if(render_mode == settings::k_rm_export_stdout)
 	{
 		// A filename of "stdout" actually makes NSI output to standard output
-		return export_mode.toStdString();
+		return std::string("stdout");
 	}
 
 	UT_String export_file;

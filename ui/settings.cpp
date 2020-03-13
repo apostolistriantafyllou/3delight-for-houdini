@@ -21,10 +21,15 @@
 static const float k_one_line = 0.267;
 
 const char* settings::k_rendering = "rendering";
+const char* settings::k_render_mode = "render_mode";
+const std::string settings::k_rm_render = "render";
+const std::string settings::k_rm_live_render = "live_render";
+const std::string settings::k_rm_export_file = "export_file";
+const std::string settings::k_rm_export_stdout = "export_stdout";
 const char* settings::k_stop_render = "stop_render";
 const char* settings::k_export = "export";
-const char* settings::k_export_nsi = "export_nsi";
-const char* settings::k_ipr = "ipr";
+const char* settings::k_old_export_nsi = "export_nsi";
+const char* settings::k_old_ipr = "ipr";
 const char* settings::k_shading_samples = "shading_samples";
 const char* settings::k_pixel_samples = "pixel_samples";
 const char* settings::k_volume_samples = "volume_samples";
@@ -89,8 +94,7 @@ settings::settings( ROP_3Delight &i_rop )
 		Export button replace it.
 	*/
 	static PRM_Conditional render_h(
-		("{ " + std::string(k_rendering) + " != 0 } {" +
-			std::string(k_export_nsi) + " != \"off\" }").c_str(),
+		("{ " + std::string(k_rendering) + " != 0 } { " + std::string(k_render_mode) + " == \"" + k_rm_export_file + "\" } { " + std::string(k_render_mode) + " == \"" + k_rm_export_stdout + "\" }").c_str(),
 		PRM_CONDTYPE_HIDE);
 	execute_tmpl->setConditionalBasePtr(&render_h);
 }
@@ -113,7 +117,7 @@ PRM_Template* settings::GetTemplates()
 	static PRM_Name separator4("separator4", "");
 	static PRM_Name separator5("separator5", "");
 	static PRM_Name separator6("separator6", "");
-	static PRM_Name separator7("separator7", "");
+	// separator7 is obsolete : don't use it
 
 	// Actions
 	static PRM_Name rendering(k_rendering, "Rendering");
@@ -123,7 +127,11 @@ PRM_Template* settings::GetTemplates()
 	static PRM_Conditional stop_render_h(("{ " + std::string(k_rendering) + " == 0 }").c_str(), PRM_CONDTYPE_HIDE);
 
 	static PRM_Name export_n(k_export, "Export");
-	static PRM_Conditional export_h(("{ " + std::string(k_export_nsi) + " == \"off\" }").c_str(), PRM_CONDTYPE_HIDE);
+	static PRM_Conditional export_h(
+		("{ " + std::string(k_render_mode) + " != \"" + k_rm_export_file +
+			"\" " + std::string(k_render_mode) + " != \"" + k_rm_export_stdout +
+			"\" }").c_str(),
+		PRM_CONDTYPE_HIDE);
 
 	static std::vector<PRM_Template> actions_templates =
 	{
@@ -143,6 +151,25 @@ PRM_Template* settings::GetTemplates()
 			nullptr, nullptr,
 			&ROP_Node::doRenderCback, nullptr, 0, nullptr, &export_h)
 	};
+
+	// Render Mode
+	static PRM_Name render_mode(k_render_mode, "Render Mode");
+	static PRM_Default render_mode_d(0.0, "render");
+	static PRM_Item render_mode_i[] =
+	{
+		PRM_Item(k_rm_render.c_str(), "Render"),
+		PRM_Item(k_rm_live_render.c_str(), "IPR Render"),
+		PRM_Item(k_rm_export_file.c_str(), "Export to File"),
+		PRM_Item(k_rm_export_stdout.c_str(), "Export to Console Window"),
+		PRM_Item(),
+	};
+	static PRM_ChoiceList render_mode_c(PRM_CHOICELIST_SINGLE, render_mode_i);
+
+	// Export filename
+	static PRM_Name default_export_nsi_filename(k_default_export_nsi_filename, "Output File");
+	static PRM_Default default_export_nsi_filename_d(
+		0.0f, "$HIP/render/`$HIPNAME`_`$OS`_$F4.nsi");
+	static PRM_Conditional default_export_nsi_filename_g(("{ " + std::string(k_render_mode) + " != \"" + k_rm_export_file + "\" }").c_str());
 
 	// Quality
 	static PRM_Name shading_samples(k_shading_samples, "Shading Samples");
@@ -386,8 +413,6 @@ PRM_Template* settings::GetTemplates()
 		PRM_Template(PRM_SEPARATOR, 0, &separator5)
 	};
 
-	;
-
 	//// Multi-Light
 
 	static PRM_Name light_sets(k_light_sets, "Light Sets");
@@ -485,26 +510,6 @@ PRM_Template* settings::GetTemplates()
 
 	// Debug
 
-	static PRM_Name export_nsi(k_export_nsi, "Export NSI");
-	static PRM_Default export_nsi_d(0.0f, "off");
-	static PRM_Item export_nsi_i[] =
-	{
-		PRM_Item("off", "Disabled"),
-		PRM_Item("on", "to File"),
-		PRM_Item("stdout", "to Console Window"),
-		PRM_Item(),
-	};
-	static PRM_ChoiceList export_nsi_c(PRM_CHOICELIST_SINGLE, export_nsi_i);
-
-	static PRM_Name default_export_nsi_filename(k_default_export_nsi_filename, "Output File");
-	static PRM_Default default_export_nsi_filename_d(
-		0.0f, "$HIP/render/`$HIPNAME`_`$OS`_$F4.nsi");
-	static PRM_Conditional default_export_nsi_filename_g(("{ " + std::string(k_export_nsi) + " != \"on\" }").c_str());
-
-	static PRM_Name ipr(k_ipr, "IPR");
-	static PRM_Default ipr_d(false);
-	static PRM_Conditional ipr_g(("{ " + std::string(k_export_nsi) + " != \"off\" }").c_str());
-
 	static PRM_Name hdk_version("hdk_version", "Built with HDK " SYS_VERSION_MAJOR "." SYS_VERSION_MINOR "." SYS_VERSION_BUILD "." SYS_VERSION_PATCH);
 	NSI::DynamicAPI api;
 	const char* (*get_dl_version)();
@@ -524,10 +529,6 @@ PRM_Template* settings::GetTemplates()
 
 	static std::vector<PRM_Template> debug_templates =
 	{
-		PRM_Template(PRM_STRING, 1, &export_nsi, &export_nsi_d, &export_nsi_c),
-		PRM_Template(PRM_FILE, 1, &default_export_nsi_filename, &default_export_nsi_filename_d, 0, 0, nullptr, nullptr, 1, nullptr, &default_export_nsi_filename_g),
-		PRM_Template(PRM_TOGGLE, 1, &ipr, &ipr_d, 0, 0, nullptr, nullptr, 1, nullptr, &ipr_g),
-		PRM_Template(PRM_SEPARATOR, 0, &separator7),
 		PRM_Template(PRM_LABEL, 0, &hdk_version),
 		PRM_Template(PRM_LABEL, 0, &dl_version)
 	};
@@ -558,8 +559,25 @@ PRM_Template* settings::GetTemplates()
 			base->getType() != PRM_LIST_TERMINATOR;
 			base++)
 		{
+			/*
+				Insert the render mode parameter above the "Valid Frame Range"
+				("trange") parameter, which should be on the second line.
+			*/
+			if(base->getNamePtr()->getToken() == std::string("trange"))
+			{
+				templates.push_back(
+					PRM_Template(
+						PRM_STRING, 1,
+						&render_mode, &render_mode_d, &render_mode_c));
+			}
+
 			templates.push_back(*base);
 		}
+
+		templates.push_back(
+			PRM_Template(PRM_FILE, 1, &default_export_nsi_filename,
+				&default_export_nsi_filename_d, 0, 0, nullptr, nullptr, 1,
+				nullptr, &default_export_nsi_filename_g)),
 
 		templates.push_back(
 			PRM_Template(
@@ -635,6 +653,36 @@ OP_VariablePair* settings::GetVariablePair()
 	}
 
 	return pair;
+}
+
+PRM_Template* settings::GetObsoleteParameters()
+{
+	static PRM_Name export_nsi(k_old_export_nsi, "Export NSI");
+	static PRM_Default export_nsi_d(0.0f, "off");
+	static PRM_Item export_nsi_i[] =
+	{
+		PRM_Item("off", "Disabled"),
+		PRM_Item("on", "to File"),
+		PRM_Item("stdout", "to Console Window"),
+		PRM_Item(),
+	};
+	static PRM_ChoiceList export_nsi_c(PRM_CHOICELIST_SINGLE, export_nsi_i);
+
+	static PRM_Name ipr(k_old_ipr, "IPR");
+	static PRM_Default ipr_d(false);
+	static PRM_Conditional ipr_g(("{ " + std::string(k_old_export_nsi) + " != \"off\" }").c_str());
+
+	static PRM_Name separator7("separator7", "");
+
+	static PRM_Template obsolete_templates[] =
+	{
+		PRM_Template(PRM_STRING, 1, &export_nsi, &export_nsi_d, &export_nsi_c),
+		PRM_Template(PRM_TOGGLE, 1, &ipr, &ipr_d, 0, 0, nullptr, nullptr, 1, nullptr, &ipr_g),
+		PRM_Template(PRM_SEPARATOR, 0, &separator7),
+		PRM_Template()
+	};
+
+	return obsolete_templates;
 }
 
 int settings::image_format_cb(
@@ -936,6 +984,13 @@ UT_String settings::get_matte_objects( void ) const
 			matte_pattern, settings::k_matte_objects, 0, 0.0f );
 	}
 	return matte_pattern;
+}
+
+UT_String settings::get_render_mode()const
+{
+	UT_String render_mode("*");
+	m_parameters.evalString(render_mode, settings::k_render_mode, 0, 0.0f);
+	return render_mode;
 }
 
 int settings::StopRenderCB(void* i_node, int, double, const PRM_Template*)

@@ -28,6 +28,7 @@ public:
 	static PRM_Template* GetTemplates();
 	static OP_TemplatePair* GetTemplatePair();
 	static OP_VariablePair* GetVariablePair();
+	static PRM_Template* GetObsoleteParameters();
 
     static int image_format_cb(
 		void* data, int index, fpreal t,
@@ -48,10 +49,15 @@ public:
 public:
 
 	static const char* k_rendering;
+	static const char* k_render_mode;
+	static const std::string k_rm_render;
+	static const std::string k_rm_live_render;
+	static const std::string k_rm_export_file;
+	static const std::string k_rm_export_stdout;
 	static const char* k_stop_render;
 	static const char* k_export;
-	static const char* k_export_nsi;
-	static const char* k_ipr;
+	static const char* k_old_export_nsi;
+	static const char* k_old_ipr;
 	static const char* k_shading_samples;
 	static const char* k_pixel_samples;
 	static const char* k_volume_samples;
@@ -111,6 +117,7 @@ private:
 	UT_String GetObjectsToRender() const;
 	UT_String GetLightsToRender() const;
 	UT_String get_matte_objects( void ) const;
+	UT_String get_render_mode()const;
 
 	/// Called when the Abort button is pressed
 	static int StopRenderCB(void* i_node, int, double, const PRM_Template*);
