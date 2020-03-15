@@ -26,7 +26,6 @@ class exporter;
 class ROP_3Delight : public ROP_Node
 {
 	friend class settings; // UI related.
-	friend struct cop_utilities; // for OP texture generation
 
 public:
 
@@ -83,6 +82,14 @@ public:
 	*/
 	double current_time( void ) const;
 
+	/**
+		\brief Returns the name of the file into which to export an NSI stream.
+
+		It might also return "stdout", which is valid in NSI, or an empty
+		string, which means to render instead of exporting.
+	*/
+	std::string GetNSIExportFilename( double i_time ) const;
+
 protected:
 
 	ROP_3Delight(
@@ -100,14 +107,6 @@ protected:
 	virtual bool updateParmsFlags();
 
 	virtual void loadFinished();
-
-	/**
-		\brief Returns the name of the file into which to export an NSI stream.
-
-		It might also return "stdout", which is valid in NSI, or an empty
-		string, which means to render instead of exporting.
-	*/
-	std::string GetNSIExportFilename( double i_time ) const;
 
     virtual void resolveObsoleteParms(PRM_ParmList*);
 
