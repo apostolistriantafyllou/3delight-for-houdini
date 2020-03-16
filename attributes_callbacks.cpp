@@ -192,11 +192,26 @@ namespace
 			instance of the callback remains connected.
 		*/
 		interests_mutex.lock();
+
 		manager_interests.push_back(
 			safe_interest(
 					&i_manager,
 					nullptr,
 					&manager_cb));
+
+		/*
+			Strangely (but, sadly, not surprisingly), manager_cb is called twice
+			for the creation of managers "/mat" and "/out" under "/". Let's
+			avoid registering our callback twice on the same manager, otherwise
+			the callbacks for all their subnets will be duplicated as well.
+		*/
+		size_t nb_cb = manager_interests.size();
+		if(nb_cb >= 2 &&
+			manager_interests[nb_cb-2] == manager_interests[nb_cb-1])
+		{
+			manager_interests.pop_back();
+		}
+
 		interests_mutex.unlock();
 	}
 

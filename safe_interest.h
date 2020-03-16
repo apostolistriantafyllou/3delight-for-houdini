@@ -57,6 +57,14 @@ public:
 		return m_node;
 	}
 
+	/// Returns true if both interests have the same callback/node pair.
+	bool operator==(const safe_interest& i_other)const
+	{
+		return
+			m_node == i_other.m_node &&
+			m_callee == i_other.m_callee && m_cb == i_other.m_cb;
+	}
+
 private:
 
 	/**
