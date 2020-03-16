@@ -10,15 +10,40 @@
 
 namespace
 {
-	const char* k_obj_manager_path = "/obj";
+	UT_String k_obj_manager_path = "/obj";
 
 	std::mutex interests_mutex;
-	safe_interest obj_node_interest;
-	safe_interest obj_manager_interest;
+	std::vector<safe_interest> obj_node_interests;
+	std::vector<safe_interest> manager_interests;
 
 	bool scene_loading = false;
 	std::mutex scene_nodes_mutex;
 	std::vector<OBJ_Node*> scene_nodes;
+
+	void register_manager_cb(OP_Node& i_manager);
+
+	/// Clears out inactive interests from a list.
+	void clean_interests(std::vector<safe_interest>& io_interests)
+	{
+		if(io_interests.empty())
+		{
+			return;
+		}
+
+		safe_interest* last = &io_interests.back();
+		safe_interest* current = last;
+		do
+		{
+			if(!current->active())
+			{
+				*current = *last;
+				last--;
+			}
+		}
+		while(current-- != &io_interests.front());
+
+		io_interests.resize(last-current);
+	}
 
 	/**
 		\brief Called when a scene is loaded (opened or merged).
@@ -47,9 +72,19 @@ namespace
 		}
 		scene_nodes.clear();
 		scene_nodes_mutex.unlock();
+
+		// Avoid accumulating inactive interests
+		interests_mutex.lock();
+		clean_interests(obj_node_interests);
+		clean_interests(manager_interests);
+		interests_mutex.unlock();
 	}
 
-	/// Called when a child of /obj changes (we only react to their creation)
+	/**
+		\brief Called when a child of an obj manager changes.
+
+		We only react to their creation.
+	*/
 	void obj_node_cb(
 		OP_Node* i_caller,
 		void*,
@@ -93,32 +128,29 @@ namespace
 		}
 	}
 
-	/// Registers a callback on /obj to detect node creation.
-	void register_obj_node_cb()
+	/// Registers a callback on an obj manager to detect node creation.
+	void register_obj_node_cb(OP_Node& i_obj_manager)
 	{
-		// Find the /obj node
-		OP_Node* obj_manager = OPgetDirector()->findNode(k_obj_manager_path);
-		if(!obj_manager)
-		{
-			return;
-		}
-
 		/*
-			Connect the callback to /obj.  safe_interest's destructor and
-			assignment operator will ensure that, en the end, only one instance
-			of the callback remains connected.
+			Connect the callback to the obj manager.  safe_interest's destructor
+			and assignment operator will ensure that, en the end, only one
+			instance of the callback remains connected.
 		*/
 		interests_mutex.lock();
-		obj_node_interest =
+		obj_node_interests.push_back(
 			safe_interest(
-					obj_manager,
+					&i_obj_manager,
 					nullptr,
-					&obj_node_cb);
+					&obj_node_cb));
 		interests_mutex.unlock();
 	}
 
-	/// Called when a child of / changes (we only react to the creation of /obj)
-	void obj_manager_cb(
+	/**
+		\brief Called when a child of a manager changes.
+
+		We only react to the creation of other managers.
+	*/
+	void manager_cb(
 		OP_Node* i_caller,
 		void*,
 		OP_EventType i_type,
@@ -130,13 +162,42 @@ namespace
 		}
 
 		OP_Node* node = (OP_Node*)i_data;
-		UT_StringRef path = node->getFullPath();
-		if(path != k_obj_manager_path)
+
+		// We're only interested in managers here
+		if(!node->isManager() && !node->isManagementNode() &&
+			!node->isEffectivelyAManagementNode())
 		{
 			return;
 		}
 
-		register_obj_node_cb();
+		register_manager_cb(*node);
+
+		if(node->getOpTypeID() == OBJ_OPTYPE_ID ||
+			node->getFullPath() == k_obj_manager_path)
+		{
+			/*
+				This is an OBJ manager : it could contain OBJ nodes, in addition
+				to other managers.
+			*/
+			register_obj_node_cb(*node);
+		}
+	}
+
+	/// Registers a callback on a manager to detect obj manager creation
+	void register_manager_cb(OP_Node& i_manager)
+	{
+		/*
+			Connect the callback to the obj manager. safe_interest's destructor
+			and assignment operator will ensure that, en the end, only one
+			instance of the callback remains connected.
+		*/
+		interests_mutex.lock();
+		manager_interests.push_back(
+			safe_interest(
+					&i_manager,
+					nullptr,
+					&manager_cb));
+		interests_mutex.unlock();
 	}
 
 }
@@ -161,18 +222,15 @@ void attributes_callbacks::init()
 
 	/*
 		Here, we connect a callback on the root node which will notify us of the
-		creation of the /obj network's manager node. When this happens, we will
-		be able to connect a callback that notifies of the creation of any node
-		under /obj.
+		creation of any node manager. When this happens, we will be able to
+		connect a callback that notifies of the creation of any node
+		under an obj manager.
 
 		Note that, unlike the creation scripts automatically called by Houdini,
 		our callback is also called during the opening of a scene, which means
 		that we don't need a 456.cmd script anymore.
 	*/
-	interests_mutex.lock();
-	obj_manager_interest = 
-		safe_interest(OPgetDirector(), nullptr, &obj_manager_cb);
-	interests_mutex.unlock();
+	register_manager_cb(*OPgetDirector());
 }
 
 void attributes_callbacks::add_attributes_to_node(OBJ_Node& io_node)

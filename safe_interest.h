@@ -45,6 +45,18 @@ public:
 	*/
 	const safe_interest& operator=(const safe_interest& i_source);
 
+	/**
+		\brief Returns true if the interest is still connected to a node.
+
+		If the return value is false, it means that the node has been deleted
+		and the callback will never be called again.
+		This is useful when unused safe_interests need to be cleaned out.
+	*/
+	bool active()const
+	{
+		return m_node;
+	}
+
 private:
 
 	/**
