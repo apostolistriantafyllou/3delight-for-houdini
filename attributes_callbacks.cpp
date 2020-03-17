@@ -173,12 +173,6 @@ void attributes_callbacks::init()
 	obj_manager_interest = 
 		safe_interest(OPgetDirector(), nullptr, &obj_manager_cb);
 	interests_mutex.unlock();
-
-	/*
-		Try to connect the child node creation callback immediately, in case
-		/obj already exists.
-	*/
-	register_obj_node_cb();
 }
 
 void attributes_callbacks::add_attributes_to_node(OBJ_Node& io_node)
