@@ -23,6 +23,7 @@ ENDIF()
 # Add a library
 set( library_name 3Delight_for_Houdini )
 add_library( ${library_name} SHARED
+	OBJ_IncandescenceLight.cpp
 	ROP_3Delight.cpp
 	VOP_3DelightMaterialBuilder.cpp
 	VOP_ExternalOSL.cpp
@@ -34,6 +35,7 @@ add_library( ${library_name} SHARED
 	exporter.cpp
 	geometry.cpp
 	idisplay_port.cpp
+	incandescence_light.cpp
 	instance.cpp
 	light.cpp
 	polygonmesh.cpp
@@ -90,7 +92,7 @@ install(
 	DESTINATION ${INSTALL_DIR}/config/Icons )
 
 install(
-	FILES ui/vdb_no_outline.png ui/shelf_ROP_3Delight.png ui/shelf_ROP_3Delight_cloud.png ui/shelf_ROP_render_3Delight.png ui/shelf_ROP_select_3Delight.png ui/VOP_3Delight-dlHairAndFur.png ui/VOP_3Delight-dlPrincipled.png ui/VOP_3Delight-dlMetal.png ui/VOP_3Delight-dlSkin.png ui/VOP_3Delight-dlGlass.png ui/VOP_3Delight-dlSubstance.png ui/VOP_3Delight-dlColorToFloat.png ui/VOP_3Delight-dlFloatToColor.png ui/VOP_3Delight-dlRamp.png ui/VOP_3Delight-dlToon.png ui/VOP_3Delight-dlThin.png ui/VOP_3Delight-vdbVolume.png
+	FILES ui/vdb_no_outline.png ui/shelf_ROP_3Delight.png ui/shelf_ROP_3Delight_cloud.png ui/shelf_ROP_render_3Delight.png ui/shelf_ROP_select_3Delight.png ui/VOP_3Delight-dlHairAndFur.png ui/VOP_3Delight-dlPrincipled.png ui/VOP_3Delight-dlMetal.png ui/VOP_3Delight-dlSkin.png ui/VOP_3Delight-dlGlass.png ui/VOP_3Delight-dlSubstance.png ui/VOP_3Delight-dlColorToFloat.png ui/VOP_3Delight-dlFloatToColor.png ui/VOP_3Delight-dlRamp.png ui/VOP_3Delight-dlToon.png ui/VOP_3Delight-dlThin.png ui/VOP_3Delight-vdbVolume.png ui/OBJ_3Delight-dlIncandescenceLight.png
 	DESTINATION ${INSTALL_DIR}/config/Icons )
 
 install(
@@ -100,6 +102,10 @@ install(
 install(
 	FILES ui/geo_OnCreated.cmd ui/cam_OnCreated.cmd ui/hlight--2.0_OnCreated.cmd ui/envlight_OnCreated.cmd ui/null_OnCreated.cmd ui/3Delight--VOP_OnCreated.cmd
 	DESTINATION ${INSTALL_DIR}/scripts/private )
+
+install(
+	FILES ui/IncandescenceLight_OnCreated.py
+	DESTINATION ${INSTALL_DIR}/scripts/obj )
 
 install(
 	FILES ui/3Delight_OnCreated.py

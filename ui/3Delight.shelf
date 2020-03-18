@@ -19,6 +19,7 @@
     <memberTool name="_3dl_object_geolight"/>
     <memberTool name="_3dl_object_distantlight"/>
     <memberTool name="_3dl_object_envlight"/>
+    <memberTool name="_3dl_object_incandescencelight"/>
     <memberTool name="_3dl_object_vdb"/>
   </toolshelf>
 
@@ -321,6 +322,16 @@ group.hideFolder("Shadow", True)
 group.hideFolder(("Light", "Render Options"), True)
 group.hideFolder(("Light", "Sky Environment Map"), True)
 newnode.setParmTemplateGroup(group)]]></script>
+  </tool>
+
+  <tool name="_3dl_object_incandescencelight" label="Incandescent Light" icon="OBJ_3Delight-dlIncandescenceLight">
+    <helpText><![CDATA[Creates an incandescence light to .]]></helpText>
+    <script scriptType="python"><![CDATA[
+obj = hou.node("/obj")
+newnode = obj.createNode("IncandescenceLight")
+newnode.moveToGoodPosition()
+newnode.setCurrent(True)
+]]></script>
   </tool>
 
   <tool name="_3dl_object_vdb" label="VDB" icon="vdb_no_outline">

@@ -4,6 +4,7 @@
 #include "camera.h"
 #include "exporter.h"
 #include "geometry.h"
+#include "incandescence_light.h"
 #include "instance.h"
 #include "light.h"
 #include "null.h"
@@ -143,6 +144,22 @@ void scene::process_obj_node(
 			rop_path,
 			i_context.m_current_time))
 	{
+		return;
+	}
+
+	/*
+		Check for special node IncandenceLight.
+	*/
+	if( obj->getOperator()->getName() == "IncandescenceLight" )
+	{
+		o_to_export.push_back( new incandescence_light(i_context, obj) );
+		if(i_context.m_ipr)
+		{
+			io_interests.emplace_back(
+				obj,
+				const_cast<context*>(&i_context),
+				&incandescence_light::changed_cb);
+		}
 		return;
 	}
 
@@ -421,6 +438,7 @@ void scene::convert_to_nsi(
 		i_context.m_lights_to_render_pattern,
 		i_context.m_mattes_pattern,
 		i_context.m_rop_path.c_str(),
+		false,
 		lights_to_render, mattes );
 
 	for( auto &exporter : to_export )
@@ -468,6 +486,7 @@ void scene::find_lights_and_mattes(
 	const OP_BundlePattern* i_light_pattern,
 	const OP_BundlePattern* i_matte_pattern,
 	const char* i_rop_path,
+	bool i_want_incandescence_lights,
 	std::vector<OBJ_Node*>& o_lights,
 	std::vector<OBJ_Node*>& o_mattes )
 {
@@ -515,6 +534,13 @@ void scene::find_lights_and_mattes(
 				{
 					o_lights.push_back(obj);
 				}
+			}
+
+			if( obj &&
+				i_want_incandescence_lights &&
+				obj->getOperator()->getName() == "IncandescenceLight" )
+			{
+				o_lights.push_back(obj);
 			}
 
 			if( !node->isNetwork() )

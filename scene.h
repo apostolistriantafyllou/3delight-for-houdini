@@ -32,6 +32,7 @@ public:
 		const OP_BundlePattern* i_lights,
 		const OP_BundlePattern* i_mattes,
 		const char* i_rop_path,
+		bool i_want_incandescence_lights,
 		std::vector<OBJ_Node*>& o_lights,
 		std::vector<OBJ_Node*>& o_mattes );
 

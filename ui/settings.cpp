@@ -864,7 +864,7 @@ void settings::UpdateLights()
 	scene::find_lights_and_mattes(
 		pattern,
 		nullptr, /* no mattes needed */
-		m_parameters.getFullPath().c_str(), m_lights, dummy );
+		m_parameters.getFullPath().c_str(), true, m_lights, dummy );
 
 	if(pattern)
 	{

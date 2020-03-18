@@ -1,0 +1,6 @@
+newnode = kwargs.get("node", None)
+group = newnode.parmTemplateGroup()
+group.hideFolder("Transform", True)
+group.hideFolder("Render", True)
+group.hideFolder("Misc", True)
+newnode.setParmTemplateGroup(group)
