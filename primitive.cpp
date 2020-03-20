@@ -191,28 +191,33 @@ bool primitive::export_extrapolated_P(GT_DataArrayHandle i_vertices_list)const
 	GT_DataArrayHandle velocity_buffer;
 	const float* nsi_velocity_data = velocity_data->getF32Array(velocity_buffer);
 
-	// Compute pre-frame position from frame position (1 second earlier)
+	/*
+		Compute pre-frame position from frame position (typically 1 half-shutter
+		earlier).
+	*/
+	double velocity_weight = m_context.ShutterOpen() - time;
 	for(unsigned p = 0, v = 0; p < 3*nb_points; p++, v += v_inc)
 	{
-		nsi_position_data[p] -= nsi_velocity_data[v];
+		nsi_position_data[p] += velocity_weight * nsi_velocity_data[v];
 	}
 
 	// Output pre-frame position
 	m_nsi.SetAttributeAtTime(
 		m_handle,
-		time - 1.0,
+		m_context.ShutterOpen(),
 		NSI::PointsArg("P", nsi_position_data, nb_points));
 
-	// Compute post-frame position from the pre-frame position (2 seconds later)
+	// Compute post-frame position from the pre-frame position (1 shutter later)
+	velocity_weight = m_context.ShutterClose() - m_context.ShutterOpen();
 	for(unsigned p = 0, v = 0; p < 3*nb_points; p++, v += v_inc)
 	{
-		nsi_position_data[p] += 2.0f * nsi_velocity_data[v];
+		nsi_position_data[p] += velocity_weight * nsi_velocity_data[v];
 	}
 
 	// Output post-frame position
 	m_nsi.SetAttributeAtTime(
 		m_handle,
-		time + 1.0,
+		m_context.ShutterClose(),
 		NSI::PointsArg("P", nsi_position_data, nb_points));
 
 	delete[] nsi_position_data;
