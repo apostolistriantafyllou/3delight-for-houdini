@@ -112,6 +112,19 @@ bool primitive::add_time_sample(
 	return true;
 }
 
+bool primitive::merge_time_samples(const primitive& i_primitive)
+{
+	for(const TimedPrimitive& prim : i_primitive.m_gt_primitives)
+	{
+		if(!add_time_sample(prim.first, prim.second))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 bool primitive::is_volume()const
 {
 	return false;

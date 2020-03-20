@@ -44,8 +44,33 @@ public:
 
 	void set_attributes()const override;
 
-	/// Specifies the GT primitive to use when exporting one more time sample
+	/**
+		\brief Specifies the GT primitive to use when exporting a time sample.
+
+		\param i_time
+			The time at which i_primitive was generated. This additional time
+			sample might be ignored if a sample at i_time is not needed, either
+			because the primitive only requires a single sample at the current
+			frame's time or, conversely because the primitive already has all
+			multiple samples and the additional sample was meant for those
+			primitive that require a frame-aligned sample.
+		\param i_primitive
+			The GT primitive holding geometry at time i_time.
+
+		\returns
+			false when one of the time samples is incompatible with those
+			already present in the primitive, true otherwise.
+	*/
 	bool add_time_sample(double i_time, const GT_PrimitiveHandle& i_primitive);
+
+	/**
+		\brief Merges all time samples of i_primitive into this one's.
+
+		\returns
+			false when one of the time samples is incompatible with those
+			already present in the primitive, true otherwise.
+	*/
+	bool merge_time_samples(const primitive& i_primitive);
 
 	/// Returns true if the primitive should be rendered as a volume
 	virtual bool is_volume()const;

@@ -438,7 +438,7 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 			int i = 0;
 			for( auto E : m_primitives )
 			{
-				if( !E->add_time_sample( time, result[i]->default_gt_primitive()) )
+				if( !E->merge_time_samples(*result[i]) )
 				{
 					#if 0
 					fprintf( stderr, "Error (%s %s) (%d %d)\n",
