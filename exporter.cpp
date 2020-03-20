@@ -241,7 +241,7 @@ std::string exporter::absolute_path(
 }
 
 VOP_Node *exporter::resolve_material_path(
-	const char *i_path,  std::string &o_path ) const
+	OP_Node *i_node, const char *i_path,  std::string &o_path )
 {
 	OP_Node* op_node = OPgetDirector()->findNode( i_path );
 	VOP_Node *vop_node = nullptr;
@@ -254,7 +254,7 @@ VOP_Node *exporter::resolve_material_path(
 	if( !vop_node )
 	{
 		/* Try a relative search */
-		vop_node = m_object->findVOPNode( i_path );
+		vop_node = i_node->findVOPNode( i_path );
 		if( !vop_node )
 		{
 			return nullptr;
@@ -264,6 +264,7 @@ VOP_Node *exporter::resolve_material_path(
 	o_path = vop_node->getFullPath().toStdString();
 	return vop_node;
 }
+
 /**
 */
 NSI::Context&

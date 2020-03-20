@@ -76,6 +76,14 @@ public:
 	/** utility to resolve relative paths */
 	static std::string absolute_path( OP_Node *i_node, const char *i_path );
 
+	/**
+		\brief Resolves the [relaative] material path to an absolute
+		path and a VOP node.
+	*/
+	static VOP_Node *resolve_material_path(
+		OP_Node *i_needed_relative_paths,
+		const char *i_path,  std::string &o_path );
+
 protected:
 
 	/**
@@ -105,14 +113,11 @@ protected:
 		double i_time,
 		GT_DataArrayHandle i_vertices_list = GT_DataArrayHandle()) const;
 
-protected:
-
-	/**
-		\brief Resolves the [relaative] material path to an absolute
-		path and a VOP node.
-	*/
 	VOP_Node *resolve_material_path(
-		const char *i_path,  std::string &o_path ) const;
+		const char *i_path,  std::string &o_path ) const
+	{
+		return resolve_material_path(m_object, i_path, o_path );
+	}
 
 	/**
 		\brief Returns the context where to export (possibly static) attributes.

@@ -175,6 +175,9 @@ void scene::process_obj_node(
 
 /**
 	\brief Go through all used materials and produce VOPs exporters.
+
+	We also check the Atmopshere shader in the ROP, as we can't possibliy find
+	it otherwise.
 */
 void scene::vop_scan(
 	const context &i_context,
@@ -237,7 +240,31 @@ void scene::vop_scan(
 		}
 	}
 
-	//printf( "Exported %lu materials\n", vops.size() );
+	/* Deal with atmosphere */
+	OP_Node *rop = OPgetDirector()->findNode( i_context.m_rop_path.c_str() );
+	if( !rop )
+	{
+		return;
+	}
+
+	int index;
+	if( (index=rop->getParmIndex("atmosphere")) == -1 )
+		return;
+
+	ROP_3Delight *r3 = (ROP_3Delight *) CAST_ROPNODE( rop );
+	UT_String atmosphere_path;
+	rop->evalString( atmosphere_path, "atmosphere", 0, r3->current_time() );
+
+	if( atmosphere_path.length() > 0 )
+	{
+		std::string resolved;
+		VOP_Node *atmosphere_shader = exporter::resolve_material_path(
+			r3, atmosphere_path.c_str(), resolved );
+
+		if( atmosphere_shader )
+			io_to_export.push_back( new vop(i_context, atmosphere_shader) );
+	}
+
 	return;
 }
 
