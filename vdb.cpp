@@ -88,6 +88,7 @@ void vdb::set_attributes( void ) const
 	*/
 
 	UT_String density_grid = VolumeGridParameters::density_default;
+	UT_String color_grid = VolumeGridParameters::color_default;
 	UT_String temperature_grid = VolumeGridParameters::temperature_default;
 	UT_String emissionintensity_grid = VolumeGridParameters::emission_default;
 	UT_String velocity_grid = VolumeGridParameters::velocity_default;
@@ -102,6 +103,10 @@ void vdb::set_attributes( void ) const
 		if(material->hasParm(density_name))
 		{
 			material->evalString(density_grid, density_name, 0, time);
+		}
+		if(material->hasParm(color_name))
+		{
+			material->evalString(color_grid, color_name, 0, time);
 		}
 		if(material->hasParm(temperature_name))
 		{
@@ -130,6 +135,11 @@ void vdb::set_attributes( void ) const
 		if( grid == density_grid.c_str() )
 		{
 			arguments.Add( new NSI::StringArg("densitygrid", grid) );
+		}
+
+		if( grid == color_grid.c_str() )
+		{
+			arguments.Add( new NSI::StringArg( "colorgrid", grid) );
 		}
 
 		if( grid == temperature_grid.c_str() )

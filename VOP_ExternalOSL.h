@@ -14,6 +14,8 @@ namespace VolumeGridParameters
 {
 	/// Name of the "density" hardcoded parameter
 	const char density_name[] = "density_grid_name";
+	/// Name of the "color" hardcoded parameter
+	const char color_name[] = "color_grid_name";
 	/// Name of the "temperature" hardcoded parameter
 	const char temperature_name[] = "temperature_grid_name";
 	/// Name of the "emission" hardcoded parameter
@@ -25,6 +27,8 @@ namespace VolumeGridParameters
 
 	/// Default value of the "density" hardcoded parameter
 	const char density_default[] = "density";
+	/// Default value of the "color" hardcoded parameter
+	const char color_default[] = "color";
 	/// Default value of the "temperature" hardcoded parameter
 	const char temperature_default[] = "temperature";
 	/// Default value of the "emission" hardcoded parameter

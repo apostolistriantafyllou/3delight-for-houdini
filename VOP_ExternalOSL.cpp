@@ -26,8 +26,8 @@ static const std::vector<const DlShaderInfo::Parameter*> GetVolumeParams()
 	typedef DlShaderInfo::conststring conststring;
 	typedef DlShaderInfo::Parameter Parameter;
 
-	static const unsigned nparams = 5;
-	static const unsigned nstrings = 4;
+	static const unsigned nparams = 6;
+	static const unsigned nstrings = 5;
 	static const char label[] = "label";
 
 	using namespace VolumeGridParameters;
@@ -36,6 +36,8 @@ static const std::vector<const DlShaderInfo::Parameter*> GetVolumeParams()
 	{
 		conststring(
 			density_name, density_name+sizeof(density_name)),
+		conststring(
+			color_name, color_name+sizeof(color_name)),
 		conststring(
 			temperature_name, temperature_name+sizeof(temperature_name)),
 		conststring(
@@ -47,6 +49,7 @@ static const std::vector<const DlShaderInfo::Parameter*> GetVolumeParams()
 	};
 
 	static const char density_label[] = "Smoke";
+	static const char color_label[] = "Smoke Color";
 	static const char temperature_label[] = "Temperature";
 	static const char emission_label[] = "Emission Intensity";
 	static const char velocity_label[] = "Velocity";
@@ -56,6 +59,8 @@ static const std::vector<const DlShaderInfo::Parameter*> GetVolumeParams()
 	{
 		conststring(
 			density_label, density_label+sizeof(density_label)),
+		conststring(
+			color_label, color_label+sizeof(color_label)),
 		conststring(
 			temperature_label, temperature_label+sizeof(temperature_label)),
 		conststring(
@@ -70,6 +75,8 @@ static const std::vector<const DlShaderInfo::Parameter*> GetVolumeParams()
 	{
 		conststring(
 			density_default, density_default+sizeof(density_default)),
+		conststring(
+			color_default, color_default+sizeof(color_default)),
 		conststring(
 			temperature_default, temperature_default+sizeof(temperature_default)),
 		conststring(
@@ -113,7 +120,7 @@ static const std::vector<const DlShaderInfo::Parameter*> GetVolumeParams()
 			DlShaderInfo::constvector<Parameter>(meta + p, meta + p+1);
 
 	}
-	params[4].fdefault =
+	params[nstrings].fdefault =
 		DlShaderInfo::constvector<float>(
 			&velocity_scale_default, &velocity_scale_default + 1);
 
