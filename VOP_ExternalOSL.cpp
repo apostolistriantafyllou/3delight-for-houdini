@@ -274,34 +274,44 @@ NewPRMRange(
 
 /// Returns a newly allocated array of PRM_Defaults built from a shader parameter.
 static PRM_Default* NewPRMDefault(
-	const DlShaderInfo::Parameter& i_param)
+	const DlShaderInfo::Parameter& i_param,
+	unsigned i_nb_defaults)
 {
 	switch(i_param.type.type)
 	{
 		case NSITypeFloat:
 		case NSITypeDouble:
-			if(!i_param.fdefault.empty())
+			if(i_param.fdefault.size() >= i_nb_defaults)
 			{
-				PRM_Default* def = new PRM_Default[1];
-				def[0] = PRM_Default(i_param.fdefault[0]);
+				PRM_Default* def = new PRM_Default[i_nb_defaults];
+				for(unsigned i = 0; i < i_nb_defaults; i++)
+				{
+					def[i] = PRM_Default(i_param.fdefault[i]);
+				}
 				return def;
 			}
 			return nullptr;
 
 		case NSITypeInteger:
-			if(!i_param.idefault.empty())
+			if(i_param.idefault.size() >= i_nb_defaults)
 			{
-				PRM_Default* def = new PRM_Default[1];
-				def[0] = PRM_Default(i_param.idefault[0]);
+				PRM_Default* def = new PRM_Default[i_nb_defaults];
+				for(unsigned i = 0; i < i_nb_defaults; i++)
+				{
+					def[i] = PRM_Default(i_param.idefault[i]);
+				}
 				return def;
 			}
 			return nullptr;
 
 		case NSITypeString:
-			if(!i_param.sdefault.empty())
+			if(i_param.sdefault.size() >= i_nb_defaults)
 			{
-				PRM_Default* def = new PRM_Default[1];
-				def[0] = PRM_Default(0.0f, i_param.sdefault[0].c_str());
+				PRM_Default* def = new PRM_Default[i_nb_defaults];
+				for(unsigned i = 0; i < i_nb_defaults; i++)
+				{
+					def[i] = PRM_Default(0.0f, i_param.sdefault[i].c_str());
+				}
 				return def;
 			}
 			return nullptr;
@@ -310,10 +320,10 @@ static PRM_Default* NewPRMDefault(
 		case NSITypePoint:
 		case NSITypeVector:
 		case NSITypeNormal:
-			if(i_param.fdefault.size() >= 3)
+			if(i_param.fdefault.size() >= i_nb_defaults)
 			{
-				PRM_Default* def = new PRM_Default[3];
-				for(unsigned i = 0; i < 3; i++)
+				PRM_Default* def = new PRM_Default[i_nb_defaults];
+				for(unsigned i = 0; i < i_nb_defaults; i++)
 				{
 					def[i] = PRM_Default(i_param.fdefault[i]);
 				}
@@ -499,7 +509,7 @@ AddParameterTemplate(
 	PRM_Name* name = LEAKED(new PRM_Name(i_param.name.c_str(), i_meta.m_label));
 	PRM_Type type = GetPRMType(i_param.type, i_meta);
 	PRM_Range* range = LEAKED(NewPRMRange(i_param.type, i_meta));
-	PRM_Default* defau1t = LEAKED(NewPRMDefault(i_param));
+	PRM_Default* defau1t = LEAKED(NewPRMDefault(i_param, num_components));
 	PRM_ChoiceList* choices = LEAKED(NewPRMChoiceList(i_param.type, i_meta));
 
 	io_templates.push_back(
