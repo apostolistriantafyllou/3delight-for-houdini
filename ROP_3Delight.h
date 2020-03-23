@@ -153,6 +153,15 @@ private:
 		const char* i_extension,
 		UT_String& o_image_unique_name) const;
 
+	/**
+		\brief Builds light categories, either a bundle, or a single light.
+		Bundles are created as "set".
+	*/
+	void BuildLightCategories(
+		const context& i_ctx,
+		const std::vector<OBJ_Node*>& i_lights,
+		std::vector<std::string>& o_light_names) const;
+
 	bool HasSpeedBoost()const;
 	/// Retrieves the image resolution, scaled by the Speed Boost res factor
 	bool GetScaledResolution(int& o_x, int& o_y)const;

@@ -42,10 +42,6 @@ public:
 		void* data, int index, fpreal t,
 		const PRM_Template* tplate);
 
-	static int refresh_lights_cb(
-		void* data, int index, fpreal t,
-		const PRM_Template* tplate );
-
 public:
 
 	static const char* k_rendering;
@@ -85,10 +81,7 @@ public:
 	static const char* k_aov_clear;
 	static const char* k_add_layer;
 	static const char* k_view_layer;
-	static const char* k_light_sets;
-	static const char* k_use_light_set;
-	static const char* k_light_set;
-	static const char* k_display_all_lights;
+	static const char* k_enable_multi_light;
 	static const char* k_speed_boost;
 	static const char* k_disable_motion_blur;
 	static const char* k_disable_depth_of_field;
@@ -101,19 +94,13 @@ public:
 private:
 
 	/**
-		\brief Update UI lights from scene lights.
+		\brief Get lights from scene lights.
 	*/
-	void UpdateLights();
-	void GetSelectedLights(std::vector<std::string>& o_light_names) const;
-
-	/**
-		\brief Returns the use light's token for the specified index
-	*/
-	static const char* GetUseLightToken(int index);
-	static const char* GetLightToken(int index);
+	void GetLights(std::vector<OBJ_Node*>& o_lights) const;
 
 	UT_String GetAtmosphere() const;
 	bool OverrideDisplayFlags()const;
+	bool EnableMultiLight()const;
 	UT_String GetObjectsToRender() const;
 	UT_String GetLightsToRender() const;
 	UT_String get_matte_objects( void ) const;
@@ -125,6 +112,5 @@ private:
 	/** ROP containing all the parameters */
 	ROP_3Delight& m_parameters;
 
-	std::vector<OBJ_Node*> m_lights;
 	static SelectLayersDialog* sm_dialog;
 };

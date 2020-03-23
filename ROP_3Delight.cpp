@@ -7,12 +7,15 @@
 #include "object_attributes.h"
 #include "scene.h"
 #include "shader_library.h"
+#include "vdb.h"
 #include "ui/select_layers_dialog.h"
 
 #include <CH/CH_Manager.h>
 #include <HOM/HOM_Module.h>
 #include <OBJ/OBJ_Camera.h>
 #include <OBJ/OBJ_Light.h>
+#include <OP/OP_Bundle.h>
+#include <OP/OP_BundleList.h>
 #include <OP/OP_Director.h>
 #include <OP/OP_OperatorTable.h>
 #include <MOT/MOT_Director.h>
@@ -172,7 +175,6 @@ ROP_3Delight::~ROP_3Delight()
 void ROP_3Delight::onCreated()
 {
 	ROP_Node::onCreated();
-	m_settings.UpdateLights();
 	std::vector<VOP_Node*> custom_aovs;
 	scene::find_custom_aovs(custom_aovs);
 	aov::updateCustomVariables(custom_aovs);
@@ -762,7 +764,6 @@ ROP_3Delight::updateParmsFlags()
 	}
 
 	changed |= enableParm(settings::k_view_layer, false);
-	changed |= enableParm(settings::k_display_all_lights, false);
 
 	return changed;
 }
@@ -771,7 +772,6 @@ void
 ROP_3Delight::loadFinished()
 {
 	ROP_Node::loadFinished();
-	m_settings.UpdateLights();
 
 	// Ensure that the ROP's initial rendering state is reflected in the UI
 	m_settings.Rendering(false);
@@ -1033,7 +1033,9 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 	std::vector<std::string> light_names;
 	light_names.push_back(""); // no light for the first one
-	m_settings.GetSelectedLights(light_names);
+	std::vector<OBJ_Node*> lights;
+	m_settings.GetLights(lights);
+	BuildLightCategories(i_ctx, lights, light_names);
 
 	bool has_frame_buffer = false;
 
@@ -1087,6 +1089,9 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 			nb_light_categories = light_names.size();
 		}
 
+		OP_BundleList* blist = OPgetDirector()->getBundles();
+		assert(blist);
+
 		for (unsigned j = 0; j < nb_light_categories; j++)
 		{
 			std::string layer_name = prefix;
@@ -1125,8 +1130,34 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					/*
 						Only export this for Preview renders.
 					*/
-					ExportLayerFeedbackData(
-						i_ctx, layer_name, light_names[j] );
+					// First check if light_name is a bundle
+					OP_Bundle* bundle =
+						blist->getBundle(light_names[j].c_str());
+					if (bundle)
+					{
+						int numNodes = bundle->entries();
+						// Process all lights in this bundle
+						// TODO: revised this for a same light in many bundles
+						for (int k = 0; k < numNodes; k++)
+						{
+							OP_Node* node = bundle->getNode(k);
+							OBJ_Node* obj = node->castToOBJNode();
+							if (obj &&
+								(obj->castToOBJLight() ||
+								 !vdb::node_is_vdb_loader(obj, 0).empty() ||
+								 obj->getOperator()->getName() == "IncandescenceLight"))
+							{
+								ExportLayerFeedbackData(
+									i_ctx, layer_name,
+									obj->getFullPath().toStdString() );
+							}
+						}	
+					}
+					else
+					{
+						ExportLayerFeedbackData(
+							i_ctx, layer_name, light_names[j] );
+					}		
 				}
 			}
 
@@ -1557,6 +1588,61 @@ ROP_3Delight::BuildImageUniqueName(
 	}
 	o_image_unique_name += i_extension;
 }
+
+void
+ROP_3Delight::BuildLightCategories(
+	const context& i_ctx,
+	const std::vector<OBJ_Node*>& i_lights,
+	std::vector<std::string>& o_light_names) const
+{
+	if (i_lights.empty())
+		return;
+
+	// Get all bundles
+	OP_BundleList* blist = OPgetDirector()->getBundles();
+	assert(blist);
+	int numBundles = blist->entries();
+
+	std::set<std::string> bundle_set;
+	std::vector<std::string> single_lights;
+	for( auto light : i_lights )
+	{
+		bool foundInBundle = false;
+		// Need to scan all bundles (light may be present into more than one)
+		for (int i = 0; i < numBundles; i++)
+		{
+			OP_Bundle* bundle = blist->getBundle(i);
+			assert(bundle);
+			if (bundle->contains(light, false))
+			{
+				foundInBundle = true;
+				if (bundle_set.find(bundle->getName()) == bundle_set.end())
+				{
+					bundle_set.insert(bundle->getName());
+					i_ctx.m_nsi.Create(bundle->getName(), "set");
+				}
+				i_ctx.m_nsi.Connect(
+					light->getFullPath().toStdString(), "",
+					bundle->getName(), "members");
+			}
+		}
+		if (!foundInBundle)
+		{
+			single_lights.push_back(light->getFullPath().toStdString());
+		}
+	}
+
+	for (auto bname : bundle_set)
+	{
+		o_light_names.push_back(bname);
+	}
+
+	for (auto slname : single_lights)
+	{
+		o_light_names.push_back(slname);
+	}
+}
+
 bool
 ROP_3Delight::HasSpeedBoost()const
 {
