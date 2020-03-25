@@ -1589,11 +1589,18 @@ ROP_3Delight::BuildImageUniqueName(
 	o_image_unique_name += i_extension;
 }
 
-void
-ROP_3Delight::BuildLightCategories(
+/**
+	\brief Output light categories for light bundles.
+
+	We output a light category for each bundle of lights. Lights that are alone
+	will be in their own category.
+
+	We do not enforce
+*/
+void ROP_3Delight::BuildLightCategories(
 	const context& i_ctx,
 	const std::vector<OBJ_Node*>& i_lights,
-	std::vector<std::string>& o_light_names) const
+	std::vector<std::string>& o_light_names ) const
 {
 	if (i_lights.empty())
 		return;
@@ -1632,12 +1639,12 @@ ROP_3Delight::BuildLightCategories(
 		}
 	}
 
-	for (auto bname : bundle_set)
+	for (auto &bname : bundle_set)
 	{
 		o_light_names.push_back(bname);
 	}
 
-	for (auto slname : single_lights)
+	for (auto &slname : single_lights)
 	{
 		o_light_names.push_back(slname);
 	}
