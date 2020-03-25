@@ -392,7 +392,7 @@ PRM_Template* settings::GetTemplates()
 	static PRM_Name view_layer(k_view_layer, "View...");
 	static PRM_Name dummy("dummy", "");
 
-	static PRM_Name enable_multi_light(k_enable_multi_light, "Enable Multi-Light");
+	static PRM_Name enable_multi_light(k_enable_multi_light, "Multi-Light");
 	static PRM_Default enable_multi_light_d(false);
 
 	static std::vector<PRM_Template> image_layers_templates =
@@ -402,6 +402,7 @@ PRM_Template* settings::GetTemplates()
 		PRM_Template(PRM_STRING|PRM_TYPE_LABEL_NONE, 1, &default_image_bits, &default_image_bits_d, &default_image_bits_c),
 		PRM_Template(PRM_ORD, 1, &batch_output_mode, &batch_output_mode_d, &batch_output_mode_c),
 		PRM_Template(PRM_ORD, 1, &interactive_output_mode, &interactive_output_mode_d, &interactive_output_mode_c),
+		PRM_Template(PRM_TOGGLE, 1, &enable_multi_light, &enable_multi_light_d),
 		PRM_Template(PRM_SEPARATOR, 0, &separator4),
 		PRM_Template(PRM_LABEL|PRM_TYPE_JOIN_NEXT, 1, &aovs_titles1),
 		PRM_Template(PRM_LABEL, 1, &aovs_titles2),
@@ -410,8 +411,7 @@ PRM_Template* settings::GetTemplates()
 					&settings::add_layer_cb),
 		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &view_layer),
 		PRM_Template(PRM_LABEL, 1, &dummy),
-		PRM_Template(PRM_SEPARATOR, 0, &separator5),
-		PRM_Template(PRM_TOGGLE, 1, &enable_multi_light, &enable_multi_light_d)
+		PRM_Template(PRM_SEPARATOR, 0, &separator5)
 	};
 
 	// Overrides
