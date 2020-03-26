@@ -199,6 +199,8 @@ void shader_library::find_all_shaders( const char *i_root)
 		"dlColorBlend",
 		"dlColorBlendMulti",
 		"dlColorCorrection",
+		"dlUV",
+		"dlLayeredMaterial",
 		"vdbVolume",
 		"transparent"
 	};
