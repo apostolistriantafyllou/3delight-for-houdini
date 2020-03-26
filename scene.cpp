@@ -228,6 +228,18 @@ void scene::vop_scan(
 					node, const_cast<context*>(&i_context), &vop::changed_cb);
 			}
 			vops.insert( node );
+
+			/*
+				If this was a material builder, also recurse inside the assigned
+				material itself.
+			*/
+			std::string op = node->getOperator()->getName().toStdString();
+			if( op == "3Delight::dlMaterialBuilder" )
+			{
+				node = vop::get_builder_material( node );
+				if( !node )
+					continue;
+			}
 		}
 
 		int ninputs = node->nInputs();

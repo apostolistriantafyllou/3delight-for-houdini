@@ -19,10 +19,19 @@ vop::vop(
 :
 	exporter( i_ctx, i_vop )
 {
+	std::string op = i_vop->getOperator()->getName().toStdString();
+
+	if( op == "3Delight::dlMaterialBuilder" )
+	{
+		m_vop = get_builder_material( i_vop );
+	}
 }
 
 void vop::create( void ) const
 {
+	if( !m_object )
+		return;
+
 	const shader_library &library = shader_library::get_instance();
 	std::string path = library.get_shader_path( vop_name().c_str() );
 	if( path.length() == 0 )
@@ -35,11 +44,17 @@ void vop::create( void ) const
 
 void vop::set_attributes( void ) const
 {
+	if( !m_object )
+		return;
+
 	set_attributes_at_time(m_context.m_current_time);
 }
 
 void vop::set_attributes_at_time( double i_time ) const
 {
+	if( !m_object )
+		return;
+
 	NSI::ArgumentList list;
 	std::string uv_coord_connection;
 
@@ -663,4 +678,25 @@ bool vop::is_renderable( VOP_Node *i_vop )
 	std::string path = library.get_shader_path( vop_name.c_str() );
 
 	return !path.empty();
+}
+
+/**
+	We loop through all the nodes in the material builder and just take
+	the first material we get.
+*/
+VOP_Node *vop::get_builder_material( VOP_Node *i_material_builder )
+{
+	int nkids = i_material_builder->getNchildren();
+
+	for( int i=0; i<nkids; i++ )
+	{
+		VOP_Node *mat = CAST_VOPNODE( i_material_builder->getChild(i) );
+
+		if( !mat || !mat->getMaterialFlag() )
+			continue;
+
+		return mat;
+	}
+
+	return nullptr;
 }
