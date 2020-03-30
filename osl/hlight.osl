@@ -16,7 +16,8 @@ surface hlight(
 	/* spot light */
 	int coneenable = 0,
 	float coneangle = 45,
-	float conedelta = 10
+	float conedelta = 10,
+	string projmap = ""
 )
 {
 	Ci = 0;
@@ -28,6 +29,7 @@ surface hlight(
 	}
 
 	float scale = 1;
+	color light_col = light_color;
 	if( coneenable )
 	{
 		/* Cone and penumbra */
@@ -42,6 +44,22 @@ surface hlight(
 
 		scale = M_PI * smoothstep(low, high, cosangle);
 		scale /= surfacearea();
+
+		if( projmap != "" )
+		{
+			point O = P - I;
+			point localO = transform( "object", O );
+			vector Iobj = localO - point(0);
+
+			float s = Iobj[0] + 0.5;
+			float t = Iobj[1] + 0.5;
+
+			color tex_value = texture(
+				projmap, s, t,
+				"swrap", "clamp",
+				"twrap", "clamp" );
+			light_col = light_color * tex_value;
+		}
 	}
 	else
 	{
@@ -56,7 +74,7 @@ surface hlight(
 			scale /= surfacearea();
 	}
 
-	color result = light_color * light_intensity * pow(2, light_exposure);
+	color result = light_col * light_intensity * pow(2, light_exposure);
 	/*
 		Conditions are arranged so that if 3Delight tags hair rays as
 		specular we won't be scaling twice.
