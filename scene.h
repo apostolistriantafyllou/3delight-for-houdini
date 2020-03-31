@@ -54,6 +54,10 @@ private:
 		const context& i_context,
 		std::vector<exporter *>& io_to_export );
 
+	static void export_nsi(
+		const context &i_context,
+		const std::vector<exporter*>& i_to_export);
+
 	static void scan_for_instanced(
 		const context &i_context,
 		std::vector<exporter *> &io_to_export );

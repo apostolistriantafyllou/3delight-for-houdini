@@ -400,7 +400,7 @@ void scene::scan_for_instanced(
 void scene::convert_to_nsi( const context &i_context )
 {
 	/*
-		Start be getting the list of all OBJ exporters.
+		Start by getting the list of all OBJ exporters.
 	*/
 	std::vector<exporter *> to_export;
 	obj_scan( i_context, to_export );
@@ -417,12 +417,20 @@ void scene::convert_to_nsi( const context &i_context )
 	*/
 	vop_scan( i_context, to_export );
 
+	export_nsi(i_context, to_export);
+}
+
+/// Run the exporters to export NSI nodes and their attributes
+void scene::export_nsi(
+	const context &i_context,
+	const std::vector<exporter*>& i_to_export)
+{
 	/*
 		Create phase. This will create all the main NSI nodes from the Houdini
 		objects that we support, so that connections can later be made in any
 		particular order.
 	*/
-	for( auto &exporter : to_export )
+	for( auto &exporter : i_to_export )
 	{
 		exporter->create();
 	}
@@ -431,7 +439,7 @@ void scene::convert_to_nsi( const context &i_context )
 		Now connect nodes together. This has to be done after the create
 		so that all the nodes are present.
 	*/
-	for( auto &exporter : to_export )
+	for( auto &exporter : i_to_export )
 	{
 		exporter->connect();
 	}
@@ -441,7 +449,7 @@ void scene::convert_to_nsi( const context &i_context )
 		managed nodes in the process.
 		FIXME : parallel processing?
 	*/
-	for( auto &exporter : to_export )
+	for( auto &exporter : i_to_export )
 	{
 		exporter->set_attributes();
 	}
@@ -467,7 +475,7 @@ void scene::convert_to_nsi( const context &i_context )
 		false,
 		lights_to_render );
 
-	for( auto &exporter : to_export )
+	for( auto &exporter : i_to_export )
 	{
 		export_light_categories(
 			i_context.m_nsi,
@@ -476,7 +484,7 @@ void scene::convert_to_nsi( const context &i_context )
 			lights_to_render );
 	}
 
-	for( auto &exporter : to_export )
+	for( auto &exporter : i_to_export )
 	{
 		delete exporter;
 	}
