@@ -101,20 +101,22 @@ void scene::process_obj_node(
 
 	if( obj->castToOBJLight() )
 	{
-		if(object_displayed(
+		if(!i_check_visibility ||
+			object_displayed(
 				*obj,
 				i_context.m_lights_to_render_pattern,
 				rop_path,
 				i_context.m_current_time))
 		{
 			o_to_export.push_back( new light(i_context, obj) );
-			if(i_context.m_ipr)
-			{
-				io_interests.emplace_back(
-					obj,
-					const_cast<context*>(&i_context),
-					&light::changed_cb);
-			}
+		}
+
+		if(i_context.m_ipr)
+		{
+			io_interests.emplace_back(
+				obj,
+				const_cast<context*>(&i_context),
+				&light::changed_cb);
 		}
 
 		/*
