@@ -15,7 +15,7 @@ class OBJ_Node;
 	call the appropriate scripts manually *each time* an object is created or a
 	scene is opened.
 */
-namespace attributes_callbacks
+namespace creation_callbacks
 {
 	/// Initializes the callbacks that add custom attributes.
 	void init();

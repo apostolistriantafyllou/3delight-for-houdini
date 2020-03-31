@@ -1,4 +1,4 @@
-#include "attributes_callbacks.h"
+#include "creation_callbacks.h"
 
 #include "safe_interest.h"
 
@@ -68,7 +68,7 @@ namespace
 		scene_nodes_mutex.lock();
 		for(OBJ_Node* node : scene_nodes)
 		{
-			attributes_callbacks::add_attributes_to_node(*node);
+			creation_callbacks::add_attributes_to_node(*node);
 		}
 		scene_nodes.clear();
 		scene_nodes_mutex.unlock();
@@ -124,7 +124,7 @@ namespace
 		else
 		{
 			// Add our attributes to the node now. 
-			attributes_callbacks::add_attributes_to_node(*obj_node);
+			creation_callbacks::add_attributes_to_node(*obj_node);
 		}
 	}
 
@@ -217,7 +217,7 @@ namespace
 
 }
 
-void attributes_callbacks::init()
+void creation_callbacks::init()
 {
 	/*
 		Connect callbacks to the director in order to be aware of scene loading
@@ -248,7 +248,7 @@ void attributes_callbacks::init()
 	register_manager_cb(*OPgetDirector());
 }
 
-void attributes_callbacks::add_attributes_to_node(OBJ_Node& io_node)
+void creation_callbacks::add_attributes_to_node(OBJ_Node& io_node)
 {
 	// Retrieve the node's operator type
 	std::string node_type = io_node.getOperator()->getName().toStdString();
