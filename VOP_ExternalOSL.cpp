@@ -416,10 +416,23 @@ NewPRMChoiceList(
 	return new PRM_ChoiceList(PRM_CHOICELIST_SINGLE, &(*items)[0]);
 }
 
-/// Returns a VOP_Type that corresponds to a DlShaderInfo::TypeDesc
-static VOP_Type GetVOPType(const DlShaderInfo::TypeDesc& i_osl_type)
+VOP_Type VOP_ExternalOSL::GetVOPType(const DlShaderInfo::Parameter& i_osl_param)
 {
-	switch(i_osl_type.type)
+	if( i_osl_param.isclosure )
+	{
+		/*
+			Use the type of the shader node. This is what makes the network
+			connect to the correct terminal type on the USD side of the
+			universe. See getMaterialPrimOutputName() and isShaderVopTypeName()
+			in husdshadertranslators/default.py
+
+			Note that VOP_ATMOSPHERE_SHADER is remapped to volume for USD.
+			Also, getShaderType() is used if there is no output parameter.
+		*/
+		return m_shader_info.ShaderType();
+	}
+
+	switch(i_osl_param.type.type)
 	{
 		case NSITypeFloat:
 		case NSITypeDouble:
@@ -449,6 +462,7 @@ static VOP_Type GetVOPType(const DlShaderInfo::TypeDesc& i_osl_type)
 
 		case NSITypePointer:
 			// Corresponds to "closure color"
+			assert(false);
 			return VOP_TYPE_COLOR;
 
 		default:
@@ -613,9 +627,22 @@ StructuredShaderInfo::StructuredShaderInfo(const DlShaderInfo* i_info)
 
 		for(const DlShaderInfo::conststring& tag : param.sdefault)
 		{
-			if(tag == "surface" || tag == "volume" )
+			if( tag == "surface" || tag == "environment")
 			{
 				m_terminal = true;
+				m_shader_type = VOP_SURFACE_SHADER;
+				break;
+			}
+			if( tag == "displacement" )
+			{
+				m_terminal = true;
+				m_shader_type = VOP_DISPLACEMENT_SHADER;
+				break;
+			}
+			if( tag == "volume" )
+			{
+				m_terminal = true;
+				m_shader_type = VOP_ATMOSPHERE_SHADER;
 				break;
 			}
 		}
@@ -936,6 +963,16 @@ UT_StringHolder VOP_ExternalOSL::getShaderName(
 
 	return VOP_Node::getShaderName(style, shader_type);
 }
+
+/*
+	This shader type is used by Houdini to figure out the terminal name in the
+	USD universe, for shaders which don't have a specific output closure
+	parameter. See GetVOPType() for the case where there is a parameter.
+*/
+VOP_Type VOP_ExternalOSL::getShaderType() const
+{
+	return m_shader_info.ShaderType();
+}
 #endif
 
 void
@@ -965,7 +1002,7 @@ VOP_ExternalOSL::getInputTypeInfoSubclass(VOP_TypeInfo &o_type_info, int i_idx)
 	assert(i_idx < m_shader_info.NumInputs());
 	const DlShaderInfo::Parameter& param = m_shader_info.GetInput(i_idx);
 	assert(!param.isoutput);
-	o_type_info.setType(GetVOPType(param.type));
+	o_type_info.setType(GetVOPType(param));
 }
 
 void
@@ -990,7 +1027,7 @@ VOP_ExternalOSL::getOutputTypeInfoSubclass(VOP_TypeInfo& o_type_info, int i_idx)
 	assert(i_idx < m_shader_info.NumOutputs());
 	const DlShaderInfo::Parameter& param = m_shader_info.GetOutput(i_idx);
 	assert(param.isoutput);
-	o_type_info.setType(GetVOPType(param.type));
+	o_type_info.setType(GetVOPType(param));
 }
 
 void

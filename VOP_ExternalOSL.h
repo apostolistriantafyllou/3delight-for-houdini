@@ -70,6 +70,8 @@ public:
 	/// Returns true if the shader can be used as a material
 	bool IsTerminal()const { return m_terminal; }
 
+	VOP_Type ShaderType() const { return m_shader_type; }
+
 	/// The shader description
 	const DlShaderInfo& m_dl;
 
@@ -81,6 +83,8 @@ private:
 	std::vector<unsigned> m_outputs;
 	// Indicates that the shader is meant to be used as a shading network's root
 	bool m_terminal;
+	// The type of shader.
+	VOP_Type m_shader_type{VOP_SURFACE_SHADER};
 };
 
 
@@ -88,6 +92,9 @@ private:
 class VOP_ExternalOSL : public VOP_Node
 {
 public:
+
+	/// Returns a VOP_Type for the given parameter.
+	VOP_Type GetVOPType(const DlShaderInfo::Parameter& i_osl_param);
 
 	/**
 		\brief Adds an instance of VOP_ExternalOSL to a network.
@@ -134,6 +141,8 @@ public:
 	virtual UT_StringHolder getShaderName(
 		VOP_ShaderNameStyle style,
 		VOP_Type shader_type) const override;
+
+	virtual VOP_Type getShaderType() const override;
 #endif
 
 protected:
