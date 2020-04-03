@@ -546,8 +546,15 @@ AddRampParameterTemplate(
 
 	const DlShaderInfo::Parameter* knots = nullptr;
 	const DlShaderInfo::Parameter* interpolation = nullptr;
+	const DlShaderInfo::Parameter* shared_interpolation = nullptr;
 	std::string base_name;
-	if(!FindMatchingRampParameters(i_shader, i_param, knots, interpolation, base_name))
+	if(!FindMatchingRampParameters(
+		i_shader,
+		i_param,
+		knots,
+		interpolation,
+		shared_interpolation,
+		base_name))
 	{
 		return;
 	}
@@ -1048,9 +1055,15 @@ VOP_ExternalOSL::SetRampParametersDefaults()
 
 		const DlShaderInfo::Parameter* knots = nullptr;
 		const DlShaderInfo::Parameter* interpolation = nullptr;
+		const DlShaderInfo::Parameter* shared_interpolation = nullptr;
 		std::string base_name;
 		if(!FindMatchingRampParameters(
-				m_shader_info.m_dl, param, knots, interpolation, base_name))
+				m_shader_info.m_dl,
+				param,
+				knots,
+				interpolation,
+				shared_interpolation,
+				base_name))
 		{
 			continue;
 		}
@@ -1061,8 +1074,27 @@ VOP_ExternalOSL::SetRampParametersDefaults()
 		unsigned value_size = color ? 3 : 1;
 		unsigned nb_default_values = default_values.size() / value_size;
 		const DlShaderInfo::constvector<float>& default_knots = knots->fdefault;
-		const DlShaderInfo::constvector<int>& default_inter =
-			interpolation->idefault;
+
+		// The interpolation mode could be expressed in 2 different ways
+		std::vector<int> default_inter;
+		if(shared_interpolation && shared_interpolation->sdefault.size() == 1 &&
+			interpolation->idefault.size() == 1 && interpolation->idefault[0] == -1)
+		{
+			int shared_inter =
+				ToHoudiniInterpolation(shared_interpolation->sdefault[0].string());
+			default_inter.insert(
+				default_inter.end(),
+				nb_default_values,
+				shared_inter);
+		}
+		else
+		{
+			for(int i : interpolation->idefault)
+			{
+				default_inter.push_back(ToHoudiniInterpolation(i));
+			}
+		}
+
 		unsigned nb_defaults =
 			std::min(
 				nb_default_values,
@@ -1095,8 +1127,7 @@ VOP_ExternalOSL::SetRampParametersDefaults()
 			}
 
 			std::string inter_item = inter_string + index;
-			PRM_RampInterpType i = ToHoudiniInterpolation(default_inter[d]);
-			setInt(inter_item.c_str(), 0, 0.0, i);
+			setInt(inter_item.c_str(), 0, 0.0, default_inter[d]);
 		}
 	}
 }

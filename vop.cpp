@@ -589,8 +589,15 @@ void vop::list_ramp_parameters(
 
 	const DlShaderInfo::Parameter* knots = nullptr;
 	const DlShaderInfo::Parameter* interpolation = nullptr;
+	const DlShaderInfo::Parameter* shared_interpolation = nullptr;
 	std::string base_name;
-	if(!FindMatchingRampParameters(i_shader, i_param, knots, interpolation, base_name))
+	if(!FindMatchingRampParameters(
+			i_shader,
+			i_param,
+			knots,
+			interpolation,
+			shared_interpolation,
+			base_name))
 	{
 		return;
 	}

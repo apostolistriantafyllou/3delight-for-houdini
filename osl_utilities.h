@@ -53,26 +53,40 @@ namespace osl_utilities
 		int FromHoudiniInterpolation(PRM_RampInterpType i_houdini_interpolation);
 		/// Converts our ramp interpolation (used in our OSLs) into Houdini's.
 		PRM_RampInterpType ToHoudiniInterpolation(int i_3delight_interpolation);
+		/// Converts our ramp shared interpolation (used in our OSLs) into Houdini's.
+		PRM_RampInterpType ToHoudiniInterpolation(
+			const std::string& i_3delight_interpolation);
 
 		/**
-			\brief Finds the knots and interpolation 
+			\brief Finds information about a shader's ramp parameters.
 
 			Given the main "value" parameter of a "ramp" contraption in a
 			shader, this function identifies the other related parameters of the
 			shader, based only on their name and type.
 
 			\param i_shader
+				Description of the shader containing the ramp thingy.
 			\param i_value
+				The main parameter of a ramp.
 			\param o_knots
+				To be set to the "knots" parameter of the ramp.
 			\param o_interpolation
+				To be set to the "interpolation" parameter of the ramp.
+			\param o_shared_interpolation
+				To be set to the "shared interpolation" parameter of the ramp,
+				which is a string describing the interpolation to be used for
+				all points. Not finding this one is not an error.
 			\param o_base_name
+				Will be set to the common prefix of the ramp's parameters names.
 			\return
+				True if o_knots and o_interpolation were found.
 		*/
 		bool FindMatchingRampParameters(
 			const DlShaderInfo& i_shader,
 			const DlShaderInfo::Parameter& i_value,
 			const DlShaderInfo::Parameter*& o_knots,
 			const DlShaderInfo::Parameter*& o_interpolation,
+			const DlShaderInfo::Parameter*& o_shared_interpolation,
 			std::string& o_base_name);
 	}
 }

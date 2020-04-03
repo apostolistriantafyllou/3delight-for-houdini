@@ -11,6 +11,16 @@ const std::string osl_utilities::k_filename = "filename";
 
 const std::string osl_utilities::ramp::k_index_suffix = "_#_";
 
+namespace
+{
+	const std::string k_interpolation_none = "none";
+	const std::string k_interpolation_constant = "constant";
+	const std::string k_interpolation_linear = "linear";
+	const std::string k_interpolation_smooth = "smooth";
+	const std::string k_interpolation_catmullrom = "catmull-rom";
+	const std::string k_interpolation_bspline = "bspline";
+}
+
 static const PRM_RampInterpType k_3delight_interpolation_to_houdini[] =
 {
 	PRM_RAMP_INTERP_CONSTANT,
@@ -163,12 +173,46 @@ osl_utilities::ramp::ToHoudiniInterpolation(int i_3delight_interpolation)
 		: PRM_RAMP_INTERP_CONSTANT;
 }
 
+PRM_RampInterpType
+osl_utilities::ramp::ToHoudiniInterpolation(
+	const std::string& i_3delight_interpolation)
+{
+	if(i_3delight_interpolation == k_interpolation_none ||
+		i_3delight_interpolation == k_interpolation_constant)
+	{
+		return PRM_RAMP_INTERP_CONSTANT;
+	}
+
+	if(i_3delight_interpolation == k_interpolation_linear)
+	{
+		return PRM_RAMP_INTERP_LINEAR;
+	}
+
+	if(i_3delight_interpolation == k_interpolation_smooth)
+	{
+		return PRM_RAMP_INTERP_MONOTONECUBIC;
+	}
+
+	if(i_3delight_interpolation == k_interpolation_catmullrom)
+	{
+		return PRM_RAMP_INTERP_CATMULLROM;
+	}
+
+	if(i_3delight_interpolation == k_interpolation_bspline)
+	{
+		return PRM_RAMP_INTERP_BSPLINE;
+	}
+
+	return PRM_RAMP_INTERP_CONSTANT;
+}
+
 bool
 osl_utilities::ramp::FindMatchingRampParameters(
 	const DlShaderInfo& i_shader,
 	const DlShaderInfo::Parameter& i_value,
 	const DlShaderInfo::Parameter*& o_knots,
 	const DlShaderInfo::Parameter*& o_interpolation,
+	const DlShaderInfo::Parameter*& o_shared_interpolation,
 	std::string& o_base_name)
 {
 	o_knots = nullptr;
@@ -194,38 +238,43 @@ osl_utilities::ramp::FindMatchingRampParameters(
 	o_base_name = name.substr(0, end);
 
 	/*
-		Search for "knots" and "interpolation" parameters among the other shader
-		parameters.
+		Search for "knots", "interpolation" and "shared interpolation"
+		parameters among the other shader parameters.
 	*/
 	unsigned nparams = i_shader.nparams();
-	for(unsigned p = 0; p < nparams; p++)
+	unsigned found = 0;
+	for(unsigned p = 0; p < nparams && found < 3; p++)
 	{
 		const DlShaderInfo::Parameter* param = i_shader.getparam(p);
 		assert(param);
-		if(param == &i_value || !param->type.is_array() ||
+		if(param == &i_value ||
 			param->isoutput != i_value.isoutput ||
 			param->name.string().substr(0, prefix.length()) != prefix)
 		{
 			continue;
 		}
 
-		if(!o_knots && param->type.type == NSITypeFloat)
+		if(!param->type.is_array() &&
+			!o_shared_interpolation && param->type.type == NSITypeString)
 		{
-			o_knots = param;
-			if(o_interpolation)
-			{
-				break;
-			}
+			o_shared_interpolation = param;
+			found++;
 		}
-		else if(!o_interpolation && param->type.type == NSITypeInteger)
+
+		if(param->type.is_array())
 		{
-			o_interpolation = param;
-			if(o_knots)
+			if(!o_knots && param->type.type == NSITypeFloat)
 			{
-				break;
+				o_knots = param;
+				found++;
+			}
+			else if(!o_interpolation && param->type.type == NSITypeInteger)
+			{
+				o_interpolation = param;
+				found++;
 			}
 		}
 	}
 
-	return true;
+	return o_knots && o_interpolation;
 }
