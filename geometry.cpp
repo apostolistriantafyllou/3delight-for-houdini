@@ -533,13 +533,12 @@ void geometry::connect()const
 	if( get_assigned_material(material_path) == nullptr )
 		return;
 
-	std::string attributes = m_handle + "|attributes";
-	m_nsi.Create( attributes, "attributes" );
-	m_nsi.Connect( attributes, "", m_handle, "geometryattributes" );
+	m_nsi.Create( attributes_handle(), "attributes" );
+	m_nsi.Connect( attributes_handle(), "", m_handle, "geometryattributes" );
 
 	m_nsi.Connect(
 		material_path, "",
-		attributes, volume ? "volumeshader" : "surfaceshader" );
+		attributes_handle(), volume ? "volumeshader" : "surfaceshader" );
 
 	export_override_attributes();
 }
@@ -552,8 +551,7 @@ void geometry::export_override_attributes() const
 		return;
 	}
 
-	std::string	override_nsi_handle = m_handle;
-	override_nsi_handle += "|attributeOverrides";
+	std::string	override_nsi_handle = overrides_handle();
 
 	m_nsi.Create( override_nsi_handle, "attributes" );
 

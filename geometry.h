@@ -60,6 +60,18 @@ private:
 	*/
 	void export_override_attributes( void ) const;
 
+	/// Returns the handle of the object's NSI attributes node
+	std::string attributes_handle()const
+	{
+		return m_handle + "|attributes";
+	}
+
+	/// Returns the handle of the object's overrides NSI attributes node
+	std::string overrides_handle()const
+	{
+		return m_handle + "|overrides";
+	}
+
 private:
 
 	/// List of refined primitives
