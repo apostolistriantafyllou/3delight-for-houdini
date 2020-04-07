@@ -90,6 +90,9 @@ public:
 	*/
 	std::string GetNSIExportFilename( double i_time ) const;
 
+	/// Called by creation_callbacks when a new OBJ is created in IPR
+	void NewOBJNode(OBJ_Node& i_node);
+
 protected:
 
 	ROP_3Delight(

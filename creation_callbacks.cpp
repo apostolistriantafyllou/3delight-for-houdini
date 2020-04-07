@@ -1,5 +1,6 @@
 #include "creation_callbacks.h"
 
+#include "ROP_3Delight.h"
 #include "safe_interest.h"
 
 #include "OBJ/OBJ_Node.h"
@@ -12,6 +13,9 @@ namespace
 {
 	UT_String k_obj_manager_path = "/obj";
 
+	std::mutex rops_mutex;
+	std::set<ROP_3Delight*> rops;
+	
 	std::mutex interests_mutex;
 	std::vector<safe_interest> obj_node_interests;
 	std::vector<safe_interest> manager_interests;
@@ -96,6 +100,22 @@ namespace
 			return;
 		}
 
+		OP_Node* node = (OP_Node*)i_data;
+		OBJ_Node* obj_node = node->castToOBJNode();
+		if(!obj_node)
+		{
+			return;
+		}
+
+		// Notify registered ROPs of the new OBJ node
+		rops_mutex.lock();
+		for(ROP_3Delight* rop : rops)
+		{
+			rop->NewOBJNode(*obj_node);
+			
+		}
+		rops_mutex.unlock();
+
 		/*
 			Filter-out unsupported node types. The mere absence of a script for
 			a particular node type is sufficient to avoid adding attribute to
@@ -103,13 +123,10 @@ namespace
 			calling scripts on lots of node and, more importantly, it avoids
 			filling the scene_nodes list with useless data during scene loading.
 		*/
-		OP_Node* node = (OP_Node*)i_data;
-		OBJ_Node* obj_node = node->castToOBJNode();
-		if(!obj_node ||
-			(obj_node->getObjectType() != OBJ_GEOMETRY &&
+		if(obj_node->getObjectType() != OBJ_GEOMETRY &&
 			obj_node->getObjectType() != OBJ_CAMERA &&
 			obj_node->getObjectType() != OBJ_STD_NULL &&
-			obj_node->getObjectType() != OBJ_STD_LIGHT))
+			obj_node->getObjectType() != OBJ_STD_LIGHT)
 		{
 			return;
 		}
@@ -267,3 +284,18 @@ void creation_callbacks::add_attributes_to_node(OBJ_Node& io_node)
 		io_node.getFullPath().toStdString();
 	OPgetDirector()->getCommandManager()->execute(init_cmd.c_str());
 }
+
+void creation_callbacks::register_ROP(ROP_3Delight* i_rop)
+{
+	rops_mutex.lock();
+	rops.insert(i_rop);
+	rops_mutex.unlock();
+}
+
+void creation_callbacks::unregister_ROP(ROP_3Delight* i_rop)
+{
+	rops_mutex.lock();
+	rops.erase(i_rop);
+	rops_mutex.unlock();
+}
+

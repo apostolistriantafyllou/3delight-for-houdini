@@ -134,6 +134,16 @@ void scene::process_obj_node(
 	o_to_export.push_back( new geometry(i_context, obj) );
 }
 
+/// Inserts a newly created node into an existing NSI scene
+void scene::insert_obj_node(
+	OBJ_Node& i_node,
+	const context& i_context )
+{
+	std::vector<exporter*> to_export;
+	process_obj_node(i_context, &i_node, false, to_export);
+	export_nsi(i_context, to_export);
+}
+
 /// Exports materials to the context's NSI stream.
 void scene::export_materials(
 	std::unordered_set<std::string>& i_materials,

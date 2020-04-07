@@ -2,6 +2,7 @@
 
 #include "camera.h"
 #include "context.h"
+#include "creation_callbacks.h"
 #include "exporter.h"
 #include "idisplay_port.h"
 #include "object_attributes.h"
@@ -608,6 +609,9 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 
 	if(m_current_render->m_ipr)
 	{
+		// Get notifications for newly created nodes
+		creation_callbacks::register_ROP(this);
+		// Get notifications for changes to this ROP
 		m_current_render->m_interests.emplace_back(
 			this,
 			m_current_render,
@@ -646,6 +650,11 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 				ROP_3Delight* rop = (ROP_3Delight*)i_data;
 
 				rop->m_render_end_mutex.lock();
+
+				if(rop->m_current_render->m_ipr)
+				{
+					creation_callbacks::unregister_ROP(rop);
+				}
 
 				delete rop->m_current_render; rop->m_current_render = nullptr;
 
@@ -1840,6 +1849,12 @@ ROP_3Delight::GetNSIExportFilename(double i_time)const
 	return export_file.toStdString();
 }
 
+void ROP_3Delight::NewOBJNode(OBJ_Node& i_node)
+{
+	scene::insert_obj_node(i_node, *m_current_render);
+	m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
+}
+
 /**
 	\brief Sets the differents IDs needed for 3Delight Cloud.
 
@@ -1850,7 +1865,7 @@ ROP_3Delight::GetNSIExportFilename(double i_time)const
 		Both are passed back to 3Delight Display and shown in the 3Delight
 		Cloud Dashboard.
 
-	ATTENTION: do not do arbitrary cahges to formatting is this might affect
+	ATTENTION: do not do arbitrary changes to formatting as this might affect
 	the layout of the UI and website.
 */
 void ROP_3Delight::export_render_notes( const context &i_context ) const

@@ -1,6 +1,7 @@
 #pragma once
 
 class OBJ_Node;
+class ROP_3Delight;
 
 /**
 	This ensures that our scripts that try to add custom attributes on node
@@ -14,6 +15,8 @@ class OBJ_Node;
 	So, instead of relying on this flaky system, we install C++ callbacks that
 	call the appropriate scripts manually *each time* an object is created or a
 	scene is opened.
+	
+	This is also used to notify a ROP of new nodes to be added to an IPR render.
 */
 namespace creation_callbacks
 {
@@ -22,4 +25,9 @@ namespace creation_callbacks
 
 	/// Utility function that adds our custom attributes to a node.
 	void add_attributes_to_node(OBJ_Node& io_node);
+	
+	/// Register a ROP to be notified when an OBJ node is created
+	void register_ROP(ROP_3Delight* i_rop);
+	/// Unregisters a ROP previously registered with register_ROP
+	void unregister_ROP(ROP_3Delight* i_rop);
 }

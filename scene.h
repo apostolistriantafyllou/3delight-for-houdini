@@ -27,6 +27,10 @@ class scene
 public:
 	static void convert_to_nsi( const context & );
 
+	static void insert_obj_node(
+		OBJ_Node& i_node,
+		const context& i_context );
+
 	static void export_materials(
 		std::unordered_set<std::string>& i_materials,
 		const context& i_context );
