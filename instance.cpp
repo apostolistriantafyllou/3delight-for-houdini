@@ -49,7 +49,10 @@ void instance::connect( void ) const
 		std::string merge_h = merge_handle( {}, {} );
 		m_nsi.Create( merge_h, "transform" );
 		for( const auto &sm : m_source_models )
-			m_nsi.Connect( sm, "", merge_h, "objects" );
+			m_nsi.Connect(
+				sm, "",
+				merge_h, "objects",
+				NSI::IntegerArg("strength", 1) );
 		m_nsi.Connect( merge_h, "", m_handle, "sourcemodels" );
 		return;
 	}
@@ -89,8 +92,13 @@ void instance::connect( void ) const
 			std::string attribute_handle = merge_h + "|attribute";
 			m_nsi.Create( attribute_handle, "attributes" );
 			m_nsi.Connect( attribute_handle, "", merge_h, "geometryattributes");
-			m_nsi.Connect( material, "", attribute_handle, "surfaceshader",
-				NSI::IntegerArg("priority", 2) );
+			m_nsi.Connect(
+				material, "",
+				attribute_handle, "surfaceshader",
+				(
+					NSI::IntegerArg("priority", 2),
+					NSI::IntegerArg("strength", 1)
+				) );
 		}
 
 		/* Opportune moment to store the index. */

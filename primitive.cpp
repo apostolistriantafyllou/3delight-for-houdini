@@ -402,11 +402,14 @@ void primitive::assign_sop_materials( void ) const
 		{
 			std::string attribute_handle = m_handle + shop;
 
-			NSI::ArgumentList priority;
-			priority.Add(new NSI::IntegerArg("priority", 1));
-
 			m_nsi.Create( attribute_handle, "attributes" );
-			m_nsi.Connect( shop, "", attribute_handle, "surfaceshader", priority );
+			m_nsi.Connect(
+				shop, "",
+				 attribute_handle, "surfaceshader",
+				 (
+					NSI::IntegerArg("priority", 1),
+					NSI::IntegerArg("strength", 1)
+				) );
 			m_nsi.Connect(attribute_handle, "", m_handle, "geometryattributes" );
 		}
 

@@ -66,7 +66,13 @@ void light::create( void ) const
 	m_nsi.SetAttribute(
 		shader, NSI::StringArg("shaderfilename", path_to_hlight) );
 
+	/*
+		Although we usually add strength to shader connections in order to
+		protect them from recursive node deletions, we omit this parameter
+		here because we own the shader, so it can't be shared.
+	*/
 	m_nsi.Connect( shader, "", attributes, "surfaceshader" );
+
 	m_nsi.Connect( attributes, "", m_handle, "geometryattributes" );
 }
 

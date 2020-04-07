@@ -552,7 +552,8 @@ void geometry::connect()const
 
 	m_nsi.Connect(
 		material_path, "",
-		attributes_handle(), volume ? "volumeshader" : "surfaceshader" );
+		attributes_handle(), volume ? "volumeshader" : "surfaceshader",
+		NSI::IntegerArg("strength", 1) );
 
 	export_override_attributes();
 }
@@ -732,14 +733,16 @@ void geometry::export_override_attributes() const
 
 		if( override_surface_shader )
 		{
-			NSI::ArgumentList arguments;
-			arguments.Add(new NSI::IntegerArg("priority", 10));
-
 			std::string material;
 			get_assigned_material( material );
 
 			m_nsi.Connect(
-				material, "", override_nsi_handle, "surfaceshader", arguments );
+				material, "",
+				override_nsi_handle, "surfaceshader",
+				(
+					NSI::IntegerArg("priority", 10),
+					NSI::IntegerArg("strength", 1)
+				) );
 		}
 	}
 	else

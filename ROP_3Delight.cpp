@@ -273,7 +273,10 @@ void ROP_3Delight::ExportDefaultMaterial( const context &i_context ) const
 	nsi.SetAttribute( k_shader, NSI::StringArg("shaderfilename", path) );
 
 	nsi.Connect( k_attributes, "", NSI_SCENE_ROOT, "geometryattributes" );
-	nsi.Connect( k_shader, "", k_attributes, "surfaceshader" );
+	nsi.Connect(
+		k_shader, "",
+		k_attributes, "surfaceshader",
+		NSI::IntegerArg("strength", 1) );
 }
 
 void
@@ -844,12 +847,13 @@ void ROP_3Delight::ExportTransparentSurface(const context& i_ctx) const
 		shaderHandle,
 		NSI::StringArg("shaderfilename", path) );
 
-	NSI::ArgumentList arguments;
-	arguments.Add(new NSI::IntegerArg("priority", 60));
-
 	nsi.Connect(
 		shaderHandle, "",
-		exporter::transparent_surface_handle(), "surfaceshader", arguments );
+		exporter::transparent_surface_handle(), "surfaceshader",
+		(
+			NSI::IntegerArg("priority", 60),
+			NSI::IntegerArg("strength", 1)
+		) );
 }
 
 void
@@ -875,7 +879,8 @@ ROP_3Delight::ExportAtmosphere(const context& i_ctx)
 
 	i_ctx.m_nsi.Connect(
 		atmo_handle, "",
-		attr_handle, "volumeshader" );
+		attr_handle, "volumeshader",
+		NSI::IntegerArg("strength", 1) );
 
 	i_ctx.m_nsi.Connect(
 		attr_handle, "",
