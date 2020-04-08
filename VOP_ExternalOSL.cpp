@@ -71,20 +71,6 @@ static const std::vector<const DlShaderInfo::Parameter*> GetVolumeParams()
 			velocity_scale_label, velocity_scale_label+sizeof(velocity_scale_label))
 	};
 
-	static const conststring default_strings[nstrings] =
-	{
-		conststring(
-			density_default, density_default+sizeof(density_default)),
-		conststring(
-			color_default, color_default+sizeof(color_default)),
-		conststring(
-			temperature_default, temperature_default+sizeof(temperature_default)),
-		conststring(
-			emission_default, emission_default+sizeof(emission_default)),
-		conststring(
-			velocity_default, velocity_default+sizeof(velocity_default))
-	};
-
 	static Parameter meta[nparams];
 	for(unsigned p = 0; p < nparams; p++)
 	{
@@ -110,16 +96,11 @@ static const std::vector<const DlShaderInfo::Parameter*> GetVolumeParams()
 		param.varlenarray = false;
 		param.isstruct = false;
 		param.isclosure = false;
-		if(p < nstrings)
-		{
-			param.sdefault =
-				DlShaderInfo::constvector<conststring>(
-					default_strings+p, default_strings + p+1);
-		}
 		param.metadata =
 			DlShaderInfo::constvector<Parameter>(meta + p, meta + p+1);
-
 	}
+
+	/* This one is the actual NSI default so we define it here. */
 	params[nstrings].fdefault =
 		DlShaderInfo::constvector<float>(
 			&velocity_scale_default, &velocity_scale_default + 1);
@@ -955,6 +936,11 @@ VOP_ExternalOSL::runCreateScript()
 
 	SetRampParametersDefaults();
 
+	if( m_shader_info.m_dl.shadername() == "vdbVolume" )
+	{
+		SetVDBVolumeDefaults();
+	}
+
 	return ret;
 }
 
@@ -1130,6 +1116,23 @@ VOP_ExternalOSL::SetRampParametersDefaults()
 			setInt(inter_item.c_str(), 0, 0.0, default_inter[d]);
 		}
 	}
+}
+
+/*
+	Set the default values for the volume grids parameters which are added to
+	the shader but will be exported on the volume node. They are set instead of
+	being defined as default values because they are not the actual defaults of
+	NSI. Velocity scale is a proper default in GetVolumeParams() because it is
+	the same as the NSI default.
+*/
+void VOP_ExternalOSL::SetVDBVolumeDefaults()
+{
+	using namespace VolumeGridParameters;
+	setString(density_default, CH_STRING_LITERAL, density_name, 0, 0.f);
+	setString(color_default, CH_STRING_LITERAL, color_name, 0, 0.f);
+	setString(temperature_default, CH_STRING_LITERAL, temperature_name, 0, 0.f);
+	setString(emission_default, CH_STRING_LITERAL, emission_name, 0, 0.f);
+	setString(velocity_default, CH_STRING_LITERAL, velocity_name, 0, 0.f);
 }
 
 

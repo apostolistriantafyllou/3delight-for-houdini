@@ -12,30 +12,24 @@ struct VOP_ExternalOSLOperator;
 /// Description of hardcoded parameters added to the "vdbVolume" shader
 namespace VolumeGridParameters
 {
-	/// Name of the "density" hardcoded parameter
-	const char density_name[] = "density_grid_name";
-	/// Name of the "color" hardcoded parameter
-	const char color_name[] = "color_grid_name";
-	/// Name of the "temperature" hardcoded parameter
-	const char temperature_name[] = "temperature_grid_name";
-	/// Name of the "emission" hardcoded parameter
-	const char emission_name[] = "emission_grid_name";
-	/// Name of the "velocity" hardcoded parameter
-	const char velocity_name[] = "velocity_grid_name";
-	/// Name of the "velocity_scale" hardcoded parameter
-	const char velocity_scale_name[] = "velocity_scale";
+	/*
+		Names of the hardcoded grid parameters. They are deliberately the same
+		names used on the NSI volume node.
+	*/
+	const char density_name[] = "densitygrid";
+	const char color_name[] = "colorgrid";
+	const char temperature_name[] = "temperaturegrid";
+	const char emission_name[] = "emissionintensitygrid";
+	const char velocity_name[] = "velocitygrid";
+	/// Name of the velocity scale  hardcoded parameter
+	const char velocity_scale_name[] = "velocityscale";
 
-	/// Default value of the "density" hardcoded parameter
+	/* Default values for the above parameters. */
 	const char density_default[] = "density";
-	/// Default value of the "color" hardcoded parameter
 	const char color_default[] = "color";
-	/// Default value of the "temperature" hardcoded parameter
 	const char temperature_default[] = "temperature";
-	/// Default value of the "emission" hardcoded parameter
 	const char emission_default[] = "heat";
-	/// Default value of the "velocity" hardcoded parameter
 	const char velocity_default[] = "vel";
-	/// Default value of the "velocity_scale" hardcoded parameter
 	const float velocity_scale_default = 1.0f;
 }
 
@@ -194,6 +188,8 @@ private:
 		node that contains ramps.
 	*/
 	void SetRampParametersDefaults();
+
+	void SetVDBVolumeDefaults();
 
 	// Description of the shader this node stands for
 	StructuredShaderInfo m_shader_info;

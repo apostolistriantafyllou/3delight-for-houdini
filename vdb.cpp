@@ -87,11 +87,11 @@ void vdb::set_attributes( void ) const
 		scale.
 	*/
 
-	UT_String density_grid = VolumeGridParameters::density_default;
-	UT_String color_grid = VolumeGridParameters::color_default;
-	UT_String temperature_grid = VolumeGridParameters::temperature_default;
-	UT_String emissionintensity_grid = VolumeGridParameters::emission_default;
-	UT_String velocity_grid = VolumeGridParameters::velocity_default;
+	UT_String density_grid;
+	UT_String color_grid;
+	UT_String temperature_grid;
+	UT_String emissionintensity_grid;
+	UT_String velocity_grid;
 	double velocity_scale = 1.0;
 
 	double time = m_context.m_current_time;
