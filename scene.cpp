@@ -219,27 +219,29 @@ void scene::vop_scan(
 		if( !node )
 			continue;
 
-		if( vops.find(node) == vops.end() )
+		if( vops.find(node) != vops.end() )
 		{
-			io_to_export.push_back( new vop(i_context, node) );
-			if(i_context.m_ipr)
-			{
-				io_interests.emplace_back(
-					node, const_cast<context*>(&i_context), &vop::changed_cb);
-			}
-			vops.insert( node );
+			continue;
+		}
 
-			/*
-				If this was a material builder, also recurse inside the assigned
-				material itself.
-			*/
-			std::string op = node->getOperator()->getName().toStdString();
-			if( op == "3Delight::dlMaterialBuilder" )
-			{
-				node = vop::get_builder_material( node );
-				if( !node )
-					continue;
-			}
+		vops.insert( node );
+
+		io_to_export.push_back( new vop(i_context, node) );
+		if(i_context.m_ipr)
+		{
+			io_interests.emplace_back(
+				node, const_cast<context*>(&i_context), &vop::changed_cb);
+		}
+
+		/*
+			If this was a material builder, also recurse inside the assigned
+			material itself.
+		*/
+		std::string op = node->getOperator()->getName().toStdString();
+		if( op == "3Delight::dlMaterialBuilder" )
+		{
+			traversal.push_back( vop::get_builder_material( node ) );
+			continue;
 		}
 
 		int ninputs = node->nInputs();
