@@ -368,9 +368,13 @@ void scene::scan_for_instanced(
 			continue;
 		}
 
+		OP_BundlePattern* pattern =
+			obj->castToOBJLight()
+			?	i_context.m_lights_to_render_pattern
+			:	i_context.m_objects_to_render_pattern;
 		if( object_displayed(
 				*obj,
-				i_context.m_lights_to_render_pattern,
+				pattern,
 				i_context.m_rop_path.data(),
 				i_context.m_current_time))
 		{
