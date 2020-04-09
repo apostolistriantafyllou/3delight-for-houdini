@@ -109,6 +109,9 @@ public:
 		return (!SingleFrame() || m_cloud) && !m_export_nsi;
 	}
 
+	/// Returns true if an object is to be rendered.
+	bool object_displayed(const OBJ_Node& i_node)const;
+
 public:
 	NSI::Context &m_nsi;
 	NSI::Context &m_static_nsi;

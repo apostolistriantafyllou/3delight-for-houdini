@@ -30,34 +30,6 @@
 #include <set>
 
 /**
-	\brief Returns true if an object is to be rendered.
-
-	\param i_node
-		Object for which visibility must be tested.
-	\param i_pattern
-		If not null, the object's display flag will be ignored and only objects
-		that match this pattern will be considered as renderable. Otherwise (if
-		null), the object's display flag will be used.
-	\param i_rop_path
-		Path of the 3Delight ROP, to be used with i_pattern.
-	\param i_time
-		Time at which the display flag must be tested.
-*/
-static bool object_displayed(
-	const OBJ_Node& i_node,
-	const OP_BundlePattern* i_render_pattern,
-	const char* i_rop_path,
-	double i_time)
-{
-	if(i_render_pattern)
-	{
-		return i_render_pattern->match(&i_node, i_rop_path, true);
-	}
-
-	return i_node.getObjectDisplay(i_time);
-}
-
-/**
 	\brief Decide what to do with the given OP_Node.
 
 	\param i_check_visibility
@@ -97,16 +69,9 @@ void scene::process_obj_node(
 		return;
 	}
 
-	const char* rop_path = i_context.m_rop_path.c_str();
-
 	if( obj->castToOBJLight() )
 	{
-		if(!i_check_visibility ||
-			object_displayed(
-				*obj,
-				i_context.m_lights_to_render_pattern,
-				rop_path,
-				i_context.m_current_time))
+		if(!i_check_visibility || i_context.object_displayed(*obj) )
 		{
 			o_to_export.push_back( new light(i_context, obj) );
 		}
@@ -139,18 +104,13 @@ void scene::process_obj_node(
 		return;
 	}
 
-	if( i_check_visibility &&
-		!object_displayed(
-			*obj,
-			i_context.m_objects_to_render_pattern,
-			rop_path,
-			i_context.m_current_time))
+	if( i_check_visibility && !i_context.object_displayed(*obj) )
 	{
 		return;
 	}
 
 	/*
-		Check for special node IncandenceLight.
+		Check for special node IncandescenceLight.
 	*/
 	if( obj->getOperator()->getName() == "IncandescenceLight" )
 	{
@@ -368,15 +328,7 @@ void scene::scan_for_instanced(
 			continue;
 		}
 
-		OP_BundlePattern* pattern =
-			obj->castToOBJLight()
-			?	i_context.m_lights_to_render_pattern
-			:	i_context.m_objects_to_render_pattern;
-		if( object_displayed(
-				*obj,
-				pattern,
-				i_context.m_rop_path.data(),
-				i_context.m_current_time))
+		if( i_context.object_displayed(*obj) )
 		{
 			instanced.erase( it );
 		}

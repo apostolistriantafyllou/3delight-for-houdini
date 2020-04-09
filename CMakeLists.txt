@@ -28,6 +28,7 @@ add_library( ${library_name} SHARED
 	VOP_3DelightMaterialBuilder.cpp
 	VOP_ExternalOSL.cpp
 	camera.cpp
+	context.cpp
 	cop_utilities.cpp
 	creation_callbacks.cpp
 	curvemesh.cpp
