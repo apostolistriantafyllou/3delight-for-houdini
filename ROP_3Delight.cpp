@@ -593,7 +593,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	object_attributes::export_object_attribute_nodes(*m_current_render);
 	ExportTransparentSurface(*m_current_render);
 
-	scene::convert_to_nsi( *m_current_render, m_interests );
+	scene::convert_to_nsi( *m_current_render );
 
 	ExportAtmosphere(*m_current_render);
 	ExportOutputs(*m_current_render);
@@ -644,7 +644,6 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 
 				rop->m_render_end_mutex.lock();
 
-				rop->m_interests.clear();
 				delete rop->m_current_render; rop->m_current_render = nullptr;
 
 				/*
@@ -740,7 +739,6 @@ ROP_3Delight::endRender()
 	m_render_end_mutex.lock();
 	if(m_current_render && !m_current_render->BackgroundThreadRendering())
 	{
-		m_interests.clear();
 		delete m_current_render; m_current_render = nullptr;
 	}
 	m_render_end_mutex.unlock();

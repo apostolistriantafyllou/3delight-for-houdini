@@ -24,9 +24,7 @@ namespace NSI { class Context; }
 class scene
 {
 public:
-	static void convert_to_nsi(
-		const context &,
-		std::deque<safe_interest>& io_interests );
+	static void convert_to_nsi( const context & );
 
 	static void find_lights_and_mattes(
 		const OP_BundlePattern* i_lights,
@@ -44,25 +42,21 @@ public:
 private:
 	static void obj_scan(
 		const context &i_context,
-		std::vector< exporter * > &o_to_export,
-		std::deque<safe_interest>& io_interests );
+		std::vector< exporter * > &o_to_export );
 
 	static void vop_scan(
 		const context &i_context,
-		std::vector< exporter * > &o_to_export,
-		std::deque<safe_interest>& io_interests );
+		std::vector< exporter * > &o_to_export );
 
 	static void scan_for_instanced(
 		const context &i_context,
-		std::vector<exporter *> &io_to_export,
-		std::deque<safe_interest>& io_interests );
+		std::vector<exporter *> &io_to_export );
 
 	static void process_obj_node(
 		const context &i_context,
 		OBJ_Node *,
 		bool i_check_visibility,
-		std::vector<exporter *> &o_to_export,
-		std::deque<safe_interest>& io_interests );
+		std::vector<exporter *> &o_to_export );
 
 	/**
 		\brief Exports connections to the proper sets to implement light linking.

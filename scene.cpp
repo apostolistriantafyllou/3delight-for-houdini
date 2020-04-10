@@ -46,8 +46,7 @@ void scene::process_obj_node(
 	const context &i_context,
 	OBJ_Node *obj,
 	bool i_check_visibility,
-	std::vector<exporter *> &o_to_export,
-	std::deque<safe_interest>& io_interests )
+	std::vector<exporter *> &o_to_export )
 {
 	/*
 		Each object is its own null transform. Note that this null transform
@@ -58,7 +57,7 @@ void scene::process_obj_node(
 
 	if(i_context.m_ipr)
 	{
-		io_interests.emplace_back(
+		i_context.m_interests.emplace_back(
 			obj,
 			const_cast<context*>(&i_context),
 			&null::changed_cb);
@@ -78,7 +77,7 @@ void scene::process_obj_node(
 
 		if(i_context.m_ipr)
 		{
-			io_interests.emplace_back(
+			i_context.m_interests.emplace_back(
 				obj,
 				const_cast<context*>(&i_context),
 				&light::changed_cb);
@@ -96,7 +95,7 @@ void scene::process_obj_node(
 		o_to_export.push_back( new camera(i_context, obj) );
 		if(i_context.m_ipr)
 		{
-			io_interests.emplace_back(
+			i_context.m_interests.emplace_back(
 				obj,
 				const_cast<context*>(&i_context),
 				&camera::changed_cb);
@@ -117,7 +116,7 @@ void scene::process_obj_node(
 		o_to_export.push_back( new incandescence_light(i_context, obj) );
 		if(i_context.m_ipr)
 		{
-			io_interests.emplace_back(
+			i_context.m_interests.emplace_back(
 				obj,
 				const_cast<context*>(&i_context),
 				&incandescence_light::changed_cb);
@@ -143,8 +142,7 @@ void scene::process_obj_node(
 */
 void scene::vop_scan(
 	const context &i_context,
-	std::vector<exporter *> &io_to_export,
-	std::deque<safe_interest>& io_interests )
+	std::vector<exporter *> &io_to_export )
 {
 	std::unordered_set< std::string > materials;
 	for( auto E : io_to_export )
@@ -191,7 +189,7 @@ void scene::vop_scan(
 		io_to_export.push_back( new vop(i_context, node) );
 		if(i_context.m_ipr)
 		{
-			io_interests.emplace_back(
+			i_context.m_interests.emplace_back(
 				node, const_cast<context*>(&i_context), &vop::changed_cb);
 		}
 
@@ -254,8 +252,7 @@ void scene::vop_scan(
 */
 void scene::obj_scan(
 	const context &i_context,
-	std::vector<exporter *> &o_to_export,
-	std::deque<safe_interest>& io_interests )
+	std::vector<exporter *> &o_to_export )
 {
 	std::vector<OP_Node *> traversal;
 	traversal.push_back( OPgetDirector()->findNode("/obj") );
@@ -273,8 +270,7 @@ void scene::obj_scan(
 
 			if( obj )
 			{
-				process_obj_node(
-					i_context, obj, true, o_to_export, io_interests );
+				process_obj_node( i_context, obj, true, o_to_export );
 			}
 
 			traversal.push_back( node );
@@ -288,8 +284,7 @@ void scene::obj_scan(
 */
 void scene::scan_for_instanced(
 	const context &i_context,
-	std::vector<exporter *> &io_to_export,
-	std::deque<safe_interest>& io_interests )
+	std::vector<exporter *> &io_to_export )
 {
 	std::unordered_set< std::string > instanced;
 
@@ -346,7 +341,7 @@ void scene::scan_for_instanced(
 			continue;
 
 		int s = io_to_export.size(); assert( s>0 );
-		process_obj_node( i_context, o, false, io_to_export, io_interests );
+		process_obj_node( i_context, o, false, io_to_export );
 
 		/*
 		   Finally, make sure we don't render the source geometry as its
@@ -366,27 +361,25 @@ void scene::scan_for_instanced(
 
 	\see process_obj_node
 */
-void scene::convert_to_nsi(
-	const context &i_context,
-	std::deque<safe_interest>& io_interests )
+void scene::convert_to_nsi( const context &i_context )
 {
 	/*
 		Start be getting the list of all OBJ exporters.
 	*/
 	std::vector<exporter *> to_export;
-	obj_scan( i_context, to_export, io_interests );
+	obj_scan( i_context, to_export );
 
 	/*
 		Make sure instanced geometry is included in the list, regardless of
 		display flag or scene elements.
 	*/
-	scan_for_instanced( i_context, to_export, io_interests );
+	scan_for_instanced( i_context, to_export );
 
 	/*
 		Now, for the OBJs that are geometries, gather the list of materials and
 		build a list of VOP exporters for these.
 	*/
-	vop_scan( i_context, to_export, io_interests );
+	vop_scan( i_context, to_export );
 
 	/*
 		Create phase. This will create all the main NSI nodes from the Houdini

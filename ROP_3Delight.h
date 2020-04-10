@@ -171,6 +171,7 @@ private:
 	OBJ_Camera* GetCamera()const;
 	double GetShutterInterval(double i_time)const;
 	bool HasDepthOfField()const;
+
 	std::vector<OBJ_Node*> m_lights;
 	bool m_cloud;
 
@@ -196,17 +197,6 @@ private:
 		a different context handle than m_nsi.
 	*/
 	std::string m_static_nsi_file;
-
-	/*
-		List of interests (callbacks) created in IPR mode.
-		We don't use a vector because there might be a lot of items (1 or 2 per
-		node) and the re-allocation pattern of std::vector implies copying its
-		into a bigger array. In the case of our safe_interest class, this would
-		mean additional connections (in copy-constructor) and disconnections (in
-		destructor) from nodes, so the callbacks point to the right
-		safe_interest object.
-	*/
-	std::deque<safe_interest> m_interests;
 
 	// renderdl process rendering a list of NSI files being read from stdin
 	UT_ReadWritePipe* m_renderdl;
