@@ -25,8 +25,8 @@ public:
 	/// Notifies the object of the ROP's rendering state
 	void Rendering(bool i_render);
 
-	static PRM_Template* GetTemplates();
-	static OP_TemplatePair* GetTemplatePair();
+	static PRM_Template* GetTemplates(bool i_cloud);
+	static OP_TemplatePair* GetTemplatePair(bool i_cloud);
 	static OP_VariablePair* GetVariablePair();
 	static PRM_Template* GetObsoleteParameters();
 

@@ -106,7 +106,7 @@ void settings::Rendering(bool i_render)
 	m_parameters.setInt(k_rendering, 0, 0.0, i_render);
 }
 
-PRM_Template* settings::GetTemplates()
+PRM_Template* settings::GetTemplates(bool i_cloud)
 {
 	static PRM_Name separator1("separator1", "");
 	static PRM_Name separator2("separator2", "");
@@ -513,7 +513,8 @@ PRM_Template* settings::GetTemplates()
 		PRM_Default(debug_templates.size(), "Debug")
 	};
 
-	static std::vector<PRM_Template> templates;
+	static std::vector<PRM_Template> rop_templates[2];
+	std::vector<PRM_Template>& templates = rop_templates[i_cloud];
 	if(templates.size() == 0)
 	{
 		// Actions
@@ -533,9 +534,11 @@ PRM_Template* settings::GetTemplates()
 			*/
 			if(base->getNamePtr()->getToken() == std::string("trange"))
 			{
+				PRM_Type type =
+					i_cloud ? PRM_STRING|PRM_TYPE_INVISIBLE : PRM_STRING;
 				templates.push_back(
 					PRM_Template(
-						PRM_STRING, 1,
+						type, 1,
 						&render_mode, &render_mode_d, &render_mode_c));
 			}
 
@@ -589,15 +592,15 @@ PRM_Template* settings::GetTemplates()
 	return &templates[0];
 }
 
-OP_TemplatePair* settings::GetTemplatePair()
+OP_TemplatePair* settings::GetTemplatePair(bool i_cloud)
 {
-	static OP_TemplatePair* ropPair = nullptr;
-	if(!ropPair)
+	static OP_TemplatePair* ropPair[2] = { nullptr, nullptr };
+	if(!ropPair[i_cloud])
 	{
-		ropPair = new OP_TemplatePair(GetTemplates());
+		ropPair[i_cloud] = new OP_TemplatePair(GetTemplates(i_cloud));
 	}
 
-	return ropPair;
+	return ropPair[i_cloud];
 }
 
 OP_VariablePair* settings::GetVariablePair()
