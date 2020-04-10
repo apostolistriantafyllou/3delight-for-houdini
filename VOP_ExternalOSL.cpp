@@ -565,6 +565,14 @@ AddRampParameterTemplate(
 	nodes->push_back(
 		PRM_Template());
 
+	// Put the other dirty bits somewhere.
+	PRM_SpareData *spare = LEAKED(new PRM_SpareData);
+	spare->setMultiStartOffset(0);
+	/* These are fetched by the USD translator and used to name the params. */
+	spare->setRampKeysVar(knots->name.c_str());
+	spare->setRampValuesVar(i_param.name.c_str());
+	spare->setRampBasisVar(interpolation->name.c_str());
+
 	// Create the main ramp template
 	PRM_MultiType multi_type =
 		color ? PRM_MULTITYPE_RAMP_RGB : PRM_MULTITYPE_RAMP_FLT;
@@ -578,7 +586,7 @@ AddRampParameterTemplate(
 			name,
 			nullptr,
 			nullptr,
-			&PRM_SpareData::multiStartOffsetZero));
+			spare));
 }
 
 
