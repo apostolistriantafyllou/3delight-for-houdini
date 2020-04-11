@@ -32,19 +32,6 @@ surface hlight(
 	color light_col = light_color;
 	if( coneenable )
 	{
-		/* Cone and penumbra */
-		float cosangle = abs( dot(-normalize(I), normalize(N)) );
-		float _coneangle = radians(coneangle);
-		float penumbraangle = radians(conedelta);
-
-		float coslimit = cos(_coneangle / 2);
-		float cospen = cos((_coneangle / 2) + penumbraangle);
-		float low = min(cospen, coslimit);
-		float high = max(cospen, coslimit);
-
-		scale = M_PI * smoothstep(low, high, cosangle);
-		scale /= surfacearea();
-
 		if( projmap != "" )
 		{
 			point O = P - I;
@@ -75,6 +62,7 @@ surface hlight(
 	}
 
 	color result = light_col * light_intensity * pow(2, light_exposure);
+
 	/*
 		Conditions are arranged so that if 3Delight tags hair rays as
 		specular we won't be scaling twice.
@@ -88,5 +76,31 @@ surface hlight(
 	else if( _3dl_volume_contribution!=1.0 && raytype("volume") )
 		result *= _3dl_volume_contribution;
 
-	Ci += scale * result * emission( "focus",  spread_to_focus(_3dl_spread) );
+	if( coneenable )
+	{
+		/* Cone and penumbra */
+		float _coneangle = radians(coneangle);
+		float penumbraangle = radians(conedelta);
+		scale /= surfacearea();
+		if (penumbraangle > 0)
+		{
+			/* emission() expects cone apex angle to include penumbra. */
+			_coneangle += 2 * penumbraangle;
+		}
+		else
+		{
+			/* emission() expects a positive penumbra angle, even though it is applied inside. */
+			penumbraangle = -penumbraangle;
+		}
+
+		Ci += scale * result *
+			emission(
+				"focus", spread_to_focus(_3dl_spread),
+				"cone", _coneangle,
+				"conefade", penumbraangle );
+	}
+	else
+	{
+		Ci += scale * result * emission( "focus",  spread_to_focus(_3dl_spread) );
+	}
 }
