@@ -361,8 +361,18 @@ void vop::list_shader_parameters(
 				}
 			}
 
-			o_list.Add(
-				new NSI::StringArg( parameter->name.c_str(), str.buffer()) );
+			/*
+				3Delight nows about UDIM, but Houdini users prefere <UDIM>. Note
+				UT_String class seems to provide changeWord and changeString but
+				I amnot going to use a method that has zero  comments and no
+				docs, so std::string it is.
+			*/
+			std::string stdstr( str );
+			size_t start_pos = stdstr.find( "<UDIM>" );
+			if( start_pos != std::string::npos )
+				stdstr.replace( start_pos, 6, "UDIM" );
+
+			o_list.Add( new NSI::StringArg(parameter->name.c_str(), stdstr) );
 
 			if( isTextureNode || is_texture_path( parameter->name.c_str() ) )
 			{
