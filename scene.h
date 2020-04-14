@@ -16,6 +16,7 @@ namespace NSI { class Context; }
 #include <vector>
 #include <set>
 #include <string>
+#include <unordered_set>
 
 /**
 	\brief Converts the scene (geo, shaders, light, cameras) into its
@@ -47,6 +48,13 @@ private:
 	static void vop_scan(
 		const context &i_context,
 		std::vector< exporter * > &o_to_export );
+	static void create_materials_exporters(
+		const std::unordered_set<std::string>& i_materials,
+		const context &i_context,
+		std::vector<exporter *> &io_to_export );
+	static void create_atmosphere_shader_exporter(
+		const context& i_context,
+		std::vector<exporter *>& io_to_export );
 
 	static void scan_for_instanced(
 		const context &i_context,

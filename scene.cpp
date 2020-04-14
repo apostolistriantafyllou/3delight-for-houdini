@@ -137,7 +137,7 @@ void scene::process_obj_node(
 /**
 	\brief Go through all used materials and produce VOPs exporters.
 
-	We also check the Atmopshere shader in the ROP, as we can't possibliy find
+	We also check the Atmosphere shader in the ROP, as we can't possibly find
 	it otherwise.
 */
 void scene::vop_scan(
@@ -153,8 +153,29 @@ void scene::vop_scan(
 		geo->get_all_material_paths( materials );
 	}
 
+	create_materials_exporters( materials, i_context, io_to_export );
+	
+	/* Deal with atmosphere */
+	create_atmosphere_shader_exporter( i_context, io_to_export );
+}
+
+/**
+	\brief Creates the exporters for all shaders node required by each material.
+	
+	\param i_materials
+		List of materials paths for which to create exporters.
+	\param i_context
+		Current rendering context.
+	\param io_to_export
+		New exporters will be appended here.
+*/
+void scene::create_materials_exporters(
+	const std::unordered_set<std::string>& i_materials,
+	const context &i_context,
+	std::vector<exporter *> &io_to_export )
+{
 	std::unordered_set<VOP_Node *> vops;
-	for( const auto &M : materials )
+	for( const auto &M : i_materials )
 	{
 		VOP_Node *mat = OPgetDirector()->findVOPNode( M.data() );
 
@@ -213,8 +234,20 @@ void scene::vop_scan(
 			traversal.push_back( input );
 		}
 	}
+}
 
-	/* Deal with atmosphere */
+/**
+	\brief Creates the exporters required by the atmosphere shader.
+
+	\param i_context
+		Current rendering context.
+	\param io_to_export
+		New exporters will be appended here.
+*/
+void scene::create_atmosphere_shader_exporter(
+	const context& i_context,
+	std::vector<exporter *>& io_to_export )
+{
 	OP_Node *rop = OPgetDirector()->findNode( i_context.m_rop_path.c_str() );
 	if( !rop )
 	{
