@@ -265,20 +265,15 @@ void scene::create_atmosphere_shader_exporter(
 	if( atmosphere_path.length() > 0 )
 	{
 		std::string resolved;
-		VOP_Node *atmosphere_shader = exporter::resolve_material_path(
-			r3, atmosphere_path.c_str(), resolved );
+		VOP_Node *atmosphere_shader =
+			exporter::resolve_material_path(
+				r3, atmosphere_path.c_str(), resolved );
 
 		if( atmosphere_shader )
 		{
-			io_to_export.push_back( new vop(i_context, atmosphere_shader) );
-			if(i_context.m_ipr)
-			{
-				i_context.m_interests.emplace_back(
-					atmosphere_shader,
-					const_cast<context*>(&i_context),
-					&vop::changed_cb);
-			}
-
+			std::unordered_set<std::string> mat;
+			mat.insert(resolved);
+			create_materials_exporters(mat, i_context, io_to_export);
 		}
 	}
 }
