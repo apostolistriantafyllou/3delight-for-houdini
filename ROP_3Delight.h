@@ -115,10 +115,28 @@ private:
 	/// Sets "render_mode" parameter based on "export_nsi" and "ipr"
 	void resolve_obsolete_render_mode(PRM_ParmList* i_old_parms);
 
+	/**
+		\brief Called when the ROP changes in any way during an IPR render.
+		
+		This is used to detect changes that require updating the scene in IPR.
+		An atmosphere shader assignment is an example of this.
+
+		It could have been implemented by overriding virtual function
+		OP_Node::opChanged instead, but this would have been less convenient,
+		mostly because opChanged could be called at any time, even when not
+		rendering and even when the ROP is being deleted. This could cause
+		serious synchronization and validation problems.
+	*/
+	static void changed_cb(
+		OP_Node* i_caller,
+		void* i_callee,
+		OP_EventType i_type,
+		void* i_data);
+	
 	void export_render_notes( const context &i_context ) const;
 
 	void ExportTransparentSurface(const context& i_ctx) const;
-	void ExportAtmosphere(const context& i_ctx);
+	void ExportAtmosphere(const context& i_ctx, bool ipr_update = false);
 	void ExportOutputs(const context& i_ctx)const;
 	void ExportOneOutputLayer(
 		const context& i_ctx,

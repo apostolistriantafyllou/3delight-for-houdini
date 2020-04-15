@@ -606,6 +606,14 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 
 	export_render_notes( *m_current_render );
 
+	if(m_current_render->m_ipr)
+	{
+		m_current_render->m_interests.emplace_back(
+			this,
+			m_current_render,
+			&ROP_3Delight::changed_cb);
+	}
+
 	/*
 		Stop redirecting static attributes to the main NSI stream. This is
 		important to avoid closing the main stream prematurely.
@@ -827,6 +835,33 @@ ROP_3Delight::resolve_obsolete_render_mode(PRM_ParmList* i_old_parms)
 	}
 }
 
+void ROP_3Delight::changed_cb(
+	OP_Node* i_caller,
+	void* i_callee,
+	OP_EventType i_type,
+	void* i_data)
+{
+	if(i_type != OP_PARM_CHANGED)
+	{
+		return;
+	}
+
+	ROP_3Delight* rop = dynamic_cast<ROP_3Delight*>(i_caller);
+	assert(rop);
+	
+	int parm_index = reinterpret_cast<intptr_t>(i_data);
+	PRM_Parm& parm = rop->getParm(parm_index);
+	std::string name = parm.getToken();
+		
+	if(name == settings::k_atmosphere)
+	{
+		context* ctx = (context*)i_callee;
+		rop->ExportAtmosphere(*ctx, true);
+		ctx->m_nsi.RenderControl(
+			NSI::CStringPArg("action", "synchronize"));
+	}
+}
+
 /**
 	This is needed by the Spatial Override feature to make the overriding
 	object transparent.
@@ -857,7 +892,7 @@ void ROP_3Delight::ExportTransparentSurface(const context& i_ctx) const
 }
 
 void
-ROP_3Delight::ExportAtmosphere(const context& i_ctx)
+ROP_3Delight::ExportAtmosphere(const context& i_ctx, bool ipr_update)
 {
 	std::string atmo_handle;
 	VOP_Node* atmo_vop =
@@ -865,11 +900,26 @@ ROP_3Delight::ExportAtmosphere(const context& i_ctx)
 			this,
 			m_settings.GetAtmosphere().c_str(),
 			atmo_handle);
-	
-	if(!atmo_vop)
-		return;
 
 	std::string env_handle = "atmosphere|environment";
+	
+	if(!atmo_vop)
+	{
+		if(ipr_update)
+		{
+			i_ctx.m_nsi.Delete(env_handle, NSI::IntegerArg("recursive", 1));
+		}
+		return;
+	}
+
+	if(ipr_update)
+	{
+		// Ensure that the shader exists before connecting to it
+		std::unordered_set<std::string> mat;
+		mat.insert(atmo_handle);
+		scene::export_materials(mat, i_ctx);
+	}
+
 	std::string attr_handle = "atmosphere|attributes";
 
 	i_ctx.m_nsi.Create( env_handle, "environment" );
