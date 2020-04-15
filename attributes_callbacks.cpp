@@ -10,9 +10,6 @@
 
 namespace
 {
-	/** Forward declaraation */
-	void register_obj_node_cb(OP_Node& i_obj_manager);
-
 	UT_String k_obj_manager_path = "/obj";
 
 	std::mutex interests_mutex;
@@ -112,8 +109,7 @@ namespace
 			(obj_node->getObjectType() != OBJ_GEOMETRY &&
 			obj_node->getObjectType() != OBJ_CAMERA &&
 			obj_node->getObjectType() != OBJ_STD_NULL &&
-			obj_node->getObjectType() != OBJ_STD_LIGHT &&
-			obj_node->getObjectType() != OBJ_SUBNET))
+			obj_node->getObjectType() != OBJ_STD_LIGHT))
 		{
 			return;
 		}
@@ -124,12 +120,6 @@ namespace
 			scene_nodes_mutex.lock();
 			scene_nodes.push_back(obj_node);
 			scene_nodes_mutex.unlock();
-
-			if( obj_node->getObjectType() == OBJ_SUBNET )
-			{
-				/* We need to observe this subnet for child OBJ creation. */
-				register_obj_node_cb( *obj_node );
-			}
 		}
 		else
 		{
