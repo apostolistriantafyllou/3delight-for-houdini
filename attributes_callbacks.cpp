@@ -83,7 +83,7 @@ namespace
 	/**
 		\brief Called when a child of an obj manager changes.
 
-		We only react to their creation.
+		We only react to the creation of geometry nodes.
 	*/
 	void obj_node_cb(
 		OP_Node* i_caller,
@@ -163,9 +163,9 @@ namespace
 
 		OP_Node* node = (OP_Node*)i_data;
 
-		// We're only interested in managers here
+		// We're only interested in managers here (including subnetworks)
 		if(!node->isManager() && !node->isManagementNode() &&
-			!node->isEffectivelyAManagementNode())
+			!node->isEffectivelyAManagementNode() && !node->isSubNetwork(true))
 		{
 			return;
 		}
