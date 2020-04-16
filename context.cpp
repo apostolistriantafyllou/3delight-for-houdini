@@ -17,3 +17,11 @@ context::object_displayed(const OBJ_Node& i_node)const
 
 	return i_node.getObjectDisplay(m_current_time);
 }
+
+bool
+context::object_is_matte(const OBJ_Node& i_node)const
+{
+	return
+		m_mattes_pattern &&
+		m_mattes_pattern->match(&i_node, m_rop_path.c_str(), true);
+}

@@ -113,6 +113,8 @@ public:
 
 	/// Returns true if an object is to be rendered.
 	bool object_displayed(const OBJ_Node& i_node)const;
+	/// Returns true if an object is in the mattes bundle.
+	bool object_is_matte(const OBJ_Node& i_node)const;
 
 public:
 	NSI::Context &m_nsi;

@@ -27,13 +27,11 @@ class scene
 public:
 	static void convert_to_nsi( const context & );
 
-	static void find_lights_and_mattes(
+	static void find_lights(
 		const OP_BundlePattern* i_lights,
-		const OP_BundlePattern* i_mattes,
 		const char* i_rop_path,
 		bool i_want_incandescence_lights,
-		std::vector<OBJ_Node*>& o_lights,
-		std::vector<OBJ_Node*>& o_mattes );
+		std::vector<OBJ_Node*>& o_lights );
 
 	/**
 		\brief Find the bind export nodes that can produce custom AOVs

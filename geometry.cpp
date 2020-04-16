@@ -525,6 +525,20 @@ void geometry::connect()const
 		m_handle);
 
 	/*
+		Connect to the matte attributes node if the node is part of the matte
+		bundle.
+		FIXME : the call to connect_to_object_attributes_nodes above also
+		handles mattes, but based on an object's attribute instead of a bundle.
+	*/
+	if(m_context.object_is_matte(*m_object))
+	{
+		const char *matte_handle =
+			object_attributes::geo_attribute_node_handle(
+				object_attributes::e_matte);
+		m_nsi.Connect(matte_handle, "", m_handle, "geometryattributes");
+	}
+
+	/*
 		OBJ-level material assignment.
 
 		\see polygonmesh for primitive attribute assignment on polygonal faces

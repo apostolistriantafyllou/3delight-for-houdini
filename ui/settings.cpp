@@ -788,12 +788,9 @@ void settings::GetLights(
 		? OP_BundlePattern::allocPattern(GetLightsToRender())
 		: nullptr;
 
-	std::vector<OBJ_Node *> dummy;
-
-	scene::find_lights_and_mattes(
+	scene::find_lights(
 		pattern,
-		nullptr, /* no mattes needed */
-		m_parameters.getFullPath().c_str(), true, o_lights, dummy );
+		m_parameters.getFullPath().c_str(), true, o_lights);
 
 	if(pattern)
 	{

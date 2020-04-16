@@ -460,14 +460,12 @@ void scene::convert_to_nsi( const context &i_context )
 	*/
 	std::set<std::string> exported_lights_categories;
 
-	std::vector<OBJ_Node*> lights_to_render, mattes;
-
-	find_lights_and_mattes(
+	std::vector<OBJ_Node*> lights_to_render;
+	find_lights(
 		i_context.m_lights_to_render_pattern,
-		i_context.m_mattes_pattern,
 		i_context.m_rop_path.c_str(),
 		false,
-		lights_to_render, mattes );
+		lights_to_render );
 
 	for( auto &exporter : to_export )
 	{
@@ -476,17 +474,6 @@ void scene::convert_to_nsi( const context &i_context )
 			exporter,
 			exported_lights_categories,
 			lights_to_render );
-	}
-
-	const char *matte_handle =
-		object_attributes::geo_attribute_node_handle(
-			object_attributes::e_matte );
-
-	for( auto &matte : mattes )
-	{
-		i_context.m_nsi.Connect(
-			matte_handle, "",
-			matte->getFullPath().c_str(), "geometryattributes");
 	}
 
 	for( auto &exporter : to_export )
@@ -506,17 +493,12 @@ void scene::convert_to_nsi( const context &i_context )
 		Path of the 3Delight ROP, to be used with i_light_pattern.
 	\param o_lights
 		Will be filled with the scene's renderable light sources.
-
-	Arguably, doing lights and matte objects in the same function appears
-	weird. Our aim here is performance: why scan the scene N times ?
 */
-void scene::find_lights_and_mattes(
+void scene::find_lights(
 	const OP_BundlePattern* i_light_pattern,
-	const OP_BundlePattern* i_matte_pattern,
 	const char* i_rop_path,
 	bool i_want_incandescence_lights,
-	std::vector<OBJ_Node*>& o_lights,
-	std::vector<OBJ_Node*>& o_mattes )
+	std::vector<OBJ_Node*>& o_lights )
 {
 	/* A traversal stack to avoid recursion */
 	std::vector< OP_Node * > traversal;
@@ -545,13 +527,6 @@ void scene::find_lights_and_mattes(
 		{
 			OP_Node *node = network->getChild(i);
 			OBJ_Node *obj = node->castToOBJNode();
-
-			if( obj &&
-				(!i_matte_pattern ||
-				i_matte_pattern->match(obj, i_rop_path, true)) )
-			{
-				o_mattes.push_back( obj );
-			}
 
 			if( obj &&
 				(obj->castToOBJLight() ||
