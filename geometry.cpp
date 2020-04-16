@@ -475,6 +475,7 @@ geometry::~geometry()
 
 void geometry::create()const
 {
+	m_nsi.Create(hub_handle(), "transform");
 	for(primitive* p : m_primitives)
 	{
 		p->create();
@@ -502,6 +503,9 @@ void geometry::set_attributes()const
 
 void geometry::connect()const
 {
+	// Connect the geometry's hub transform to the null's transform
+	m_nsi.Connect(hub_handle(), "", m_handle, "objects");
+
 	// Connect all primitives to their ancestor
 	bool volume = false;
 	for(primitive* p : m_primitives)
@@ -522,7 +526,7 @@ void geometry::connect()const
 	object_attributes::connect_to_object_attributes_nodes(
 		m_context,
 		m_object,
-		m_handle);
+		hub_handle());
 
 	/*
 		Connect to the matte attributes node if the node is part of the matte
@@ -535,7 +539,7 @@ void geometry::connect()const
 		const char *matte_handle =
 			object_attributes::geo_attribute_node_handle(
 				object_attributes::e_matte);
-		m_nsi.Connect(matte_handle, "", m_handle, "geometryattributes");
+		m_nsi.Connect(matte_handle, "", hub_handle(), "geometryattributes");
 	}
 
 	/*
@@ -548,7 +552,9 @@ void geometry::connect()const
 		return;
 
 	m_nsi.Create( attributes_handle(), "attributes" );
-	m_nsi.Connect( attributes_handle(), "", m_handle, "geometryattributes" );
+	m_nsi.Connect(
+		attributes_handle(), "",
+		hub_handle(), "geometryattributes" );
 
 	m_nsi.Connect(
 		material_path, "",
@@ -719,14 +725,14 @@ void geometry::export_override_attributes() const
 	bool spatial_override = m_object->evalInt("_3dl_spatial_override", 0, time);
 	if( spatial_override )
 	{
-		m_nsi.Connect( m_handle, "",
+		m_nsi.Connect( hub_handle(), "",
 			override_nsi_handle, "bounds" );
 		m_nsi.Connect( override_nsi_handle, "",
 			NSI_SCENE_ROOT, "geometryattributes" );
 
 		m_nsi.Connect(
 			transparent_surface_handle(), "",
-			m_handle, "geometryattributes" );
+			hub_handle(), "geometryattributes" );
 
 		bool override_surface_shader = m_object->evalInt(
 			"_3dl_override_surface_shader", 0, time);
@@ -748,7 +754,7 @@ void geometry::export_override_attributes() const
 	else
 	{
 		/* NOTE: This is needed for IPR only */
-		m_nsi.Disconnect( m_handle, "",
+		m_nsi.Disconnect( hub_handle(), "",
 			override_nsi_handle, "bounds" );
 		m_nsi.Disconnect( override_nsi_handle, "",
 			NSI_SCENE_ROOT, "geometryattributes" );

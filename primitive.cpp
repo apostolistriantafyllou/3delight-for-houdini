@@ -1,4 +1,6 @@
 #include "primitive.h"
+
+#include "geometry.h"
 #include "time_sampler.h"
 
 #include <unordered_map>
@@ -69,7 +71,7 @@ primitive::connect()const
 	m_nsi.Create( parent, "transform" );
 	m_nsi.SetAttribute( parent,
 			NSI::DoubleMatrixArg( "transformationmatrix", matrix.data() ) );
-	m_nsi.Connect( parent, "", m_object->getFullPath().c_str(), "objects" );
+	m_nsi.Connect( parent, "", geometry::hub_handle(*m_object), "objects" );
 
 	m_nsi.Connect( m_handle, "", parent, "objects" );
 }

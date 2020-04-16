@@ -41,6 +41,12 @@ public:
 	void get_all_material_paths(
 		std::unordered_set< std::string > &o_materials ) const;
 
+	/// Returns the handle of the hub transform all primitives should connect to
+	static std::string hub_handle(const OBJ_Node& i_node)
+	{
+		return i_node.getFullPath().toStdString() + "|hub";
+	}
+	
 private:
 	/**
 		\brief Returns the material assigned to this geometry, either as an OBJ
@@ -59,6 +65,12 @@ private:
 		\brief When this geometry is used as an NSI space override.
 	*/
 	void export_override_attributes( void ) const;
+
+	/// Returns the handle of the object's main NSI transform node
+	std::string hub_handle()const
+	{
+		return m_handle + "|hub";
+	}
 
 	/// Returns the handle of the object's NSI attributes node
 	std::string attributes_handle()const
