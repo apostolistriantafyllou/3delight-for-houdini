@@ -475,17 +475,19 @@ void scene::export_nsi(
 	*/
 	std::set<std::string> exported_lights_categories;
 
+	/*
+		This stores the list of lights that are part of the rendered scene.
+		This is not always required, since some (hopefully, many) objects see
+		all lights and don't need to connect to light categories. This is
+		especially true in IPR where we usually re-export only one object. So,
+		it's filled lazily, at most once, by export_light_categories.
+	*/
 	std::vector<OBJ_Node*> lights_to_render;
-	find_lights(
-		i_context.m_lights_to_render_pattern,
-		i_context.m_rop_path.c_str(),
-		false,
-		lights_to_render );
-
+	
 	for( auto &exporter : i_to_export )
 	{
 		export_light_categories(
-			i_context.m_nsi,
+			i_context,
 			exporter,
 			exported_lights_categories,
 			lights_to_render );
@@ -614,10 +616,10 @@ void scene::find_custom_aovs( std::vector<VOP_Node*>& o_custom_aovs )
 static const std::string k_light_category_prefix = ".!@category:";
 
 void scene::export_light_categories(
-	NSI::Context &i_nsi,
+	const context &i_context,
 	exporter *i_exporter,
 	std::set<std::string> &io_exported_lights_categories,
-	const std::vector<OBJ_Node*> &i_lights_to_render )
+	std::vector<OBJ_Node*> &io_lights_to_render )
 {
 	assert( i_exporter );
 
@@ -659,21 +661,33 @@ void scene::export_light_categories(
 		return;
 	}
 
+	NSI::Context& nsi = i_context.m_nsi;
+	
 	std::string cat_handle = k_light_category_prefix + categories.toStdString();
 	std::string cat_attr_handle = cat_handle + "|attributes";
 
 	auto insertion = io_exported_lights_categories.insert(cat_handle);
 	if(insertion.second)
 	{
+		// Fill io_lights_to_render lazily since it won't always be needed
+		if(io_lights_to_render.empty())
+		{
+			find_lights(
+				i_context.m_lights_to_render_pattern,
+				i_context.m_rop_path.c_str(),
+				false,
+				io_lights_to_render);
+		}
+
 		/*
 			This is the first time we use this NSI set, so we have to create it
 			first!
 		*/
-		i_nsi.Create(cat_handle, "set");
-		i_nsi.Create(cat_attr_handle, "attributes");
-		i_nsi.Connect(cat_attr_handle, "", cat_handle, "geometryattributes");
+		nsi.Create(cat_handle, "set");
+		nsi.Create(cat_attr_handle, "attributes");
+		nsi.Connect(cat_attr_handle, "", cat_handle, "geometryattributes");
 
-		for(OBJ_Node* light : i_lights_to_render)
+		for(OBJ_Node* light : io_lights_to_render)
 		{
 			/*
 				Parse the list of categories for the light. This shouldn't be
@@ -687,7 +701,7 @@ void scene::export_light_categories(
 			// Add the lights we have to turn off to the set
 			if(!tags->match(*categories_expr))
 			{
-				i_nsi.Connect(
+				nsi.Connect(
 					light->getFullPath().toStdString(), "",
 					cat_handle, "members");
 			}
@@ -696,12 +710,12 @@ void scene::export_light_categories(
 
 	std::string attributes_handle( i_exporter->handle() );
 	attributes_handle += "|attributes";
-	i_nsi.Create( attributes_handle, "attributes");
-	i_nsi.Connect(
+	nsi.Create( attributes_handle, "attributes");
+	nsi.Connect(
 		attributes_handle, "", i_exporter->handle(), "geometryattributes" );
 
 	// Turn off lights in the set for this object
-	i_nsi.Connect(
+	nsi.Connect(
 		attributes_handle, "",
 		cat_attr_handle, "visibility",
 		(
