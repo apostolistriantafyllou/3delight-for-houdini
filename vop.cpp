@@ -82,9 +82,6 @@ void vop::set_attributes_at_time( double i_time ) const
 	monolithic and specify the "igonresubnetworks" tag.
 
 		\ref osl/texture__2_0.osl
-
-	Here "input" means the destination of the connection and "output" means the
-	source of the connection.
 */
 void vop::connect( void ) const
 {
@@ -98,33 +95,35 @@ void vop::connect( void ) const
 		if( !input_ref )
 			continue;
 
-		VOP_Node *output = CAST_VOPNODE( m_vop->getInput(i) );
+		VOP_Node *source = CAST_VOPNODE( m_vop->getInput(i) );
 
-		if( !output )
+		if( !source )
 			continue;
 
-		UT_String input_name, output_name;
-
-		int output_index = input_ref->getNodeOutputIndex();
-		output->getOutputName(output_name, output_index);
+		UT_String input_name;
 		m_vop->getInputName(input_name, i);
-
-		if ( is_aov_definition(output) )
+		
+		if ( is_aov_definition(source) )
 		{
 			/*
-				Special case for 'bind' export node: if we use output_name,
-				this will be unrecognized by nsi since output_name is modifued
-				each time user specify a new name for its export (custom) name
+				Special case for 'bind' export node: if we use source_name,
+				this will be unrecognized by NSI since source_name changes
+				each time user specifies a new name for its export (custom)
+				name.
 			*/
 			m_nsi.Connect(
-				output->getFullPath().buffer(), "outColor",
-				m_handle, input_name.buffer() );
+				source->getFullPath().toStdString(), "outColor",
+				m_handle, input_name.toStdString() );
 		}
 		else
 		{
+			UT_String source_name;
+			int source_index = input_ref->getNodeOutputIndex();
+			source->getOutputName(source_name, source_index);
+
 			m_nsi.Connect(
-				output->getFullPath().buffer(), output_name.buffer(),
-				m_handle, input_name.buffer() );
+				source->getFullPath().toStdString(), source_name.toStdString(),
+				m_handle, input_name.toStdString() );
 		}
 	}
 
@@ -371,7 +370,7 @@ void vop::list_shader_parameters(
 
 std::string vop::vop_name( void ) const
 {
-	return m_vop->getOperator()->getName().buffer();
+	return m_vop->getOperator()->getName().toStdString();
 }
 
 
