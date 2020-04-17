@@ -9,6 +9,7 @@
 #include <UT/UT_TempFileManager.h>
 
 #include <assert.h>
+#include <deque>
 #include <string>
 #include <vector>
 
