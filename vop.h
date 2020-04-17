@@ -28,8 +28,7 @@ class vop : public exporter
 	friend class light;
 
 	/**
-		The scene needs to find out if a certain vop is an AOV
-		defifinition.
+		The scene needs to find out if a certain vop is an AOV definition.
 
 		\ref scene::find_custom_aovs
 	*/
@@ -104,12 +103,6 @@ private:
 		(probably because the OSL version has all the functionality inside).
 	*/
 	bool ignore_subnetworks( void ) const;
-
-	/**
-		\returns true if unsupported shader. Meaning that we don't have an
-		OSL counterpart for this shader.
-	*/
-	bool unsupported( void ) const;
 
 	/**
 		\brief If vop is our material and have some bind node connected, add

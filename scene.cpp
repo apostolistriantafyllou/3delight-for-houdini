@@ -197,10 +197,8 @@ void scene::create_materials_exporters(
 		VOP_Node* node = traversal.back();
 		traversal.pop_back();
 
-		if( !node )
-			continue;
-
-		if( vops.find(node) != vops.end() )
+		if( !node || !vop::is_renderable(node) ||
+			vops.find(node) != vops.end() )
 		{
 			continue;
 		}

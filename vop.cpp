@@ -19,14 +19,14 @@ vop::vop(
 :
 	exporter( i_ctx, i_vop )
 {
+	assert(is_renderable(i_vop));
 }
 
 void vop::create( void ) const
 {
 	const shader_library &library = shader_library::get_instance();
 	std::string path = library.get_shader_path( vop_name().c_str() );
-	if( path.length() == 0 )
-		return;
+	assert( !path.empty() );
 
 	m_nsi.Create( m_handle, "shader" );
 	m_nsi.SetAttribute( m_handle,
@@ -88,9 +88,6 @@ void vop::set_attributes_at_time( double i_time ) const
 */
 void vop::connect( void ) const
 {
-	if( unsupported() )
-		return;
-
 	if( ignore_subnetworks() )
 		return;
 
@@ -405,13 +402,6 @@ bool vop::ignore_subnetworks( void ) const
 	return false;
 }
 
-bool vop::unsupported( void ) const
-{
-	const shader_library &library = shader_library::get_instance();
-	std::string path = library.get_shader_path( vop_name().c_str() );
-	return path.size() == 0;
-}
-
 bool vop::is_texture_path( const char* i_param_name )
 {
 	UT_String name = i_param_name;
@@ -432,10 +422,7 @@ void vop::add_and_connect_aov_group() const
 	*/
 	const shader_library &library = shader_library::get_instance();
 	std::string path = library.get_shader_path( vop_name().c_str() );
-	if( path.size() == 0 )
-	{
-		return;
-	}
+	assert( !path.empty() );
 
 	DlShaderInfo *shader_info = library.get_shader_info( path.c_str() );
 	bool ourMaterial = false;
