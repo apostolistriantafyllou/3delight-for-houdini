@@ -14,14 +14,14 @@ VOP_3DelightOperatorFilter::allowOperatorAsChild(OP_Operator* i_op)
 void
 VOP_3DelightMaterialBuilder::Register(OP_OperatorTable* io_table)
 {
-	io_table->addOperator(new VOP_External3DelightMaterialBuilderOperator());
+	io_table->addOperator(new VOP_3DelightMaterialBuilderOperator());
 }
 
 OP_Node*
 VOP_3DelightMaterialBuilder::alloc(OP_Network* net, const char* name, OP_Operator* entry)
 {
-	VOP_External3DelightMaterialBuilderOperator* osl_entry =
-		dynamic_cast<VOP_External3DelightMaterialBuilderOperator*>(entry);
+	VOP_3DelightMaterialBuilderOperator* osl_entry =
+		dynamic_cast<VOP_3DelightMaterialBuilderOperator*>(entry);
 	assert(osl_entry);
     return new VOP_3DelightMaterialBuilder(net, name, osl_entry);
 }
@@ -39,7 +39,7 @@ VOP_3DelightMaterialBuilder::getOperatorFilter()
 }
 
 VOP_3DelightMaterialBuilder::VOP_3DelightMaterialBuilder(
-	OP_Network* parent, const char* name, VOP_External3DelightMaterialBuilderOperator* entry)
+	OP_Network* parent, const char* name, VOP_3DelightMaterialBuilderOperator* entry)
     :	VOP_SubnetBase(parent, name, entry)
 {
 	/*
@@ -91,7 +91,7 @@ VOP_Node* VOP_3DelightMaterialBuilder::get_material()
 	return nullptr;
 }
 
-VOP_External3DelightMaterialBuilderOperator::VOP_External3DelightMaterialBuilderOperator()
+VOP_3DelightMaterialBuilderOperator::VOP_3DelightMaterialBuilderOperator()
 	:	VOP_Operator(
 			"3Delight::dlMaterialBuilder",
 			"3Delight Material Builder",

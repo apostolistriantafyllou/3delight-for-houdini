@@ -3,7 +3,7 @@
 #include <VOP/VOP_SubnetBase.h>
 #include <VOP/VOP_Operator.h>
 
-struct VOP_External3DelightMaterialBuilderOperator;
+struct VOP_3DelightMaterialBuilderOperator;
 
 class VOP_3DelightOperatorFilter : public OP_OperatorFilter
 {
@@ -49,7 +49,7 @@ protected:
 	VOP_3DelightMaterialBuilder(
 		OP_Network* net,
 		const char* name,
-		VOP_External3DelightMaterialBuilderOperator* entry);
+		VOP_3DelightMaterialBuilderOperator* entry);
 	virtual ~VOP_3DelightMaterialBuilder();
 
 private:
@@ -58,9 +58,9 @@ private:
 };
 
 
-struct VOP_External3DelightMaterialBuilderOperator : public VOP_Operator
+struct VOP_3DelightMaterialBuilderOperator : public VOP_Operator
 {
 	/// Constructor.
-	VOP_External3DelightMaterialBuilderOperator();
+	VOP_3DelightMaterialBuilderOperator();
 };
 
