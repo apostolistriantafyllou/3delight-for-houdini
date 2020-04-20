@@ -273,7 +273,7 @@ VOP_Node *exporter::resolve_material_path(
 		dynamic_cast<VOP_3DelightMaterialBuilder*>(vop_node);
 	if(builder)
 	{
-		vop_node = vop::get_builder_material(builder);
+		vop_node = builder->get_material();
 	}
 
 	if(!vop_node)

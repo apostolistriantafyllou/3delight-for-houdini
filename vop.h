@@ -59,8 +59,6 @@ public:
 		OP_EventType i_type,
 		void* i_data);
 
-	static VOP_Node *get_builder_material( VOP_Node *i_material_builder );
-
 protected:
 	/**
 		Set all parameters of 'i_shader' by finding their values pairs

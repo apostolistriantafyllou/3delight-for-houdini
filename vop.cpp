@@ -677,24 +677,3 @@ bool vop::is_renderable( VOP_Node *i_vop )
 
 	return !path.empty();
 }
-
-/**
-	We loop through all the nodes in the material builder and just take
-	the first material we get.
-*/
-VOP_Node *vop::get_builder_material( VOP_Node *i_material_builder )
-{
-	int nkids = i_material_builder->getNchildren();
-
-	for( int i=0; i<nkids; i++ )
-	{
-		VOP_Node *mat = CAST_VOPNODE( i_material_builder->getChild(i) );
-
-		if( !mat || !mat->getMaterialFlag() )
-			continue;
-
-		return mat;
-	}
-
-	return nullptr;
-}

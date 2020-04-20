@@ -70,6 +70,27 @@ VOP_3DelightMaterialBuilder::getNumVisibleInputs() const
 	return 0;
 }
 
+/**
+	We loop through all the nodes in the material builder and just take
+	the first material we get.
+*/
+VOP_Node* VOP_3DelightMaterialBuilder::get_material()
+{
+	int nkids = getNchildren();
+
+	for( int i=0; i<nkids; i++ )
+	{
+		VOP_Node *mat = CAST_VOPNODE(getChild(i) );
+
+		if( !mat || !mat->getMaterialFlag() )
+			continue;
+
+		return mat;
+	}
+
+	return nullptr;
+}
+
 VOP_External3DelightMaterialBuilderOperator::VOP_External3DelightMaterialBuilderOperator()
 	:	VOP_Operator(
 			"3Delight::dlMaterialBuilder",
