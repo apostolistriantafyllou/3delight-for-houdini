@@ -214,17 +214,6 @@ void scene::create_materials_exporters(
 				node, const_cast<context*>(&i_context), &vop::changed_cb);
 		}
 
-		/*
-			If this was a material builder, also recurse inside the assigned
-			material itself.
-		*/
-		std::string op = node->getOperator()->getName().toStdString();
-		if( op == "3Delight::dlMaterialBuilder" )
-		{
-			traversal.push_back( vop::get_builder_material( node ) );
-			continue;
-		}
-
 		int ninputs = node->nInputs();
 		for( int i = 0; i < ninputs; i++ )
 		{

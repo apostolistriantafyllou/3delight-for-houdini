@@ -394,11 +394,11 @@ void primitive::assign_sop_materials( void ) const
 	{
 		/*
 			Could be a detail attribute or just one-faced poly, no need
-			to go further as we can just create one attirbute node.
+			to go further as we can just create one attribute node.
 		*/
-		const std::string shop( materials->getS(0) );
+		std::string shop( materials->getS(0) );
 
-		if( !shop.empty() )
+		if( !resolve_material_path(m_object, shop.c_str(), shop) )
 		{
 			std::string attribute_handle = m_handle + shop;
 
@@ -422,10 +422,11 @@ void primitive::assign_sop_materials( void ) const
 	std::unordered_map< std::string, std::vector<int> > all_materials;
 	for( int i=0; i<materials->entries(); i++ )
 	{
-		const std::string shop( materials->getS(i) );
-
-		if( !shop.empty() )
+		std::string shop( materials->getS(i) );
+		if( resolve_material_path(m_object, shop.c_str(), shop) )
+		{
 			all_materials[ shop ].push_back( i );
+		}
 	}
 
 	/* Create the NSI face sets + attributes and connect to geo */

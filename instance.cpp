@@ -304,6 +304,8 @@ void instance::get_merge_points(
 		std::string M =	(material && i<material->entries()) ?
 					(const char*)(material->getS(i)) : "";
 
+		resolve_material_path(m_object, M.c_str(), M);
+
 		std::pair< std::string, std::string > m = std::make_pair(I, M);
 
 		if( o_uniqued.find(m) == o_uniqued.end() )

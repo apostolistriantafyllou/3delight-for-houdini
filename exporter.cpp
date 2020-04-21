@@ -1,6 +1,8 @@
 #include "exporter.h"
 
 #include "context.h"
+#include "vop.h"
+#include "VOP_3DelightMaterialBuilder.h"
 
 #include <nsi.hpp>
 
@@ -261,11 +263,23 @@ VOP_Node *exporter::resolve_material_path(
 	{
 		/* Try a relative search */
 		vop_node = i_node->findVOPNode( i_path );
-		if( !vop_node )
-		{
-			o_path.clear();
-			return nullptr;
-		}
+	}
+
+	/*
+		If the material is actually a 3Delight MaterialBuilder, use its "main
+		material" instead so the builders is kept out of the export logic.
+	*/
+	VOP_3DelightMaterialBuilder* builder =
+		dynamic_cast<VOP_3DelightMaterialBuilder*>(vop_node);
+	if(builder)
+	{
+		vop_node = vop::get_builder_material(builder);
+	}
+
+	if(!vop_node)
+	{
+		o_path.clear();
+		return nullptr;
 	}
 
 	o_path = vop_node->getFullPath().toStdString();
