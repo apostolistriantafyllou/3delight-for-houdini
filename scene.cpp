@@ -134,6 +134,16 @@ void scene::process_obj_node(
 	o_to_export.push_back( new geometry(i_context, obj) );
 }
 
+/// Exports materials to the context's NSI stream.
+void scene::export_materials(
+	std::unordered_set<std::string>& i_materials,
+	const context& i_context)
+{
+	std::vector<exporter*> to_export;
+	create_materials_exporters(i_materials, i_context, to_export);
+	export_nsi(i_context, to_export);
+}
+
 /**
 	\brief Go through all used materials and produce VOPs exporters.
 

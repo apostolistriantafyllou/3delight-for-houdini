@@ -95,6 +95,10 @@ protected:
 		std::string &o_uv_connection );
 
 private:
+	
+	/// Exports the NSI connection of input number i_input_index
+	void connect_input(int i_input_index)const;
+	
 	/// Exports time-dependent attributes to NSI
 	void set_attributes_at_time( double i_time ) const;
 

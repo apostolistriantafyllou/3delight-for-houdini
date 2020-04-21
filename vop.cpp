@@ -3,6 +3,7 @@
 #include "context.h"
 #include "osl_utilities.h"
 #include "3Delight/ShaderQuery.h"
+#include "scene.h"
 #include "shader_library.h"
 
 #include <VOP/VOP_Node.h>
@@ -12,6 +13,7 @@
 #include <nsi.hpp>
 #include <algorithm>
 #include <iostream>
+#include <unordered_set>
 
 vop::vop(
 	const context& i_ctx,
@@ -90,45 +92,50 @@ void vop::connect( void ) const
 
 	for( int i = 0, n = m_vop->nInputs(); i<n; ++i )
 	{
-		OP_Input *input_ref = m_vop->getInputReferenceConst(i);
-
-		if( !input_ref )
-			continue;
-
-		VOP_Node *source = CAST_VOPNODE( m_vop->getInput(i) );
-
-		if( !source )
-			continue;
-
-		UT_String input_name;
-		m_vop->getInputName(input_name, i);
-		
-		if ( is_aov_definition(source) )
-		{
-			/*
-				Special case for 'bind' export node: if we use source_name,
-				this will be unrecognized by NSI since source_name changes
-				each time user specifies a new name for its export (custom)
-				name.
-			*/
-			m_nsi.Connect(
-				source->getFullPath().toStdString(), "outColor",
-				m_handle, input_name.toStdString() );
-		}
-		else
-		{
-			UT_String source_name;
-			int source_index = input_ref->getNodeOutputIndex();
-			source->getOutputName(source_name, source_index);
-
-			m_nsi.Connect(
-				source->getFullPath().toStdString(), source_name.toStdString(),
-				m_handle, input_name.toStdString() );
-		}
+		connect_input(i);
 	}
 
 	// If needed, add and connect our aov group to our material
 	add_and_connect_aov_group();
+}		
+
+void vop::connect_input(int i_input_index)const
+{
+	OP_Input *input_ref = m_vop->getInputReferenceConst(i_input_index);
+
+	if( !input_ref )
+		return;
+
+	VOP_Node *source = CAST_VOPNODE( m_vop->getInput(i_input_index) );
+
+	if( !source )
+		return;
+
+	UT_String input_name;
+	m_vop->getInputName(input_name, i_input_index);
+	
+	if ( is_aov_definition(source) )
+	{
+		/*
+			Special case for 'bind' export node: if we use source_name,
+			this will be unrecognized by NSI since source_name changes
+			each time user specifies a new name for its export (custom)
+			name.
+		*/
+		m_nsi.Connect(
+			source->getFullPath().toStdString(), "outColor",
+			m_handle, input_name.toStdString() );
+	}
+	else
+	{
+		UT_String source_name;
+		int source_index = input_ref->getNodeOutputIndex();
+		source->getOutputName(source_name, source_index);
+
+		m_nsi.Connect(
+			source->getFullPath().toStdString(), source_name.toStdString(),
+			m_handle, input_name.toStdString() );
+	}
 }
 
 /**
@@ -151,6 +158,36 @@ void vop::changed_cb(
 		{
 			ctx->m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
 		}
+	}
+	else if(i_type == OP_INPUT_REWIRED)
+	{
+		intptr_t input_index = reinterpret_cast<intptr_t>(i_data);
+		UT_String input_name;
+		i_caller->getInputName(input_name, input_index);
+
+		vop v(*ctx, i_caller->castToVOPNode());
+
+		// Disconnect the previous source node from the input parameter
+		ctx->m_nsi.Disconnect(
+			NSI_ALL_NODES, NSI_ALL_ATTRIBUTES,
+			v.m_handle, input_name.toStdString());
+
+		OP_Node* source = i_caller->getInput(input_index);
+		if(source)
+		{
+			/*
+				Export the source node and all its sub-network, in case it
+				hadn't been exported yet.
+			*/
+			std::unordered_set<std::string> materials;
+			materials.insert(source->getFullPath().toStdString());
+			scene::export_materials(materials, *ctx);
+
+			// Connect the source node to the input parameter
+			v.connect_input(input_index);
+		}
+
+		ctx->m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
 	}
 }
 
@@ -416,8 +453,8 @@ void vop::add_and_connect_aov_group() const
 {
 	/*
 		First, check if this node represents a final surface such
-		as DllPrincipled or DlMetal. These surface has a special
-		aovGroup to which we can connect AOV nodes.
+		as DlPrincipled or DlMetal. These surfaces have a special
+		aovGroup input to which we can connect AOV nodes.
 	*/
 	const shader_library &library = shader_library::get_instance();
 	std::string path = library.get_shader_path( vop_name().c_str() );
