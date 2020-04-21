@@ -80,8 +80,21 @@ private:
 	*/
 	void export_override_attributes( void ) const;
 
-	// Re-exports the node to an NSI scene (during an IPR render).
-	static void re_export(const context& i_ctx, OBJ_Node& i_node);
+	/**
+		\brief Re-exports the node to an NSI scene (during an IPR render).
+		
+		\param i_ctx
+			The IPR rendering context.
+		\param i_node
+			The node to export.
+		\param i_new_material
+			Indicates whether material assignment has changed, which requires
+			re-exporting their NSI shader networks to ensure they exist.
+	*/
+	static void re_export(
+		const context& i_ctx,
+		OBJ_Node& i_node,
+		bool i_new_material = false);
 	
 	/// Returns the handle of the object's main NSI transform node
 	std::string hub_handle()const

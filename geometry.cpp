@@ -864,8 +864,13 @@ void geometry::changed_cb(
 				return;
 			}
 
-			if(parm_index >= 0 &&
-				obj->getParm(parm_index).getType().isSwitcher())
+			if(parm_index < 0)
+			{
+				return;
+			}
+			
+			const PRM_Parm& parm = obj->getParm(parm_index);
+			if(parm.getType().isSwitcher())
 			{
 				/*
 					Avoid re-exporting the geometry when the user selects a
@@ -874,7 +879,9 @@ void geometry::changed_cb(
 				return;
 			}
 
-			re_export(*ctx, *obj);
+			bool new_material =
+				parm.getToken() == std::string("shop_materialpath");
+			re_export(*ctx, *obj, new_material);
 			break;
 		}
 
@@ -931,7 +938,10 @@ void geometry::sop_changed_cb(
 
 }
 
-void geometry::re_export(const context& i_ctx, OBJ_Node& i_node)
+void geometry::re_export(
+	const context& i_ctx,
+	OBJ_Node& i_node,
+	bool i_new_material)
 {
 	i_ctx.m_nsi.Delete(hub_handle(i_node), NSI::IntegerArg("recursive", 1));
 
@@ -941,6 +951,17 @@ void geometry::re_export(const context& i_ctx, OBJ_Node& i_node)
 	}
 
 	geometry geo(i_ctx, &i_node);
+
+	if(i_new_material)
+	{
+		/*
+			Material assignment has changed, ensure that the new material exists
+			in the NSI scene before connecting to it.
+		*/
+		std::unordered_set<std::string> materials;
+		geo.get_all_material_paths(materials);
+		scene::export_materials(materials, i_ctx);
+	}
 
 	geo.create();
 	geo.connect();
