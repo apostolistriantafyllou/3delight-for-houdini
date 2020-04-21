@@ -2,6 +2,8 @@
 
 #include "exporter.h"
 
+#include <OP/OP_Value.h>
+
 #include <vector>
 #include <string>
 #include <unordered_set>
@@ -41,13 +43,25 @@ public:
 	void get_all_material_paths(
 		std::unordered_set< std::string > &o_materials ) const;
 
+	static void changed_cb(
+		OP_Node* i_caller,
+		void* i_callee,
+		OP_EventType i_type,
+		void* i_data);
+	static void sop_changed_cb(
+		OP_Node* i_caller,
+		void* i_callee,
+		OP_EventType i_type,
+		void* i_data);
+
 	/// Returns the handle of the hub transform all primitives should connect to
 	static std::string hub_handle(const OBJ_Node& i_node)
 	{
 		return i_node.getFullPath().toStdString() + "|hub";
 	}
-	
+
 private:
+
 	/**
 		\brief Returns the material assigned to this geometry, either as an OBJ
 		property or as a detail attribute.
@@ -66,6 +80,9 @@ private:
 	*/
 	void export_override_attributes( void ) const;
 
+	// Re-exports the node to an NSI scene (during an IPR render).
+	static void re_export(const context& i_ctx, OBJ_Node& i_node);
+	
 	/// Returns the handle of the object's main NSI transform node
 	std::string hub_handle()const
 	{

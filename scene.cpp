@@ -103,17 +103,17 @@ void scene::process_obj_node(
 		return;
 	}
 
-	if( i_check_visibility && !i_context.object_displayed(*obj) )
-	{
-		return;
-	}
+	bool visible = !i_check_visibility || i_context.object_displayed(*obj);
 
 	/*
 		Check for special node IncandescenceLight.
 	*/
 	if( obj->getOperator()->getName() == "IncandescenceLight" )
 	{
-		o_to_export.push_back( new incandescence_light(i_context, obj) );
+		if(visible)
+		{
+			o_to_export.push_back( new incandescence_light(i_context, obj) );
+		}
 		if(i_context.m_ipr)
 		{
 			i_context.m_interests.emplace_back(
@@ -124,14 +124,36 @@ void scene::process_obj_node(
 		return;
 	}
 
-	SOP_Node *sop = obj->getRenderSopPtr();
-
-	if( !sop || !obj->castToOBJGeometry() )
+	if(!obj->castToOBJGeometry() )
 	{
 		return;
 	}
 
-	o_to_export.push_back( new geometry(i_context, obj) );
+	SOP_Node *sop = obj->getRenderSopPtr();
+	if(sop && visible)
+	{
+		o_to_export.push_back( new geometry(i_context, obj) );
+	}
+	if(i_context.m_ipr)
+	{
+		// Watch for OBJ-level changes
+		i_context.m_interests.emplace_back(
+			obj,
+			const_cast<context*>(&i_context),
+			&geometry::changed_cb);
+		if(sop)
+		{
+			/*
+				Watch for SOP-level changes. If there isn't a render SOP yet,
+				the connection will be made later, when the render SOP change
+				is trapped in geometry::changed_cb.
+			*/
+			i_context.m_interests.emplace_back(
+				sop,
+				const_cast<context*>(&i_context),
+				&geometry::sop_changed_cb);
+		}
+	}
 }
 
 /// Inserts a newly created node into an existing NSI scene

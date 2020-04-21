@@ -3,9 +3,12 @@
 #include "context.h"
 #include "curvemesh.h"
 #include "instance.h"
+#include "null.h"
 #include "object_attributes.h"
 #include "polygonmesh.h"
 #include "pointmesh.h"
+#include "safe_interest.h"
+#include "scene.h"
 #include "time_sampler.h"
 #include "vdb.h"
 
@@ -806,4 +809,140 @@ void geometry::get_all_material_paths(
 	get_assigned_material( obj_mat );
 
 	o_materials.insert( obj_mat );
+}
+
+/**
+	\brief Callback that should be connected to an OBJ_Node that has an
+	associated geometry exporter.
+*/
+void geometry::changed_cb(
+	OP_Node* i_caller,
+	void* i_callee,
+	OP_EventType i_type,
+	void* i_data)
+{
+	OBJ_Node* obj = i_caller->castToOBJNode();
+	assert(obj);
+	context* ctx = (context*)i_callee;
+
+	intptr_t parm_index = -1;
+
+	switch(i_type)
+	{
+		case OP_CHILD_SWITCHED:
+		{
+			SOP_Node* render_sop = obj->getRenderSopPtr();
+			OP_Node* child = (OP_Node*)i_data;
+			if(render_sop != child)
+			{
+				return;
+			}
+
+			/*
+				This could be a new render SOP, so we connect a callback to
+				trap SOP_level updates to this OBJ node. A connection to a
+				single node (the root of the network) seems to be sufficient to
+				catch updates from all its dependencies, through the
+				OP_INPUT_CHANGED event.
+				FIXME : avoid creating duplicate interests for the same SOP.
+			*/
+			ctx->m_interests.emplace_back(
+				render_sop,
+				ctx,
+				&geometry::sop_changed_cb);
+			re_export(*ctx, *obj);
+			break;
+		}
+
+		case OP_PARM_CHANGED:
+		{
+			parm_index = reinterpret_cast<intptr_t>(i_data);
+
+			if(null::is_transform_parameter_index(parm_index))
+			{
+				// This will be handled by the associated null exporter
+				return;
+			}
+
+			if(parm_index >= 0 &&
+				obj->getParm(parm_index).getType().isSwitcher())
+			{
+				/*
+					Avoid re-exporting the geometry when the user selects a
+					different tab folder in the UI.
+				*/
+				return;
+			}
+
+			re_export(*ctx, *obj);
+			break;
+		}
+
+		case OP_FLAG_CHANGED:
+		case OP_INPUT_CHANGED:
+		case OP_SPAREPARM_MODIFIED:
+		{
+			re_export(*ctx, *obj);
+			break;
+		}
+
+		case OP_NODE_PREDELETE:
+		{
+			ctx->m_nsi.Delete(hub_handle(*obj), NSI::IntegerArg("recursive", 1));
+			break;
+		}
+		
+		default:
+			return;
+	}
+
+	ctx->m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
+}
+
+/**
+	\brief Callback that should be connected to the render SOP of an OBJ_Node
+	that has an	associated geometry exporter.
+	
+	It allows us to trap changes to the whole SOP network contained in the OBJ
+	node, which would go unnoticed if we had only connected
+	geometry::changed_cb.
+*/
+void geometry::sop_changed_cb(
+	OP_Node* i_caller,
+	void* i_callee,
+	OP_EventType i_type,
+	void* i_data)
+{
+	if(i_type != OP_PARM_CHANGED && i_type != OP_FLAG_CHANGED &&
+		i_type != OP_INPUT_CHANGED  && i_type != OP_SPAREPARM_MODIFIED)
+	{
+		return;
+	}
+
+	context* ctx = (context*)i_callee;
+
+	OP_Network* parent = i_caller->getParent();
+	assert(parent);
+	OBJ_Node* obj = parent->castToOBJNode();
+	assert(obj);
+
+	re_export(*ctx, *obj);
+	ctx->m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
+
+}
+
+void geometry::re_export(const context& i_ctx, OBJ_Node& i_node)
+{
+	i_ctx.m_nsi.Delete(hub_handle(i_node), NSI::IntegerArg("recursive", 1));
+
+	if(!i_node.getRenderSopPtr() || !i_ctx.object_displayed(i_node))
+	{
+		return;
+	}
+
+	geometry geo(i_ctx, &i_node);
+
+	geo.create();
+	geo.connect();
+	geo.set_attributes();
 }
