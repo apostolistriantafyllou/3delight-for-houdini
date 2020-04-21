@@ -477,7 +477,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		if(m_cloud)
 		{
 			renderdl_command += " -cloud -cloudtag HOUDINI";
-			if(batch)
+			if( batch || !m_current_render->SingleFrame() )
 			{
 				renderdl_command += "_BATCH";
 			}
