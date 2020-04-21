@@ -86,8 +86,7 @@ void pointmesh::export_basic_attributes(
 	export_attributes( to_export, *i_gt_primitive.get(), i_time );
 
 	if( std::find(to_export.begin(),to_export.end(),"width")!=to_export.end() &&
-		std::find(to_export.begin(),to_export.end(),"pcale")!=to_export.end() )
-
+		std::find(to_export.begin(),to_export.end(),"pscale")!=to_export.end() )
 	{
 		// "width" not in attribute list. default to something.
 		m_nsi.SetAttributeAtTime(
