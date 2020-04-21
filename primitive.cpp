@@ -1,6 +1,8 @@
 #include "primitive.h"
 #include "time_sampler.h"
 
+#include <unordered_map>
+
 #include <OBJ/OBJ_Node.h>
 #include <VOP/VOP_Node.h>
 #include <OP/OP_Node.h>
@@ -36,6 +38,12 @@ primitive::primitive(
 void
 primitive::connect()const
 {
+	/*
+		The right place to do this as we need all the materials to be
+		already exported.
+	*/
+	assign_sop_materials();
+
 	assert(m_object);
 
 	if( m_instanced )
@@ -367,5 +375,81 @@ void primitive::get_all_material_paths(
 
 		if( !resolved.empty() )
 			o_materials.insert( resolved );
+	}
+}
+
+void primitive::assign_sop_materials( void ) const
+{
+	/* Priority to uniform/primitive materials */
+	GT_Owner type;
+	GT_DataArrayHandle materials = default_gt_primitive().get()->findAttribute(
+		"shop_materialpath", type, 0);
+
+	if( !materials || materials->getStorage()!=GT_STORE_STRING )
+	{
+		return;
+	}
+
+	if( materials->entries() == 1u )
+	{
+		/*
+			Could be a detail attribute or just one-faced poly, no need
+			to go further as we can just create one attirbute node.
+		*/
+		const std::string shop( materials->getS(0) );
+
+		if( !shop.empty() )
+		{
+	printf( "%d\n", __LINE__ );
+			std::string attribute_handle = m_handle + shop;
+
+			NSI::ArgumentList priority;
+			priority.Add(new NSI::IntegerArg("priority", 1));
+
+			m_nsi.Create( attribute_handle, "attributes" );
+			m_nsi.Connect( shop, "", attribute_handle, "surfaceshader", priority );
+			m_nsi.Connect(attribute_handle, "", m_handle, "geometryattributes" );
+		}
+
+		return;
+	}
+
+	printf( "%d\n", __LINE__ );
+	// Retrieve a context that might redirect the attributes to a shared file
+	NSI::Context& static_nsi = attributes_context();
+
+	/*
+		We will need per-face assignments.  Build a material -> uniform/face map
+	*/
+	std::unordered_map< std::string, std::vector<int> > all_materials;
+	for( int i=0; i<materials->entries(); i++ )
+	{
+		const std::string shop( materials->getS(i) );
+
+		if( !shop.empty() )
+			all_materials[ shop ].push_back( i );
+	}
+
+	/* Create the NSI face sets + attributes and connect to geo */
+	for( auto material : all_materials )
+	{
+		std::string attribute_handle = m_handle + material.first;
+		std::string set_handle = m_handle + material.first + "|set";
+
+		m_nsi.Create( attribute_handle, "attributes" );
+		m_nsi.Create( set_handle, "faceset" );
+		m_nsi.Connect( material.first, "", attribute_handle, "surfaceshader" );
+		m_nsi.Connect( attribute_handle, "", set_handle, "geometryattributes" );
+		m_nsi.Connect( set_handle, "", m_handle, "facesets" );
+
+		// This attribute may already have been exported in a previous frame
+		if(static_nsi.Handle() != NSI_BAD_CONTEXT)
+		{
+			static_nsi.SetAttribute( set_handle,
+				*NSI::Argument( "faces" )
+					.SetType( NSITypeInteger )
+					->SetCount( material.second.size() )
+					->SetValuePointer( &material.second[0] ) );
+		}
 	}
 }

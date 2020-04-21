@@ -26,8 +26,6 @@ protected:
 		double i_time,
 		const GT_PrimitiveHandle i_gt_primitive)const override;
 
-	void assign_primitive_materials( void ) const;
-
 private:
 	void export_creases(
 		GT_DataArrayHandle i_indices, int *i_nvertices, size_t i_n ) const;

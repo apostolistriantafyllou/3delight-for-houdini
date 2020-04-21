@@ -134,6 +134,8 @@ private:
 		std::vector<OP_Node *> &i_to_scan,
 		std::vector< std::string > &o_to_export ) const;
 
+	void assign_sop_materials( void ) const;
+
 private:
 
 	typedef std::pair<double, GT_PrimitiveHandle> TimedPrimitive;
