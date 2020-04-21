@@ -852,39 +852,34 @@ void ROP_3Delight::ExportTransparentSurface(const context& i_ctx) const
 		exporter::transparent_surface_handle(), "surfaceshader", arguments );
 }
 
-std::string
-ROP_3Delight::AtmosphereAttributesHandle() const
-{
-	return "3delight_render_pass_atmosphere_attributes";
-}
-
 void
 ROP_3Delight::ExportAtmosphere(const context& i_ctx)
 {
-	std::string shaderHandle;
+	std::string atmo_handle;
 	VOP_Node* atmo_vop =
 		exporter::resolve_material_path(
 			this,
 			m_settings.GetAtmosphere().c_str(),
-			shaderHandle);
+			atmo_handle);
 	
 	if(!atmo_vop)
 		return;
 
-	std::string atmHandle = shaderHandle + "|_environment";
+	std::string env_handle = "atmosphere|environment";
+	std::string attr_handle = "atmosphere|attributes";
 
-	i_ctx.m_nsi.Create( atmHandle, "environment" );
-	i_ctx.m_nsi.Connect( atmHandle, "", NSI_SCENE_ROOT, "objects" );
+	i_ctx.m_nsi.Create( env_handle, "environment" );
+	i_ctx.m_nsi.Connect( env_handle, "", NSI_SCENE_ROOT, "objects" );
 
-	i_ctx.m_nsi.Create( AtmosphereAttributesHandle(), "attributes" );
-
-	i_ctx.m_nsi.Connect(
-		shaderHandle, "",
-		AtmosphereAttributesHandle(), "volumeshader" );
+	i_ctx.m_nsi.Create( attr_handle, "attributes" );
 
 	i_ctx.m_nsi.Connect(
-		AtmosphereAttributesHandle(), "",
-		atmHandle, "geometryattributes" );
+		atmo_handle, "",
+		attr_handle, "volumeshader" );
+
+	i_ctx.m_nsi.Connect(
+		attr_handle, "",
+		env_handle, "geometryattributes" );
 }
 
 void
