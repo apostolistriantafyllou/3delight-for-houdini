@@ -353,6 +353,20 @@ void camera::set_attributes( void ) const
 			->SetCount(2)
 			->CopyValue(shutter_opening, sizeof(shutter_opening)));
 
+	OBJ_CameraParms camera_parameters;
+	cam->getCameraParms( camera_parameters, m_context.m_current_time );
+	double clipping_range[2] =
+	{
+		camera_parameters.mynear,
+		camera_parameters.myfar
+	};
+	m_nsi.SetAttribute(
+		m_handle,
+		*NSI::Argument("clippingrange")
+			.SetType(NSITypeDouble)
+			->SetCount(2)
+			->CopyValue(clipping_range, sizeof(clipping_range)));
+
 	if(m_type == "fisheyecamera")
 	{
 		m_nsi.SetAttribute(m_handle, NSI::StringArg("mapping", m_mapping));
