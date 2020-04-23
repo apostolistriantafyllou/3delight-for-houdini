@@ -1,25 +1,32 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg width="100%" height="100%" viewBox="0 0 457 457" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
-    <g transform="matrix(1,0,0,1,-21.9244,-21.9244)">
-        <g id="_3Delight-Display" serif:id="3Delight Display">
+<svg width="100%" height="100%" viewBox="0 0 500 500" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g id="main" transform="matrix(1,0,0,1,-6,-6)">
+        <g transform="matrix(0.958489,0,0,0.958489,10.6269,10.6269)">
+            <circle cx="256" cy="256" r="259.689" style="fill:rgb(213,213,213);"/>
         </g>
-        <g id="_3Delight" serif:id="3Delight" transform="matrix(1,0,0,1,-6,-6)">
-            <g id="_64-" serif:id="64+">
-                <g transform="matrix(0.863056,0,0,0.863056,35.0576,35.0576)">
-                    <circle cx="256" cy="256" r="256" style="fill:url(#_Linear1);"/>
-                </g>
-                <g transform="matrix(0.958489,0,0,0.958489,10.6269,10.6269)">
-                    <path d="M256,18.047C387.33,18.047 493.953,124.67 493.953,256C493.953,387.33 387.33,493.953 256,493.953C124.67,493.953 18.047,387.33 18.047,256C18.047,124.67 124.67,18.047 256,18.047ZM256,36.605C377.088,36.605 475.395,134.912 475.395,256C475.395,377.088 377.088,475.395 256,475.395C134.912,475.395 36.605,377.088 36.605,256C36.605,134.912 134.912,36.605 256,36.605Z" style="fill:url(#_Linear2);"/>
-                </g>
-                <g id="_3dl-alone" serif:id="3dl alone" transform="matrix(8.19215,0,0,8.19215,-1282.44,-1502.95)">
-                    <text x="173.894px" y="230.076px" style="font-family:'HelveticaNeue-Thin', 'Helvetica Neue', sans-serif;font-weight:200;font-size:50px;fill:rgb(222,222,222);">3</text>
+        <g transform="matrix(0.870869,0,0,0.870869,33.0576,33.0576)">
+            <circle cx="256" cy="256" r="256" style="fill:url(#_Linear1);"/>
+        </g>
+        <g transform="matrix(1,0,0,1,6,6)">
+            <path d="M250,17.758C121.822,17.758 17.758,121.822 17.758,250C17.758,378.178 121.822,482.242 250,482.242C378.178,482.242 482.242,378.178 482.242,250C482.242,121.822 378.178,17.758 250,17.758ZM250,43.879C363.761,43.879 456.121,136.239 456.121,250C456.121,363.761 363.761,456.121 250,456.121C136.239,456.121 43.879,363.761 43.879,250C43.879,136.239 136.239,43.879 250,43.879Z" style="fill:rgb(247,247,247);"/>
+        </g>
+        <g transform="matrix(14.6269,0,0,14.6269,-1624.05,-2731.51)">
+            <clipPath id="_clip2">
+                <path d="M132.856,202.377C134.759,203.231 135.833,205.018 135.833,207.335C135.833,211.516 132.452,213.869 128.515,213.869C126.32,213.869 124.443,213.188 123.147,211.956C121.835,210.709 121.1,208.893 121.253,206.596C121.273,206.297 121.522,206.064 121.822,206.064L123.583,206.064C123.737,206.064 123.886,206.127 123.993,206.238C124.1,206.35 124.158,206.5 124.152,206.654C124.102,208.038 124.471,209.197 125.223,210.004C125.969,210.807 127.086,211.248 128.487,211.248C130.752,211.248 132.933,209.938 132.933,207.475C132.933,205.056 131.067,203.897 128.795,203.897L127.31,203.897C126.995,203.897 126.74,203.642 126.74,203.327L126.74,201.846C126.74,201.531 126.995,201.276 127.31,201.276C127.31,201.276 128.795,201.276 128.804,201.276C130.348,201.3 132.204,200.378 132.204,198.285C132.204,197.418 131.956,196.742 131.517,196.249C130.833,195.481 129.721,195.157 128.487,195.157C127.208,195.157 126.221,195.585 125.566,196.346C124.895,197.126 124.576,198.236 124.601,199.535C124.604,199.688 124.545,199.835 124.438,199.945C124.331,200.054 124.184,200.115 124.031,200.115L122.27,200.115C122.118,200.115 121.972,200.055 121.865,199.947C121.759,199.839 121.699,199.693 121.7,199.541C121.731,195.512 124.305,192.537 128.459,192.537C131.856,192.537 135.105,194.261 135.105,198.089C135.105,199.933 134.301,201.493 132.856,202.377Z"/>
+            </clipPath>
+            <g clip-path="url(#_clip2)">
+                <g transform="matrix(0.068367,-0,-0,0.068367,111.442,187.155)">
+                    <use xlink:href="#_Image3" x="143.521" y="78.963" width="213.554px" height="312.022px" transform="matrix(0.997917,0,0,0.996876,0,0)"/>
                 </g>
             </g>
+        </g>
+        <g transform="matrix(409.718,0,0,409.718,144.283,382.285)">
+            <path d="M0.033,-0.223C0.023,-0.073 0.127,0.015 0.272,0.015C0.401,0.015 0.513,-0.061 0.513,-0.198C0.513,-0.29 0.46,-0.356 0.369,-0.371L0.369,-0.373C0.444,-0.391 0.487,-0.452 0.487,-0.528C0.487,-0.652 0.38,-0.706 0.27,-0.706C0.134,-0.706 0.05,-0.608 0.049,-0.476L0.112,-0.476C0.11,-0.58 0.166,-0.653 0.271,-0.653C0.355,-0.653 0.424,-0.613 0.424,-0.521C0.424,-0.433 0.347,-0.393 0.282,-0.394L0.229,-0.394L0.229,-0.341L0.282,-0.341C0.375,-0.341 0.45,-0.292 0.45,-0.193C0.45,-0.093 0.363,-0.038 0.271,-0.038C0.158,-0.038 0.092,-0.112 0.096,-0.223L0.033,-0.223Z" style="fill:rgb(247,247,247);fill-rule:nonzero;"/>
         </g>
     </g>
     <defs>
         <linearGradient id="_Linear1" x1="0" y1="0" x2="1" y2="0" gradientUnits="userSpaceOnUse" gradientTransform="matrix(-2.6211,556.009,-556.009,-2.6211,256,-15.273)"><stop offset="0" style="stop-color:rgb(233,80,86);stop-opacity:1"/><stop offset="1" style="stop-color:rgb(177,22,28);stop-opacity:1"/></linearGradient>
-        <linearGradient id="_Linear2" x1="0" y1="0" x2="1" y2="0" gradientUnits="userSpaceOnUse" gradientTransform="matrix(2.68682e-14,-438.791,438.791,2.68682e-14,256,475.395)"><stop offset="0" style="stop-color:rgb(225,225,225);stop-opacity:1"/><stop offset="1" style="stop-color:rgb(239,239,239);stop-opacity:1"/></linearGradient>
+        <image id="_Image3" width="214px" height="313px" xlink:href="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAE5ANYDAREAAhEBAxEB/8QAFwABAQEBAAAAAAAAAAAAAAAAAAIBBf/EABYQAQEBAAAAAAAAAAAAAAAAAAARYf/EABcBAQEBAQAAAAAAAAAAAAAAAAABBgf/xAAVEQEBAAAAAAAAAAAAAAAAAAAAEf/aAAwDAQACEQMRAD8A4dZt3YoFAoFAoFAoFAoNAAAAAAAAAAAAoF0C6BdAugigUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCg2gUCgUEXQLoF0C6BQKBQKBQKDaoUCgUCgUCgUCgUCgUCgVAoFAoIqhQKBQKBQKBQKBQKAAAAAAAkAgEAgEAC6oXQLoF0E0CgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgUE3QLoF0C6BQKBQKBQKBQKBQKBQKBQKBQKBQKBQKBQKBQRQKBQKBQKBQKBQKBQKBQKBQKBQbQKBQKBQKBdAugXQLoIoFAoFAoNohQKBQKBQKKUCgUCgUCgUCgUCgUCgUCgUEXRC6BdAugXQAAAAAAAAAAAAbQKBQKBQKBQKBQKCKBQKBQKBQKBQKBQKBQKBQKBQKBQKBQKBQKBdAugXQLoJoFAoFAoFAoFAoFAoFAoFAoFAoFAoFAoFAoFAoFAoJugXQLoF0C6BdAugXQLoF0C6BdAugXQLoF0C6BdAugXQLoF0C6BdAugXQLoIoFAoFAoFAoFAoFAoFAoFAoFAoFAoFAoFAoNoFAoFBF0C6BdAugXQLoF0C6BdAugXQLoF0C6BdAugXQLoF0C6BdAugXQLoF0C6BdBFAoFAoFBtAoFAoFAoFAoFAoFAoFAoFAoFAoFAoFAoIugXQLoF0C6BdAugXQLoF0C6BdAugXQLoF0C6BdAugXQLoF0C6BdAugXQLoJoFAoFAoFAoFAoFAoFAoFAoFAoFAoFAoFAoFAoFAoIugXQLoF0C6DRAKBQKBQKCgAAAAFAoFAoFAoFAoFAoIohQKBQKBRSgUCgUCgUCgUCgUCgUQoFAoFAoNoF0C6BdBFAoFAoFAoFAoFAoFAoFAoFAoFAoFAoFAoFBtAoFAoIugXQLoF0C6BdAugXQLoF0C6BdAugXQLoF0C6BdAugXQLoF0C6BdAugXQLoJoFAoFAoFAoFAoFAoFAoFAoFAoFAoFAoFAoFAoFAoJohQKBQKBRSgUCgUCgUQoFAoFAoFAoFAoFAoFFKBQKCLohdAugXQLoF0C6BdAugXQLoNugXQLoF0C6BdAugXQLoF0C6BdAugXQLoF0EUCgUCgUCgUCgUCgUCgUCgUCgUG0CgUCgUCgUCgUCgigUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgm6BdAugXQLoF0C6BdAugXQLoF0C6BdAugXQLoF0C6BdAugXQLoF0C6BdAugmgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgmgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgm6BdAugXQLoF0C6BdAugXQLoF0C6BdAugXQLoF0C6BdAugXQLoF0C6BdAugigUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgUG0CgUEXQLoF0C6BdAugXQLoF0C6BdAugXQLoF0C6BdAugXQLoF0C6BdAugXQLoF0EUQoFAoFAoNopQKBQKBQKIUCgUCgUCgUCgUCgUCgUCgi6BdAugXQLoF0C6BdAugXQLoF0C6BdAugXQLoF0C6BdAugXQLoF0C6BdAugmgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgi6BdAugXQLoF0C6BdAugXQLoF0C6BdAugXQLoF0G3QpdCl0KXQpdCl0C6BdAugigUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgUCgm6BdAugXQLoFAoFAoFAoFAoFAoFAoFAoFAoFAoFAoFAoJoFAoFAoFAoFAoFAoFAAAAAAAAAAAAAugXQLoJAAAAAAAAAAAAAAAAAAAAAAAAAAB//Z"/>
     </defs>
 </svg>
