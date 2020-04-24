@@ -1,11 +1,6 @@
 # Get the list of the files
 file(GLOB OSL_SRCS "*.osl")
 
-# This will get the destination directory for the installation.
-if(NOT DEFINED INSTALL_DIR)
-	houdini_get_default_install_dir( INSTALL_DIR )
-ENDIF()
-
 # Compile and install each file
 foreach(osl_file ${OSL_SRCS})
 
@@ -16,7 +11,8 @@ foreach(osl_file ${OSL_SRCS})
     add_custom_command( OUTPUT ${osl_name}.oso
         COMMAND ${DELIGHT}/bin/oslc -I${OSL_SHADERS_DIR} -D_3DFH=1 -q ${osl_file}
         DEPENDS ${osl_file}
-        COMMENT "Compiling ${osl_name}.osl" )
+        COMMENT "Compiling ${osl_name}.osl"
+        VERBATIM )
 
     add_custom_target( ${osl_name} DEPENDS ${osl_name}.oso ${osl_file} )
 
@@ -24,6 +20,6 @@ foreach(osl_file ${OSL_SRCS})
 
 	install(
 		FILES ${CMAKE_CURRENT_BINARY_DIR}/${osl_name}.oso
-		DESTINATION ${INSTALL_DIR}/osl)
+		DESTINATION osl)
 
 endforeach(osl_file)
