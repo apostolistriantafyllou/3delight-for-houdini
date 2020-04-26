@@ -5,7 +5,8 @@ project( 3Delight_for_Houdini )
 
 # Default install prefix is a 3DelightForHoudini directory in the build one.
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/3DelightForHoudini" CACHE PATH "..." FORCE)
+	set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/3DelightForHoudini" CACHE PATH "..." FORCE)
+	set(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT FALSE)
 endif()
 
 # Locate Houdini's libraries and header files.
@@ -136,3 +137,14 @@ install(
 # Configure several common target properties, such as its output directory.
 # Has the lousy behavior of building the lib directly to its install location.
 houdini_configure_target( ${library_name} "INSTDIR" "${CMAKE_INSTALL_PREFIX}/dso" )
+
+# Add the Hydra plugin, if present, for Houdini >= 18.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/HydraNSI/CMakeLists.txt"
+	AND Houdini_VERSION_MAJOR GREATER_EQUAL 18)
+	message(STATUS "Configuring HydraNSI plugin for Solaris")
+	set(HYDRANSI_INSTALL_PREFIX "dso/usd_plugins/")
+	add_subdirectory(HydraNSI)
+	install(
+		FILES Solaris/plugInfo.json
+		DESTINATION dso/usd_plugins)
+endif()
