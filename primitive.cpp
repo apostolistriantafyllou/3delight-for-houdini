@@ -400,7 +400,6 @@ void primitive::assign_sop_materials( void ) const
 
 		if( !shop.empty() )
 		{
-	printf( "%d\n", __LINE__ );
 			std::string attribute_handle = m_handle + shop;
 
 			NSI::ArgumentList priority;
@@ -414,7 +413,6 @@ void primitive::assign_sop_materials( void ) const
 		return;
 	}
 
-	printf( "%d\n", __LINE__ );
 	// Retrieve a context that might redirect the attributes to a shared file
 	NSI::Context& static_nsi = attributes_context();
 
