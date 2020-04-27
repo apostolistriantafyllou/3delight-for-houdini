@@ -612,10 +612,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 		// Get notifications for newly created nodes
 		creation_callbacks::register_ROP(this);
 		// Get notifications for changes to this ROP
-		m_current_render->m_interests.emplace_back(
-			this,
-			m_current_render,
-			&ROP_3Delight::changed_cb);
+		m_current_render->register_interest(this, &ROP_3Delight::changed_cb);
 	}
 
 	// Close the static attributes file if one was opened

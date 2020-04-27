@@ -846,10 +846,8 @@ void geometry::changed_cb(
 				OP_INPUT_CHANGED event.
 				FIXME : avoid creating duplicate interests for the same SOP.
 			*/
-			ctx->m_interests.emplace_back(
-				render_sop,
-				ctx,
-				&geometry::sop_changed_cb);
+			ctx->register_interest(render_sop, &geometry::sop_changed_cb);
+
 			re_export(*ctx, *obj);
 			break;
 		}

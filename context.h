@@ -117,6 +117,20 @@ public:
 	/// Returns true if an object is in the mattes bundle.
 	bool object_is_matte(const OBJ_Node& i_node)const;
 
+	/**
+		\brief Registers a callback to be notified of changes to a node.
+		
+		\param i_node
+			Pointer to the node being watched.
+		\param i_cb
+			Pointer to the function callback.
+	*/
+	void register_interest(OP_Node* i_node, OP_EventMethod i_cb)const
+	{
+		assert(m_ipr);
+		m_interests.emplace_back(i_node, const_cast<context*>(this), i_cb);
+	}
+
 public:
 	NSI::Context &m_nsi;
 	NSI::Context &m_static_nsi;

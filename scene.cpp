@@ -57,10 +57,7 @@ void scene::process_obj_node(
 
 	if(i_context.m_ipr)
 	{
-		i_context.m_interests.emplace_back(
-			obj,
-			const_cast<context*>(&i_context),
-			&null::changed_cb);
+		i_context.register_interest(obj, &null::changed_cb);
 	}
 
 	if( obj->getObjectType() & OBJ_NULL )
@@ -77,10 +74,7 @@ void scene::process_obj_node(
 
 		if(i_context.m_ipr)
 		{
-			i_context.m_interests.emplace_back(
-				obj,
-				const_cast<context*>(&i_context),
-				&light::changed_cb);
+			i_context.register_interest(obj, &light::changed_cb);
 		}
 
 		/*
@@ -95,10 +89,7 @@ void scene::process_obj_node(
 		o_to_export.push_back( new camera(i_context, obj) );
 		if(i_context.m_ipr)
 		{
-			i_context.m_interests.emplace_back(
-				obj,
-				const_cast<context*>(&i_context),
-				&camera::changed_cb);
+			i_context.register_interest(obj, &camera::changed_cb);
 		}
 		return;
 	}
@@ -116,10 +107,7 @@ void scene::process_obj_node(
 		}
 		if(i_context.m_ipr)
 		{
-			i_context.m_interests.emplace_back(
-				obj,
-				const_cast<context*>(&i_context),
-				&incandescence_light::changed_cb);
+			i_context.register_interest(obj, &incandescence_light::changed_cb);
 		}
 		return;
 	}
@@ -137,10 +125,7 @@ void scene::process_obj_node(
 	if(i_context.m_ipr)
 	{
 		// Watch for OBJ-level changes
-		i_context.m_interests.emplace_back(
-			obj,
-			const_cast<context*>(&i_context),
-			&geometry::changed_cb);
+		i_context.register_interest(obj, &geometry::changed_cb);
 		if(sop)
 		{
 			/*
@@ -148,10 +133,7 @@ void scene::process_obj_node(
 				the connection will be made later, when the render SOP change
 				is trapped in geometry::changed_cb.
 			*/
-			i_context.m_interests.emplace_back(
-				sop,
-				const_cast<context*>(&i_context),
-				&geometry::sop_changed_cb);
+			i_context.register_interest(sop, &geometry::sop_changed_cb);
 		}
 	}
 }
@@ -250,8 +232,7 @@ void scene::create_materials_exporters(
 		io_to_export.push_back( new vop(i_context, node) );
 		if(i_context.m_ipr)
 		{
-			i_context.m_interests.emplace_back(
-				node, const_cast<context*>(&i_context), &vop::changed_cb);
+			i_context.register_interest(node, &vop::changed_cb);
 		}
 
 		int ninputs = node->nInputs();
