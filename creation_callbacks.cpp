@@ -154,11 +154,7 @@ namespace
 			instance of the callback remains connected.
 		*/
 		interests_mutex.lock();
-		obj_node_interests.push_back(
-			safe_interest(
-					&i_obj_manager,
-					nullptr,
-					&obj_node_cb));
+		obj_node_interests.emplace_back(&i_obj_manager, nullptr, &obj_node_cb);
 		interests_mutex.unlock();
 	}
 
@@ -210,11 +206,7 @@ namespace
 		*/
 		interests_mutex.lock();
 
-		manager_interests.push_back(
-			safe_interest(
-					&i_manager,
-					nullptr,
-					&manager_cb));
+		manager_interests.emplace_back(&i_manager, nullptr, &manager_cb);
 
 		/*
 			Strangely (but, sadly, not surprisingly), manager_cb is called twice
