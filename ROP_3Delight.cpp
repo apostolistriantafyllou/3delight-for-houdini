@@ -869,7 +869,7 @@ void ROP_3Delight::changed_cb(
 void ROP_3Delight::ExportTransparentSurface(const context& i_ctx) const
 {
 	std::string shaderHandle = exporter::transparent_surface_handle();
-	shaderHandle =+ "|shader";
+	shaderHandle += "|shader";
 
 	NSI::Context& nsi = i_ctx.m_nsi;
 	nsi.Create(exporter::transparent_surface_handle(), "attributes");
