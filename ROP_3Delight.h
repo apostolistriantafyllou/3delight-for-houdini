@@ -119,7 +119,7 @@ private:
 
 	void ExportTransparentSurface(const context& i_ctx) const;
 	std::string AtmosphereAttributesHandle() const;
-	void ExportAtmosphere(const context& i_ctx)const;
+	void ExportAtmosphere(const context& i_ctx);
 	void ExportOutputs(const context& i_ctx)const;
 	void ExportOneOutputLayer(
 		const context& i_ctx,

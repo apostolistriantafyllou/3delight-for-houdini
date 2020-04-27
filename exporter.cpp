@@ -243,6 +243,12 @@ std::string exporter::absolute_path(
 VOP_Node *exporter::resolve_material_path(
 	OP_Node *i_node, const char *i_path,  std::string &o_path )
 {
+	if(!i_path || !i_path[0])
+	{
+		o_path.clear();
+		return nullptr;
+	}
+	
 	OP_Node* op_node = OPgetDirector()->findNode( i_path );
 	VOP_Node *vop_node = nullptr;
 
@@ -257,6 +263,7 @@ VOP_Node *exporter::resolve_material_path(
 		vop_node = i_node->findVOPNode( i_path );
 		if( !vop_node )
 		{
+			o_path.clear();
 			return nullptr;
 		}
 	}

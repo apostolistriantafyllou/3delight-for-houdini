@@ -859,21 +859,19 @@ ROP_3Delight::AtmosphereAttributesHandle() const
 }
 
 void
-ROP_3Delight::ExportAtmosphere(const context& i_ctx)const
+ROP_3Delight::ExportAtmosphere(const context& i_ctx)
 {
-	std::string atmHandle = m_settings.GetAtmosphere().toStdString();
-
-	if (atmHandle.length() == 0) return;
-
-	// This is the shader handle which has been created elsewhere
-	std::string shaderHandle = atmHandle;
-
-	// Test if the node still exist
-	OP_Node* op_node = OPgetDirector()->findNode(shaderHandle.c_str());
-	if (!op_node)
+	std::string shaderHandle;
+	VOP_Node* atmo_vop =
+		exporter::resolve_material_path(
+			this,
+			m_settings.GetAtmosphere().c_str(),
+			shaderHandle);
+	
+	if(!atmo_vop)
 		return;
 
-	atmHandle += "_environment";
+	std::string atmHandle = shaderHandle + "|_environment";
 
 	i_ctx.m_nsi.Create( atmHandle, "environment" );
 	i_ctx.m_nsi.Connect( atmHandle, "", NSI_SCENE_ROOT, "objects" );
