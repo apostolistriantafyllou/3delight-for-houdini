@@ -479,18 +479,21 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 	// Debug
 
 	static PRM_Name hdk_version("hdk_version", "Built with HDK " SYS_VERSION_MAJOR "." SYS_VERSION_MINOR "." SYS_VERSION_BUILD "." SYS_VERSION_PATCH);
-	NSI::DynamicAPI api;
-	const char* (*get_dl_version)();
-	api.LoadFunction(get_dl_version, "DlGetLibNameAndVersionString");
 	static std::string dl_version_str;
-
-	if( get_dl_version )
+	if(dl_version_str.empty())
 	{
-		dl_version_str = std::string("Rendering with ") + get_dl_version();
-	}
-	else
-	{
-		dl_version_str = "** Installation error: unable to load 3Delight NSI library **";
+		NSI::DynamicAPI api;
+		const char* (*get_dl_version)();
+		api.LoadFunction(get_dl_version, "DlGetLibNameAndVersionString");
+		if( get_dl_version )
+		{
+			dl_version_str = std::string("Rendering with ") + get_dl_version();
+		}
+		else
+		{
+			dl_version_str =
+				"** Installation error: unable to load 3Delight NSI library **";
+		}
 	}
 
 	static PRM_Name dl_version("dl_version", dl_version_str.c_str());
