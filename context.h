@@ -158,7 +158,8 @@ public:
 
 	/** files to be deleted at render end. */
 	mutable std::vector< std::string > m_temp_filenames;
-	
+
+private:
 	/*
 		List of interests (callbacks) created in IPR mode.
 		We don't use a vector because there might be a lot of items (1 or 2 per
