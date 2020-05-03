@@ -96,14 +96,8 @@ void light::create_geometry( void ) const
 	int type = m_object->evalInt( "light_type", 0, time );
 	int is_spot = m_object->evalInt( "coneenable", 0, time );
 
-	float x_size = 1.0f;
-	float y_size = 1.0f;
-	if(!is_spot && (type == e_grid || type == e_tube || type == e_geometry))
-	{
-		x_size = m_object->evalFloat( "areasize", 0, time );
-		y_size = m_object->evalFloat( "areasize", 1, time );
-	}
-
+	float x_size = m_object->evalFloat( "areasize", 0, time );
+	float y_size = m_object->evalFloat( "areasize", 1, time );
 
 	if( type == e_grid || is_spot )
 	{
@@ -140,11 +134,6 @@ void light::create_geometry( void ) const
 	}
 	else if( type == e_point || type == e_disk || type == e_sphere )
 	{
-		/*
-			FIXME : scale disk with (x_size, y_size) and sphere with
-			(x_size, y_size, x_size).
-		*/
-
 		NSI::ArgumentList args;
 		float P[3] = { 0.0f, 0.0f, 0.0f };
 		float N[3] = { 0.0f, 0.0f, -1.0f }; // for disks
@@ -167,6 +156,36 @@ void light::create_geometry( void ) const
 			args.push( NSI::Argument::New( "N" )
 				->SetType( NSITypeNormal )
 				->SetValuePointer( &N[0] ) );
+		}
+
+		/*
+			Scale sphere and disk using a matrix.
+		*/
+		if( type == e_disk )
+		{
+			double m[16] =
+			{
+				x_size, 0, 0, 0,
+				0, y_size, 0, 0,
+				0, 0, 1, 0,
+				0, 0, 0, 1
+			};
+			m_nsi.SetAttributeAtTime(
+				m_handle, time,
+				NSI::DoubleMatrixArg( "transformationmatrix", m) );
+		}
+		else if( type == e_sphere )
+		{
+			double m[16] =
+			{
+				x_size, 0, 0, 0,
+				0, y_size, 0, 0,
+				0, 0, x_size, 0,
+				0, 0, 0, 1.0
+			};
+			m_nsi.SetAttributeAtTime(
+				m_handle, time,
+				NSI::DoubleMatrixArg( "transformationmatrix",m) );
 		}
 
 		m_nsi.Create( geo_name, "particles" );
