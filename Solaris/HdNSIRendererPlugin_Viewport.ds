@@ -1,0 +1,49 @@
+{
+    name        "nsi"
+    label       "NSI"
+    parmtag     { spare_opfilter        "!!SHOP/PROPERTIES!!" }
+    parmtag     { spare_classtags       "render" }
+
+/* Shading Samples */
+    parm {
+        name    "xn__nsiglobalshadingsamples_gebg"
+        label   "Shading Samples"
+        type    int
+        size    1
+        parmtag { "spare_category" "Quality" }
+        parmtag { "uiscope" "viewport" }
+        parmtag { "usdvaluetype" "int" }
+        default { 64 }
+        range { 1! 400 }
+        help "Quality of surface shading."
+    }
+
+/* Pixel Samples */
+    parm {
+        name    "xn__nsiglobalpixelsamples_69ag"
+        label   "Pixel Samples"
+        type    int
+        size    1
+        parmtag { "spare_category" "Quality" }
+        parmtag { "uiscope" "viewport" }
+        parmtag { "usdvaluetype" "int" }
+        default { 64 }
+        range { 1! 100 }
+        help "Quality of anti-aliasing, depth of field, motion blur."
+    }
+
+/* Volume Samples */
+    parm {
+        name    "xn__nsiglobalvolumesamples_tcbg"
+        label   "Volume Samples"
+        type    int
+        size    1
+        parmtag { "spare_category" "Quality" }
+        parmtag { "uiscope" "viewport" }
+        parmtag { "usdvaluetype" "int" }
+        default { 64 }
+        range { 1! 400 }
+        help "Quality of volumes."
+    }
+}
+// vim: set softtabstop=4 expandtab shiftwidth=4:
