@@ -9,6 +9,9 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 	set(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT FALSE)
 endif()
 
+# Shut up 'Up-to-date' install messages.
+set(CMAKE_INSTALL_MESSAGE LAZY)
+
 # Locate Houdini's libraries and header files.
 # Registers an imported library target named 'Houdini'.
 list( APPEND CMAKE_PREFIX_PATH "$ENV{HFS}/toolkit/cmake" )
