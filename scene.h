@@ -9,6 +9,7 @@ class SOP_Node;
 class UT_String;
 class VOP_Node;
 class OP_BundlePattern;
+struct object_visibility_resolver;
 
 namespace NSI { class Context; }
 
@@ -44,7 +45,9 @@ public:
 	/**
 		\brief Find the bind export nodes that can produce custom AOVs
 	*/
-	static void find_custom_aovs( std::vector<VOP_Node*>& o_custom_aovs );
+	static void find_custom_aovs(
+		const object_visibility_resolver &,
+		std::vector<VOP_Node*>& o_custom_aovs );
 
 private:
 	static void obj_scan(
@@ -54,6 +57,11 @@ private:
 	static void vop_scan(
 		const context &i_context,
 		std::vector< exporter * > &o_to_export );
+
+	static void get_material_vops(
+		const std::unordered_set<std::string>& i_materials,
+		std::vector<VOP_Node*> &o_vops );
+
 	static void create_materials_exporters(
 		const std::unordered_set<std::string>& i_materials,
 		const context &i_context,

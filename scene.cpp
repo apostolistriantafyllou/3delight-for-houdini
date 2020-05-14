@@ -178,25 +178,22 @@ void scene::vop_scan(
 	}
 
 	create_materials_exporters( materials, i_context, io_to_export );
-	
+
 	/* Deal with atmosphere */
 	create_atmosphere_shader_exporter( i_context, io_to_export );
 }
 
 /**
-	\brief Creates the exporters for all shaders node required by each material.
-	
+	\brief Returns all the vops traversed by a set of materials
+
 	\param i_materials
-		List of materials paths for which to create exporters.
-	\param i_context
-		Current rendering context.
-	\param io_to_export
-		New exporters will be appended here.
+		List of materials paths to explore for VOPs
+	\param o_vops
+		VOPs poduced during scan
 */
-void scene::create_materials_exporters(
+void scene::get_material_vops(
 	const std::unordered_set<std::string>& i_materials,
-	const context &i_context,
-	std::vector<exporter *> &io_to_export )
+	std::vector<VOP_Node*> &o_vops )
 {
 	std::unordered_set<VOP_Node *> vops;
 	for( const auto &M : i_materials )
@@ -229,11 +226,7 @@ void scene::create_materials_exporters(
 
 		vops.insert( node );
 
-		io_to_export.push_back( new vop(i_context, node) );
-		if(i_context.m_ipr)
-		{
-			i_context.register_interest(node, &vop::changed_cb);
-		}
+		o_vops.push_back( node );
 
 		int ninputs = node->nInputs();
 		for( int i = 0; i < ninputs; i++ )
@@ -243,6 +236,35 @@ void scene::create_materials_exporters(
 				continue;
 			traversal.push_back( input );
 		}
+	}
+}
+
+/**
+	\brief Creates the exporters for all shaders node required by each material.
+
+	\param i_materials
+		List of materials paths for which to create exporters.
+	\param i_context
+		Current rendering context.
+	\param io_to_export
+		New exporters will be appended here.
+*/
+void scene::create_materials_exporters(
+	const std::unordered_set<std::string>& i_materials,
+	const context &i_context,
+	std::vector<exporter *> &io_to_export )
+{
+	std::vector<VOP_Node *> vops;
+	get_material_vops( i_materials, vops );
+
+	for( auto &V : vops )
+	{
+		if(i_context.m_ipr)
+		{
+			i_context.register_interest(V, &vop::changed_cb);
+		}
+
+		io_to_export.push_back( new vop(i_context,V) );
 	}
 }
 
@@ -326,7 +348,7 @@ void scene::obj_scan(
 
 /**
 	\brief Export instanced objects that might have been skipped because
-	of visiblity.
+	of visibility.
 */
 void scene::scan_for_instanced(
 	const context &i_context,
@@ -578,14 +600,17 @@ void scene::find_lights(
 	}
 }
 
-void scene::find_custom_aovs( std::vector<VOP_Node*>& o_custom_aovs )
+void scene::find_custom_aovs(
+	const object_visibility_resolver &i_resolver,
+	std::vector<VOP_Node*>& o_custom_aovs )
 {
 	/* A traversal stack to avoid recursion */
 	std::vector< OP_Node * > traversal;
 
 	OP_Node *our_dear_leader = OPgetDirector();
-	traversal.push_back( our_dear_leader->findNode( "/mat") );
 	traversal.push_back( our_dear_leader->findNode( "/obj") );
+
+	std::unordered_set< std::string > materials;
 
 	while( traversal.size() )
 	{
@@ -598,10 +623,19 @@ void scene::find_custom_aovs( std::vector<VOP_Node*>& o_custom_aovs )
 		for( int i=0; i< nkids; i++ )
 		{
 			OP_Node *node = network->getChild(i);
-			VOP_Node *vop_node = node->castToVOPNode();
-			if( vop_node && vop::is_aov_definition(vop_node) )
+			OBJ_Node *obj_node = node->castToOBJNode();
+
+			if( !obj_node || !i_resolver.object_displayed(*obj_node) )
 			{
-				o_custom_aovs.push_back(vop_node);
+				continue;
+			}
+
+			OP_Node* material =
+				obj_node->getMaterialNode(i_resolver.m_current_time);
+
+			if( material )
+			{
+				materials.insert( material->getFullPath().toStdString() );
 			}
 
 			if( !node->isNetwork() )
@@ -613,6 +647,15 @@ void scene::find_custom_aovs( std::vector<VOP_Node*>& o_custom_aovs )
 				traversal.push_back( kidnet );
 			}
 		}
+	}
+
+	std::vector< VOP_Node * > vops;
+	get_material_vops( materials, vops );
+
+	for( auto vop : vops )
+	{
+		if( vop::is_aov_definition(vop) )
+			o_custom_aovs.push_back( vop );
 	}
 }
 
@@ -676,7 +719,7 @@ void scene::export_light_categories(
 		if(io_lights_to_render.empty())
 		{
 			find_lights(
-				i_context.m_lights_to_render_pattern,
+				i_context.m_object_visibility_resolver.m_lights_to_render_pattern,
 				i_context.m_rop_path.c_str(),
 				false,
 				io_lights_to_render);

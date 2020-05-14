@@ -6,6 +6,7 @@
 #include "exporter.h"
 #include "idisplay_port.h"
 #include "object_attributes.h"
+#include "object_visibility_resolver.h"
 #include "scene.h"
 #include "shader_library.h"
 #include "vdb.h"
@@ -176,9 +177,6 @@ ROP_3Delight::~ROP_3Delight()
 void ROP_3Delight::onCreated()
 {
 	ROP_Node::onCreated();
-	std::vector<VOP_Node*> custom_aovs;
-	scene::find_custom_aovs(custom_aovs);
-	aov::updateCustomVariables(custom_aovs);
 }
 
 void ROP_3Delight::StartRenderFromIDisplay(
@@ -436,6 +434,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 			settings::k_rm_live_render;
 
 	m_current_render = new context(
+		m_settings,
 		m_nsi,
 		m_static_nsi,
 		tstart,
@@ -447,11 +446,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		ipr,
 		!render,
 		m_cloud,
-		getFullPath().toStdString(),
-		m_settings.OverrideDisplayFlags(),
-		m_settings.GetObjectsToRender(),
-		m_settings.GetLightsToRender(),
-		m_settings.get_matte_objects() );
+		getFullPath().toStdString() );
 
 	m_end_time = tend;
 

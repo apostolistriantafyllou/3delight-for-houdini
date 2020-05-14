@@ -53,6 +53,7 @@ add_library( ${library_name} SHARED
 	primitive.cpp
 	null.cpp
 	object_attributes.cpp
+	object_visibility_resolver.cpp
 	osl_utilities.cpp
 	plugin.cpp
 	safe_interest.cpp

@@ -42,6 +42,11 @@ public:
 		void* data, int index, fpreal t,
 		const PRM_Template* tplate);
 
+	UT_String GetObjectsToRender() const;
+	UT_String GetLightsToRender() const;
+	UT_String get_matte_objects( void ) const;
+	bool OverrideDisplayFlags()const;
+
 public:
 
 	static const char* k_rendering;
@@ -99,11 +104,7 @@ private:
 	void GetLights(std::vector<OBJ_Node*>& o_lights) const;
 
 	UT_String GetAtmosphere() const;
-	bool OverrideDisplayFlags()const;
 	bool EnableMultiLight()const;
-	UT_String GetObjectsToRender() const;
-	UT_String GetLightsToRender() const;
-	UT_String get_matte_objects( void ) const;
 	UT_String get_render_mode()const;
 
 	/// Called when the Abort button is pressed

@@ -3,6 +3,7 @@
 #include "select_layers_dialog.h"
 #include "../scene.h"
 #include "../ROP_3Delight.h"
+#include "../object_visibility_resolver.h"
 
 #include "delight.h"
 #include "nsi_dynamic.hpp"
@@ -764,13 +765,18 @@ int settings::add_layer_cb(
 	void* data, int index, fpreal t,
 	const PRM_Template* tplate)
 {
+	ROP_3Delight *node = reinterpret_cast<ROP_3Delight*>(data);
+
 	std::vector<VOP_Node*> custom_aovs;
-	scene::find_custom_aovs(custom_aovs);
+	object_visibility_resolver resolver(
+		node->getFullPath().toStdString(), node->m_settings, t );
+
+	scene::find_custom_aovs( resolver, custom_aovs );
 	aov::updateCustomVariables(custom_aovs);
 
 	delete sm_dialog;
 	sm_dialog = new SelectLayersDialog();
-	if (!sm_dialog->open(reinterpret_cast<ROP_Node*>(data), custom_aovs))
+	if (!sm_dialog->open( node, custom_aovs))
 	{
 		fprintf(
 			stderr,

@@ -1,10 +1,10 @@
 #pragma once
 
 #include "safe_interest.h"
+#include "object_visibility_resolver.h"
 
 #include <nsi.hpp>
 
-#include <OP/OP_BundlePattern.h>
 #include <SYS/SYS_Types.h>
 #include <UT/UT_TempFileManager.h>
 
@@ -14,6 +14,7 @@
 #include <vector>
 
 class OBJ_Node;
+class ROP_3Delight;
 
 /**
 	\brief An export context passed around to each exporter. Allows us
@@ -25,6 +26,7 @@ class context
 {
 public:
 	context(
+		const settings &i_settings,
 		NSI::Context &i_nsi,
 		NSI::Context &i_static_nsi,
 		fpreal i_start_time,
@@ -36,11 +38,7 @@ public:
 		bool i_ipr,
 		bool i_export_nsi,
 		bool i_cloud,
-		const std::string& i_rop_path,
-		bool i_override_display_flags,
-		const UT_String& i_objects_to_render,
-		const UT_String& i_lights_to_render,
-		const UT_String& i_matte_objects )
+		const std::string& i_rop_path)
 	:
 		m_nsi(i_nsi),
 		m_static_nsi(i_static_nsi),
@@ -55,29 +53,13 @@ public:
 		m_export_nsi(i_export_nsi),
 		m_cloud(i_cloud),
 		m_rop_path(i_rop_path),
-		m_objects_to_render_pattern(
-			i_override_display_flags
-			? OP_BundlePattern::allocPattern(i_objects_to_render)
-			: nullptr),
-		m_lights_to_render_pattern(
-			i_override_display_flags
-			? OP_BundlePattern::allocPattern(i_lights_to_render)
-			: nullptr),
-		m_mattes_pattern( OP_BundlePattern::allocPattern(i_matte_objects) )
+		m_object_visibility_resolver(i_rop_path, i_settings, i_start_time)
 	{
 		assert(!m_ipr || !m_export_nsi);
 	}
 
 	~context()
 	{
-		if( m_lights_to_render_pattern &&
-			m_objects_to_render_pattern &&
-			m_mattes_pattern )
-		{
-			OP_BundlePattern::freePattern(m_lights_to_render_pattern);
-			OP_BundlePattern::freePattern(m_objects_to_render_pattern);
-			OP_BundlePattern::freePattern(m_mattes_pattern);
-		}
 
 		for( const auto &f : m_temp_filenames )
 		{
@@ -148,16 +130,10 @@ public:
 	// Full path of the 3Delight ROP from where rendering originates
 	std::string m_rop_path;
 
-	// Objects export filter
-	OP_BundlePattern* m_objects_to_render_pattern;
-	// Lights export filter
-	OP_BundlePattern* m_lights_to_render_pattern;
-
-	/** All these objects will be tagged as matte */
-	OP_BundlePattern* m_mattes_pattern;
-
 	/** files to be deleted at render end. */
 	mutable std::vector< std::string > m_temp_filenames;
+
+	object_visibility_resolver m_object_visibility_resolver;
 
 private:
 	/*
