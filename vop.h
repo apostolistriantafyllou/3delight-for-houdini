@@ -58,8 +58,6 @@ public:
 		OP_EventType i_type,
 		void* i_data);
 
-	VOP_Node *vop_node( void ) { return  m_vop; }
-
 protected:
 	/**
 		Set all parameters of 'i_shader' by finding their values pairs
