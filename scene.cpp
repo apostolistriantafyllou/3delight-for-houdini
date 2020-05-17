@@ -32,8 +32,13 @@
 /**
 	\brief Decide what to do with the given OP_Node.
 
-	\param i_check_visibility
-		= true if must check Display flag / Objects to Render.
+	\param i_re_export_instanced.
+		= true if this run is for re exporting and instanced object that was
+		ignored beause it was invisible. We find out about such objects later
+		in the pipeline. When re-exportig, we don't check Display flag /
+		Objects to Render (as this would return 'false') and we don't need
+		to exprt the NULL transform at the top because it has alredy been
+		exported in the first run. \ref scan_for_instanced
 
 	Houdini's OBJ nodes will correspond to NSI transform. So we insert
 	a null exported for each one of these.
@@ -45,15 +50,19 @@
 void scene::process_obj_node(
 	const context &i_context,
 	OBJ_Node *obj,
-	bool i_check_visibility,
+	bool i_re_export_instanced,
 	std::vector<exporter *> &o_to_export )
 {
 	/*
-		Each object is its own null transform. Note that this null transform
-		is *needed* if object is invisible because it could potentially have
-		visible children.
+		Each object is its own null transform. When re-exporting an invisible
+		object that was tgged as an instance, we don't need to output the
+		null exported as it is already present since the first scene
+		scan.
 	*/
-	o_to_export.push_back( new null(i_context, obj) );
+	if( !i_re_export_instanced )
+	{
+		o_to_export.push_back( new null(i_context, obj) );
+	}
 
 	if(i_context.m_ipr)
 	{
@@ -65,9 +74,11 @@ void scene::process_obj_node(
 		return;
 	}
 
+	bool check_visibility = !i_re_export_instanced;
+
 	if( obj->castToOBJLight() )
 	{
-		if(!i_check_visibility || i_context.object_displayed(*obj) )
+		if(!check_visibility || i_context.object_displayed(*obj) )
 		{
 			o_to_export.push_back( new light(i_context, obj) );
 		}
@@ -94,7 +105,7 @@ void scene::process_obj_node(
 		return;
 	}
 
-	bool visible = !i_check_visibility || i_context.object_displayed(*obj);
+	bool visible = !check_visibility || i_context.object_displayed(*obj);
 
 	/*
 		Check for special node IncandescenceLight.
@@ -338,7 +349,7 @@ void scene::obj_scan(
 
 			if( obj )
 			{
-				process_obj_node( i_context, obj, true, o_to_export );
+				process_obj_node( i_context, obj, false, o_to_export );
 			}
 
 			traversal.push_back( node );
@@ -408,14 +419,14 @@ void scene::scan_for_instanced(
 		if( !o )
 			continue;
 
-		int s = io_to_export.size(); assert( s>0 );
-		process_obj_node( i_context, o, false, io_to_export );
+		process_obj_node(
+			i_context, o, true /* re-export instance */, io_to_export );
 
 		/*
 		   Finally, make sure we don't render the source geometry as its
 		   only rendered through instancing.
 		*/
-		for( int i=s-1; i<io_to_export.size(); i++ )
+		for( int i=0; i<io_to_export.size(); i++ )
 		{
 			if( io_to_export[i]->handle() == E )
 				io_to_export[i]->set_as_instanced();

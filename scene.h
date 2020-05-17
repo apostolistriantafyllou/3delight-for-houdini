@@ -81,7 +81,7 @@ private:
 	static void process_obj_node(
 		const context &i_context,
 		OBJ_Node *,
-		bool i_check_visibility,
+		bool i_re_export_instanced,
 		std::vector<exporter *> &o_to_export );
 
 	/**
