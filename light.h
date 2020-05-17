@@ -40,6 +40,12 @@ public:
 		OP_EventType i_type,
 		void* i_data);
 
+	/**
+		Returns object path of the geometry. If this light is not a geo,
+		this will return an empty string.
+	*/
+	std::string get_geometry_path( void ) const;
+
 private:
 
 	/// Exports time-dependent attributes to NSI

@@ -271,15 +271,20 @@ void light::create_geometry( void ) const
 			geo_name,
 			NSI::DoubleMatrixArg("transformationmatrix", scale));
 
-		/*
-			Simply connect to the named geo, welcome to NSI!
-			FIXME: support "intothisobject"
-		*/
 		OBJ_Node* obj_node = OPgetDirector()->findOBJNode(path);
 		if(obj_node)
 		{
-			m_nsi.Connect(
-				obj_node->getFullPath().toStdString(), "", geo_name, "objects");
+			std::string model = obj_node->getFullPath().toStdString();
+			if( !m_object->evalInt("intothisobject", 0, time) )
+			{
+				/*
+				   Skip the transform and connect directly to the geo whic
+				   is prefixed with "|hub"
+				*/
+				model += "|hub";
+			}
+
+			m_nsi.Connect( model, "", geo_name, "objects");
 		}
 	}
 
@@ -459,3 +464,17 @@ void light::set_visibility_to_camera()const
 	m_nsi.SetAttribute(
 		attributes_handle(), NSI::IntegerArg("visibility.camera", cam_vis));
 }
+
+std::string light::get_geometry_path( void ) const
+{
+	fpreal time = m_context.m_current_time;
+	int type = m_object->evalInt( "light_type", 0, time );
+	if( type != e_geometry )
+		return {};
+
+	UT_String path;
+	m_object->evalString(path, "areageometry", 0, time);
+
+	return path.toStdString();
+}
+

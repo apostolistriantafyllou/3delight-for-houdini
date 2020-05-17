@@ -370,18 +370,30 @@ void scene::scan_for_instanced(
 	/*
 		For each geometry, gather its instances and from there
 		gather the instanced geometries.
+
+		Note that light sources could also have an instanced
+		geometry as they can reference a geometry object.
 	*/
 	for( const auto &E : io_to_export )
 	{
+		light *L = nullptr;
 		geometry *G = dynamic_cast<geometry *>( E );
-		if( !G )
-			continue;
 
-		std::vector< const instance * > instances;
-		G->get_instances( instances );
+		if( G )
+		{
+			std::vector< const instance * > instances;
+			G->get_instances( instances );
 
-		for( auto I : instances )
-			I->get_instanced( instanced );
+			for( auto I : instances )
+				I->get_instanced( instanced );
+		}
+		else if( (L=dynamic_cast<light *>(E)) )
+		{
+			std::string geo = L->get_geometry_path();
+
+			if( !geo.empty() )
+				instanced.insert( geo );
+		}
 	}
 
 	if( instanced.empty() )
