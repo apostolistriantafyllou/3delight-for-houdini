@@ -203,7 +203,8 @@ void shader_library::find_all_shaders( const char *i_root)
 		"dlLayeredMaterial",
 		"vdbVolume",
 		"transparent",
-		"dlSolidRamp"
+		"dlSolidRamp",
+		"dlFloatToUV"
 	};
 
 	m_shaders.emplace_back("3Delight", "3Delight");
