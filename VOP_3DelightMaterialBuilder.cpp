@@ -71,12 +71,28 @@ VOP_3DelightMaterialBuilder::getNumVisibleInputs() const
 }
 
 /**
-	We loop through all the nodes in the material builder and just take
-	the first material we get.
+	First try to find a Terminal node. And get the surface shader from
+	there.
+
+	If none found, loop through all the nodes in the material builder and just
+	take the first material we get.
 */
 VOP_Node* VOP_3DelightMaterialBuilder::get_material()
 {
 	int nkids = getNchildren();
+
+	VOP_Node *terminal = nullptr;
+	for( int i=0; i<nkids; i++ )
+	{
+		VOP_Node *mat = CAST_VOPNODE(getChild(i) );
+
+		if( mat &&
+			mat->getOperator()->getName().toStdString() ==
+				"3Delight::dlTerminal" )
+		{
+			return mat;
+		}
+	}
 
 	for( int i=0; i<nkids; i++ )
 	{
