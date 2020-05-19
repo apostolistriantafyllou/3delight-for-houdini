@@ -307,7 +307,8 @@ void shader_library::remove_useless_maya_shaders(
 			shader_name == "shader3DelightAtmosphere.oso" ||
 			shader_name == "displacementShader.oso" ||
 			shader_name == "delightEnvironment.oso" ||
-			shader_name == "texture3DelightSky.oso";
+			shader_name == "texture3DelightSky.oso" ||
+			shader_name == "ocean.oso";
 
 		if( useless )
 		{
