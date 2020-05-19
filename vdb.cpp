@@ -67,7 +67,7 @@ void vdb::set_attributes( void ) const
 	}
 
 	int num_grids = 0;
-	const char *const *grid_names;
+	const char *const *grid_names = nullptr;
 	if( !vdb_grids( m_vdb_file.c_str(), &num_grids, &grid_names) ||
 		num_grids==0 ||
 		!grid_names )
@@ -95,7 +95,13 @@ void vdb::set_attributes( void ) const
 	double velocity_scale = 1.0;
 
 	double time = m_context.m_current_time;
-	OP_Node* material = m_object->getMaterialNode(time);
+	OP_Node* op = m_object->getMaterialNode(time);
+
+	std::string resolved;
+	VOP_Node *material = op ?
+		resolve_material_path( op->getFullPath().c_str(), resolved ) :
+		nullptr;
+
 	if(material)
 	{
 		using namespace VolumeGridParameters;
@@ -132,27 +138,27 @@ void vdb::set_attributes( void ) const
 	{
 		std::string grid( grid_names[i] ? grid_names[i] : "" );
 
-		if( grid == density_grid.c_str() )
+		if( grid == density_grid.toStdString() )
 		{
 			arguments.Add( new NSI::StringArg("densitygrid", grid) );
 		}
 
-		if( grid == color_grid.c_str() )
+		if( grid == color_grid.toStdString() )
 		{
 			arguments.Add( new NSI::StringArg( "colorgrid", grid) );
 		}
 
-		if( grid == temperature_grid.c_str() )
+		if( grid == temperature_grid.toStdString() )
 		{
 			arguments.Add( new NSI::StringArg( "temperaturegrid", grid) );
 		}
 
-		if( grid == emissionintensity_grid.c_str() )
+		if( grid == emissionintensity_grid.toStdString() )
 		{
 			arguments.Add( new NSI::StringArg( "emissionintensitygrid", grid) );
 		}
 
-		if( grid == velocity_grid.c_str() )
+		if( grid == velocity_grid.toStdString() )
 		{
 			arguments.Add( new NSI::StringArg( "velocitygrid", grid) );
 		}
