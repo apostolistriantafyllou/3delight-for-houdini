@@ -467,6 +467,9 @@ void light::set_visibility_to_camera()const
 
 std::string light::get_geometry_path( void ) const
 {
+	if( m_is_env_light )
+		return {};
+
 	fpreal time = m_context.m_current_time;
 	int type = m_object->evalInt( "light_type", 0, time );
 	if( type != e_geometry )
