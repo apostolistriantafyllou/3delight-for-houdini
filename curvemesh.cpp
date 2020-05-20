@@ -15,8 +15,13 @@ curvemesh::curvemesh(
 	double i_time,
 	const GT_PrimitiveHandle &i_gt_primitive,
 	unsigned i_primitive_index )
-:
-	primitive( i_ctx, i_object, i_time, i_gt_primitive, i_primitive_index )
+	:	primitive(
+			i_ctx,
+			i_object,
+			i_time,
+			i_gt_primitive,
+			i_primitive_index,
+			has_velocity(i_gt_primitive))
 {
 }
 
@@ -90,17 +95,50 @@ void curvemesh::set_attributes( void ) const
 		m_nsi.SetAttribute( m_handle, NSI::CStringPArg("basis", "linear") );
 	}
 
-	primitive::set_attributes();
+	/*
+		If the curves mesh is not motion-blurred (ie : it needs only one time
+		sample or if it has no velocity attribute) we simply output the
+		attributes' values at each time sample. When there is no motion blur,
+		it's simpler this way. However, we generally try to implement motion 
+		blur using the velocity attribute, in Houdini (mostly because particles
+		get funky values otherwise).
+	*/
+	if(!requires_frame_aligned_sample() ||
+		time_sampler(
+			m_context,
+			*m_object, time_sampler::e_deformation).nb_samples() <= 1 ||
+		!export_extrapolated_P())
+	{
+		// Export attributes at each time sample
+		primitive::set_attributes();
+		return;
+	}
+
+	// Export curves widths
+	export_basic_attributes(
+		m_context.m_current_time, default_gt_primitive(),
+		true /* width only */ );
 }
 
 void curvemesh::set_attributes_at_time(
 	double i_time,
 	const GT_PrimitiveHandle i_gt_primitive) const
 {
+	export_basic_attributes(i_time, i_gt_primitive, false);
+}
+
+void curvemesh::export_basic_attributes(
+	double i_time,
+	const GT_PrimitiveHandle i_gt_primitive,
+	bool i_width_only)const
+{
 	const GT_Primitive *curve = i_gt_primitive.get();
 
 	std::vector< std::string > to_export;
-	to_export.push_back("P");
+	if(!i_width_only)
+	{
+		to_export.push_back("P");
+	}
 	to_export.push_back("width");
 
 	export_attributes(to_export, *curve, i_time);
