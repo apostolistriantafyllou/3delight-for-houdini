@@ -81,7 +81,6 @@ VOP_Node* VOP_3DelightMaterialBuilder::get_material()
 {
 	int nkids = getNchildren();
 
-	VOP_Node *terminal = nullptr;
 	for( int i=0; i<nkids; i++ )
 	{
 		VOP_Node *mat = CAST_VOPNODE(getChild(i) );
