@@ -477,6 +477,13 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 		PRM_Template(PRM_LABEL, 0, &overrides_note)
 	};
 
+	// Scripts
+
+	static std::vector<PRM_Template>
+		scripts_templates(
+			&theRopTemplates[ROP_SCRIPT_START_TPLATE],
+			&theRopTemplates[ROP_SCRIPT_END_TPLATE+1]);
+
 	// Debug
 
 	static PRM_Name hdk_version("hdk_version", "Built with HDK " SYS_VERSION_MAJOR "." SYS_VERSION_MINOR "." SYS_VERSION_BUILD "." SYS_VERSION_PATCH);
@@ -514,6 +521,7 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 		PRM_Default(scene_elements_templates.size(), "Scene Elements"),
 		PRM_Default(image_layers_templates.size(), "Image Layers"),
 		PRM_Default(overrides_templates.size(), "Overrides"),
+		PRM_Default(scripts_templates.size(), "Scripts"),
 		PRM_Default(debug_templates.size(), "Debug")
 	};
 
@@ -578,11 +586,18 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 				templates.end(),
 				image_layers_templates.begin(),
 				image_layers_templates.end());
+
 			// Overrides
 			templates.insert(
 				templates.end(),
 				overrides_templates.begin(),
 				overrides_templates.end());
+
+			// Scripts
+			templates.insert(
+				templates.end(),
+				scripts_templates.begin(),
+				scripts_templates.end());
 
 			// Debug
 			templates.insert(
