@@ -774,6 +774,8 @@ ROP_3Delight::endRender()
 		!m_current_render->BackgroundProcessRendering())
 	{
 		delete m_current_render; m_current_render = nullptr;
+		m_rendering = false;
+		m_settings.Rendering(false);
 	}
 	m_render_end_mutex.unlock();
 
