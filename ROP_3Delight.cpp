@@ -500,6 +500,8 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 
 					m_render_end_mutex.lock();
 
+					delete m_current_render; m_current_render = nullptr;
+
 					m_rendering = false;
 
 					// Notify the UI that rendering has stopped
@@ -705,7 +707,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 		/*
 			This will either close the static NSI file context or simply prevent
 			m_static_nsi from keeping a reference to a soon invalid context
-			(depending on wwhether m_static_nsi own its context or not).
+			(depending on whether m_static_nsi owns its context or not).
 		*/
 		m_static_nsi.SetHandle(NSI_BAD_CONTEXT);
 		// Close the main rendering/exporting context
@@ -755,11 +757,18 @@ ROP_3Delight::endRender()
 	}
 
 	/*
-		If we render in a background thread, the interests and rendering context
-		will be destroyed by this thread's stoppedcallback.
+		Destroy the rendering context if rendering/exporting is over.
+		If we render in a background thread, the rendering context will be
+		destroyed by that thread's stoppedcallback.
+		If we render in a separate renderdl process, it will be destroyed by the
+		m_renderdl_waiter thread.
+		So, we actually only destroy it when exporting an NSI file or rendering
+		a single frame in batch mode, which doesn't occur in a separate thread.
 	*/
 	m_render_end_mutex.lock();
-	if(m_current_render && !m_current_render->BackgroundThreadRendering())
+	if(m_current_render &&
+		!m_current_render->BackgroundThreadRendering() &&
+		!m_current_render->BackgroundProcessRendering())
 	{
 		delete m_current_render; m_current_render = nullptr;
 	}
