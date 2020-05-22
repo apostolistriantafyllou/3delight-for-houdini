@@ -529,6 +529,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	else if(m_renderdl)
 	{
 		m_static_nsi_file = UT_TempFileManager::getTempFilename();
+		m_current_render->m_temp_filenames.push_back( m_static_nsi_file );
 	}
 
 	if(error() < UT_ERROR_ABORT)
@@ -561,6 +562,8 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 			separate renderdl process.
 		*/
 		frame_nsi_file = UT_TempFileManager::getTempFilename();
+		m_current_render->m_temp_filenames.push_back( frame_nsi_file );
+
 		InitNSIExport(m_nsi, frame_nsi_file);
 	}
 	else
