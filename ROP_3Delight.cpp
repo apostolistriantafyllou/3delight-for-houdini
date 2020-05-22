@@ -744,6 +744,14 @@ ROP_3Delight::endRender()
 		*/
 		fprintf(m_renderdl->getWriteFile(), "\n");
 		fflush(m_renderdl->getWriteFile());
+
+		// In batch mode, wait for the renderdl process to finish before exiting
+		if(!UTisUIAvailable())
+		{
+			assert(m_renderdl_waiter.joinable());
+			m_renderdl_waiter.join();
+			assert(!m_renderdl);
+		}
 	}
 
 	/*
