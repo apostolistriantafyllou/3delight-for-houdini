@@ -175,12 +175,11 @@ private:
 
 	/**
 		\brief Builds light categories, either a bundle, or a single light.
-		Bundles are created as "set".
+
+		Each category name is retuned with the list of light handles.
 	*/
 	void BuildLightCategories(
-		const context& i_ctx,
-		const std::vector<OBJ_Node*>& i_lights,
-		std::vector<std::string>& o_light_names) const;
+		std::vector< std::pair<std::string, std::vector<std::string>>> &) const;
 
 	bool HasSpeedBoost()const;
 	/// Retrieves the image resolution, scaled by the Speed Boost res factor

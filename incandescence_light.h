@@ -32,17 +32,6 @@ private:
 	/// Computes output color from incandescence parameters
 	void compute_output_color(float o_color[]) const;
 
-	/// Returns the handle of the incandescence's NSI attributes node
-	std::string attributes_handle()const
-	{
-		return m_handle + "|attributes";
-	}
-	/// Returns the handle of the incandescence's NSI set node
-	std::string set_handle()const
-	{
-		return m_handle + "|set";
-	}
-
 	/**
 		We have to keep track of the currently "managed" materials as we have
 		to reset their multipliers to 1 during live operation. When

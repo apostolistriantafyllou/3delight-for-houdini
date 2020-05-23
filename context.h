@@ -101,7 +101,7 @@ public:
 
 	/**
 		\brief Registers a callback to be notified of changes to a node.
-		
+
 		\param i_node
 			Pointer to the node being watched.
 		\param i_cb

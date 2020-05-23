@@ -12,8 +12,7 @@
 #include <assert.h>
 #include <nsi.hpp>
 
-#define NSI_LIGHT_PRIORITY 1
-
+const char* k_incandescence_multiplier = "incandescence_multiplier";
 namespace
 {
 	/**
@@ -38,43 +37,19 @@ incandescence_light::incandescence_light(
 :
 	exporter( i_ctx, i_object )
 {
-	m_handle += "|incandescence_light";
 }
 
+/**
+	We do not create antyhgin for the incandlight. We will be using
+	the parent's handle, which is a null, to connect to
+*/
 void incandescence_light::create() const
 {
-	/* Needed for multi-light layer */
-	std::string set = set_handle();
+	/*
+		This light is  really just a set to connect objecys to.
+	*/
+	std::string set = handle();
 	m_nsi.Create( set, "set" );
-
-	/*
-		Create the attribute node so that we can connect the surface
-		shader used for the light source.
-	*/
-	std::string attributes = attributes_handle();
-	m_nsi.Create( attributes, "attributes" );
-
-	m_nsi.Connect( attributes, "",	set, "geometryattributes" );
-
-	/*
-		All our lights are created invisible to all ray types. Their membership
-		status in the defaultLightSet will override this visibility. The case
-		of the incandescent light is different as it doesn't have "camera"
-		visibility.
-	*/
-	m_nsi.SetAttribute( attributes,
-		(
-			NSI::IntegerArg("visibility.diffuse", 0),
-			NSI::IntegerArg("visibility.diffuse.priority", NSI_LIGHT_PRIORITY),
-			NSI::IntegerArg("visibility.specular", 0),
-			NSI::IntegerArg("visibility.specular.priority", NSI_LIGHT_PRIORITY),
-			NSI::IntegerArg("visibility.reflection", 0),
-			NSI::IntegerArg("visibility.reflection.priority", NSI_LIGHT_PRIORITY),
-			NSI::IntegerArg("visibility.refraction", 0),
-			NSI::IntegerArg("visibility.refraction.priority", NSI_LIGHT_PRIORITY),
-			NSI::IntegerArg("visibility.shadow", 0),
-			NSI::IntegerArg("visibility.shadow.priority", NSI_LIGHT_PRIORITY)
-		) );
 }
 
 void incandescence_light::set_attributes() const
@@ -94,7 +69,6 @@ void incandescence_light::connect() const
 	geo_str.tokenize(obj_paths, ' ');
 
 	const shader_library& library = shader_library::get_instance();
-	const char* incandescence_multiplier = "incandescence_multiplier";
 
 	// Process each obj_path in the selection
 	for(int i = 0; i < obj_paths.getArgc(); i++)
@@ -105,39 +79,36 @@ void incandescence_light::connect() const
 			// Case relative path
 			obj_node = m_object->findOBJNode(obj_paths(i));
 		}
-		if (obj_node)
+		if (!obj_node)
+			continue;
+
+		UT_String mat_path;
+		obj_node->evalString(mat_path, "shop_materialpath", 0, time);
+
+		VOP_Node* vop_node = OPgetDirector()->findVOPNode(mat_path);
+		if (!vop_node)
+			continue;
+
+		OP_Operator* op = vop_node->getOperator();
+		std::string path = library.get_shader_path(op->getName().c_str());
+
+		DlShaderInfo* shader_info = library.get_shader_info( path.c_str() );
+		if( !shader_info )
+			continue;
+
+		// Check if incandescence_multiplier exists in this shader
+		if( ParameterExist(shader_info, k_incandescence_multiplier) )
 		{
-			UT_String mat_path;
-			obj_node->evalString(mat_path, "shop_materialpath", 0, time);
+			m_nsi.SetAttribute(
+				vop_node->getFullPath().toStdString(),
+				NSI::ColorArg(k_incandescence_multiplier,
+					incandescenceColor));
 
-			VOP_Node* vop_node = OPgetDirector()->findVOPNode(mat_path);
-			// Do we got a material node?
-			if (vop_node)
-			{
-				OP_Operator* op = vop_node->getOperator();
-				std::string path =
-					library.get_shader_path(op->getName().c_str());
+			m_current_multipliers.push_back(
+				vop_node->getFullPath().toStdString() );
 
-				DlShaderInfo* shader_info =
-					library.get_shader_info( path.c_str() );
-				if (shader_info)
-				{
-					// Check if incandescence_multiplier exists in this shader
-					if (ParameterExist(shader_info, incandescence_multiplier))
-					{
-						m_nsi.SetAttribute(
-							vop_node->getFullPath().toStdString(),
-							NSI::ColorArg(incandescence_multiplier,
-								incandescenceColor));
-
-						m_current_multipliers.push_back(
-							vop_node->getFullPath().toStdString() );
-
-						m_nsi.Connect( obj_node->getFullPath().c_str(), "",
-										set_handle().c_str(), "objects" );
-					}
-				}
-			}
+			m_nsi.Connect( obj_node->getFullPath().c_str(), "",
+				handle(), "members" );
 		}
 	}
 }
@@ -197,12 +168,12 @@ void incandescence_light::disconnect()const
 		for( const std::string& handle : m_current_multipliers )
 		{
 			m_nsi.SetAttribute(
-				handle.c_str(),
-				NSI::ColorArg("incandescence_multiplier", white));
+				handle,
+				NSI::ColorArg(k_incandescence_multiplier, white));
 		}
 
 		/* This will take care of the Multi-Light output */
-		m_nsi.Disconnect( NSI_ALL_NODES, "", set_handle().c_str(), "objects" );
+		m_nsi.Disconnect( NSI_ALL_NODES, "", handle().c_str(), "objects" );
 
 		m_current_multipliers.clear();
 	}
@@ -212,11 +183,11 @@ void incandescence_light::compute_output_color(float o_color[]) const
 {
 	fpreal time = m_context.m_current_time;
 
-	fpreal color_r = m_object->evalFloat( "color", 0, time );
-	fpreal color_g = m_object->evalFloat( "color", 1, time );
-	fpreal color_b = m_object->evalFloat( "color", 2, time );
+	fpreal color_r = m_object->evalFloat( "light_color", 0, time );
+	fpreal color_g = m_object->evalFloat( "light_color", 1, time );
+	fpreal color_b = m_object->evalFloat( "light_color", 2, time );
 
-	fpreal intensity = m_object->evalFloat( "intensity", 0, time );
+	fpreal intensity = m_object->evalFloat( "light_intensity", 0, time );
 	fpreal exposure = m_object->evalFloat( "exposure", 0, time );
 
 	o_color[0] = color_r * intensity * exp2f(exposure);

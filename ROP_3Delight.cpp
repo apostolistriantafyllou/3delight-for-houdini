@@ -21,7 +21,6 @@
 #include <OP/OP_Director.h>
 #include <OP/OP_OperatorTable.h>
 #include <MOT/MOT_Director.h>
-#include <RE/RE_Light.h>
 #include <ROP/ROP_Templates.h>
 #include <SYS/SYS_Version.h>
 #include <UT/UT_Exit.h>
@@ -1102,14 +1101,15 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	evalString(filter, settings::k_pixel_filter, 0, 0.0f);
 	double filter_width = evalFloat(settings::k_filter_width, 0, 0.0f);
 
-	std::vector<std::string> light_names;
-	light_names.push_back(""); // no light for the first one
-	std::vector<OBJ_Node*> lights;
-	m_settings.GetLights(lights);
-	BuildLightCategories(i_ctx, lights, light_names);
+	std::vector< std::pair<std::string, std::vector<std::string>> >
+		light_categories;
+
+	/* First empty category means ALL lights */
+	light_categories.push_back( {} );
+
+	BuildLightCategories( light_categories );
 
 	bool has_frame_buffer = false;
-
 	for (int i = 0; i < nb_aovs; i++)
 	{
 		UT_String label;
@@ -1157,19 +1157,24 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		unsigned nb_light_categories = 1;
 		if (desc.m_support_multilight)
 		{
-			nb_light_categories = light_names.size();
+			nb_light_categories = light_categories.size();
 		}
 
-		OP_BundleList* blist = OPgetDirector()->getBundles();
-		assert(blist);
+		assert( nb_light_categories>0 );
 
-		for (unsigned j = 0; j < nb_light_categories; j++)
+		int j = -1;
+		for( auto &category : light_categories )
 		{
+			j++;
 			std::string layer_name = prefix;
 			layer_name += "-";
 			layer_name += desc.m_filename_token;
-			layer_name += "-";
-			layer_name += light_names[j];
+
+			if( !category.first.empty() )
+			{
+				layer_name += "-";
+				layer_name += category.first;
+			}
 
 			if (idisplay_output)
 			{
@@ -1182,7 +1187,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					i_ctx.m_nsi.SetAttribute(
 						idisplay_driver_name,
 						(
-							NSI::CStringPArg("drivername", idisplay_driver.c_str()),
+							NSI::StringArg("drivername", idisplay_driver),
 							NSI::StringArg("imagefilename", image_display_name),
 							NSI::CStringPArg("ropname", getFullPath().c_str())
 						) );
@@ -1191,44 +1196,35 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 				ExportOneOutputLayer(
 					i_ctx, layer_name, desc, scalar_format,
 					filter, filter_width,
-					k_screen_name, light_names[j],
+					k_screen_name, category.first,
 					idisplay_driver_name, idisplay_driver.toStdString(),
-					sort_key);
+					sort_key );
 
-				if( !m_current_render->m_export_nsi &&
-					!m_current_render->m_batch )
+				if( m_current_render->m_export_nsi ||
+					m_current_render->m_batch )
 				{
-					/*
-						Only export this for Preview renders.
-					*/
-					// First check if light_name is a bundle
-					OP_Bundle* bundle =
-						blist->getBundle(light_names[j].c_str());
-					if (bundle)
-					{
-						int numNodes = bundle->entries();
-						// Process all lights in this bundle
-						// TODO: revised this for a same light in many bundles
-						for (int k = 0; k < numNodes; k++)
-						{
-							OP_Node* node = bundle->getNode(k);
-							OBJ_Node* obj = node->castToOBJNode();
-							if (obj &&
-								(obj->castToOBJLight() ||
-								 !vdb::node_is_vdb_loader(obj, 0).empty() ||
-								 obj->getOperator()->getName() == "IncandescenceLight"))
-							{
-								ExportLayerFeedbackData(
-									i_ctx, layer_name,
-									obj->getFullPath().toStdString() );
-							}
-						}	
-					}
-					else
+					continue;
+				}
+
+				/*
+					3Delight display's Multi-Light tool needs some information,
+					called "feedback data" to communicate backe the values.
+				*/
+				if( !category.second.empty() )
+				{
+					i_ctx.m_nsi.Create( category.first, "set");
+					for( auto &light_handle : category.second )
 					{
 						ExportLayerFeedbackData(
-							i_ctx, layer_name, light_names[j] );
-					}		
+							i_ctx, layer_name, light_handle );
+						i_ctx.m_nsi.Connect( light_handle, "",
+							category.first, "members" );
+					}
+				}
+				else
+				{
+					ExportLayerFeedbackData(
+						i_ctx, layer_name, category.first );
 				}
 			}
 
@@ -1251,7 +1247,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 				ExportOneOutputLayer(
 					i_ctx, file_layer_name, desc, scalar_format,
 					filter, filter_width,
-					k_screen_name, light_names[j],
+					k_screen_name, category.first,
 					file_driver_name, file_driver.toStdString(),
 					sort_key);
 			}
@@ -1267,7 +1263,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 				UT_String image_png_name;
 				BuildImageUniqueName(
-					image_file_name, light_names[j],
+					image_file_name, category.first,
 					desc.m_filename_token, ".png", image_png_name);
 
 				i_ctx.m_nsi.Create(png_driver_name, "outputdriver");
@@ -1281,7 +1277,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 				ExportOneOutputLayer(
 					i_ctx, png_layer_name, desc, "uint8",
 					filter, filter_width,
-					k_screen_name, light_names[j],
+					k_screen_name, category.first,
 					png_driver_name, png_driver,
 					sort_key);
 			}
@@ -1297,7 +1293,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 				UT_String image_jpeg_name;
 				BuildImageUniqueName(
-					image_file_name, light_names[j],
+					image_file_name, category.first,
 					desc.m_filename_token, ".jpg", image_jpeg_name);
 
 				i_ctx.m_nsi.Create(jpeg_driver_name, "outputdriver");
@@ -1311,7 +1307,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 				ExportOneOutputLayer(
 					i_ctx, jpeg_layer_name, desc, "uint8",
 					filter, filter_width,
-					k_screen_name, light_names[j],
+					k_screen_name, category.first,
 					jpeg_driver_name, jpeg_driver,
 					sort_key);
 			}
@@ -1351,7 +1347,7 @@ ROP_3Delight::ExportOneOutputLayer(
 	const UT_String& i_filter,
 	double i_filter_width,
 	const std::string& i_screen_handle,
-	const std::string& i_light_handle,
+	const std::string& i_light_category,
 	const std::string& i_driver_handle,
 	const std::string& i_driver_name,
 	unsigned& io_sort_key) const
@@ -1428,10 +1424,10 @@ ROP_3Delight::ExportOneOutputLayer(
 		i_layer_handle, "",
 		i_screen_handle, "outputlayers");
 
-	if (!i_light_handle.empty())
+	if (!i_light_category.empty())
 	{
 		i_ctx.m_nsi.Connect(
-			i_light_handle, "", i_layer_handle, "lightset");
+			i_light_category, "", i_layer_handle, "lightset");
 	}
 
 	i_ctx.m_nsi.Connect(
@@ -1505,91 +1501,38 @@ ROP_3Delight::ExportLayerFeedbackData(
 	OBJ_Node* obj_node = OPgetDirector()->findOBJNode(i_light_handle.c_str());
 	assert(obj_node);
 
-	fpreal r, g, b;
-	fpreal dimmer;
-	RE_Light* re_light = 0;
-	OBJ_Light* obj_light = obj_node->castToOBJLight();
-	if (obj_light)
+	if( !obj_node )
+		return;
+
+	fpreal r = 1.0f;
+	fpreal g = 1.0f;
+	fpreal b = 1.0f;
+	fpreal intensity = 1.0f;
+
+	double time = i_ctx.m_current_time;
+	if( obj_node->getParmIndex("light_color")>=0 )
 	{
-		dimmer = obj_light->DIMMER(0);
-		r = obj_light->CR(0);
-		g = obj_light->CG(0);
-		b = obj_light->CB(0);
-		re_light = obj_light->getLightValue();
-		assert(re_light);
-	}
-	else
-	{
-		OBJ_Ambient* obj_ambient = obj_node->castToOBJAmbient();
-		if (obj_ambient)
-		{
-			dimmer = obj_ambient->DIMMER(0);
-			r = obj_ambient->CR(0);
-			g = obj_ambient->CG(0);
-			b = obj_ambient->CB(0);
-			re_light = obj_light->getLightValue();
-			assert(re_light);
-		}
+		r = obj_node->evalFloat( "light_color", 0, time );
+		g = obj_node->evalFloat( "light_color", 1, time );
+		b = obj_node->evalFloat( "light_color", 2, time );
 	}
 
-	if( re_light == 0 )
+	if( obj_node->getParmIndex("light_intensity")>=0 )
 	{
-		i_ctx.m_nsi.SetAttribute( i_layer_handle,
-			(
-				NSI::StringArg( "sourceapp", "Houdini" ),
-				NSI::StringArg( "feedbackhost", host ),
-				NSI::IntegerArg( "feedbackport", port )
-			));
-		return;
+		intensity = obj_node->evalFloat( "light_intensity", 0, time );
 	}
 
 	std::string values;
 	std::stringstream ss1;
-	ss1 << dimmer;
+	ss1 << intensity;
 	values = ss1.str();
 
 	std::string color_values;
 	std::stringstream ss2;
-	ss2 << r;
-	ss2 << ",";
-	ss2 << g;
-	ss2 << ",";
-	ss2 << b;
+	ss2 << r << "," << g << "," << b;
 	color_values = ss2.str();
 
-	RE_Light::RE_HQLightType enum_type = re_light->hqLightType();
-	std::string light_type;
-	switch (enum_type)
-	{
-		case RE_Light::HQLIGHT_AMBIENT:
-			light_type = "ambient";
-			break;
-		case RE_Light::HQLIGHT_DIR:
-			light_type = "directional";
-			break;
-		case RE_Light::HQLIGHT_ENV:
-			light_type = "environment";
-			break;
-		case RE_Light::HQLIGHT_POINT:
-			light_type = "point";
-			break;
-		case RE_Light::HQLIGHT_SPOT:
-			light_type = "spot";
-			break;
-		case RE_Light::HQLIGHT_AREA:
-			light_type = "area";
-			break;
-		case RE_Light::HQLIGHT_AREA_SPOT:
-			light_type = "area spot";
-			break;
-		case RE_Light::NUM_HQLIGHT_TYPES:
-			light_type = "unknown";
-			break;
-		default:
-			light_type = "unknown";
-			break;
-	}
-
+	std::string light_type = "don't care";
 	std::string feedback_data;
 
 	/* Make the feedback message */
@@ -1661,63 +1604,78 @@ ROP_3Delight::BuildImageUniqueName(
 }
 
 /**
-	\brief Output light categories for light bundles.
+	\brief Output light categories for light bundles and single lights.
 
 	We output a light category for each bundle of lights. Lights that are alone
-	will be in their own category.
-
-	We do not enforce
+	will be in their own category. Incandescence lights nd VDBs cannot be but
+	into bundles. Doesn't make sense for Incandescent and 3Delight NSId doesn't
+	support grpouping them yet.
 */
 void ROP_3Delight::BuildLightCategories(
-	const context& i_ctx,
-	const std::vector<OBJ_Node*>& i_lights,
-	std::vector<std::string>& o_light_names ) const
+	std::vector< std::pair<std::string, std::vector<std::string>>> &
+		o_light_categories ) const
 {
-	if (i_lights.empty())
+	std::vector<OBJ_Node*> i_lights;
+	m_settings.GetLights( i_lights );
+
+	if( i_lights.empty() )
 		return;
 
-	// Get all bundles
 	OP_BundleList* blist = OPgetDirector()->getBundles();
 	assert(blist);
 	int numBundles = blist->entries();
 
-	std::set<std::string> bundle_set;
-	std::vector<std::string> single_lights;
+	std::vector<std::string> empty;
+	std::unordered_set<std::string> output_categories;
+
 	for( auto light : i_lights )
 	{
 		bool foundInBundle = false;
-		// Need to scan all bundles (light may be present into more than one)
-		for (int i = 0; i < numBundles; i++)
+		bool incand =
+			light->getOperator()->getName() == "3Delight::IncandescenceLight";
+		bool isvdb = light->castToOBJLight() == nullptr;
+
+		for (int i = 0; !incand && !isvdb && i < numBundles; i++)
 		{
-			OP_Bundle* bundle = blist->getBundle(i);
-			assert(bundle);
-			if (bundle->contains(light, false))
+			OP_Bundle* bundle = blist->getBundle(i); assert(bundle);
+
+			if( bundle && bundle->contains(light, false) )
 			{
-				foundInBundle = true;
-				if (bundle_set.find(bundle->getName()) == bundle_set.end())
+				std::string bundle_name = bundle->getName();
+
+				if( output_categories.find( bundle_name ) ==
+					output_categories.end())
 				{
-					bundle_set.insert(bundle->getName());
-					i_ctx.m_nsi.Create(bundle->getName(), "set");
+					output_categories.insert( bundle_name );
+
+					/* Make a cagtegory for this bundle  */
+					o_light_categories.push_back(
+						std::make_pair(bundle_name, empty) );
 				}
-				i_ctx.m_nsi.Connect(
-					light->getFullPath().toStdString(), "",
-					bundle->getName(), "members");
+
+				/* Insert light in the right category */
+				std::string light_handle = light->getFullPath().toStdString();
+
+				for( auto &C : o_light_categories )
+				{
+					if( C.first == bundle_name )
+					{
+						foundInBundle = true;
+						C.second.push_back( light_handle );
+						break;
+					}
+				}
+
+				assert( foundInBundle = true );
 			}
 		}
-		if (!foundInBundle)
+
+		if( !foundInBundle )
 		{
-			single_lights.push_back(light->getFullPath().toStdString());
+			/* Make a category for this single light */
+			o_light_categories.push_back(
+				std::make_pair(light->getFullPath().toStdString(), empty));
 		}
-	}
-
-	for (auto &bname : bundle_set)
-	{
-		o_light_names.push_back(bname);
-	}
-
-	for (auto &slname : single_lights)
-	{
-		o_light_names.push_back(slname);
 	}
 }
 

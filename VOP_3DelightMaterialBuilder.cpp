@@ -1,5 +1,4 @@
 #include "VOP_3DelightMaterialBuilder.h"
-
 #include "VOP_ExternalOSL.h"
 
 const char* VOP_3DelightMaterialBuilder::theChildTableName = VOP_TABLE_NAME;
@@ -27,7 +26,7 @@ VOP_3DelightMaterialBuilder::alloc(OP_Network* net, const char* name, OP_Operato
 }
 
 PRM_Template
-VOP_3DelightMaterialBuilder::myTemplateList[] = 
+VOP_3DelightMaterialBuilder::myTemplateList[] =
 {
     PRM_Template()      // List terminator
 };

@@ -250,7 +250,7 @@ VOP_Node *exporter::resolve_material_path(
 		o_path.clear();
 		return nullptr;
 	}
-	
+
 	OP_Node* op_node = OPgetDirector()->findNode( i_path );
 	VOP_Node *vop_node = nullptr;
 

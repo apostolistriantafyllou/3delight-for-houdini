@@ -114,7 +114,7 @@ install(
 	DESTINATION scripts/private )
 
 install(
-	FILES ui/IncandescenceLight_OnCreated.py
+	FILES ui/3Delight-IncandescenceLight_OnCreated.py
 	DESTINATION scripts/obj )
 
 install(

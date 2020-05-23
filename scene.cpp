@@ -76,16 +76,37 @@ void scene::process_obj_node(
 
 	bool check_visibility = !i_re_export_instanced;
 
-	if( obj->castToOBJLight() )
+	bool visible = !check_visibility || i_context.object_displayed(*obj);
+
+	bool is_incand = obj->getOperator()->getName().toStdString() ==
+		"3Delight::IncandescenceLight";
+
+	if( obj->castToOBJLight() || is_incand )
 	{
-		if(!check_visibility || i_context.object_displayed(*obj) )
+		if( is_incand && !i_re_export_instanced)
 		{
-			o_to_export.push_back( new light(i_context, obj) );
+			/*
+				We don't need the null. The incandescence light will create a
+				set. \ref incandescence_light
+			*/
+			delete o_to_export.back();
+			o_to_export.pop_back();
+		}
+
+		if( visible )
+		{
+			o_to_export.push_back(
+				is_incand ?
+					(exporter*)new incandescence_light(i_context, obj) :
+					(exporter*)new light(i_context, obj) );
 		}
 
 		if(i_context.m_ipr)
 		{
-			i_context.register_interest(obj, &light::changed_cb);
+			i_context.register_interest( obj,
+				is_incand ?
+					&incandescence_light::changed_cb :
+					&light::changed_cb );
 		}
 
 		/*
@@ -95,30 +116,12 @@ void scene::process_obj_node(
 		*/
 	}
 
-	if( obj->castToOBJCamera() )
+	if( obj->castToOBJCamera() && !is_incand )
 	{
 		o_to_export.push_back( new camera(i_context, obj) );
 		if(i_context.m_ipr)
 		{
 			i_context.register_interest(obj, &camera::changed_cb);
-		}
-		return;
-	}
-
-	bool visible = !check_visibility || i_context.object_displayed(*obj);
-
-	/*
-		Check for special node IncandescenceLight.
-	*/
-	if( obj->getOperator()->getName() == "IncandescenceLight" )
-	{
-		if(visible)
-		{
-			o_to_export.push_back( new incandescence_light(i_context, obj) );
-		}
-		if(i_context.m_ipr)
-		{
-			i_context.register_interest(obj, &incandescence_light::changed_cb);
 		}
 		return;
 	}
@@ -610,7 +613,8 @@ void scene::find_lights(
 
 			if( obj &&
 				i_want_incandescence_lights &&
-				obj->getOperator()->getName() == "IncandescenceLight" )
+				obj->getOperator()->getName() ==
+					"3Delight::IncandescenceLight" )
 			{
 				o_lights.push_back(obj);
 			}

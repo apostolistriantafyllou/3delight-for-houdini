@@ -20,13 +20,13 @@ OBJ_IncandescenceLight::alloc(OP_Network* net, const char* name, OP_Operator* en
 
 static PRM_Name separator("separator", "");
 
-static PRM_Name color("color", "Color");
+static PRM_Name color("light_color", "Color");
 static PRM_Default color_d[3] = {1.0f, 1.0f, 1.0f};
 
 static PRM_Name childcomp("childcomp", "ChildComp");
 static PRM_Default childcomp_d(0);
 
-static PRM_Name intensity("intensity", "Intensity");
+static PRM_Name intensity("light_intensity", "Intensity");
 static PRM_Default intensity_d(1.0f);
 static PRM_Range intensity_r(PRM_RANGE_RESTRICTED, 0.0f, PRM_RANGE_RESTRICTED, 10.0f);
 
@@ -37,7 +37,7 @@ static PRM_Range exposure_r(PRM_RANGE_RESTRICTED, -5.0f, PRM_RANGE_RESTRICTED, 1
 static PRM_Name object_selection("object_selection", "Object selection");
 
 PRM_Template
-OBJ_IncandescenceLight::templateList[] = 
+OBJ_IncandescenceLight::templateList[] =
 {
 	PRM_Template(PRM_RGB, 3, &color, color_d),
 	PRM_Template(PRM_FLT, 1, &intensity, &intensity_d, nullptr, &intensity_r),
@@ -58,7 +58,7 @@ OBJ_IncandescenceLight::buildTemplatePair(OP_TemplatePair *prevstuff)
     geo = new OP_TemplatePair(OBJ_Geometry::getTemplateList(OBJ_PARMS_PLAIN),
                               incandescence);
     return geo;
-} 
+}
 
 unsigned
 OBJ_IncandescenceLight::minInputs() const
@@ -84,7 +84,7 @@ OBJ_IncandescenceLight::~OBJ_IncandescenceLight()
 
 OP_IncandescenceLightOperator::OP_IncandescenceLightOperator()
 	:	OP_Operator(
-			"IncandescenceLight",
+			"3Delight::IncandescenceLight",
 			"Incandescence Light",
 			OBJ_IncandescenceLight::alloc,
 			OBJ_IncandescenceLight::buildTemplatePair(0),
