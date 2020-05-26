@@ -47,7 +47,6 @@ public:
 
 	/** \brief Returns true if motion blur is enabled. */
 	bool HasMotionBlur()const;
-	virtual void onCreated();
 
 	/**
 		\brief Manually restarts rendering at the request of i-display.

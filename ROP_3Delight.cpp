@@ -172,12 +172,6 @@ ROP_3Delight::~ROP_3Delight()
 	StopRender();
 }
 
-
-void ROP_3Delight::onCreated()
-{
-	ROP_Node::onCreated();
-}
-
 void ROP_3Delight::StartRenderFromIDisplay(
 	double i_time,
 	bool i_ipr,
