@@ -311,7 +311,7 @@ camera::camera(
 	exporter( i_ctx, i_object )
 {
 	assert(m_object);
-	m_handle = get_nsi_handle(*m_object);
+	m_handle = handle(*m_object);
 	OBJ_Camera* cam = m_object->castToOBJCamera();
 	assert(cam);
 	get_projection(*cam, i_ctx.m_current_time, m_type, m_mapping);
@@ -395,8 +395,7 @@ void camera::set_attributes( void ) const
 
 void camera::connect( void ) const
 {
-	std::string parent = m_object->getFullPath().c_str();
-	m_nsi.Connect( m_handle, "", parent, "objects" );
+	m_nsi.Connect( m_handle, "", null::handle(*m_object), "objects" );
 }
 
 void camera::changed_cb(
@@ -498,9 +497,9 @@ void camera::set_attributes_at_time( double i_time ) const
 }
 
 std::string
-camera::get_nsi_handle(OBJ_Node& i_camera)
+camera::handle(OBJ_Node& i_camera)
 {
-	return std::string(i_camera.getFullPath()) + "|camera";
+	return exporter::handle(i_camera) + "|camera";
 }
 
 double

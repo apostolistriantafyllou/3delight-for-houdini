@@ -13,6 +13,7 @@ null::null( const context& i_ctx, OBJ_Node *i_object )
 :
 	exporter( i_ctx, i_object )
 {
+	m_handle = handle(*m_object);
 }
 
 void null::create( void ) const
@@ -54,7 +55,7 @@ void null::connect( void ) const
 {
 	if( m_instanced )
 	{
-		/* This tansform is used by the OBJ-level instancer. Don't connect. */
+		/* This transform is used by the OBJ-level instancer. Don't connect. */
 		return;
 	}
 
@@ -71,12 +72,12 @@ void null::connect( void ) const
 		parent_object ?
 			parent_object->getFullPath().toStdString() : std::string() );
 
-	std::string parent = parent_object_path.size() > parent_node_path.size() ?
-		parent_object_path : parent_node_path;
+	OP_Node* parent = parent_object_path.size() > parent_node_path.size() ?
+		parent_object : parent_node;
 
-	if( parent != "/obj" )
+	if( parent && parent->getFullPath() != "/obj" )
 	{
-		m_nsi.Connect( m_handle, "", parent, "objects" );
+		m_nsi.Connect( m_handle, "", null::handle(*parent), "objects" );
 	}
 	else
 	{

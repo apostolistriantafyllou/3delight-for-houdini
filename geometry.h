@@ -57,7 +57,7 @@ public:
 	/// Returns the handle of the hub transform all primitives should connect to
 	static std::string hub_handle(const OBJ_Node& i_node)
 	{
-		return i_node.getFullPath().toStdString() + "|hub";
+		return exporter::handle(i_node) + "|hub";
 	}
 
 private:

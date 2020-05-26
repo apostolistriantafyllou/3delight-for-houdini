@@ -53,8 +53,13 @@ protected:
 
 private:
 
-	/// An object/material combination being instanciated
-	typedef std::pair<std::string, std::string> merge_point;
+	/**
+		An object/material combination being instanciated.
+		The first element of the pair is the NSI handle of the geometry rather
+		than an OBJ node handle, since we actually instantiate previously
+		exported GT primitives.
+	*/
+	typedef std::pair<std::string, VOP_Node*> merge_point;
 
 	void get_merge_points(
 		std::map<merge_point, int> &o_modelindices,

@@ -2,6 +2,7 @@
 
 #include "geometry.h"
 #include "time_sampler.h"
+#include "vop.h"
 
 #include <unordered_map>
 
@@ -375,7 +376,7 @@ void primitive::get_all_material_paths(
 	for( int i=0; i<mats.entries() ; i++ )
 	{
 		std::string resolved;
-		exporter::resolve_material_path( mats[i].c_str(), resolved );
+		resolve_material_path( mats[i].c_str(), resolved );
 
 		if( !resolved.empty() )
 			o_materials.insert( resolved );
@@ -405,16 +406,17 @@ void primitive::assign_sop_materials( void ) const
 		*/
 		std::string shop( materials->getS(0) );
 
-
-		if( resolve_material_path(m_object, shop.c_str(), shop) )
+		VOP_Node* vop = resolve_material_path(m_object, shop.c_str(), shop);
+		if(vop)
 		{
-			std::string attribute_handle = m_handle + shop;
+			std::string vop_handle = vop::handle(*vop);
+			std::string attribute_handle = m_handle + "|" + vop_handle;
 
 			m_nsi.Create( attribute_handle, "attributes" );
 			m_nsi.Connect(
-				shop, "",
-				 attribute_handle, "surfaceshader",
-				 (
+				vop_handle, "",
+				attribute_handle, "surfaceshader",
+				(
 					NSI::IntegerArg("priority", 1),
 					NSI::IntegerArg("strength", 1)
 				) );
@@ -442,19 +444,21 @@ void primitive::assign_sop_materials( void ) const
 	{
 		const std::string &m = material.first;
 		std::string shop;
-		if( !resolve_material_path(m_object, m.c_str(), shop) )
+		VOP_Node* V = resolve_material_path(m_object, m.c_str(), shop);
+		if( !V )
 		{
-			/* Will be deat with by OBJ-level assignments */
+			/* Will be dealt with by OBJ-level assignments */
 			continue;
 		}
 
-		std::string attribute_handle = m_handle + "|" + shop;
-		std::string set_handle = m_handle + shop + "|set";
+		std::string vop_handle = vop::handle(*V);
+		std::string attribute_handle = m_handle + "|" + vop_handle;
+		std::string set_handle = attribute_handle + "|set";
 
 		m_nsi.Create( attribute_handle, "attributes" );
 		m_nsi.Create( set_handle, "faceset" );
 		m_nsi.Connect(
-			shop, "",
+			vop_handle, "",
 			attribute_handle, "surfaceshader",
 			NSI::IntegerArg("strength", 1) );
 		m_nsi.Connect( attribute_handle, "", set_handle, "geometryattributes" );

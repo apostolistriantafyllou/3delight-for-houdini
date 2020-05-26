@@ -203,7 +203,7 @@ void scene::vop_scan(
 	\param i_materials
 		List of materials paths to explore for VOPs
 	\param o_vops
-		VOPs poduced during scan
+		VOPs produced during scan
 */
 void scene::get_material_vops(
 	const std::unordered_set<std::string>& i_materials,
@@ -767,7 +767,7 @@ void scene::export_light_categories(
 		nsi.Create(cat_attr_handle, "attributes");
 		nsi.Connect(cat_attr_handle, "", cat_handle, "geometryattributes");
 
-		for(OBJ_Node* light : io_lights_to_render)
+		for(OBJ_Node* light_source : io_lights_to_render)
 		{
 			/*
 				Parse the list of categories for the light. This shouldn't be
@@ -775,14 +775,14 @@ void scene::export_light_categories(
 				exporter and work on a list of those, instead.
 			*/
 			UT_String tags_string;
-			light->evalString(tags_string, "categories", 0, 0.0);
+			light_source->evalString(tags_string, "categories", 0, 0.0);
 			UT_TagListPtr tags = tag_manager.createList(tags_string, errors);
 
 			// Add the lights we have to turn off to the set
 			if(!tags->match(*categories_expr))
 			{
 				nsi.Connect(
-					light->getFullPath().toStdString(), "",
+					light::handle(*light_source), "",
 					cat_handle, "members");
 			}
 		}

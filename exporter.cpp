@@ -19,7 +19,7 @@ exporter::exporter(
 	m_object(i_object)
 {
 	assert(m_object);
-	m_handle = m_object->getFullPath();
+	m_handle = handle(*m_object);
 }
 
 exporter::~exporter()
@@ -34,12 +34,17 @@ exporter::exporter( const context &i_context, VOP_Node *i_node )
 	m_vop(i_node)
 {
 	assert(m_vop);
-	m_handle = m_vop->getFullPath();
+	m_handle = handle(*m_vop);
 }
 
 const std::string &exporter::handle( void ) const
 {
 	return m_handle;
+}
+
+std::string exporter::handle(const OP_Node& i_node)
+{
+	return i_node.getFullPath().toStdString();
 }
 
 /**

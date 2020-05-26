@@ -1,7 +1,9 @@
 #include "incandescence_light.h"
 
 #include "context.h"
+#include "geometry.h"
 #include "shader_library.h"
+#include "vop.h"
 
 #include <OBJ/OBJ_Node.h>
 #include <OP/OP_Director.h>
@@ -100,14 +102,14 @@ void incandescence_light::connect() const
 		if( ParameterExist(shader_info, k_incandescence_multiplier) )
 		{
 			m_nsi.SetAttribute(
-				vop_node->getFullPath().toStdString(),
+				vop::handle(*vop_node),
 				NSI::ColorArg(k_incandescence_multiplier,
 					incandescenceColor));
 
-			m_current_multipliers.push_back(
-				vop_node->getFullPath().toStdString() );
+			m_current_multipliers.push_back( vop::handle(*vop_node) );
 
-			m_nsi.Connect( obj_node->getFullPath().c_str(), "",
+			m_nsi.Connect(
+				geometry::handle(*obj_node), "",
 				handle(), "members" );
 		}
 	}

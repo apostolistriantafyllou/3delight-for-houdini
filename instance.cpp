@@ -1,15 +1,28 @@
 #include "instance.h"
 
 #include "context.h"
+#include "vop.h"
 
 #include <nsi.hpp>
 
 #include <GT/GT_PrimInstance.h>
 #include <OBJ/OBJ_Node.h>
 #include <OP/OP_Operator.h>
+#include <VOP/VOP_Node.h>
 
 #include <unordered_map>
 
+/**
+	\brief Constructor.
+	
+	\param i_ctx
+	\param i_object
+	\param i_time
+	\param i_gt_primitive
+	\param i_primitive_index
+	\param i_source_models
+		NSI handles of the instancer's source models.
+*/
 instance::instance(
 	const context& i_ctx,
 	OBJ_Node *i_object,
@@ -85,14 +98,14 @@ void instance::connect( void ) const
 		m_nsi.Connect( merge_h, "", m_handle, "sourcemodels",
 			NSI::IntegerArg( "index", modelindex ) );
 
-		const std::string &material = merge.second;
-		if( !material.empty() )
+		const VOP_Node* material = merge.second;
+		if( material )
 		{
 			std::string attribute_handle = merge_h + "|attribute";
 			m_nsi.Create( attribute_handle, "attributes" );
 			m_nsi.Connect( attribute_handle, "", merge_h, "geometryattributes");
 			m_nsi.Connect(
-				material, "",
+				vop::handle(*material), "",
 				attribute_handle, "surfaceshader",
 				(
 					NSI::IntegerArg("priority", 2),
@@ -268,10 +281,11 @@ void instance::set_attributes_at_time(
 
 std::string instance::merge_handle(const merge_point& i_merge_point) const
 {
+	VOP_Node* node = i_merge_point.second;
 	return
 		m_handle +
 		"|" + i_merge_point.first +
-		"|" + i_merge_point.second +
+		"|" + (node ? vop::handle(*node) : std::string()) +
 		"|merge";
 }
 
@@ -313,9 +327,9 @@ void instance::get_merge_points(
 		std::string M =	(material && i<material->entries()) ?
 					(const char*)(material->getS(i)) : "";
 
-		resolve_material_path(m_object, M.c_str(), M);
+		VOP_Node* vop = resolve_material_path(m_object, M.c_str(), M);
 
-		merge_point m(I, M);
+		merge_point m(I, vop);
 
 		if( o_uniqued.find(m) == o_uniqued.end() )
 			o_uniqued[m] = 0;

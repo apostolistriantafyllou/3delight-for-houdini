@@ -11,6 +11,7 @@
 #include "scene.h"
 #include "time_sampler.h"
 #include "vdb.h"
+#include "vop.h"
 
 #include <GT/GT_GEODetail.h>
 #include <GT/GT_PrimInstance.h>
@@ -144,8 +145,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 		case GT_PRIM_POINT_MESH:
 		{
 			const UT_StringRef &op_name = m_node->getOperator()->getName();
-			if( op_name == "instance" &&
-				m_node->getParmIndex("instancepath")>=0 )
+			if( op_name == "instance" && m_node->hasParm("instancepath") )
 			{
 				/*
 					OBJ-level instancer. Note that "instancepath" will always
@@ -153,11 +153,23 @@ struct OBJ_Node_Refiner : public GT_Refine
 				*/
 				UT_String path;
 				m_node->evalString( path, "instancepath", 0, m_time );
-				std::string absolute = exporter::absolute_path( m_node, path );
+				OP_Node* instanced = OPgetDirector()->findNode(path);
+				if(!instanced)
+				{
+					instanced = m_node->findNode(path);
+				}
 
-				std::vector<std::string> models;
-				models.push_back( absolute );
+				if(!instanced)
+				{
+#ifdef VERBOSE
+					std::cerr
+						<< "3Delight for Houdini: unable to find instanced model for "
+						<< m_node->getFullPath() << std::endl;
+#endif
+					break;
+				}
 
+				std::vector<std::string> models(1, exporter::handle(*instanced));
 				m_result.push_back(
 					new instance(
 						m_context, m_node, m_time, i_primitive, index, models));
@@ -551,7 +563,8 @@ void geometry::connect()const
 		\see polygonmesh for primitive attribute assignment on polygonal faces
 	*/
 	std::string material_path;
-	if( get_assigned_material(material_path) == nullptr )
+	VOP_Node* mat = get_assigned_material(material_path);
+	if( !mat )
 		return;
 
 	m_nsi.Create( attributes_handle(), "attributes" );
@@ -560,7 +573,7 @@ void geometry::connect()const
 		hub_handle(), "geometryattributes" );
 
 	m_nsi.Connect(
-		material_path, "",
+		vop::handle(*mat), "",
 		attributes_handle(), volume ? "volumeshader" : "surfaceshader",
 		NSI::IntegerArg("strength", 1) );
 
@@ -768,15 +781,17 @@ void geometry::export_override_attributes() const
 		if( override_surface_shader )
 		{
 			std::string material;
-			get_assigned_material( material );
-
-			m_nsi.Connect(
-				material, "",
-				override_nsi_handle, "surfaceshader",
-				(
-					NSI::IntegerArg("priority", 10),
-					NSI::IntegerArg("strength", 1)
-				) );
+			VOP_Node* vop_node = get_assigned_material( material );
+			if(vop_node)
+			{
+				m_nsi.Connect(
+					vop::handle(*vop_node), "",
+					override_nsi_handle, "surfaceshader",
+					(
+						NSI::IntegerArg("priority", 10),
+						NSI::IntegerArg("strength", 1)
+					) );
+			}
 		}
 	}
 	else if(m_context.m_ipr)
