@@ -873,6 +873,9 @@ VOP_ExternalOSL::VOP_ExternalOSL(
 		*/
 		setMaterialFlag(true);
 	}
+
+	// Show only connected input & output ports in graph view
+	setInOutLOD(1, 1);
 }
 
 VOP_ExternalOSL::~VOP_ExternalOSL()
