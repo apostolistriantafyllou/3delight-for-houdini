@@ -8,7 +8,8 @@ object_visibility_resolver::object_visibility_resolver(
 	const std::string &i_rop_path, const settings &i_settings,
 	double i_time )
 :
-	m_current_time(i_time)
+	m_current_time(i_time),
+	m_rop_path(i_rop_path)
 {
 	UT_String lights_to_render, objects_to_render;
 	bool override_display_flags = i_settings.OverrideDisplayFlags();
