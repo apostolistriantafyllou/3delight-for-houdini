@@ -206,7 +206,9 @@ void shader_library::find_all_shaders( const char *i_root)
 		"dlSolidRamp",
 		"dlFloatToUV",
 		"dlTerminal",
-		"dlFacingRatio"
+		"dlFacingRatio",
+		"dlSetRange",
+		"dlRemap"
 	};
 
 	m_shaders.emplace_back("3Delight", "3Delight");
