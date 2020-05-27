@@ -52,15 +52,19 @@ protected:
 	void get_instanced( std::unordered_set<std::string> & ) const;
 
 private:
+
+	/// An object/material combination being instanciated
+	typedef std::pair<std::string, std::string> merge_point;
+
 	void get_merge_points(
-		std::map< std::pair<std::string, std::string>, int> &o_modelindices,
-		std::vector< const std::pair<std::string, std::string> *> &o_merge_points ) const;
+		std::map<merge_point, int> &o_modelindices,
+		std::vector<const merge_point*> &o_merge_points ) const;
 
 	void get_transforms(
 		const GT_PrimitiveHandle i_gt_primitive,
 		UT_Matrix4D *o_transforms ) const;
 
-	std::string merge_handle( const std::string &, const std::string & ) const;
+	std::string merge_handle(const merge_point& i_merge_point) const;
 	int num_instances( void ) const;
 
 	std::vector<std::string> m_source_models;
