@@ -324,7 +324,7 @@ void vop::list_shader_parameters(
 		if( index < 0 || (i_parm_index >= 0 && index != i_parm_index))
 			continue;
 
-		switch( parameter->type.type )
+		switch( parameter->type.elementtype )
 		{
 		case NSITypeFloat:
 			o_list.Add(
@@ -425,7 +425,7 @@ bool vop::ignore_subnetworks( void ) const
 
 	for( auto &P : tags )
 	{
-		if( P.name != "tags" || P.type != NSITypeString )
+		if( P.name != "tags" || !P.type.IsStringArray() )
 			continue;
 
 		for( auto &tag : P.sdefault )
@@ -641,7 +641,8 @@ void vop::list_ramp_parameters(
 		positions.push_back(i_opp->evalFloat(pos_item.c_str(), 0, i_time));
 
 		std::string value_item = value_string + index;
-		for(unsigned c = 0; c < (i_param.type.type == NSITypeColor ? 3 : 1); c++)
+		unsigned nc = i_param.type.elementtype == NSITypeColor ? 3 : 1;
+		for(unsigned c = 0; c < nc; c++)
 		{
 			values.push_back(i_opp->evalFloat(value_item.c_str(), c, i_time));
 		}
@@ -657,7 +658,7 @@ void vop::list_ramp_parameters(
 		->SetArrayType(NSITypeFloat, num_points)
 		->CopyValue(&positions[0], positions.size()*sizeof(positions[0])));
 	o_list.Add(NSI::Argument::New(value_string)
-		->SetArrayType((NSIType_t)i_param.type.type, num_points)
+		->SetArrayType((NSIType_t)i_param.type.elementtype, num_points)
 		->CopyValue(&values[0], values.size()*sizeof(values[0])));
 	o_list.Add(NSI::Argument::New(inter_string)
 		->SetArrayType(NSITypeInteger, num_points)

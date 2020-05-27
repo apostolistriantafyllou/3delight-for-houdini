@@ -254,8 +254,7 @@ osl_utilities::ramp::FindMatchingRampParameters(
 			continue;
 		}
 
-		if(!param->type.is_array() &&
-			!o_shared_interpolation && param->type.type == NSITypeString)
+		if(!o_shared_interpolation && param->type.IsOneString())
 		{
 			o_shared_interpolation = param;
 			found++;
@@ -263,12 +262,13 @@ osl_utilities::ramp::FindMatchingRampParameters(
 
 		if(param->type.is_array())
 		{
-			if(!o_knots && param->type.type == NSITypeFloat)
+			if(!o_knots && param->type.elementtype == NSITypeFloat)
 			{
 				o_knots = param;
 				found++;
 			}
-			else if(!o_interpolation && param->type.type == NSITypeInteger)
+			else if(!o_interpolation &&
+				param->type.elementtype == NSITypeInteger)
 			{
 				o_interpolation = param;
 				found++;
