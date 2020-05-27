@@ -233,20 +233,6 @@ void exporter::export_attributes(
 	return; // so that we don't fall into the void.
 }
 
-std::string exporter::absolute_path(
-	OP_Node *i_node, const char *i_path )
-{
-	OP_Node* op_node = OPgetDirector()->findNode( i_path );
-	if( op_node )
-		return i_path;
-
-	op_node = i_node->findNode( i_path );
-	if( !op_node )
-		return {};
-
-	return op_node->getFullPath().toStdString();
-}
-
 VOP_Node *exporter::resolve_material_path(
 	OP_Node *i_node, const char *i_path,  std::string &o_path )
 {

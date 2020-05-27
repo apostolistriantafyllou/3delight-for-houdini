@@ -76,9 +76,6 @@ public:
 	*/
 	static const char* transparent_surface_handle();
 
-	/** utility to resolve relative paths */
-	static std::string absolute_path( OP_Node *i_node, const char *i_path );
-
 	/**
 		\brief Resolves the [relaative] material path to an absolute
 		path and a VOP node.
