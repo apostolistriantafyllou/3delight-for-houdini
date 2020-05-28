@@ -1174,6 +1174,18 @@ VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
 {
 	const char* name = i_shader_info.m_dl.shadername().c_str();
 	osl_utilities::FindMetaData(name, i_shader_info.m_dl.metadata(), "niceName");
+
+	std::string better;
+	if( ::islower(name[0]))
+	{
+		/*
+			Many utility nodes have no nice name but their ID is just fine with
+			an upper case. For example: leather, granite, etc.
+		*/
+		better = name;
+		better[0] = std::toupper(better[0]);
+		name = better.c_str();
+	}
 	setEnglish(name);
 
 	// Set default icon name for those that are not already defined by
