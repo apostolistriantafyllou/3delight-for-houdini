@@ -278,3 +278,27 @@ osl_utilities::ramp::FindMatchingRampParameters(
 
 	return o_knots && o_interpolation;
 }
+
+/**
+	\brief Returns the tags associated with provided shader.
+*/
+void osl_utilities::get_shader_tags(
+	const DlShaderInfo &i_info,
+	std::vector<std::string> &o_tags  )
+{
+	const DlShaderInfo::constvector<DlShaderInfo::Parameter>& meta =
+		i_info.metadata();
+
+	for(const DlShaderInfo::Parameter& param : meta)
+	{
+		if(param.name != "tags" || param.type.elementtype != NSITypeString)
+		{
+			continue;
+		}
+
+		for(const DlShaderInfo::conststring& tag : param.sdefault)
+		{
+			o_tags.push_back( tag.c_str() );
+		}
+	}
+}

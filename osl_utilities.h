@@ -3,6 +3,8 @@
 #include <3Delight/ShaderQuery.h>
 
 #include <PRM/PRM_Type.h>
+#include <string>
+#include <vector>
 
 namespace osl_utilities
 {
@@ -89,4 +91,11 @@ namespace osl_utilities
 			const DlShaderInfo::Parameter*& o_shared_interpolation,
 			std::string& o_base_name);
 	}
+
+	/**
+		\brief Returns the tags associated with provided shader.
+	*/
+	void get_shader_tags(
+		const DlShaderInfo &i_info,
+		std::vector<std::string> &o_tags );
 }
