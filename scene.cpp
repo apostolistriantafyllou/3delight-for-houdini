@@ -310,15 +310,13 @@ void scene::create_atmosphere_shader_exporter(
 
 	if( atmosphere_path.length() > 0 )
 	{
-		std::string resolved;
 		VOP_Node *atmosphere_shader =
-			exporter::resolve_material_path(
-				r3, atmosphere_path.c_str(), resolved );
+			exporter::resolve_material_path( r3, atmosphere_path.c_str() );
 
 		if( atmosphere_shader )
 		{
 			std::unordered_set<std::string> mat;
-			mat.insert(resolved);
+			mat.insert(atmosphere_shader->getFullPath().toStdString());
 			create_materials_exporters(mat, i_context, io_to_export);
 		}
 	}

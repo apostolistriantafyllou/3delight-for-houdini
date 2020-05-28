@@ -280,9 +280,8 @@ void primitive::export_bind_attributes( OP_Node *i_obj_level_material ) const
 	{
 		for( int i=0; i<materials->entries(); i++ )
 		{
-			std::string resolved;
-			VOP_Node *vop = exporter::resolve_material_path(
-				(const char *)materials->getS(i), resolved );
+			VOP_Node *vop =
+				resolve_material_path( materials->getS(i).c_str() );
 			to_scan.push_back( vop );
 		}
 	}
@@ -375,11 +374,10 @@ void primitive::get_all_material_paths(
 
 	for( int i=0; i<mats.entries() ; i++ )
 	{
-		std::string resolved;
-		resolve_material_path( mats[i].c_str(), resolved );
+		VOP_Node* vop = resolve_material_path( mats[i].c_str() );
 
-		if( !resolved.empty() )
-			o_materials.insert( resolved );
+		if( vop )
+			o_materials.insert( vop->getFullPath().toStdString() );
 	}
 }
 
@@ -406,7 +404,7 @@ void primitive::assign_sop_materials( void ) const
 		*/
 		std::string shop( materials->getS(0) );
 
-		VOP_Node* vop = resolve_material_path(m_object, shop.c_str(), shop);
+		VOP_Node* vop = resolve_material_path(m_object, shop.c_str());
 		if(vop)
 		{
 			std::string vop_handle = vop::handle(*vop);
@@ -443,8 +441,7 @@ void primitive::assign_sop_materials( void ) const
 	for( auto material : all_materials )
 	{
 		const std::string &m = material.first;
-		std::string shop;
-		VOP_Node* V = resolve_material_path(m_object, m.c_str(), shop);
+		VOP_Node* V = resolve_material_path(m_object, m.c_str());
 		if( !V )
 		{
 			/* Will be dealt with by OBJ-level assignments */

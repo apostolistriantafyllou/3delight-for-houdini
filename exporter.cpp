@@ -234,11 +234,10 @@ void exporter::export_attributes(
 }
 
 VOP_Node *exporter::resolve_material_path(
-	OP_Node *i_node, const char *i_path,  std::string &o_path )
+	OP_Node *i_relative_path_root, const char *i_path )
 {
 	if(!i_path || !i_path[0])
 	{
-		o_path.clear();
 		return nullptr;
 	}
 
@@ -253,7 +252,7 @@ VOP_Node *exporter::resolve_material_path(
 	if( !vop_node )
 	{
 		/* Try a relative search */
-		vop_node = i_node->findVOPNode( i_path );
+		vop_node = i_relative_path_root->findVOPNode( i_path );
 	}
 
 	/*
@@ -269,11 +268,9 @@ VOP_Node *exporter::resolve_material_path(
 
 	if(!vop_node)
 	{
-		o_path.clear();
 		return nullptr;
 	}
 
-	o_path = vop_node->getFullPath().toStdString();
 	return vop_node;
 }
 

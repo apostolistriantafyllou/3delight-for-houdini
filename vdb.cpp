@@ -97,9 +97,8 @@ void vdb::set_attributes( void ) const
 	double time = m_context.m_current_time;
 	OP_Node* op = m_object->getMaterialNode(time);
 
-	std::string resolved;
 	VOP_Node *material = op ?
-		resolve_material_path( op->getFullPath().c_str(), resolved ) :
+		resolve_material_path( op->getFullPath().c_str() ) :
 		nullptr;
 
 	if(material)

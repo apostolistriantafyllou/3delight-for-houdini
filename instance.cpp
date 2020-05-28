@@ -327,7 +327,7 @@ void instance::get_merge_points(
 		std::string M =	(material && i<material->entries()) ?
 					(const char*)(material->getS(i)) : "";
 
-		VOP_Node* vop = resolve_material_path(m_object, M.c_str(), M);
+		VOP_Node* vop = resolve_material_path(m_object, M.c_str());
 
 		merge_point m(I, vop);
 

@@ -77,12 +77,11 @@ public:
 	static const char* transparent_surface_handle();
 
 	/**
-		\brief Resolves the [relaative] material path to an absolute
-		path and a VOP node.
+		\brief Resolves the [relative] material path to a VOP node.
 	*/
 	static VOP_Node *resolve_material_path(
-		OP_Node *i_needed_relative_paths,
-		const char *i_path,  std::string &o_path );
+		OP_Node* i_relative_path_root,
+		const char *i_path);
 
 protected:
 
@@ -113,10 +112,9 @@ protected:
 		double i_time,
 		GT_DataArrayHandle i_vertices_list = GT_DataArrayHandle()) const;
 
-	VOP_Node *resolve_material_path(
-		const char *i_path,  std::string &o_path ) const
+	VOP_Node *resolve_material_path( const char *i_path ) const
 	{
-		return resolve_material_path(m_object, i_path, o_path );
+		return resolve_material_path(m_object, i_path);
 	}
 
 	/**

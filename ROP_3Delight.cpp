@@ -926,12 +926,10 @@ void ROP_3Delight::ExportTransparentSurface(const context& i_ctx) const
 void
 ROP_3Delight::ExportAtmosphere(const context& i_ctx, bool ipr_update)
 {
-	std::string atmo_path;
 	VOP_Node* atmo_vop =
 		exporter::resolve_material_path(
 			this,
-			m_settings.GetAtmosphere(i_ctx.m_current_time).c_str(),
-			atmo_path);
+			m_settings.GetAtmosphere(i_ctx.m_current_time).c_str());
 
 	std::string env_handle = "atmosphere|environment";
 	
@@ -948,7 +946,7 @@ ROP_3Delight::ExportAtmosphere(const context& i_ctx, bool ipr_update)
 	{
 		// Ensure that the shader exists before connecting to it
 		std::unordered_set<std::string> mat;
-		mat.insert(atmo_path);
+		mat.insert(atmo_vop->getFullPath().toStdString());
 		scene::export_materials(mat, i_ctx);
 	}
 

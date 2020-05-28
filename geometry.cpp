@@ -831,7 +831,13 @@ VOP_Node *geometry::get_assigned_material( std::string &o_path ) const
 		return nullptr;
 	}
 
-	return resolve_material_path( material_path.c_str(), o_path );
+	VOP_Node* vop = resolve_material_path( material_path.c_str() );
+	if(vop)
+	{
+		o_path = vop->getFullPath();
+	}
+
+	return vop;
 }
 
 /**
