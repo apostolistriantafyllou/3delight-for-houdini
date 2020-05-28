@@ -208,7 +208,6 @@ void shader_library::find_all_shaders( const char *i_root)
 		{
 			if( T == "surface" || T == "volume" || T == "displacement" )
 			{
-				printf( "Shader is %s\n", O.first.c_str() );
 				if( O.first.find("dl") == 0 )
 					lib["3Delight"].push_back( O );
 				break;
