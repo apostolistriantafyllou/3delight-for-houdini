@@ -1660,7 +1660,7 @@ void ROP_3Delight::BuildLightCategories(
 					}
 				}
 
-				assert( foundInBundle = true );
+				assert( foundInBundle );
 			}
 		}
 
