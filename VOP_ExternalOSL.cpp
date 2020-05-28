@@ -708,6 +708,11 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 		const char* page_name = "";
 		osl_utilities::FindMetaData(page_name, param.metadata, "page");
 
+		if( ::strcmp(page_name, "") == 0 )
+		{
+			page_name = "Main";
+		}
+
 		// Ensure that the page exists in page_map
 		std::pair<page_map_t::iterator, bool> inserted =
 			page_map.insert(page_map_t::value_type(page_name, page_components()));
