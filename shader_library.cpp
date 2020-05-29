@@ -107,11 +107,12 @@ std::string shader_library::get_shader_path( const char *vop ) const
 	return {};
 }
 
-/**
-	FIXME: use regex match.
-*/
 std::string shader_library::vop_to_osl( const char *i_vop )
 {
+	assert( i_vop );
+	if( !i_vop )
+		return {};
+
 	std::string legalized( i_vop );
 
 	auto p1 = legalized.find( "::" );
