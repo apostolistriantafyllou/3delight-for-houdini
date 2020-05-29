@@ -1095,11 +1095,10 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	evalString(filter, settings::k_pixel_filter, 0, 0.0f);
 	double filter_width = evalFloat(settings::k_filter_width, 0, 0.0f);
 
-	std::vector< std::pair<std::string, std::vector<std::string>> >
-		light_categories;
+	std::map<std::string, std::vector<OBJ_Node*>> light_categories;
 
-	/* First empty category means ALL lights */
-	light_categories.push_back( {} );
+	// Create a category with empty name and empty list (which means ALL lights)
+	light_categories[std::string()];
 
 	BuildLightCategories( light_categories );
 
@@ -1201,10 +1200,10 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 				}
 
 				/*
-					3Delight display's Multi-Light tool needs some information,
-					called "feedback data" to communicate backe the values.
+					3Delight Display's Multi-Light tool needs some information,
+					called "feedback data" to communicate back the values.
 				*/
-				if( !category.second.empty() )
+				if( category.second.size() > 1 )
 				{
 					// We use a set to group lights together under the same layer
 					/*
@@ -1221,8 +1220,10 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 						This part could be moved out of the loop. 
 					*/
 					i_ctx.m_nsi.Create( category.first, "set");
-					for( auto &light_handle : category.second )
+					for( auto &light_source : category.second )
 					{
+						std::string light_handle =
+							light_source->getFullPath().toStdString();
 						/*
 							FIXME : calling ExportLayerFeedbackData in a loop
 							with the same layer_name will simply overwrite the
@@ -1235,10 +1236,12 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 							category.first, "members" );
 					}
 				}
-				else
+				else if(!category.second.empty())
 				{
+					std::string light_handle =
+						category.second.back()->getFullPath().toStdString();
 					ExportLayerFeedbackData(
-						i_ctx, layer_name, category.first );
+						i_ctx, layer_name, light_handle );
 				}
 			}
 
@@ -1621,13 +1624,12 @@ ROP_3Delight::BuildImageUniqueName(
 	\brief Output light categories for light bundles and single lights.
 
 	We output a light category for each bundle of lights. Lights that are alone
-	will be in their own category. Incandescence lights nd VDBs cannot be but
-	into bundles. Doesn't make sense for Incandescent and 3Delight NSId doesn't
-	support grpouping them yet.
+	will be in their own category. Incandescence lights and VDBs cannot be put
+	into bundles. Doesn't make sense for Incandescent and 3Delight NSI doesn't
+	support grouping them yet.
 */
 void ROP_3Delight::BuildLightCategories(
-	std::vector< std::pair<std::string, std::vector<std::string>>> &
-		o_light_categories ) const
+	std::map<std::string, std::vector<OBJ_Node*>>& o_light_categories ) const
 {
 	std::vector<OBJ_Node*> i_lights;
 	m_settings.GetLights( i_lights );
@@ -1639,9 +1641,6 @@ void ROP_3Delight::BuildLightCategories(
 	assert(blist);
 	int numBundles = blist->entries();
 
-	std::vector<std::string> empty;
-	std::unordered_set<std::string> output_categories;
-
 	for( auto light : i_lights )
 	{
 		bool foundInBundle = false;
@@ -1651,44 +1650,21 @@ void ROP_3Delight::BuildLightCategories(
 
 		for (int i = 0; !incand && !isvdb && i < numBundles; i++)
 		{
-			OP_Bundle* bundle = blist->getBundle(i); assert(bundle);
-
+			OP_Bundle* bundle = blist->getBundle(i);
+			assert(bundle);
 			if( bundle && bundle->contains(light, false) )
 			{
 				std::string bundle_name = bundle->getName();
-
-				if( output_categories.find( bundle_name ) ==
-					output_categories.end())
-				{
-					output_categories.insert( bundle_name );
-
-					/* Make a cagtegory for this bundle  */
-					o_light_categories.push_back(
-						std::make_pair(bundle_name, empty) );
-				}
-
-				/* Insert light in the right category */
-				std::string light_handle = light->getFullPath().toStdString();
-
-				for( auto &C : o_light_categories )
-				{
-					if( C.first == bundle_name )
-					{
-						foundInBundle = true;
-						C.second.push_back( light_handle );
-						break;
-					}
-				}
-
-				assert( foundInBundle );
+				o_light_categories[bundle_name].push_back(light);
+				foundInBundle = true;
 			}
 		}
 
 		if( !foundInBundle )
 		{
 			/* Make a category for this single light */
-			o_light_categories.push_back(
-				std::make_pair(light->getFullPath().toStdString(), empty));
+			std::string category = light->getFullPath().toStdString();
+			o_light_categories[category].push_back(light);
 		}
 	}
 }
