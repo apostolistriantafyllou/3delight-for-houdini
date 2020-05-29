@@ -1206,9 +1206,29 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 				*/
 				if( !category.second.empty() )
 				{
+					// We use a set to group lights together under the same layer
+					/*
+						FIXME : exporting the lightsets should always be done,
+						even if idisplay_output, m_current_render->m_export_nsi
+						or m_current_render->m_batch is true. Only the layer
+						feedback data could be omitted when not sending the
+						render to i-display. 
+					*/
+					/*
+						FIXME : there is no reason to export those sets set once
+						for each AOV. Also, they should be exported *before* we
+						try to connect them to the layers in ExportOneOutputLayer.
+						This part could be moved out of the loop. 
+					*/
 					i_ctx.m_nsi.Create( category.first, "set");
 					for( auto &light_handle : category.second )
 					{
+						/*
+							FIXME : calling ExportLayerFeedbackData in a loop
+							with the same layer_name will simply overwrite the
+							"feedbackdata" attribute of the layer.  Only the
+							last light will end up in the attribute.
+						*/
 						ExportLayerFeedbackData(
 							i_ctx, layer_name, light_handle );
 						i_ctx.m_nsi.Connect( light_handle, "",
