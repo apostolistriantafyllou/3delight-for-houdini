@@ -272,6 +272,9 @@ void light::create_geometry( void ) const
 			NSI::DoubleMatrixArg("transformationmatrix", scale));
 
 		OBJ_Node* obj_node = OPgetDirector()->findOBJNode(path);
+		if( !obj_node )
+			obj_node = m_object->findOBJNode( path ); // relative?
+
 		if(obj_node)
 		{
 			std::string model = obj_node->getFullPath().toStdString();
@@ -478,6 +481,14 @@ std::string light::get_geometry_path( void ) const
 	UT_String path;
 	m_object->evalString(path, "areageometry", 0, time);
 
-	return path.toStdString();
+	OBJ_Node* obj_node = OPgetDirector()->findOBJNode(path);
+	if( obj_node )
+		return path.toStdString();
+
+	obj_node = m_object->findOBJNode( path );
+	if( !obj_node )
+		return {};
+
+	return obj_node->getFullPath().toStdString();
 }
 
