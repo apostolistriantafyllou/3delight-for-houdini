@@ -209,9 +209,11 @@ void shader_library::find_all_shaders( const char *i_root)
 		{
 			if( T == "surface" || T == "volume" || T == "displacement" )
 			{
-				if( O.first.find("dl") == 0 )
+				if( O.first.find("dl") == 0 || O.first.find("vdbVolume")==0 )
+				{
 					lib["3Delight"].push_back( O );
-				break;
+					break;
+				}
 			}
 			else if( T == "texture/2d" )
 			{
@@ -223,7 +225,7 @@ void shader_library::find_all_shaders( const char *i_root)
 			}
 			else if( T == "utility" )
 			{
-				lib["3Delight/Utilties"].push_back( O );
+				lib["3Delight/Utilities"].push_back( O );
 			}
 		}
 	}
