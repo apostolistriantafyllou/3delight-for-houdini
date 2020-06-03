@@ -117,7 +117,7 @@ static const std::vector<const DlShaderInfo::Parameter*> GetVolumeParams()
 
 
 /*
-	Checking for texture parameters which support colorspace attributes and when finding it we add
+	Checking for texture parameters which support colorspace meta data and when finding it we add
 	a new paramter below it for Color Space which later will be replaced by a dropdown
 */
 static void addColorSpace (std::vector<const DlShaderInfo::Parameter*>& page)
@@ -126,11 +126,11 @@ static void addColorSpace (std::vector<const DlShaderInfo::Parameter*>& page)
 	typedef DlShaderInfo::conststring conststring;
 	static char color_space[] = "shader_color_space";
 	static const conststring nm = conststring(color_space, color_space + sizeof(color_space));
-	static Parameter meta;
-	Parameter& param = meta;
-	param.name = nm;
-	param.type.type = NSITypeString;
-	page.push_back(&param);
+	Parameter meta;
+	Parameter *param = new Parameter(meta);
+	param->name = nm;
+	param->type.type = NSITypeString;
+	page.push_back(param);
 }
 
 /*
@@ -139,7 +139,7 @@ static void addColorSpace (std::vector<const DlShaderInfo::Parameter*>& page)
 	attribute name of textureFile variables concatenated with meta.colorspace, which is
 	exactly the same as the colorspace attribute name supported by NSI.
 */
-static void addDropDown(std::vector<PRM_Template>& templates, const char color_space_str[])
+static void addColorSpaceDropDown (std::vector<PRM_Template>& templates, const char color_space_str[])
 {
 	std::string meta_colorspace = ".meta.colorspace";
 	char* color_space = LEAKED(strdup((color_space_str + meta_colorspace).c_str()));
@@ -907,7 +907,7 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 				*/
 				if (param->name == "shader_color_space")
 				{
-					addDropDown(*templates, param_name.c_str());
+					addColorSpaceDropDown(*templates, param_name.c_str());
 				}
 				else
 					AddParameterTemplate(*templates, *param, meta);
