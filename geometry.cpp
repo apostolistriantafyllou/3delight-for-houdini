@@ -779,9 +779,8 @@ void geometry::export_override_attributes() const
 				) );
 		}
 	}
-	else
+	else if(m_context.m_ipr)
 	{
-		/* NOTE: This is needed for IPR only */
 		m_nsi.Disconnect( hub_handle(), "",
 			override_nsi_handle, "bounds" );
 		m_nsi.Disconnect( override_nsi_handle, "",
