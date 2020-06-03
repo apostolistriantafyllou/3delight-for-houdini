@@ -1204,7 +1204,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					3Delight Display's Multi-Light tool needs some information,
 					called "feedback data" to communicate back the values.
 				*/
-				if( category.second.size() > 1 )
+				if( !category.second.empty() )
 				{
 					// We use a set to group lights together under the same layer
 					/*
@@ -1237,10 +1237,9 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 							category.first, "members" );
 					}
 				}
-				else if(!category.second.empty())
+				else
 				{
-					std::string light_handle =
-						category.second.back()->getFullPath().toStdString();
+					std::string light_handle = category.first;
 					ExportLayerFeedbackData(
 						i_ctx, layer_name, light_handle );
 				}
@@ -1665,7 +1664,7 @@ void ROP_3Delight::BuildLightCategories(
 		{
 			/* Make a category for this single light */
 			std::string category = light->getFullPath().toStdString();
-			o_light_categories[category].push_back(light);
+			o_light_categories[category] = {};
 		}
 	}
 }
