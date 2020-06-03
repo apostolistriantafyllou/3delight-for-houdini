@@ -37,6 +37,9 @@ public:
 	/// Returns the number input ports that should be visible
 	virtual unsigned getNumVisibleInputs()const override;
 
+	/** \brief Needed to create DlTerminal */
+	virtual void onCreated() override;
+
 	VOP_Node* get_material();
 
 protected:
