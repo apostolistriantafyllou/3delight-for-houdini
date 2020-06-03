@@ -1690,6 +1690,8 @@ bool
 ROP_3Delight::GetScaledResolution(int& o_x, int& o_y)const
 {
 	OBJ_Camera* cam = GetCamera();
+	fpreal t = m_current_render->m_current_time;
+
 	if(!cam)
 	{
 		return false;
@@ -1697,8 +1699,8 @@ ROP_3Delight::GetScaledResolution(int& o_x, int& o_y)const
 
 	float scale = GetResolutionFactor();
 
-	o_x = int(::roundf(cam->RESX(0)*scale));
-	o_y = int(::roundf(cam->RESY(0)*scale));
+	o_x = int(::roundf(cam->RESX(t)*scale));
+	o_y = int(::roundf(cam->RESY(t)*scale));
 
 	return true;
 }
