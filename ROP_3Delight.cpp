@@ -978,7 +978,8 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 			->SetArrayType(NSITypeInteger, 2)
 			->SetCount(1)
 			->CopyValue(default_resolution, sizeof(default_resolution)),
-			NSI::IntegerArg("oversampling", GetPixelSamples())
+			NSI::IntegerArg("oversampling", GetPixelSamples()),
+			NSI::FloatArg( "pixelaspectratio", cam->ASPECT(current_time))
 		) );
 
 	// Set the crop window or priority window
