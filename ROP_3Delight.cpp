@@ -1013,8 +1013,8 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	{
 		float cam_crop[4] =
 		{
-			float(cam->CROPL(0)), float(cam->CROPB(0)),
-			float(cam->CROPR(0)), float(cam->CROPT(0))
+			float(cam->CROPL(0)), 1.0f - float(cam->CROPT(0)),
+			float(cam->CROPR(0)), 1.0f - float(cam->CROPB(0))
 		};
 		i_ctx.m_nsi.SetAttribute(
 			k_screen_name,
