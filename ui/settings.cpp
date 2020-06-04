@@ -697,7 +697,7 @@ int settings::image_format_cb(
 	OP_Parameters* node = reinterpret_cast<OP_Parameters*>(data);
 
 	UT_String image_format;
-	node->evalString(image_format, k_default_image_format, 0, 0.0f);
+	node->evalString(image_format, k_default_image_format, 0, t);
 
 	PRM_Parm& parm = node->getParm(k_default_image_bits);
 	PRM_Template* parmTemp = parm.getTemplatePtr();
@@ -705,17 +705,17 @@ int settings::image_format_cb(
 
 	if (image_format == "tiff")
 	{
-		node->setString("uint8", CH_STRING_LITERAL, k_default_image_bits, 0, 0.0f);
+		node->setString("uint8", CH_STRING_LITERAL, k_default_image_bits, 0, t);
 		parmTemp->setChoiceListPtr(&default_image_bits_c_tiff);
 	}
 	else if (image_format == "exr" || image_format == "deepexr")
 	{
-		node->setString("half", CH_STRING_LITERAL, k_default_image_bits, 0, 0.0f);
+		node->setString("half", CH_STRING_LITERAL, k_default_image_bits, 0, t);
 		parmTemp->setChoiceListPtr(&default_image_bits_c_exr);
 	}
 	else if (image_format == "jpeg" || image_format == "png")
 	{
-		node->setString("uint8", CH_STRING_LITERAL, k_default_image_bits, 0, 0.0f);
+		node->setString("uint8", CH_STRING_LITERAL, k_default_image_bits, 0, t);
 		parmTemp->setChoiceListPtr(&default_image_bits_c_png);
 	}
 
@@ -802,14 +802,15 @@ int settings::add_layer_cb(
 }
 
 void settings::GetLights(
-	std::vector<OBJ_Node*>& o_lights) const
+	std::vector<OBJ_Node*>& o_lights,
+	fpreal t ) const
 {
-	if (!EnableMultiLight())
+	if (!EnableMultiLight(t))
 		return;
 
 	auto pattern =
-		OverrideDisplayFlags()
-		? OP_BundlePattern::allocPattern(GetLightsToRender())
+		OverrideDisplayFlags(t)
+		? OP_BundlePattern::allocPattern(GetLightsToRender(t))
 		: nullptr;
 
 	scene::find_lights(
@@ -822,52 +823,52 @@ void settings::GetLights(
 	}
 }
 
-UT_String settings::GetAtmosphere() const
+UT_String settings::GetAtmosphere( fpreal t) const
 {
 	UT_String atmosphere;
-	m_parameters.evalString(atmosphere, settings::k_atmosphere, 0, 0.0f);
+	m_parameters.evalString(atmosphere, settings::k_atmosphere, 0, t);
 	return atmosphere;
 }
 
-bool settings::OverrideDisplayFlags()const
+bool settings::OverrideDisplayFlags( fpreal t)const
 {
-	return m_parameters.evalInt(settings::k_override_display_flags, 0, 0.0f) != 0;
+	return m_parameters.evalInt(settings::k_override_display_flags, 0, t) != 0;
 }
 
-bool settings::EnableMultiLight()const
+bool settings::EnableMultiLight( fpreal t )const
 {
-	return m_parameters.evalInt(settings::k_enable_multi_light, 0, 0.0f) != 0;
+	return m_parameters.evalInt(settings::k_enable_multi_light, 0, t) != 0;
 }
 
-UT_String settings::GetObjectsToRender() const
+UT_String settings::GetObjectsToRender( fpreal t ) const
 {
 	UT_String objects_pattern("*");
-	m_parameters.evalString(objects_pattern, settings::k_objects_to_render, 0, 0.0f);
+	m_parameters.evalString(objects_pattern, settings::k_objects_to_render, 0, t);
 	return objects_pattern;
 }
 
-UT_String settings::GetLightsToRender() const
+UT_String settings::GetLightsToRender( fpreal t ) const
 {
 	UT_String lights_pattern("*");
-	m_parameters.evalString(lights_pattern, settings::k_lights_to_render, 0, 0.0f);
+	m_parameters.evalString(lights_pattern, settings::k_lights_to_render, 0, t);
 	return lights_pattern;
 }
 
-UT_String settings::get_matte_objects( void ) const
+UT_String settings::get_matte_objects( fpreal t ) const
 {
 	UT_String matte_pattern;
 	if( m_parameters.getParmIndex(settings::k_matte_objects) != -1 )
 	{
 		m_parameters.evalString(
-			matte_pattern, settings::k_matte_objects, 0, 0.0f );
+			matte_pattern, settings::k_matte_objects, 0, t );
 	}
 	return matte_pattern;
 }
 
-UT_String settings::get_render_mode()const
+UT_String settings::get_render_mode( fpreal t )const
 {
 	UT_String render_mode("*");
-	m_parameters.evalString(render_mode, settings::k_render_mode, 0, 0.0f);
+	m_parameters.evalString(render_mode, settings::k_render_mode, 0, t);
 	return render_mode;
 }
 

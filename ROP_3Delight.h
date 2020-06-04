@@ -178,7 +178,7 @@ private:
 		Each category name is returned with the list of light nodes.
 	*/
 	void BuildLightCategories(
-		std::map<std::string, std::vector<OBJ_Node*>> &) const;
+		std::map<std::string, std::vector<OBJ_Node*>> &, fpreal t) const;
 
 	bool HasSpeedBoost( double i_time )const;
 	/// Retrieves the image resolution, scaled by the Speed Boost res factor

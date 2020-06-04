@@ -424,7 +424,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	bool ipr =
 		m_idisplay_rendering
 		?	m_idisplay_ipr
-		:	m_settings.get_render_mode().toStdString() ==
+		:	m_settings.get_render_mode(tstart).toStdString() ==
 			settings::k_rm_live_render;
 
 	m_current_render = new context(
@@ -917,7 +917,7 @@ ROP_3Delight::ExportAtmosphere(const context& i_ctx, bool ipr_update)
 	VOP_Node* atmo_vop =
 		exporter::resolve_material_path(
 			this,
-			m_settings.GetAtmosphere().c_str(),
+			m_settings.GetAtmosphere(i_ctx.m_current_time).c_str(),
 			atmo_handle);
 
 	std::string env_handle = "atmosphere|environment";
@@ -1102,7 +1102,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	// Create a category with empty name and empty list (which means ALL lights)
 	light_categories[std::string()];
 
-	BuildLightCategories( light_categories );
+	BuildLightCategories( light_categories, current_time );
 
 	bool has_frame_buffer = false;
 	for (int i = 0; i < nb_aovs; i++)
@@ -1630,10 +1630,11 @@ ROP_3Delight::BuildImageUniqueName(
 	support grouping them yet.
 */
 void ROP_3Delight::BuildLightCategories(
-	std::map<std::string, std::vector<OBJ_Node*>>& o_light_categories ) const
+	std::map<std::string, std::vector<OBJ_Node*>>& o_light_categories,
+	fpreal t ) const
 {
 	std::vector<OBJ_Node*> i_lights;
-	m_settings.GetLights( i_lights );
+	m_settings.GetLights( i_lights, t );
 
 	if( i_lights.empty() )
 		return;
@@ -1794,7 +1795,7 @@ ROP_3Delight::HasDepthOfField( double t )const
 std::string
 ROP_3Delight::GetNSIExportFilename(double i_time)const
 {
-	std::string render_mode = m_settings.get_render_mode().toStdString();
+	std::string render_mode = m_settings.get_render_mode(i_time).toStdString();
 
 	if(render_mode == settings::k_rm_render ||
 		render_mode == settings::k_rm_live_render)
