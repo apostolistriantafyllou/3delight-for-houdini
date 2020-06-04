@@ -97,6 +97,11 @@ void vdb::set_attributes( void ) const
 	double time = m_context.m_current_time;
 	OP_Node* op = m_object->getMaterialNode(time);
 
+	/*
+		This might seem useless but it's not, as resolve_material_path might
+		return a child of "op" instead of "op" itself, if it's a Material
+		Builder.
+	*/
 	VOP_Node *material = op ?
 		resolve_material_path( op->getFullPath().c_str() ) :
 		nullptr;
