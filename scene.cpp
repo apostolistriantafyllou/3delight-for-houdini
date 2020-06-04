@@ -349,8 +349,11 @@ void scene::obj_scan(
 		{
 			OP_Node *node = current->getChild(i);
 
-			if( node->castToTOPNode()  )
+			if( node->castToTOPNode() || node->castToSOPNode() ||
+				node->castToDOPNode()  )
+			{
 				continue;
+			}
 
 			OBJ_Node *obj = node->castToOBJNode();
 
