@@ -1765,7 +1765,9 @@ ROP_3Delight::GetCamera( double t )const
 	OBJ_Node* obj_node = OPgetDirector()->findOBJNode(cam_path);
 	if(!obj_node)
 	{
-		return nullptr;
+		obj_node = findOBJNode( cam_path );
+		if( !obj_node )
+			return nullptr;
 	}
 
 	return obj_node->castToOBJCamera();
