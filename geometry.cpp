@@ -784,7 +784,8 @@ VOP_Node *geometry::get_assigned_material( std::string &o_path ) const
 		return nullptr;
 
 	UT_String material_path;
-	m_object->evalString( material_path, "shop_materialpath", 0, 0.f );
+	m_object->evalString(
+		material_path, "shop_materialpath", 0, m_context.m_current_time );
 
 	if( material_path.length()==0 )
 	{
