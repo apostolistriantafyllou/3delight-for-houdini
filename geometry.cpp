@@ -416,9 +416,11 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 
 		if( !detail_handle.isValid() )
 		{
+#ifdef VERBOSE
 			std::cerr
 				<< "3Delight for Houdini: " << m_object->getFullPath()
 				<< " has no valid detail" << std::endl;
+#endif
 			return;
 		}
 
