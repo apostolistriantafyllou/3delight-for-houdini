@@ -117,8 +117,9 @@ static const std::vector<const DlShaderInfo::Parameter*> GetVolumeParams()
 
 
 /*
-	Checking for texture parameters which support colorspace meta data and when finding it we add
-	a new paramter below it for Color Space which later will be replaced by a dropdown
+	Checking for texture parameters which support colorspace 
+	meta data and when finding it we add a new parameter below 
+	it for Color Space which later will be replaced by a dropdown
 */
 static void addColorSpace (std::vector<const DlShaderInfo::Parameter*>& page)
 {
@@ -129,14 +130,15 @@ static void addColorSpace (std::vector<const DlShaderInfo::Parameter*>& page)
 	Parameter meta;
 	Parameter *param = new Parameter(meta);
 	param->name = nm;
-	param->type.type = NSITypeString;
+	param->type.elementtype = NSITypeString;
 	page.push_back(param);
 }
 
 /*
-	Function below it used to add a DropDown Menu with color space options for parameters
-	which support colorSpaces. The attribute name of these new "variables" will be the
-	attribute name of textureFile variables concatenated with meta.colorspace, which is
+	Function below it used to add a DropDown Menu with color space 
+	options for parameters which support colorSpaces. The attribute 
+	name of these new "variables" will be the attribute name of 
+	textureFile variables concatenated with meta.colorspace, which is
 	exactly the same as the colorspace attribute name supported by NSI.
 */
 static void addColorSpaceDropDown (std::vector<PRM_Template>& templates, const char color_space_str[])
@@ -774,8 +776,9 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 		page.push_back(&param);
 
 		/*
-			Here we check the attributes with contain defaultColorSpace meta data
-			and then we add the ColorSpace menu below the attributes which have it.
+			Here we check the attributes with contain defaultColorSpace
+			meta data and then we add the ColorSpace menu below the 
+			attributes which have it.
 		*/
 		const char* color_space_meta = "";
 		osl_utilities::FindMetaData(color_space_meta, param.metadata, "defaultColorSpace");
