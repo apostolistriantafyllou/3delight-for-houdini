@@ -98,7 +98,17 @@ void null::changed_cb(
 	void* i_data)
 {
 	context* ctx = (context*)i_callee;
-	if(i_type == OP_PARM_CHANGED)
+
+	/*
+		FIXME : We normally shouldn't react to OP_UI_MOVED because this type of
+		event is supposed to be generated only when the node's location in the
+		graph view changes, which has nothing to do with its actual position in
+		the 3D scene. However, it seems to be the only event we can trap after
+		the copy & paste of an object, once its transform has been updated.
+		Otherwise, it remains (incorrectly) set to the identity transform in the
+		NSI scene.
+	*/
+	if(i_type == OP_PARM_CHANGED || i_type == OP_UI_MOVED)
 	{
 		if(!is_transform_parameter_index(reinterpret_cast<intptr_t>(i_data)))
 		{

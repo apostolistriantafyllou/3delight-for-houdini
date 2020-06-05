@@ -930,6 +930,16 @@ void geometry::changed_cb(
 			break;
 		}
 
+		/*
+			FIXME : We normally shouldn't react to OP_UI_MOVED because this type
+			of event is supposed to be generated only when the node's location
+			in the graph view changes, which has nothing to do with its actual
+			geometry in the 3D scene. However, it seems to be the only event we
+			can trap after the copy & paste of an object, once its render SOP
+			gets a valid detail.
+		*/
+		case OP_UI_MOVED:
+
 		case OP_FLAG_CHANGED:
 		case OP_INPUT_CHANGED:
 		case OP_SPAREPARM_MODIFIED:
