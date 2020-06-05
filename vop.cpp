@@ -396,8 +396,25 @@ void vop::list_shader_parameters(
 			{
 				std::string param( parameter->name.c_str() );
 				param += ".meta.colorspace";
-				o_list.Add( new NSI::StringArg(param, color_space.buffer()) );
-			}
+				/*
+					If the value of the current texture parameter is not detected 
+					by checking for srccolorspace or texcolorspace attribute we do 
+					an additional check by checking its parameter name concantenated 
+					with .meta.colorspace. This is because when we add the color 
+					space attribute on Houdini for texture nodes we set the colorspace
+					parameter name to texture_param_name+".meta.colorspace"
+				*/
+				colorspace_index = i_parameters->getParmIndex(param.c_str());
+				if (colorspace_index >= 0)
+				{
+					/*
+						Here we update the value of color_space if the colorspace 
+						attribute named after the texture node parameter exists.
+					*/
+					i_parameters->evalString(color_space, param.c_str(), 0, i_time);
+				}
+
+				o_list.Add( new NSI::StringArg(param, color_space.buffer()) );			}
 
 			break;
 		}
