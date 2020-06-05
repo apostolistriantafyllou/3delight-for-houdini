@@ -1,8 +1,6 @@
 #include "VOP_3DelightMaterialBuilder.h"
 #include "VOP_ExternalOSL.h"
 
-#include <assert.h>
-
 const char* VOP_3DelightMaterialBuilder::theChildTableName = VOP_TABLE_NAME;
 
 bool
@@ -16,12 +14,6 @@ void
 VOP_3DelightMaterialBuilder::Register(OP_OperatorTable* io_table)
 {
 	io_table->addOperator(new VOP_3DelightMaterialBuilderOperator());
-}
-
-void VOP_3DelightMaterialBuilder::onCreated()
-{
-	OP_Node *N = OP_Network::createNode( "3Delight::dlTerminal", "Terminal");
-	assert( N );
 }
 
 OP_Node*
