@@ -400,7 +400,8 @@ void primitive::assign_sop_materials( void ) const
 		*/
 		std::string shop( materials->getS(0) );
 
-		if( !resolve_material_path(m_object, shop.c_str(), shop) )
+
+		if( resolve_material_path(m_object, shop.c_str(), shop) )
 		{
 			std::string attribute_handle = m_handle + shop;
 

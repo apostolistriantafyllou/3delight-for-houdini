@@ -76,7 +76,7 @@ static const std::vector<const DlShaderInfo::Parameter*> GetVolumeParams()
 	{
 		Parameter& param = meta[p];
 		param.name = conststring(label, label+sizeof(label));
-		param.type.type = NSITypeString;
+		param.type.elementtype = NSITypeString;
 		param.type.arraylen = 0;
 		param.validdefault = true;
 		param.sdefault =
@@ -89,7 +89,7 @@ static const std::vector<const DlShaderInfo::Parameter*> GetVolumeParams()
 	{
 		Parameter& param = params[p];
 		param.name = name_strings[p];
-		param.type.type = p < nstrings ? NSITypeString : NSITypeFloat;
+		param.type.elementtype = p < nstrings ? NSITypeString : NSITypeFloat;
 		param.type.arraylen = 0;
 		param.isoutput = false;
 		param.validdefault = true;
@@ -170,7 +170,7 @@ static void addColorSpaceDropDown (std::vector<PRM_Template>& templates, const c
 /// Returns the number of scalar channels in the specified type
 static unsigned GetNumChannels(const DlShaderInfo::TypeDesc& i_osl_type)
 {
-	switch(i_osl_type.type)
+	switch(i_osl_type.elementtype)
 	{
 		case NSITypeFloat:
 		case NSITypeDouble:
@@ -207,7 +207,7 @@ static PRM_Type GetPRMType(
 	const DlShaderInfo::TypeDesc& i_osl_type,
 	const osl_utilities::ParameterMetaData& i_meta)
 {
-	switch(i_osl_type.type)
+	switch(i_osl_type.elementtype)
 	{
 		case NSITypeFloat:
 		case NSITypeDouble:
@@ -272,7 +272,8 @@ NewPRMRange(
 	const DlShaderInfo::TypeDesc& i_osl_type,
 	const osl_utilities::ParameterMetaData& i_meta)
 {
-	if(i_osl_type.type == NSITypeFloat || i_osl_type.type == NSITypeDouble)
+	if(i_osl_type.elementtype == NSITypeFloat ||
+	   i_osl_type.elementtype == NSITypeDouble)
 	{
 		if(!(i_meta.m_fmin || i_meta.m_slider_fmin) ||
 			!(i_meta.m_fmax || i_meta.m_slider_fmax))
@@ -287,7 +288,7 @@ NewPRMRange(
 				i_meta.m_fmax ? PRM_RANGE_RESTRICTED : PRM_RANGE_UI,
 				i_meta.m_fmax ? *i_meta.m_fmax : *i_meta.m_slider_fmax);
 	}
-	else if(i_osl_type.type == NSITypeInteger)
+	else if(i_osl_type.elementtype == NSITypeInteger)
 	{
 		if(!(i_meta.m_imin || i_meta.m_slider_imin) ||
 			!(i_meta.m_imax || i_meta.m_slider_imax))
@@ -311,7 +312,7 @@ static PRM_Default* NewPRMDefault(
 	const DlShaderInfo::Parameter& i_param,
 	unsigned i_nb_defaults)
 {
-	switch(i_param.type.type)
+	switch(i_param.type.elementtype)
 	{
 		case NSITypeFloat:
 		case NSITypeDouble:
@@ -389,7 +390,7 @@ NewPRMChoiceList(
 	const DlShaderInfo::TypeDesc& i_osl_type,
 	const osl_utilities::ParameterMetaData& i_meta)
 {
-	if(i_osl_type.type != NSITypeInteger || !i_meta.m_options)
+	if(i_osl_type.elementtype != NSITypeInteger || !i_meta.m_options)
 	{
 		return nullptr;
 	}
@@ -466,7 +467,7 @@ VOP_Type VOP_ExternalOSL::GetVOPType(const DlShaderInfo::Parameter& i_osl_param)
 		return m_shader_info.ShaderType();
 	}
 
-	switch(i_osl_param.type.type)
+	switch(i_osl_param.type.elementtype)
 	{
 		case NSITypeFloat:
 		case NSITypeDouble:
@@ -514,7 +515,7 @@ static void
 InitSubPageMarker(DlShaderInfo::Parameter& o_fake_param, const char* i_name)
 {
 	assert(i_name);
-	o_fake_param.type.type = NSITypeInvalid;
+	o_fake_param.type.elementtype = NSITypeInvalid;
 	/*
 		DlShaderInfo::conststring's constructor expects its "end" pointer to
 		point *after* the string's terminating null character, hence the unusual
@@ -600,7 +601,7 @@ AddRampParameterTemplate(
 		LEAKED(strdup((i_param.name.string() + k_index_suffix).c_str()));
 	char* inter_string =
 		LEAKED(strdup((interpolation->name.string() + k_index_suffix).c_str()));
-	bool color = i_param.type.type == NSITypeColor;
+	bool color = i_param.type.elementtype == NSITypeColor;
 	PRM_Name* pos = LEAKED(new PRM_Name(pos_string, k_position));
 	PRM_Name* value = LEAKED(new PRM_Name(value_string, color ? k_color : k_value));
 	PRM_Name* inter = LEAKED(new PRM_Name(inter_string, k_interpolation));
@@ -669,7 +670,7 @@ StructuredShaderInfo::StructuredShaderInfo(const DlShaderInfo* i_info)
 		i_info->metadata();
 	for(const DlShaderInfo::Parameter& param : meta)
 	{
-		if(param.name != "tags" || param.type.type != NSITypeString)
+		if(param.name != "tags" || param.type.elementtype != NSITypeString)
 		{
 			continue;
 		}
@@ -737,8 +738,8 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 			Don't display matrices in the UI for now. They can still be
 			communicated through connections.
 		*/
-		if(param.type.type == NSITypeMatrix ||
-			param.type.type == NSITypeDoubleMatrix)
+		if(param.type.elementtype == NSITypeMatrix ||
+			param.type.elementtype == NSITypeDoubleMatrix)
 		{
 			continue;
 		}
@@ -759,6 +760,11 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 
 		const char* page_name = "";
 		osl_utilities::FindMetaData(page_name, param.metadata, "page");
+
+		if( ::strcmp(page_name, "") == 0 )
+		{
+			page_name = "Main";
+		}
 
 		// Ensure that the page exists in page_map
 		std::pair<page_map_t::iterator, bool> inserted =
@@ -884,7 +890,7 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 		static std::string param_name = "";
 		for(const DlShaderInfo::Parameter* param : *pa.second)
 		{
-			if(param->type.type == NSITypeInvalid)
+			if(param->type.elementtype == NSITypeInvalid)
 			{
 				AddSubPageHeading(*templates, param->name);
 				continue;
@@ -1144,7 +1150,7 @@ VOP_ExternalOSL::SetRampParametersDefaults()
 
 		// Retrieve the default parameters values
 		const DlShaderInfo::constvector<float>& default_values = param.fdefault;
-		bool color = param.type.type == NSITypeColor;
+		bool color = param.type.elementtype == NSITypeColor;
 		unsigned value_size = color ? 3 : 1;
 		unsigned nb_default_values = default_values.size() / value_size;
 		const DlShaderInfo::constvector<float>& default_knots = knots->fdefault;
@@ -1248,6 +1254,18 @@ VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
 {
 	const char* name = i_shader_info.m_dl.shadername().c_str();
 	osl_utilities::FindMetaData(name, i_shader_info.m_dl.metadata(), "niceName");
+
+	std::string better;
+	if( ::islower(name[0]))
+	{
+		/*
+			Many utility nodes have no nice name but their ID is just fine with
+			an upper case. For example: leather, granite, etc.
+		*/
+		better = name;
+		better[0] = std::toupper(better[0]);
+		name = better.c_str();
+	}
 	setEnglish(name);
 
 	// Set default icon name for those that are not already defined by

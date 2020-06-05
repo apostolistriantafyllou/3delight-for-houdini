@@ -42,10 +42,10 @@ public:
 		void* data, int index, fpreal t,
 		const PRM_Template* tplate);
 
-	UT_String GetObjectsToRender() const;
-	UT_String GetLightsToRender() const;
-	UT_String get_matte_objects( void ) const;
-	bool OverrideDisplayFlags()const;
+	UT_String GetObjectsToRender( fpreal ) const;
+	UT_String GetLightsToRender( fpreal ) const;
+	UT_String get_matte_objects( fpreal ) const;
+	bool OverrideDisplayFlags( fpreal )const;
 
 public:
 
@@ -101,11 +101,11 @@ private:
 	/**
 		\brief Get lights from scene lights.
 	*/
-	void GetLights(std::vector<OBJ_Node*>& o_lights) const;
+	void GetLights(std::vector<OBJ_Node*>& o_lights, fpreal t ) const;
 
-	UT_String GetAtmosphere() const;
-	bool EnableMultiLight()const;
-	UT_String get_render_mode()const;
+	UT_String GetAtmosphere( fpreal t ) const;
+	bool EnableMultiLight( fpreal t )const;
+	UT_String get_render_mode( fpreal t )const;
 
 	/// Called when the Abort button is pressed
 	static int StopRenderCB(void* i_node, int, double, const PRM_Template*);

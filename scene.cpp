@@ -33,11 +33,11 @@
 	\brief Decide what to do with the given OP_Node.
 
 	\param i_re_export_instanced.
-		= true if this run is for re exporting and instanced object that was
+		= true if this run is for re exporting an instanced object that was
 		ignored beause it was invisible. We find out about such objects later
 		in the pipeline. When re-exportig, we don't check Display flag /
 		Objects to Render (as this would return 'false') and we don't need
-		to exprt the NULL transform at the top because it has alredy been
+		to export the null transform at the top because it has already been
 		exported in the first run. \ref scan_for_instanced
 
 	Houdini's OBJ nodes will correspond to NSI transform. So we insert
@@ -55,18 +55,18 @@ void scene::process_obj_node(
 {
 	/*
 		Each object is its own null transform. When re-exporting an invisible
-		object that was tgged as an instance, we don't need to output the
+		object that was tagged as an instance, we don't need to output the
 		null exported as it is already present since the first scene
 		scan.
 	*/
 	if( !i_re_export_instanced )
 	{
 		o_to_export.push_back( new null(i_context, obj) );
-	}
 
-	if(i_context.m_ipr)
-	{
-		i_context.register_interest(obj, &null::changed_cb);
+		if(i_context.m_ipr)
+		{
+			i_context.register_interest(obj, &null::changed_cb);
+		}
 	}
 
 	if( obj->getObjectType() & OBJ_NULL )
@@ -349,8 +349,11 @@ void scene::obj_scan(
 		{
 			OP_Node *node = current->getChild(i);
 
-			if( node->castToTOPNode()  )
+			if( node->castToTOPNode() || node->castToSOPNode() ||
+				node->castToDOPNode()  )
+			{
 				continue;
+			}
 
 			OBJ_Node *obj = node->castToOBJNode();
 

@@ -63,7 +63,12 @@ namespace
 
 	const char* k_fov = "_3dl_fov";
 
-	/// Returns the field of view for a perspective camera.
+	/**
+		\brief Returns the field of view for a perspective camera.
+
+		NOTE: this takes the pixel aspect ratio ('apsect') parameter into
+		account.
+	*/
 	float get_fov(OBJ_Camera& i_camera, double i_time)
 	{
 		if(!i_camera.hasParm(k_fov))
@@ -71,7 +76,8 @@ namespace
 			return 30.0f;
 		}
 
-		return i_camera.evalFloat(k_fov, 0, i_time);
+		float fov = i_camera.evalFloat(k_fov, 0, i_time);
+		return fov / i_camera.ASPECT( i_time );
 	}
 
 	const char* k_focal_distance = "_3dl_focal_distance";

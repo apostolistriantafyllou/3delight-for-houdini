@@ -172,12 +172,6 @@ ROP_3Delight::~ROP_3Delight()
 	StopRender();
 }
 
-
-void ROP_3Delight::onCreated()
-{
-	ROP_Node::onCreated();
-}
-
 void ROP_3Delight::StartRenderFromIDisplay(
 	double i_time,
 	bool i_ipr,
@@ -245,11 +239,11 @@ void ROP_3Delight::UpdateIDisplayPriorityWindow(const float* i_window)
 	m_render_end_mutex.unlock();
 }
 
-bool ROP_3Delight::HasMotionBlur() const
+bool ROP_3Delight::HasMotionBlur( double t) const
 {
 	return
-		evalInt(settings::k_motion_blur, 0, 0.0f) &&
-		!(HasSpeedBoost() && evalInt(settings::k_disable_motion_blur, 0, 0.0f));
+		evalInt(settings::k_motion_blur, 0, t) &&
+		!(HasSpeedBoost(t) && evalInt(settings::k_disable_motion_blur, 0, t));
 }
 
 /**
@@ -280,9 +274,10 @@ void ROP_3Delight::ExportDefaultMaterial( const context &i_context ) const
 void
 ROP_3Delight::ExportGlobals(const context& i_ctx)const
 {
-	int shading_samples = evalInt(settings::k_shading_samples, 0, 0.0f);
+	fpreal t = m_current_render->m_current_time;
+	int shading_samples = evalInt(settings::k_shading_samples, 0, t);
 	shading_samples = int(float(shading_samples) * GetSamplingFactor() + 0.5f);
-	int volume_samples = evalInt(settings::k_volume_samples, 0, 0.0f);
+	int volume_samples = evalInt(settings::k_volume_samples, 0, t);
 	i_ctx.m_nsi.SetAttribute(
 		".global",
 		(
@@ -290,10 +285,10 @@ ROP_3Delight::ExportGlobals(const context& i_ctx)const
 			NSI::IntegerArg("quality.volumesamples", volume_samples)
 		) );
 
-	int max_diffuse_depth = evalInt(settings::k_max_diffuse_depth, 0, 0.0f);
-	int max_reflection_depth = evalInt(settings::k_max_reflection_depth, 0, 0.0f);
-	int max_refraction_depth = evalInt(settings::k_max_refraction_depth, 0, 0.0f);
-	int max_hair_depth = evalInt(settings::k_max_hair_depth, 0, 0.0f);
+	int max_diffuse_depth = evalInt(settings::k_max_diffuse_depth, 0, t);
+	int max_reflection_depth = evalInt(settings::k_max_reflection_depth, 0, t);
+	int max_refraction_depth = evalInt(settings::k_max_refraction_depth, 0, t);
+	int max_hair_depth = evalInt(settings::k_max_hair_depth, 0, t);
 	i_ctx.m_nsi.SetAttribute(
 		".global",
 		(
@@ -303,7 +298,7 @@ ROP_3Delight::ExportGlobals(const context& i_ctx)const
 			NSI::IntegerArg("maximumraydepth.hair", max_hair_depth)
 		) );
 
-	float max_distance = evalInt(settings::k_max_distance, 0, 0.0f);
+	float max_distance = evalInt(settings::k_max_distance, 0, t);
 	i_ctx.m_nsi.SetAttribute(
 		".global",
 		(
@@ -314,16 +309,16 @@ ROP_3Delight::ExportGlobals(const context& i_ctx)const
 			 NSI::DoubleArg( "maximumraylength.hair", max_distance)
 		) );
 
-	if(HasSpeedBoost())
+	if(HasSpeedBoost(i_ctx.m_current_time))
 	{
 
-		if(evalInt(settings::k_disable_displacement, 0, 0.0f))
+		if(evalInt(settings::k_disable_displacement, 0, t))
 		{
 			i_ctx.m_nsi.SetAttribute(
 				".global", NSI::IntegerArg("show.displacement", 0));
 		}
 
-		if(evalInt(settings::k_disable_subsurface, 0, 0.0f))
+		if(evalInt(settings::k_disable_subsurface, 0, t))
 		{
 			i_ctx.m_nsi.SetAttribute(
 				".global", NSI::IntegerArg("show.osl.subsurface", 0));
@@ -429,7 +424,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	bool ipr =
 		m_idisplay_rendering
 		?	m_idisplay_ipr
-		:	m_settings.get_render_mode().toStdString() ==
+		:	m_settings.get_render_mode(tstart).toStdString() ==
 			settings::k_rm_live_render;
 
 	m_current_render = new context(
@@ -440,7 +435,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		tend,
 		GetShutterInterval(tstart),
 		fps,
-		HasDepthOfField(),
+		HasDepthOfField(tstart),
 		batch,
 		ipr,
 		!render,
@@ -922,7 +917,7 @@ ROP_3Delight::ExportAtmosphere(const context& i_ctx, bool ipr_update)
 	VOP_Node* atmo_vop =
 		exporter::resolve_material_path(
 			this,
-			m_settings.GetAtmosphere().c_str(),
+			m_settings.GetAtmosphere(i_ctx.m_current_time).c_str(),
 			atmo_handle);
 
 	std::string env_handle = "atmosphere|environment";
@@ -964,7 +959,7 @@ ROP_3Delight::ExportAtmosphere(const context& i_ctx, bool ipr_update)
 void
 ROP_3Delight::ExportOutputs(const context& i_ctx)const
 {
-	OBJ_Camera* cam = GetCamera();
+	OBJ_Camera* cam = GetCamera( i_ctx.m_current_time );
 
 	if( !cam )
 	{
@@ -984,7 +979,8 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 			->SetArrayType(NSITypeInteger, 2)
 			->SetCount(1)
 			->CopyValue(default_resolution, sizeof(default_resolution)),
-			NSI::IntegerArg("oversampling", GetPixelSamples())
+			NSI::IntegerArg("oversampling", GetPixelSamples()),
+			NSI::FloatArg( "pixelaspectratio", cam->ASPECT(current_time))
 		) );
 
 	// Set the crop window or priority window
@@ -1019,8 +1015,8 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	{
 		float cam_crop[4] =
 		{
-			float(cam->CROPL(0)), float(cam->CROPB(0)),
-			float(cam->CROPR(0)), float(cam->CROPT(0))
+			float(cam->CROPL(0)), 1.0f - float(cam->CROPT(0)),
+			float(cam->CROPR(0)), 1.0f - float(cam->CROPB(0))
 		};
 		i_ctx.m_nsi.SetAttribute(
 			k_screen_name,
@@ -1078,18 +1074,18 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 	if (i_ctx.m_export_nsi || i_ctx.m_batch)
 	{
-		int mode = evalInt(settings::k_batch_output_mode, 0, 0.0f);
+		int mode = evalInt(settings::k_batch_output_mode, 0, current_time);
 		if (mode == 0) output_mode = e_useToggleStates;
 		else output_mode = e_allFilesAndSelectedJpeg;
 	}
 	else
 	{
-		int mode = evalInt(settings::k_interactive_output_mode, 0, 0.0f);
+		int mode = evalInt(settings::k_interactive_output_mode, 0, current_time);
 		if (mode == 0) output_mode = e_useToggleStates;
 		else if (mode == 1) output_mode = e_useToggleAndFramebufferStates;
 	}
 
-	int nb_aovs = evalInt(settings::k_aov, 0, 0.0f);
+	int nb_aovs = evalInt(settings::k_aov, 0, current_time);
 	unsigned sort_key = 0;
 
 	UT_String scalar_format;
@@ -1098,16 +1094,15 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		settings::k_default_image_bits, 0, current_time );
 
 	UT_String filter;
-	evalString(filter, settings::k_pixel_filter, 0, 0.0f);
-	double filter_width = evalFloat(settings::k_filter_width, 0, 0.0f);
+	evalString(filter, settings::k_pixel_filter, 0, current_time);
+	double filter_width = evalFloat(settings::k_filter_width, 0, current_time);
 
-	std::vector< std::pair<std::string, std::vector<std::string>> >
-		light_categories;
+	std::map<std::string, std::vector<OBJ_Node*>> light_categories;
 
-	/* First empty category means ALL lights */
-	light_categories.push_back( {} );
+	// Create a category with empty name and empty list (which means ALL lights)
+	light_categories[std::string()];
 
-	BuildLightCategories( light_categories );
+	BuildLightCategories( light_categories, current_time );
 
 	bool has_frame_buffer = false;
 	for (int i = 0; i < nb_aovs; i++)
@@ -1119,12 +1114,12 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 		bool idisplay_output =
 			!i_ctx.m_batch && !i_ctx.m_export_nsi &&
-			evalInt(aov::getAovFrameBufferOutputToken(i), 0, 0.0f) != 0;
-		bool file_output = evalInt(aov::getAovFileOutputToken(i), 0, 0.0f);
+			evalInt(aov::getAovFrameBufferOutputToken(i), 0, current_time) != 0;
+		bool file_output = evalInt(aov::getAovFileOutputToken(i), 0, current_time);
 		bool png_output = file_output;
 		file_output = file_output && file_driver.toStdString() != "png";
 		png_output = png_output && file_driver.toStdString() == "png";
-		bool jpeg_output = evalInt(aov::getAovJpegOutputToken(i), 0, 0.0f);
+		bool jpeg_output = evalInt(aov::getAovJpegOutputToken(i), 0, current_time);
 
 		if (output_mode == e_disabled)
 		{
@@ -1207,14 +1202,36 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 				}
 
 				/*
-					3Delight display's Multi-Light tool needs some information,
-					called "feedback data" to communicate backe the values.
+					3Delight Display's Multi-Light tool needs some information,
+					called "feedback data" to communicate back the values.
 				*/
 				if( !category.second.empty() )
 				{
+					// We use a set to group lights together under the same layer
+					/*
+						FIXME : exporting the lightsets should always be done,
+						even if idisplay_output, m_current_render->m_export_nsi
+						or m_current_render->m_batch is true. Only the layer
+						feedback data could be omitted when not sending the
+						render to i-display. 
+					*/
+					/*
+						FIXME : there is no reason to export those sets set once
+						for each AOV. Also, they should be exported *before* we
+						try to connect them to the layers in ExportOneOutputLayer.
+						This part could be moved out of the loop. 
+					*/
 					i_ctx.m_nsi.Create( category.first, "set");
-					for( auto &light_handle : category.second )
+					for( auto &light_source : category.second )
 					{
+						std::string light_handle =
+							light_source->getFullPath().toStdString();
+						/*
+							FIXME : calling ExportLayerFeedbackData in a loop
+							with the same layer_name will simply overwrite the
+							"feedbackdata" attribute of the layer.  Only the
+							last light will end up in the attribute.
+						*/
 						ExportLayerFeedbackData(
 							i_ctx, layer_name, light_handle );
 						i_ctx.m_nsi.Connect( light_handle, "",
@@ -1223,8 +1240,9 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 				}
 				else
 				{
+					std::string light_handle = category.first;
 					ExportLayerFeedbackData(
-						i_ctx, layer_name, category.first );
+						i_ctx, layer_name, light_handle );
 				}
 			}
 
@@ -1607,16 +1625,16 @@ ROP_3Delight::BuildImageUniqueName(
 	\brief Output light categories for light bundles and single lights.
 
 	We output a light category for each bundle of lights. Lights that are alone
-	will be in their own category. Incandescence lights nd VDBs cannot be but
-	into bundles. Doesn't make sense for Incandescent and 3Delight NSId doesn't
-	support grpouping them yet.
+	will be in their own category. Incandescence lights and VDBs cannot be put
+	into bundles. Doesn't make sense for Incandescent and 3Delight NSI doesn't
+	support grouping them yet.
 */
 void ROP_3Delight::BuildLightCategories(
-	std::vector< std::pair<std::string, std::vector<std::string>>> &
-		o_light_categories ) const
+	std::map<std::string, std::vector<OBJ_Node*>>& o_light_categories,
+	fpreal t ) const
 {
 	std::vector<OBJ_Node*> i_lights;
-	m_settings.GetLights( i_lights );
+	m_settings.GetLights( i_lights, t );
 
 	if( i_lights.empty() )
 		return;
@@ -1624,9 +1642,6 @@ void ROP_3Delight::BuildLightCategories(
 	OP_BundleList* blist = OPgetDirector()->getBundles();
 	assert(blist);
 	int numBundles = blist->entries();
-
-	std::vector<std::string> empty;
-	std::unordered_set<std::string> output_categories;
 
 	for( auto light : i_lights )
 	{
@@ -1637,50 +1652,27 @@ void ROP_3Delight::BuildLightCategories(
 
 		for (int i = 0; !incand && !isvdb && i < numBundles; i++)
 		{
-			OP_Bundle* bundle = blist->getBundle(i); assert(bundle);
-
+			OP_Bundle* bundle = blist->getBundle(i);
+			assert(bundle);
 			if( bundle && bundle->contains(light, false) )
 			{
 				std::string bundle_name = bundle->getName();
-
-				if( output_categories.find( bundle_name ) ==
-					output_categories.end())
-				{
-					output_categories.insert( bundle_name );
-
-					/* Make a cagtegory for this bundle  */
-					o_light_categories.push_back(
-						std::make_pair(bundle_name, empty) );
-				}
-
-				/* Insert light in the right category */
-				std::string light_handle = light->getFullPath().toStdString();
-
-				for( auto &C : o_light_categories )
-				{
-					if( C.first == bundle_name )
-					{
-						foundInBundle = true;
-						C.second.push_back( light_handle );
-						break;
-					}
-				}
-
-				assert( foundInBundle = true );
+				o_light_categories[bundle_name].push_back(light);
+				foundInBundle = true;
 			}
 		}
 
 		if( !foundInBundle )
 		{
 			/* Make a category for this single light */
-			o_light_categories.push_back(
-				std::make_pair(light->getFullPath().toStdString(), empty));
+			std::string category = light->getFullPath().toStdString();
+			o_light_categories[category] = {};
 		}
 	}
 }
 
 bool
-ROP_3Delight::HasSpeedBoost()const
+ROP_3Delight::HasSpeedBoost( double t )const
 {
 	bool batch = !UTisUIAvailable();
 	if(batch)
@@ -1691,14 +1683,16 @@ ROP_3Delight::HasSpeedBoost()const
 	if( m_current_render && m_current_render->m_export_nsi )
 		return false;
 
-	int speed_boost = evalInt(settings::k_speed_boost, 0, 0.0f);
+	int speed_boost = evalInt(settings::k_speed_boost, 0, t);
 	return speed_boost;
 }
 
 bool
 ROP_3Delight::GetScaledResolution(int& o_x, int& o_y)const
 {
-	OBJ_Camera* cam = GetCamera();
+	fpreal t = m_current_render->m_current_time;
+	OBJ_Camera* cam = GetCamera( t );
+
 	if(!cam)
 	{
 		return false;
@@ -1706,8 +1700,8 @@ ROP_3Delight::GetScaledResolution(int& o_x, int& o_y)const
 
 	float scale = GetResolutionFactor();
 
-	o_x = int(::roundf(cam->RESX(0)*scale));
-	o_y = int(::roundf(cam->RESY(0)*scale));
+	o_x = int(::roundf(cam->RESX(t)*scale));
+	o_y = int(::roundf(cam->RESY(t)*scale));
 
 	return true;
 }
@@ -1715,12 +1709,14 @@ ROP_3Delight::GetScaledResolution(int& o_x, int& o_y)const
 float
 ROP_3Delight::GetResolutionFactor()const
 {
-	if(!HasSpeedBoost())
+	fpreal t = m_current_render->m_current_time;
+
+	if(!HasSpeedBoost(t))
 	{
 		return 1.0f;
 	}
 
-	int resolution_factor = evalInt(settings::k_resolution_factor, 0, 0.0f);
+	int resolution_factor = evalInt(settings::k_resolution_factor, 0, t);
 
 	float factors[] = { 1.0f, 0.5f, 0.25f, 0.125f };
 	if(resolution_factor < 0 ||
@@ -1735,12 +1731,13 @@ ROP_3Delight::GetResolutionFactor()const
 float
 ROP_3Delight::GetSamplingFactor()const
 {
-	if(!HasSpeedBoost())
+	fpreal t = m_current_render->m_current_time;
+	if( !HasSpeedBoost(t) )
 	{
 		return 1.0f;
 	}
 
-	int sampling_factor = evalInt(settings::k_sampling_factor, 0, 0.0f);
+	int sampling_factor = evalInt(settings::k_sampling_factor, 0, t);
 
 	float factors[] = { 1.0f, 0.25f, 0.1f, 0.04f, 0.01f };
 	if(sampling_factor < 0 ||
@@ -1755,20 +1752,23 @@ ROP_3Delight::GetSamplingFactor()const
 int
 ROP_3Delight::GetPixelSamples()const
 {
-	int pixel_samples = evalInt(settings::k_pixel_samples, 0, 0.0f);
+	fpreal t = m_current_render->m_current_time;
+	int pixel_samples = evalInt(settings::k_pixel_samples, 0, t);
 	return pixel_samples;
 }
 
 OBJ_Camera*
-ROP_3Delight::GetCamera()const
+ROP_3Delight::GetCamera( double t )const
 {
 	UT_String cam_path;
-	evalString(cam_path, settings::k_camera, 0, 0.0f);
+	evalString(cam_path, settings::k_camera, 0, t);
 
 	OBJ_Node* obj_node = OPgetDirector()->findOBJNode(cam_path);
 	if(!obj_node)
 	{
-		return nullptr;
+		obj_node = findOBJNode( cam_path );
+		if( !obj_node )
+			return nullptr;
 	}
 
 	return obj_node->castToOBJCamera();
@@ -1777,25 +1777,25 @@ ROP_3Delight::GetCamera()const
 double
 ROP_3Delight::GetShutterInterval(double i_time)const
 {
-	if(!HasMotionBlur())
+	if(!HasMotionBlur(i_time))
 	{
 		return 0.0;
 	}
 
-	OBJ_Camera* cam = ROP_3Delight::GetCamera();
+	OBJ_Camera* cam = ROP_3Delight::GetCamera(i_time);
 	return cam ? camera::get_shutter_duration(*cam, i_time) : 1.0;
 }
 
 bool
-ROP_3Delight::HasDepthOfField()const
+ROP_3Delight::HasDepthOfField( double t )const
 {
-	return !(HasSpeedBoost() && evalInt(settings::k_disable_depth_of_field, 0, 0.0f));
+	return !(HasSpeedBoost(t) && evalInt(settings::k_disable_depth_of_field, 0, t));
 }
 
 std::string
 ROP_3Delight::GetNSIExportFilename(double i_time)const
 {
-	std::string render_mode = m_settings.get_render_mode().toStdString();
+	std::string render_mode = m_settings.get_render_mode(i_time).toStdString();
 
 	if(render_mode == settings::k_rm_render ||
 		render_mode == settings::k_rm_live_render)

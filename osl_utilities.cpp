@@ -254,8 +254,7 @@ osl_utilities::ramp::FindMatchingRampParameters(
 			continue;
 		}
 
-		if(!param->type.is_array() &&
-			!o_shared_interpolation && param->type.type == NSITypeString)
+		if(!o_shared_interpolation && param->type.IsOneString())
 		{
 			o_shared_interpolation = param;
 			found++;
@@ -263,12 +262,13 @@ osl_utilities::ramp::FindMatchingRampParameters(
 
 		if(param->type.is_array())
 		{
-			if(!o_knots && param->type.type == NSITypeFloat)
+			if(!o_knots && param->type.elementtype == NSITypeFloat)
 			{
 				o_knots = param;
 				found++;
 			}
-			else if(!o_interpolation && param->type.type == NSITypeInteger)
+			else if(!o_interpolation &&
+				param->type.elementtype == NSITypeInteger)
 			{
 				o_interpolation = param;
 				found++;
@@ -277,4 +277,28 @@ osl_utilities::ramp::FindMatchingRampParameters(
 	}
 
 	return o_knots && o_interpolation;
+}
+
+/**
+	\brief Returns the tags associated with provided shader.
+*/
+void osl_utilities::get_shader_tags(
+	const DlShaderInfo &i_info,
+	std::vector<std::string> &o_tags  )
+{
+	const DlShaderInfo::constvector<DlShaderInfo::Parameter>& meta =
+		i_info.metadata();
+
+	for(const DlShaderInfo::Parameter& param : meta)
+	{
+		if(param.name != "tags" || param.type.elementtype != NSITypeString)
+		{
+			continue;
+		}
+
+		for(const DlShaderInfo::conststring& tag : param.sdefault)
+		{
+			o_tags.push_back( tag.c_str() );
+		}
+	}
 }

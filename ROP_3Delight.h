@@ -46,8 +46,7 @@ public:
 	static OP_Node* cloud_alloc(OP_Network* net, const char* name, OP_Operator* op);
 
 	/** \brief Returns true if motion blur is enabled. */
-	bool HasMotionBlur()const;
-	virtual void onCreated();
+	bool HasMotionBlur( double i_time )const;
 
 	/**
 		\brief Manually restarts rendering at the request of i-display.
@@ -176,20 +175,20 @@ private:
 	/**
 		\brief Builds light categories, either a bundle, or a single light.
 
-		Each category name is retuned with the list of light handles.
+		Each category name is returned with the list of light nodes.
 	*/
 	void BuildLightCategories(
-		std::vector< std::pair<std::string, std::vector<std::string>>> &) const;
+		std::map<std::string, std::vector<OBJ_Node*>> &, fpreal t) const;
 
-	bool HasSpeedBoost()const;
+	bool HasSpeedBoost( double i_time )const;
 	/// Retrieves the image resolution, scaled by the Speed Boost res factor
 	bool GetScaledResolution(int& o_x, int& o_y)const;
 	float GetResolutionFactor()const;
 	float GetSamplingFactor()const;
 	int GetPixelSamples()const;
-	OBJ_Camera* GetCamera()const;
+	OBJ_Camera* GetCamera( double i_time )const;
 	double GetShutterInterval(double i_time)const;
-	bool HasDepthOfField()const;
+	bool HasDepthOfField( double i_time )const;
 
 	std::vector<OBJ_Node*> m_lights;
 	bool m_cloud;

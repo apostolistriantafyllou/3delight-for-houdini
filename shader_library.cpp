@@ -1,6 +1,6 @@
 #include "shader_library.h"
 #include "dl_system.h"
-
+#include "osl_utilities.h"
 #include "delight.h"
 
 
@@ -107,11 +107,12 @@ std::string shader_library::get_shader_path( const char *vop ) const
 	return {};
 }
 
-/**
-	FIXME: use regex match.
-*/
 std::string shader_library::vop_to_osl( const char *i_vop )
 {
+	assert( i_vop );
+	if( !i_vop )
+		return {};
+
 	std::string legalized( i_vop );
 
 	auto p1 = legalized.find( "::" );
@@ -166,81 +167,98 @@ void tokenize_path( const char *osl_path, std::vector<std::string> &o_paths )
 
 void shader_library::find_all_shaders( const char *i_root)
 {
-	// Get 3Delight installation shaders.
+	/* 
+		Start by sorting out all the shaders in the installation into
+		categgorries.
+	*/
+
 	std::string root(i_root);
 
 	std::string plugin_osl = root + "/osl/";
-	const char *shaders[] =
-	{
-		"dlHairAndFur",
-		"dlPrincipled",
-		"dlMetal",
-		"dlSkin",
-		"dlGlass",
-		"dlSubstance",
-		"dlWorleyNoise",
-		"dlBoxNoise",
-		"dlCarPaint",
-		"dlAtmosphere",
-		"dlColorVariation",
-		"dlColorToFloat",
-		"dlFloatToColor",
-		"dlRamp",
-		"dlTexture",
-		"dlToon",
-		"dlTriplanar",
-		"dlAttributeRead",
-		"dlFlakes",
-		"dlThin",
-		"dlRandomInputColor",
-		"dlRandomMaterial",
-		"dlFloatMath",
-		"dlFloatBlend",
-		"dlColorBlend",
-		"dlColorBlendMulti",
-		"dlColorCorrection",
-		"dlUV",
-		"dlLayeredMaterial",
-		"vdbVolume",
-		"transparent",
-		"dlSolidRamp",
-		"dlFloatToUV",
-		"dlTerminal",
-		"dlFacingRatio"
-	};
+	std::unordered_map<std::string, std::string> all_shaders;
+	scan_dir( plugin_osl, all_shaders );
 
-	m_shaders.emplace_back("3Delight", "3Delight");
-	for( const auto &shader : shaders )
+	/*
+		Data structure that contains, for each menu element, a list of
+		shaders to put in that menu.
+	*/
+	std::map< std::string, std::vector<std::pair<std::string, std::string>> > lib;
+
+	for( const auto &O : all_shaders )
 	{
-		std::string oso( shader ); oso += ".oso";
-		std::string path_to_oso = plugin_osl + oso;
-		if( file_exists(path_to_oso.c_str()) )
+		if( O.second.find(".oso")==std::string::npos )
+			continue;
+
+		const DlShaderInfo *si = get_shader_info( O.second.c_str() );
+		if( !si )
 		{
-			m_shaders.back().m_osos[oso] = path_to_oso;
+			/* Not an .oso file */
+			continue;
+		}
+
+		std::vector< std::string > tags;
+		osl_utilities::get_shader_tags( *si, tags );
+
+		if( std::find(tags.begin(), tags.end(), "hidden") !=
+			tags.end() )
+		{
+			continue;
+		}
+
+		for( const auto &T : tags)
+		{
+			if( T == "surface" || T == "volume" || T == "displacement" )
+			{
+				if( O.first.find("dl") == 0 || O.first.find("vdbVolume")==0 )
+				{
+					lib["3Delight"].push_back( O );
+					break;
+				}
+			}
+			else if( T == "texture/2d" )
+			{
+				lib["3Delight/Patterns"].push_back( O );
+			}
+			else if( T == "texture/3d" )
+			{
+				lib["3Delight/Patterns 3D"].push_back( O );
+			}
+			else if( T == "utility" )
+			{
+				lib["3Delight/Utilities"].push_back( O );
+			}
 		}
 	}
 
-	// Get user specified shaders.
-	std::vector<std::string> to_scan;
-	const char *user_osos = get_env( "_3DELIGHT_USER_OSO_PATH" );
-	tokenize_path( user_osos, to_scan );
-
-	m_shaders.emplace_back("user-defined", "3Delight/User-defined");
-	for( auto &path : to_scan )
+	/* 
+		All shaders are now sorted into their respective menus in the "lib"
+		data structure. We can now build our m_shaaders structure.
+ 	*/
+	for( const auto &L : lib )
 	{
-		scan_dir( path, m_shaders.back().m_osos );
+		m_shaders.emplace_back( L.first );
+		for( const auto &shader : L.second )
+			m_shaders.back().m_osos[shader.first] = shader.second;
 	}
 
-	// Get 3Delight for Houdini shaders.
-	m_shaders.emplace_back("3Delight for Houdini");
+	/* Add user specified shaders */
+	std::vector<std::string> to_scan;
+	const char *user_osos = get_env("_3DELIGHT_USER_OSO_PATH");
+	tokenize_path(user_osos, to_scan);
+
+	m_shaders.emplace_back("3Delight/Add-Ons");
+	for (auto &path : to_scan)
+	{
+		scan_dir(path, m_shaders.back().m_osos);
+	}
+
+	/*
+		Get 3Delight for Houdini shaders. Those shaders do not go into
+		the menu.
+	*/
+	m_shaders.emplace_back("");
 	std::string installation_path = m_plugin_path + "/../osl";
 	scan_dir( installation_path, m_shaders.back().m_osos );
-
-	// Get 3Delight for Maya shaders.
-	m_shaders.emplace_back("3Delight for Maya", "3Delight/Maya");
-	std::string maya_path = root + "/maya/osl";
-	scan_dir( maya_path, m_shaders.back().m_osos );
-	remove_useless_maya_shaders( m_shaders.back().m_osos );
 
 #ifndef NDEBUG
 	if(UTisUIAvailable())
@@ -248,7 +266,7 @@ void shader_library::find_all_shaders( const char *i_root)
 		std::cout << "3Delight for Houdini: loaded";
 		for(const ShadersGroup& g : m_shaders)
 		{
-			std::cout << "\n  " << g.m_osos.size() << " " << g.m_name << " shaders";
+			std::cout << "\n  " << g.m_osos.size() << " " << g.m_menu << " shaders";
 		}
 		std::cout << std::endl;
 	}
@@ -272,7 +290,7 @@ void shader_library::Register(OP_OperatorTable* io_table)const
 			{
 #ifdef NDEBUG
 				std::cerr
-					<< "3Delight for Houdini: unable to load " << g.m_name
+					<< "3Delight for Houdini: unable to load " << g.m_menu
 					<< " shader " << oso.first;
 #endif
 				continue;
@@ -283,40 +301,5 @@ void shader_library::Register(OP_OperatorTable* io_table)const
 						StructuredShaderInfo(info),
 						g.m_menu));
 		}
-	}
-}
-
-void shader_library::remove_useless_maya_shaders(
-	std::unordered_map<std::string, std::string> &i_osos )
-{
-	for( auto it=i_osos.begin(); it!=i_osos.end(); )
-	{
-		const std::string &shader_name = it->first;
-
-		bool useless =
-			shader_name.find( "dl", 0) == 0 ||
-			shader_name.find( "uv", 0) == 0 ||
-			shader_name.find( "_", 0) == 0 ||
-			shader_name.find( "material", 0) == 0 ||
-			shader_name.find( "shadingEngine", 0) == 0 ||
-			shader_name.find( "Light", 0 ) != std::string::npos ||
-			shader_name == "file.oso" ||
-			shader_name == "psdFileTex.oso" ||
-			shader_name == "surfaceShader.oso" ||
-			shader_name == "NetworkMaterials_Surface.oso" ||
-			shader_name == "envChrome.oso" ||
-			shader_name == "samplerInfo.oso" ||
-			shader_name == "shader3DelightAtmosphere.oso" ||
-			shader_name == "displacementShader.oso" ||
-			shader_name == "delightEnvironment.oso" ||
-			shader_name == "texture3DelightSky.oso" ||
-			shader_name == "ocean.oso";
-
-		if( useless )
-		{
-			it = i_osos.erase(it);
-		}
-		else
-			++it;
 	}
 }
