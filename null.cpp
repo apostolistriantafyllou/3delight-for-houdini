@@ -121,4 +121,10 @@ void null::changed_cb(
 
 		ctx->m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
 	}
+	else if(i_type == OP_NODE_PREDELETE)
+	{
+		OBJ_Node* obj = i_caller->castToOBJNode();
+		assert(obj);
+		ctx->m_nsi.Delete(handle(*obj, *ctx));
+	}
 }
