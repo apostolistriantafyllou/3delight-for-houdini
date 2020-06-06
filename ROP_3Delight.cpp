@@ -867,11 +867,17 @@ void ROP_3Delight::changed_cb(
 
 	ROP_3Delight* rop = dynamic_cast<ROP_3Delight*>(i_caller);
 	assert(rop);
-	
+
 	int parm_index = reinterpret_cast<intptr_t>(i_data);
+	if( parm_index == -1 )
+	{
+		/* Happens with File -> Save AS and Auto-Save */
+		return;
+	}
+
 	PRM_Parm& parm = rop->getParm(parm_index);
 	std::string name = parm.getToken();
-		
+
 	if(name == settings::k_atmosphere)
 	{
 		context* ctx = (context*)i_callee;
