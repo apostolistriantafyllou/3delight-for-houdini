@@ -369,11 +369,13 @@ void primitive::get_all_material_paths(
 	if( !materials )
 		return;
 
-	for( int i=0; i<materials->entries() ; i++ )
+	UT_StringArray mats;
+	materials->getStrings( mats );
+
+	for( int i=0; i<mats.entries() ; i++ )
 	{
-		const char *path = materials->getS( i );
 		std::string resolved;
-		exporter::resolve_material_path( path, resolved );
+		exporter::resolve_material_path( mats[i].c_str(), resolved );
 
 		if( !resolved.empty() )
 			o_materials.insert( resolved );
@@ -392,7 +394,10 @@ void primitive::assign_sop_materials( void ) const
 		return;
 	}
 
-	if( materials->entries() == 1u )
+	bool single_material = 
+		materials->entries() == 1u || materials->getStringIndexCount() == 1u;
+	
+	if( single_material )
 	{
 		/*
 			Could be a detail attribute or just one-faced poly, no need
