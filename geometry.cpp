@@ -683,6 +683,31 @@ void geometry::export_override_attributes() const
 		}
 	}
 
+	// Visible in Refractions override
+	if( m_object->hasParm("_3dl_override_visibility_shadow_enable") )
+	{
+		bool over_vis_shadow_enable =
+			m_object->evalInt("_3dl_override_visibility_shadow_enable", 0, time);
+
+		if( over_vis_shadow_enable )
+		{
+			bool over_vis_shadow =
+				m_object->evalInt("_3dl_override_visibility_shadow", 0, time);
+
+			arguments.Add(
+				new NSI::IntegerArg("visibility.shadow", over_vis_shadow));
+			arguments.Add(
+				new NSI::IntegerArg("visibility.shadow.priority", 10));
+		}
+		else
+		{
+			m_nsi.DeleteAttribute(
+				override_nsi_handle, "visibility.shadow" );
+			m_nsi.DeleteAttribute(
+				override_nsi_handle, "visibility.shadow.priority" );
+		}
+	}
+
 	// Compositing mode override
 	if ( m_object->hasParm("_3dl_override_compositing_enable") )
 	{

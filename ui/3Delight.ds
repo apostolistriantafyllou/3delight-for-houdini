@@ -110,6 +110,12 @@
 		SOHO_TOGGLE(_3dl_visibility_refraction, "Visible in Refractions", "3Delight", 1)
 	}
 
+	parm
+	{
+		SOHO_TOGGLE(_3dl_visibility_shadow, "Casts Shadows", "3Delight", 1)
+	}
+
+
 
 	parm
 	{
@@ -303,6 +309,26 @@
 			disablewhen  "{ _3dl_override_visibility_refraction_enable == 0 } { _3dl_spatial_override == 0 }"
 		}
 	}
+
+	collection
+	{
+	    name	_3dl_override_visibility_shadow_group
+		parmtag	{ spare_category "3Delight" }
+		parm
+		{
+			DELIGHT_CONTROL_NEXT_PARM(
+				_3dl_override_visibility_shadow_enable, "3Delight", 0)
+			disablewhen  "{ _3dl_spatial_override == 0 }"
+		}
+		parm
+		{
+			SOHO_TOGGLE(
+				_3dl_override_visibility_shadow,
+				"Casts Shadows", "3Delight", 0)
+			disablewhen  "{ _3dl_override_visibility_shadow_enable == 0 } { _3dl_spatial_override == 0 }"
+		}
+	}
+
 
 	parm
 	{
