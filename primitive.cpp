@@ -394,9 +394,9 @@ void primitive::assign_sop_materials( void ) const
 		return;
 	}
 
-	bool single_material = 
+	bool single_material =
 		materials->entries() == 1u || materials->getStringIndexCount() == 1u;
-	
+
 	if( single_material )
 	{
 		/*
@@ -434,21 +434,26 @@ void primitive::assign_sop_materials( void ) const
 	for( int i=0; i<materials->entries(); i++ )
 	{
 		std::string shop( materials->getS(i) );
-		if( resolve_material_path(m_object, shop.c_str(), shop) )
-		{
-			all_materials[ shop ].push_back( i );
-		}
+		all_materials[ shop ].push_back( i );
 	}
 
 	/* Create the NSI face sets + attributes and connect to geo */
 	for( auto material : all_materials )
 	{
-		std::string attribute_handle = m_handle + material.first;
-		std::string set_handle = m_handle + material.first + "|set";
+		const std::string &m = material.first;
+		std::string shop;
+		if( !resolve_material_path(m_object, m.c_str(), shop) )
+		{
+			/* Will be deat with by OBJ-level assignments */
+			continue;
+		}
+
+		std::string attribute_handle = m_handle + shop;
+		std::string set_handle = m_handle + shop + "|set";
 
 		m_nsi.Create( attribute_handle, "attributes" );
 		m_nsi.Create( set_handle, "faceset" );
-		m_nsi.Connect( material.first, "", attribute_handle, "surfaceshader" );
+		m_nsi.Connect( shop, "", attribute_handle, "surfaceshader" );
 		m_nsi.Connect( attribute_handle, "", set_handle, "geometryattributes" );
 		m_nsi.Connect( set_handle, "", m_handle, "facesets" );
 
