@@ -1681,8 +1681,15 @@ void ROP_3Delight::BuildLightCategories(
 	}
 }
 
-bool
-ROP_3Delight::HasSpeedBoost( double t )const
+/*
+	\brief returns true if speed boost is enabled for this render and this
+	particular rendering mode.
+
+	Speed boost is only active for an interactive render. We also make an
+	exception when outputting to stdout as this output is a purely debugging
+	output and is only done interactively.
+*/
+bool ROP_3Delight::HasSpeedBoost( double t )const
 {
 	bool batch = !UTisUIAvailable();
 	if(batch)
@@ -1690,11 +1697,11 @@ ROP_3Delight::HasSpeedBoost( double t )const
 		return false;
 	}
 
-	if( m_current_render && m_current_render->m_export_nsi )
+	std::string render_mode = m_settings.get_render_mode(t).toStdString();
+	if(render_mode == settings::k_rm_export_file )
 		return false;
 
-	int speed_boost = evalInt(settings::k_speed_boost, 0, t);
-	return speed_boost;
+	return evalInt(settings::k_speed_boost, 0, t);
 }
 
 bool
