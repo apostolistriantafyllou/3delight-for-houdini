@@ -435,7 +435,7 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 	static PRM_Default disable_subsurface_d(false);
 
 	static PRM_Name resolution_factor(k_resolution_factor, "Resolution");
-	static PRM_Default resolution_factor_d(0);
+	static PRM_Default resolution_factor_d(1);
 	static PRM_Item resolution_factor_i[] =
 	{
 		PRM_Item("1", "Full"),
@@ -447,7 +447,7 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 	static PRM_ChoiceList resolution_factor_c(PRM_CHOICELIST_SINGLE, resolution_factor_i);
 
 	static PRM_Name sampling_factor(k_sampling_factor, "Sampling");
-	static PRM_Default sampling_factor_d(0.1f);
+	static PRM_Default sampling_factor_d( 2 );
 	static PRM_Item sampling_factor_i[] =
 	{
 		PRM_Item("1.00", "100%"),
