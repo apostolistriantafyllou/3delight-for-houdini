@@ -65,6 +65,8 @@ const char* settings::k_disable_motion_blur = "disable_motion_blur";
 const char* settings::k_disable_depth_of_field = "disable_depth_of_field";
 const char* settings::k_disable_displacement = "disable_displacement";
 const char* settings::k_disable_subsurface = "disable_subsurface";
+const char* settings::k_disable_atmosphere = "disable_atmosphere";
+const char* settings::k_disable_multiple_scattering = "disable_multiple_scattering";
 const char* settings::k_resolution_factor = "resolution_factor";
 const char* settings::k_sampling_factor = "sampling_factor";
 const char* settings::k_default_export_nsi_filename = "default_export_nsi_filename";
@@ -434,6 +436,12 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 	static PRM_Name disable_subsurface(k_disable_subsurface, "Disable Subsurface");
 	static PRM_Default disable_subsurface_d(false);
 
+	static PRM_Name disable_atmospheres(k_disable_atmosphere, "Disable Atmosphere");
+	static PRM_Default disable_atmospheres_d(false);
+
+	static PRM_Name disable_multiscatter(k_disable_multiple_scattering, "Disable Multiple Scattering");
+	static PRM_Default disable_multiscatter_d(false);
+
 	static PRM_Name resolution_factor(k_resolution_factor, "Resolution");
 	static PRM_Default resolution_factor_d(1);
 	static PRM_Item resolution_factor_i[] =
@@ -470,6 +478,8 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 		PRM_Template(PRM_TOGGLE, 1, &disable_depth_of_field, &disable_depth_of_field_d, 0, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
 		PRM_Template(PRM_TOGGLE, 1, &disable_displacement, &disable_displacement_d, 0, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
 		PRM_Template(PRM_TOGGLE, 1, &disable_subsurface, &disable_subsurface_d, 0, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
+		PRM_Template(PRM_TOGGLE, 1, &disable_atmospheres, &disable_atmospheres_d, 0, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
+		PRM_Template(PRM_TOGGLE, 1, &disable_multiscatter, &disable_multiscatter_d, 0, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
 		PRM_Template(PRM_SEPARATOR, 0, &separator6),
 		PRM_Template(PRM_ORD, 1, &resolution_factor, &resolution_factor_d, &resolution_factor_c, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
 		PRM_Template(PRM_ORD, 1, &sampling_factor, &sampling_factor_d, &sampling_factor_c, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),

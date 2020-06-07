@@ -182,6 +182,10 @@ private:
 
 	bool HasSpeedBoost( double i_time )const;
 
+	/** volumesm can be disabled in speed boost */
+	bool atmosphere_enabled( double t ) const;
+	double multi_scatter_multipier( double t ) const;
+
 	/// Retrieves the image resolution, scaled by the Speed Boost res factor
 	bool GetScaledResolution(int& o_x, int& o_y)const;
 

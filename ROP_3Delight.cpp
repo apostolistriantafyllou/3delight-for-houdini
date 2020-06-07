@@ -309,21 +309,25 @@ ROP_3Delight::ExportGlobals(const context& i_ctx)const
 			 NSI::DoubleArg( "maximumraylength.hair", max_distance)
 		) );
 
-	if(HasSpeedBoost(i_ctx.m_current_time))
-	{
+	int boost = HasSpeedBoost( i_ctx.m_current_time );
 
-		if(evalInt(settings::k_disable_displacement, 0, t))
-		{
-			i_ctx.m_nsi.SetAttribute(
-				".global", NSI::IntegerArg("show.displacement", 0));
-		}
+	int toggle = evalInt(settings::k_disable_displacement, 0, t);
+	i_ctx.m_nsi.SetAttribute(
+		".global", NSI::IntegerArg("show.displacement", !(toggle && boost)));
 
-		if(evalInt(settings::k_disable_subsurface, 0, t))
-		{
-			i_ctx.m_nsi.SetAttribute(
-				".global", NSI::IntegerArg("show.osl.subsurface", 0));
-		}
-	}
+	toggle = evalInt(settings::k_disable_subsurface, 0, t);
+	i_ctx.m_nsi.SetAttribute(
+		".global", NSI::IntegerArg("show.osl.subsurface", !(toggle && boost)));
+
+	toggle = evalInt(settings::k_disable_atmosphere, 0, t);
+	i_ctx.m_nsi.SetAttribute(
+		".global", NSI::IntegerArg("show.atmosphere", !(toggle && boost)));
+
+	toggle = evalFloat(settings::k_disable_multiple_scattering, 0, t);
+	i_ctx.m_nsi.SetAttribute(
+		".global",
+		NSI::DoubleArg("show.multiplescattering",
+			(toggle && boost) ? 0.0 : 1.0));
 }
 
 void ROP_3Delight::StopRender()
