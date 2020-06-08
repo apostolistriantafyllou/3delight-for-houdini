@@ -699,9 +699,19 @@ bool vop::is_renderable( VOP_Node *i_vop )
 
 std::string vop::shader_path( const VOP_Node *i_vop )
 {
-	const shader_library &library = shader_library::get_instance();
-	std::string path = library.get_shader_path(
-			vop_name( i_vop ).c_str() );
+	std::string path;
+
+	UT_StringHolder shaderParmName("_3dl_osl_shader");
+
+	if( i_vop->hasParm( shaderParmName ) )
+	{
+		UT_String shaderfilename;
+		i_vop->evalString( shaderfilename, shaderParmName, 0, 0 );
+		path = shaderfilename;
+	} else {
+		const shader_library &library = shader_library::get_instance();
+		path = library.get_shader_path( vop_name( i_vop ).c_str() );
+	}
 
 	return path;
 }
