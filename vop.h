@@ -42,9 +42,9 @@ public:
 	void connect( void ) const override;
 
 	/**
-		\returns m_vop->getOperator()->getName()
+		\returns i_vop->getOperator()->getName()
 	*/
-	std::string vop_name( void ) const;
+	static std::string vop_name( const VOP_Node *i_vop );
 
 	/**
 		Returns true if the VOP node has a corresponding
