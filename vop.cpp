@@ -26,9 +26,7 @@ vop::vop(
 
 void vop::create( void ) const
 {
-	const shader_library &library = shader_library::get_instance();
-	std::string path = library.get_shader_path(
-			vop_name( m_vop ).c_str() );
+	std::string path = shader_path( m_vop );
 	assert( !path.empty() );
 
 	m_nsi.Create( m_handle, "shader" );
@@ -415,8 +413,7 @@ std::string vop::vop_name( const VOP_Node *i_vop )
 bool vop::ignore_subnetworks( void ) const
 {
 	const shader_library &library = shader_library::get_instance();
-	std::string path = library.get_shader_path(
-			vop_name( m_vop ).c_str() );
+	std::string path = shader_path( m_vop );
 	if( path.size() == 0 )
 	{
 		return false;
@@ -459,8 +456,7 @@ void vop::add_and_connect_aov_group() const
 		aovGroup input to which we can connect AOV nodes.
 	*/
 	const shader_library &library = shader_library::get_instance();
-	std::string path = library.get_shader_path(
-			vop_name( m_vop ).c_str() );
+	std::string path = shader_path( m_vop );
 	assert( !path.empty() );
 
 	DlShaderInfo *shader_info = library.get_shader_info( path.c_str() );
@@ -698,9 +694,14 @@ bool vop::is_aov_definition( VOP_Node *i_vop )
 
 bool vop::is_renderable( VOP_Node *i_vop )
 {
+	return !shader_path( i_vop ).empty();
+}
+
+std::string vop::shader_path( const VOP_Node *i_vop )
+{
 	const shader_library &library = shader_library::get_instance();
 	std::string path = library.get_shader_path(
 			vop_name( i_vop ).c_str() );
 
-	return !path.empty();
+	return path;
 }

@@ -52,6 +52,8 @@ public:
 	*/
 	static bool is_renderable( VOP_Node *i_vop );
 
+        static std::string shader_path( const VOP_Node *i_vop );
+
 	static void changed_cb(
 		OP_Node* i_caller,
 		void* i_callee,
