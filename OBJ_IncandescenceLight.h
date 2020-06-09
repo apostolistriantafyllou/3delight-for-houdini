@@ -27,7 +27,6 @@ public:
 
 	/// Returns the number input ports that should be visible
 	virtual unsigned getNumVisibleInputs()const override;
-
 protected:
 
 	/**
@@ -47,4 +46,9 @@ struct OP_IncandescenceLightOperator : public OP_Operator
 {
 	/// Constructor.
 	OP_IncandescenceLightOperator();
+	virtual bool getOpHelpURL(UT_String& url)
+	{
+		url.harden("https://www.3delight.com/documentation/display/3DfH/Incandescence+Light"); 
+		return true;
+	}
 };

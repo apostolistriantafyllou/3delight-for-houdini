@@ -1,6 +1,7 @@
 #include "VOP_ExternalOSL.h"
 
 #include "osl_utilities.h"
+#include <HOM/HOM_ui.h>
 
 #include <PRM/PRM_Include.h>
 #include <PRM/PRM_SpareData.h>
@@ -1135,7 +1136,7 @@ VOP_ExternalOSL::SetRampParametersDefaults()
 		{
 			continue;
 		}
-
+		
 		const DlShaderInfo::Parameter* knots = nullptr;
 		const DlShaderInfo::Parameter* interpolation = nullptr;
 		const DlShaderInfo::Parameter* shared_interpolation = nullptr;
@@ -1275,6 +1276,8 @@ VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
 	// VOP_3Delight-xxx in ui
 	const DlShaderInfo::conststring& shadername =
 		i_shader_info.m_dl.shadername();
+		
+	
 	if (shadername != "dlColorToFloat" &&
 		shadername != "dlFloatToColor" &&
 		shadername != "dlGlass" &&
@@ -1291,6 +1294,7 @@ VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
 		setIconName("ROP_3Delight");
 	}
 
+
 	setOpTabSubMenuPath(i_menu_name.c_str());
 
 	VOP_OperatorInfo* vop_info =
@@ -1303,4 +1307,28 @@ VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
 		see the networks there.
 	*/
 	vop_info->setRenderMask("nsi");
+}
+
+
+/*
+	Setting a custom help URL by overriding the virtual GetOPHelpURL    
+	function of OP_Operator class.
+*/
+bool VOP_ExternalOSLOperator::getOpHelpURL(UT_String &url)
+{
+	const char* name = m_shader_info.m_dl.shadername().c_str();
+	osl_utilities::FindMetaData(name, m_shader_info.m_dl.metadata(), "niceName");
+
+	//Replacing " " with "+" so it adapts to 3Delight URL.
+	std::string shader_ui_nm = name;
+	std::transform(shader_ui_nm.begin(), shader_ui_nm.end(), shader_ui_nm.begin(), [](char ch) {
+		return ch == ' ' ? '+' : ch;
+	});
+
+	std::string url_name = "https://www.3delight.com/documentation/display/3DfH/";
+	if (shader_ui_nm == "vdbVolume")
+		shader_ui_nm = "Open+VDB";
+	url_name += shader_ui_nm;
+	url.hardenIfNeeded(url_name.c_str());
+	return true;
 }
