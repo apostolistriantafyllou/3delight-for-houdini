@@ -47,7 +47,7 @@ void vop::set_attributes_at_time( double i_time ) const
 	list_shader_parameters(
 		m_context,
 		m_vop,
-		m_vop->getOperator()->getName(),
+		nullptr,
 		i_time,
 		-1,
 		list, uv_coord_connection );
@@ -209,11 +209,19 @@ void vop::list_shader_parameters(
 	NSI::ArgumentList &o_list,
 	std::string &o_uv_connection )
 {
-	assert( i_shader );
 	assert( i_parameters );
 
 	const shader_library &library = shader_library::get_instance();
-	std::string path = library.get_shader_path( i_shader );
+	std::string path;
+	if(i_shader)
+	{
+		path = library.get_shader_path( i_shader );
+	} else {
+		const VOP_Node *vop = dynamic_cast<const VOP_Node*>(
+				i_parameters );
+		assert( vop );
+		path = shader_path( vop );
+	}
 	if( path.size() == 0 )
 	{
 		return;
@@ -579,7 +587,7 @@ bool vop::set_single_attribute(int i_parm_index)const
 	list_shader_parameters(
 		m_context,
 		m_vop,
-		m_vop->getOperator()->getName(),
+		nullptr,
 		m_context.m_current_time,
 		i_parm_index,
 		list, dummy );

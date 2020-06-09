@@ -71,7 +71,9 @@ protected:
 		\param i_parameters
 			The node where to get parameter values.
 		\param i_shader
-			The OSL shader from where to get parameter names.
+			Optional OSL shader from where to get parameter names.
+			If non-null, the specified shader is used. If null, the
+			default OSL shader is determined from i_parameters.
 		\param i_time
 			The time to use for the parameter's eval. Note that this can be
 			different from i_context.m_current_time.
