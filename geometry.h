@@ -55,9 +55,9 @@ public:
 		void* i_data);
 
 	/// Returns the handle of the hub transform all primitives should connect to
-	static std::string hub_handle(const OBJ_Node& i_node)
+	static std::string hub_handle(const OBJ_Node& i_node, const context& i_ctx)
 	{
-		return exporter::handle(i_node) + "|hub";
+		return exporter::handle(i_node, i_ctx) + "|hub";
 	}
 
 private:

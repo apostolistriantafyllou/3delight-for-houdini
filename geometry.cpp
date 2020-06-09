@@ -169,7 +169,8 @@ struct OBJ_Node_Refiner : public GT_Refine
 					break;
 				}
 
-				std::vector<std::string> models(1, exporter::handle(*instanced));
+				std::vector<std::string>
+					models(1, exporter::handle(*instanced, m_context));
 				m_result.push_back(
 					new instance(
 						m_context, m_node, m_time, i_primitive, index, models));
@@ -573,7 +574,7 @@ void geometry::connect()const
 		hub_handle(), "geometryattributes" );
 
 	m_nsi.Connect(
-		vop::handle(*mat), "",
+		vop::handle(*mat, m_context), "",
 		attributes_handle(), volume ? "volumeshader" : "surfaceshader",
 		NSI::IntegerArg("strength", 1) );
 
@@ -785,7 +786,7 @@ void geometry::export_override_attributes() const
 			if(vop_node)
 			{
 				m_nsi.Connect(
-					vop::handle(*vop_node), "",
+					vop::handle(*vop_node, m_context), "",
 					override_nsi_handle, "surfaceshader",
 					(
 						NSI::IntegerArg("priority", 10),
@@ -939,7 +940,9 @@ void geometry::changed_cb(
 
 		case OP_NODE_PREDELETE:
 		{
-			ctx->m_nsi.Delete(hub_handle(*obj), NSI::IntegerArg("recursive", 1));
+			ctx->m_nsi.Delete(
+				hub_handle(*obj, *ctx),
+				NSI::IntegerArg("recursive", 1));
 			break;
 		}
 		
@@ -987,7 +990,9 @@ void geometry::re_export(
 	OBJ_Node& i_node,
 	bool i_new_material)
 {
-	i_ctx.m_nsi.Delete(hub_handle(i_node), NSI::IntegerArg("recursive", 1));
+	i_ctx.m_nsi.Delete(
+		hub_handle(i_node, i_ctx),
+		NSI::IntegerArg("recursive", 1));
 
 	if(!i_node.getRenderSopPtr() || !i_ctx.object_displayed(i_node))
 	{

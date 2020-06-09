@@ -285,8 +285,8 @@ void light::create_geometry( void ) const
 			*/
 			std::string model =
 				m_object->evalInt("intothisobject", 0, time)
-				?	null::handle(*obj_node)
-				:	geometry::hub_handle(*obj_node);
+				?	null::handle(*obj_node, m_context)
+				:	geometry::hub_handle(*obj_node, m_context);
 
 			m_nsi.Connect( model, "", geo_name, "objects");
 		}
@@ -340,7 +340,7 @@ void light::connect( void ) const
 	*/
 	if( m_object->evalInt("light_enable", 0, m_context.m_current_time) )
 	{
-		std::string parent_handle = null::handle(*m_object);
+		std::string parent_handle = null::handle(*m_object, m_context);
 		m_nsi.Connect(m_handle, "", parent_handle, "objects");
 	}
 
@@ -420,7 +420,7 @@ void light::changed_cb(
 
 void light::disconnect()const
 {
-	std::string parent_handle = null::handle(*m_object);
+	std::string parent_handle = null::handle(*m_object, m_context);
 	m_nsi.Disconnect(m_handle, "", parent_handle, "objects");
 
 	m_nsi.Disconnect(

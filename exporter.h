@@ -69,7 +69,7 @@ public:
 	void set_as_instanced( void ) { m_instanced = true; }
 
 	/// Returns the NSI handle used for the node i_node
-	static std::string handle(const OP_Node& i_node);
+	static std::string handle(const OP_Node& i_node, const context& i_ctx);
 
 	/**
 		\brief Returns the name of transparent shader attribute.

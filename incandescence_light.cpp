@@ -102,14 +102,14 @@ void incandescence_light::connect() const
 		if( ParameterExist(shader_info, k_incandescence_multiplier) )
 		{
 			m_nsi.SetAttribute(
-				vop::handle(*vop_node),
+				vop::handle(*vop_node, m_context),
 				NSI::ColorArg(k_incandescence_multiplier,
 					incandescenceColor));
 
-			m_current_multipliers.push_back( vop::handle(*vop_node) );
+			m_current_multipliers.push_back( vop::handle(*vop_node, m_context) );
 
 			m_nsi.Connect(
-				geometry::handle(*obj_node), "",
+				geometry::handle(*obj_node, m_context), "",
 				handle(), "members" );
 		}
 	}

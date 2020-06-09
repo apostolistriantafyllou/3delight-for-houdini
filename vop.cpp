@@ -123,7 +123,7 @@ void vop::connect_input(int i_input_index)const
 			name.
 		*/
 		m_nsi.Connect(
-			vop::handle(*source), "outColor",
+			vop::handle(*source, m_context), "outColor",
 			m_handle, input_name.toStdString() );
 	}
 	else
@@ -133,7 +133,7 @@ void vop::connect_input(int i_input_index)const
 		source->getOutputName(source_name, source_index);
 
 		m_nsi.Connect(
-			vop::handle(*source), source_name.toStdString(),
+			vop::handle(*source, m_context), source_name.toStdString(),
 			m_handle, input_name.toStdString() );
 	}
 }
@@ -583,7 +583,7 @@ void vop::add_and_connect_aov_group() const
 			UT_String aov_value;
 			aov_value.sprintf("colorAOVValues[%u]", i);
 			m_nsi.Connect(
-				vop::handle(*aov_export_nodes[i]), "outColor",
+				vop::handle(*aov_export_nodes[i], m_context), "outColor",
 				handle, aov_value.c_str() );
 		}
 	}

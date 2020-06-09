@@ -13,7 +13,7 @@ null::null( const context& i_ctx, OBJ_Node *i_object )
 :
 	exporter( i_ctx, i_object )
 {
-	m_handle = handle(*m_object);
+	m_handle = handle(*m_object, i_ctx);
 }
 
 void null::create( void ) const
@@ -77,7 +77,9 @@ void null::connect( void ) const
 
 	if( parent && parent->getFullPath() != "/obj" )
 	{
-		m_nsi.Connect( m_handle, "", null::handle(*parent), "objects" );
+		m_nsi.Connect(
+			m_handle, "",
+			null::handle(*parent, m_context), "objects" );
 	}
 	else
 	{

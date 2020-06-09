@@ -30,7 +30,7 @@ public:
 		void* i_data);
 
 	/// Returns the NSI handle used for the camera i_camera
-	static std::string handle(OBJ_Node& i_camera);
+	static std::string handle(OBJ_Node& i_camera, const context& i_ctx);
 
 	/// Returns the time during which i_camera's shutter is open, around i_time
 	static double get_shutter_duration(

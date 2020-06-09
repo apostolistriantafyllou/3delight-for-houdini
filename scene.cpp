@@ -780,7 +780,7 @@ void scene::export_light_categories(
 			if(!tags->match(*categories_expr))
 			{
 				nsi.Connect(
-					light::handle(*light_source), "",
+					light::handle(*light_source, i_context), "",
 					cat_handle, "members");
 			}
 		}

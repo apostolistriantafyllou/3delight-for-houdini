@@ -105,7 +105,7 @@ void instance::connect( void ) const
 			m_nsi.Create( attribute_handle, "attributes" );
 			m_nsi.Connect( attribute_handle, "", merge_h, "geometryattributes");
 			m_nsi.Connect(
-				vop::handle(*material), "",
+				vop::handle(*material, m_context), "",
 				attribute_handle, "surfaceshader",
 				(
 					NSI::IntegerArg("priority", 2),
@@ -285,7 +285,7 @@ std::string instance::merge_handle(const merge_point& i_merge_point) const
 	return
 		m_handle +
 		"|" + i_merge_point.first +
-		"|" + (node ? vop::handle(*node) : std::string()) +
+		"|" + (node ? vop::handle(*node, m_context) : std::string()) +
 		"|merge";
 }
 

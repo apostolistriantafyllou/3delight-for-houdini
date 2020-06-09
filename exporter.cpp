@@ -19,7 +19,7 @@ exporter::exporter(
 	m_object(i_object)
 {
 	assert(m_object);
-	m_handle = handle(*m_object);
+	m_handle = handle(*m_object, i_context);
 }
 
 exporter::~exporter()
@@ -34,7 +34,7 @@ exporter::exporter( const context &i_context, VOP_Node *i_node )
 	m_vop(i_node)
 {
 	assert(m_vop);
-	m_handle = handle(*m_vop);
+	m_handle = handle(*m_vop, i_context);
 }
 
 const std::string &exporter::handle( void ) const
@@ -42,9 +42,12 @@ const std::string &exporter::handle( void ) const
 	return m_handle;
 }
 
-std::string exporter::handle(const OP_Node& i_node)
+std::string exporter::handle(const OP_Node& i_node, const context& i_ctx)
 {
-	return i_node.getFullPath().toStdString();
+	return
+		i_ctx.m_ipr
+		?	std::to_string(i_node.getUniqueId())
+		:	i_node.getFullPath().toStdString();
 }
 
 /**

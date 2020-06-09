@@ -72,7 +72,9 @@ primitive::connect()const
 	m_nsi.Create( parent, "transform" );
 	m_nsi.SetAttribute( parent,
 			NSI::DoubleMatrixArg( "transformationmatrix", matrix.data() ) );
-	m_nsi.Connect( parent, "", geometry::hub_handle(*m_object), "objects" );
+	m_nsi.Connect(
+		parent, "",
+		geometry::hub_handle(*m_object, m_context), "objects" );
 
 	m_nsi.Connect( m_handle, "", parent, "objects" );
 }
@@ -407,7 +409,7 @@ void primitive::assign_sop_materials( void ) const
 		VOP_Node* vop = resolve_material_path(m_object, shop.c_str());
 		if(vop)
 		{
-			std::string vop_handle = vop::handle(*vop);
+			std::string vop_handle = vop::handle(*vop, m_context);
 			std::string attribute_handle = m_handle + "|" + vop_handle;
 
 			m_nsi.Create( attribute_handle, "attributes" );
@@ -448,7 +450,7 @@ void primitive::assign_sop_materials( void ) const
 			continue;
 		}
 
-		std::string vop_handle = vop::handle(*V);
+		std::string vop_handle = vop::handle(*V, m_context);
 		std::string attribute_handle = m_handle + "|" + vop_handle;
 		std::string set_handle = attribute_handle + "|set";
 

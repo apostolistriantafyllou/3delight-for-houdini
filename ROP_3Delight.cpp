@@ -958,7 +958,7 @@ ROP_3Delight::ExportAtmosphere(const context& i_ctx, bool ipr_update)
 	i_ctx.m_nsi.Create( attr_handle, "attributes" );
 
 	i_ctx.m_nsi.Connect(
-		vop::handle(*atmo_vop), "",
+		vop::handle(*atmo_vop, i_ctx), "",
 		attr_handle, "volumeshader",
 		NSI::IntegerArg("strength", 1) );
 
@@ -1054,7 +1054,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 	i_ctx.m_nsi.Connect(
 		k_screen_name, "",
-		camera::handle(*cam), "screens");
+		camera::handle(*cam, i_ctx), "screens");
 
 	UT_String idisplay_driver = "idisplay";
 	UT_String file_driver;
@@ -1216,11 +1216,16 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					3Delight Display's Multi-Light tool needs some information,
 					called "feedback data" to communicate back the values.
 				*/
-				if( !category.second.empty() )
+				if( category.second.size() > 1 ||
+					category.second.size() == 1 &&
+						light::handle(*category.second[0], i_ctx) != category.first)
 				{
 					/*
 						We use a set to group lights together under the same
-						layer.
+						layer. This is also useful when the light category name
+						is different than a single light's handle (this occurs
+						with bundles containing only one light or single lights
+						in IPR mode, which uses different handles).
 					*/
 					/*
 						FIXME : exporting the lightsets should always be done,
@@ -1238,7 +1243,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					i_ctx.m_nsi.Create( category.first, "set");
 					for( auto &light_source : category.second )
 					{
-						std::string light_handle = light::handle(*light_source);
+						std::string light_handle = light::handle(*light_source, i_ctx);
 						/*
 							FIXME : calling ExportLayerFeedbackData in a loop
 							with the same layer_name will simply overwrite the
@@ -1256,7 +1261,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					std::string light_handle =
 						category.second.empty()
 						?	std::string()
-						:	light::handle(*category.second.back());
+						:	light::handle(*category.second.back(), i_ctx);
 					ExportLayerFeedbackData(
 						i_ctx, layer_name, light_handle );
 				}
