@@ -453,7 +453,10 @@ void primitive::assign_sop_materials( void ) const
 
 		m_nsi.Create( attribute_handle, "attributes" );
 		m_nsi.Create( set_handle, "faceset" );
-		m_nsi.Connect( shop, "", attribute_handle, "surfaceshader" );
+		m_nsi.Connect(
+			shop, "",
+			attribute_handle, "surfaceshader",
+			NSI::IntegerArg("strength", 1) );
 		m_nsi.Connect( attribute_handle, "", set_handle, "geometryattributes" );
 		m_nsi.Connect( set_handle, "", m_handle, "facesets" );
 
