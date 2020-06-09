@@ -448,7 +448,7 @@ void primitive::assign_sop_materials( void ) const
 			continue;
 		}
 
-		std::string attribute_handle = m_handle + shop;
+		std::string attribute_handle = m_handle + "|" + shop;
 		std::string set_handle = m_handle + shop + "|set";
 
 		m_nsi.Create( attribute_handle, "attributes" );
