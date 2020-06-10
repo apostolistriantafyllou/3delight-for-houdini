@@ -2,6 +2,7 @@
 
 #include "geometry.h"
 #include "time_sampler.h"
+#include "vop.h"
 
 #include <unordered_map>
 
@@ -71,7 +72,9 @@ primitive::connect()const
 	m_nsi.Create( parent, "transform" );
 	m_nsi.SetAttribute( parent,
 			NSI::DoubleMatrixArg( "transformationmatrix", matrix.data() ) );
-	m_nsi.Connect( parent, "", geometry::hub_handle(*m_object), "objects" );
+	m_nsi.Connect(
+		parent, "",
+		geometry::hub_handle(*m_object, m_context), "objects" );
 
 	m_nsi.Connect( m_handle, "", parent, "objects" );
 }
@@ -279,9 +282,8 @@ void primitive::export_bind_attributes( OP_Node *i_obj_level_material ) const
 	{
 		for( int i=0; i<materials->entries(); i++ )
 		{
-			std::string resolved;
-			VOP_Node *vop = exporter::resolve_material_path(
-				(const char *)materials->getS(i), resolved );
+			VOP_Node *vop =
+				resolve_material_path( materials->getS(i).c_str() );
 			to_scan.push_back( vop );
 		}
 	}
@@ -369,14 +371,15 @@ void primitive::get_all_material_paths(
 	if( !materials )
 		return;
 
-	for( int i=0; i<materials->entries() ; i++ )
-	{
-		const char *path = materials->getS( i );
-		std::string resolved;
-		exporter::resolve_material_path( path, resolved );
+	UT_StringArray mats;
+	materials->getStrings( mats );
 
-		if( !resolved.empty() )
-			o_materials.insert( resolved );
+	for( int i=0; i<mats.entries() ; i++ )
+	{
+		VOP_Node* vop = resolve_material_path( mats[i].c_str() );
+
+		if( vop )
+			o_materials.insert( vop->getFullPath().toStdString() );
 	}
 }
 
@@ -392,7 +395,10 @@ void primitive::assign_sop_materials( void ) const
 		return;
 	}
 
-	if( materials->entries() == 1u )
+	bool single_material =
+		materials->entries() == 1u || materials->getStringIndexCount() == 1u;
+
+	if( single_material )
 	{
 		/*
 			Could be a detail attribute or just one-faced poly, no need
@@ -400,16 +406,17 @@ void primitive::assign_sop_materials( void ) const
 		*/
 		std::string shop( materials->getS(0) );
 
-
-		if( resolve_material_path(m_object, shop.c_str(), shop) )
+		VOP_Node* vop = resolve_material_path(m_object, shop.c_str());
+		if(vop)
 		{
-			std::string attribute_handle = m_handle + shop;
+			std::string vop_handle = vop::handle(*vop, m_context);
+			std::string attribute_handle = m_handle + "|" + vop_handle;
 
 			m_nsi.Create( attribute_handle, "attributes" );
 			m_nsi.Connect(
-				shop, "",
-				 attribute_handle, "surfaceshader",
-				 (
+				vop_handle, "",
+				attribute_handle, "surfaceshader",
+				(
 					NSI::IntegerArg("priority", 1),
 					NSI::IntegerArg("strength", 1)
 				) );
@@ -429,21 +436,30 @@ void primitive::assign_sop_materials( void ) const
 	for( int i=0; i<materials->entries(); i++ )
 	{
 		std::string shop( materials->getS(i) );
-		if( resolve_material_path(m_object, shop.c_str(), shop) )
-		{
-			all_materials[ shop ].push_back( i );
-		}
+		all_materials[ shop ].push_back( i );
 	}
 
 	/* Create the NSI face sets + attributes and connect to geo */
 	for( auto material : all_materials )
 	{
-		std::string attribute_handle = m_handle + material.first;
-		std::string set_handle = m_handle + material.first + "|set";
+		const std::string &m = material.first;
+		VOP_Node* V = resolve_material_path(m_object, m.c_str());
+		if( !V )
+		{
+			/* Will be dealt with by OBJ-level assignments */
+			continue;
+		}
+
+		std::string vop_handle = vop::handle(*V, m_context);
+		std::string attribute_handle = m_handle + "|" + vop_handle;
+		std::string set_handle = attribute_handle + "|set";
 
 		m_nsi.Create( attribute_handle, "attributes" );
 		m_nsi.Create( set_handle, "faceset" );
-		m_nsi.Connect( material.first, "", attribute_handle, "surfaceshader" );
+		m_nsi.Connect(
+			vop_handle, "",
+			attribute_handle, "surfaceshader",
+			NSI::IntegerArg("strength", 1) );
 		m_nsi.Connect( attribute_handle, "", set_handle, "geometryattributes" );
 		m_nsi.Connect( set_handle, "", m_handle, "facesets" );
 

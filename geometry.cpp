@@ -11,6 +11,7 @@
 #include "scene.h"
 #include "time_sampler.h"
 #include "vdb.h"
+#include "vop.h"
 
 #include <GT/GT_GEODetail.h>
 #include <GT/GT_PrimInstance.h>
@@ -144,8 +145,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 		case GT_PRIM_POINT_MESH:
 		{
 			const UT_StringRef &op_name = m_node->getOperator()->getName();
-			if( op_name == "instance" &&
-				m_node->getParmIndex("instancepath")>=0 )
+			if( op_name == "instance" && m_node->hasParm("instancepath") )
 			{
 				/*
 					OBJ-level instancer. Note that "instancepath" will always
@@ -153,11 +153,24 @@ struct OBJ_Node_Refiner : public GT_Refine
 				*/
 				UT_String path;
 				m_node->evalString( path, "instancepath", 0, m_time );
-				std::string absolute = exporter::absolute_path( m_node, path );
+				OP_Node* instanced = OPgetDirector()->findNode(path);
+				if(!instanced)
+				{
+					instanced = m_node->findNode(path);
+				}
 
-				std::vector<std::string> models;
-				models.push_back( absolute );
+				if(!instanced)
+				{
+#ifdef VERBOSE
+					std::cerr
+						<< "3Delight for Houdini: unable to find instanced model for "
+						<< m_node->getFullPath() << std::endl;
+#endif
+					break;
+				}
 
+				std::vector<std::string>
+					models(1, exporter::handle(*instanced, m_context));
 				m_result.push_back(
 					new instance(
 						m_context, m_node, m_time, i_primitive, index, models));
@@ -403,9 +416,11 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 
 		if( !detail_handle.isValid() )
 		{
+#ifdef VERBOSE
 			std::cerr
 				<< "3Delight for Houdini: " << m_object->getFullPath()
 				<< " has no valid detail" << std::endl;
+#endif
 			return;
 		}
 
@@ -551,7 +566,8 @@ void geometry::connect()const
 		\see polygonmesh for primitive attribute assignment on polygonal faces
 	*/
 	std::string material_path;
-	if( get_assigned_material(material_path) == nullptr )
+	VOP_Node* mat = get_assigned_material(material_path);
+	if( !mat )
 		return;
 
 	m_nsi.Create( attributes_handle(), "attributes" );
@@ -560,7 +576,7 @@ void geometry::connect()const
 		hub_handle(), "geometryattributes" );
 
 	m_nsi.Connect(
-		material_path, "",
+		vop::handle(*mat, m_context), "",
 		attributes_handle(), volume ? "volumeshader" : "surfaceshader",
 		NSI::IntegerArg("strength", 1) );
 
@@ -683,6 +699,31 @@ void geometry::export_override_attributes() const
 		}
 	}
 
+	// Visible in Refractions override
+	if( m_object->hasParm("_3dl_override_visibility_shadow_enable") )
+	{
+		bool over_vis_shadow_enable =
+			m_object->evalInt("_3dl_override_visibility_shadow_enable", 0, time);
+
+		if( over_vis_shadow_enable )
+		{
+			bool over_vis_shadow =
+				m_object->evalInt("_3dl_override_visibility_shadow", 0, time);
+
+			arguments.Add(
+				new NSI::IntegerArg("visibility.shadow", over_vis_shadow));
+			arguments.Add(
+				new NSI::IntegerArg("visibility.shadow.priority", 10));
+		}
+		else
+		{
+			m_nsi.DeleteAttribute(
+				override_nsi_handle, "visibility.shadow" );
+			m_nsi.DeleteAttribute(
+				override_nsi_handle, "visibility.shadow.priority" );
+		}
+	}
+
 	// Compositing mode override
 	if ( m_object->hasParm("_3dl_override_compositing_enable") )
 	{
@@ -743,20 +784,21 @@ void geometry::export_override_attributes() const
 		if( override_surface_shader )
 		{
 			std::string material;
-			get_assigned_material( material );
-
-			m_nsi.Connect(
-				material, "",
-				override_nsi_handle, "surfaceshader",
-				(
-					NSI::IntegerArg("priority", 10),
-					NSI::IntegerArg("strength", 1)
-				) );
+			VOP_Node* vop_node = get_assigned_material( material );
+			if(vop_node)
+			{
+				m_nsi.Connect(
+					vop::handle(*vop_node, m_context), "",
+					override_nsi_handle, "surfaceshader",
+					(
+						NSI::IntegerArg("priority", 10),
+						NSI::IntegerArg("strength", 1)
+					) );
+			}
 		}
 	}
-	else
+	else if(m_context.m_ipr)
 	{
-		/* NOTE: This is needed for IPR only */
 		m_nsi.Disconnect( hub_handle(), "",
 			override_nsi_handle, "bounds" );
 		m_nsi.Disconnect( override_nsi_handle, "",
@@ -792,7 +834,13 @@ VOP_Node *geometry::get_assigned_material( std::string &o_path ) const
 		return nullptr;
 	}
 
-	return resolve_material_path( material_path.c_str(), o_path );
+	VOP_Node* vop = resolve_material_path( material_path.c_str() );
+	if(vop)
+	{
+		o_path = vop->getFullPath();
+	}
+
+	return vop;
 }
 
 /**
@@ -884,6 +932,16 @@ void geometry::changed_cb(
 			break;
 		}
 
+		/*
+			FIXME : We normally shouldn't react to OP_UI_MOVED because this type
+			of event is supposed to be generated only when the node's location
+			in the graph view changes, which has nothing to do with its actual
+			geometry in the 3D scene. However, it seems to be the only event we
+			can trap after the copy & paste of an object, once its render SOP
+			gets a valid detail.
+		*/
+		case OP_UI_MOVED:
+
 		case OP_FLAG_CHANGED:
 		case OP_INPUT_CHANGED:
 		case OP_SPAREPARM_MODIFIED:
@@ -894,7 +952,9 @@ void geometry::changed_cb(
 
 		case OP_NODE_PREDELETE:
 		{
-			ctx->m_nsi.Delete(hub_handle(*obj), NSI::IntegerArg("recursive", 1));
+			ctx->m_nsi.Delete(
+				hub_handle(*obj, *ctx),
+				NSI::IntegerArg("recursive", 1));
 			break;
 		}
 		
@@ -942,7 +1002,9 @@ void geometry::re_export(
 	OBJ_Node& i_node,
 	bool i_new_material)
 {
-	i_ctx.m_nsi.Delete(hub_handle(i_node), NSI::IntegerArg("recursive", 1));
+	i_ctx.m_nsi.Delete(
+		hub_handle(i_node, i_ctx),
+		NSI::IntegerArg("recursive", 1));
 
 	if(!i_node.getRenderSopPtr() || !i_ctx.object_displayed(i_node))
 	{

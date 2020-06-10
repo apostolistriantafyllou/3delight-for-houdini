@@ -1,6 +1,7 @@
 #include "light.h"
 
 #include "context.h"
+#include "geometry.h"
 #include "null.h"
 #include "object_attributes.h"
 #include "shader_library.h"
@@ -277,15 +278,15 @@ void light::create_geometry( void ) const
 
 		if(obj_node)
 		{
-			std::string model = obj_node->getFullPath().toStdString();
-			if( !m_object->evalInt("intothisobject", 0, time) )
-			{
-				/*
-				   Skip the transform and connect directly to the geo whic
-				   is prefixed with "|hub"
-				*/
-				model += "|hub";
-			}
+			/*
+		-		When "intothisobject" is enabled, we use the object's transform.
+				Otherwise, we skip the transform and connect directly to its
+				geometry, which is connected to an identity "hub" transform.
+			*/
+			std::string model =
+				m_object->evalInt("intothisobject", 0, time)
+				?	null::handle(*obj_node, m_context)
+				:	geometry::hub_handle(*obj_node, m_context);
 
 			m_nsi.Connect( model, "", geo_name, "objects");
 		}
@@ -339,7 +340,7 @@ void light::connect( void ) const
 	*/
 	if( m_object->evalInt("light_enable", 0, m_context.m_current_time) )
 	{
-		std::string parent_handle = m_object->getFullPath().c_str();
+		std::string parent_handle = null::handle(*m_object, m_context);
 		m_nsi.Connect(m_handle, "", parent_handle, "objects");
 	}
 
@@ -419,7 +420,7 @@ void light::changed_cb(
 
 void light::disconnect()const
 {
-	std::string parent_handle = m_object->getFullPath().c_str();
+	std::string parent_handle = null::handle(*m_object, m_context);
 	m_nsi.Disconnect(m_handle, "", parent_handle, "objects");
 
 	m_nsi.Disconnect(

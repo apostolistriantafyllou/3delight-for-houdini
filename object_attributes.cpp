@@ -158,7 +158,8 @@ void object_attributes::adjust_geo_attribute_connection(
 	{
 		i_ctx.m_nsi.Connect(
 			geo_attribute_node_handle( i_type ), "",
-			i_handle.c_str(), "geometryattributes");
+			i_handle.c_str(), "geometryattributes",
+			NSI::IntegerArg("strength", 1));
 	}
 	else if( !i_first_time )
 	{

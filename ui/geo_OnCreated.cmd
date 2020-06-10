@@ -11,6 +11,7 @@ if ( "$arg1" != "" ) then
    opproperty -f $arg1 3Delight _3dl_visibility_diffuse
    opproperty -f $arg1 3Delight _3dl_visibility_reflection
    opproperty -f $arg1 3Delight _3dl_visibility_refraction
+   opproperty -f $arg1 3Delight _3dl_visibility_shadow
    opproperty -f $arg1 3Delight _3dl_compositing
    opproperty -f $arg1 3Delight _3dl_obj_geo_label2_group
    opproperty -f $arg1 3Delight _3dl_transformation_blur
@@ -25,5 +26,6 @@ if ( "$arg1" != "" ) then
    opproperty -f $arg1 3Delight _3dl_override_visibility_diffuse_group
    opproperty -f $arg1 3Delight _3dl_override_visibility_reflection_group
    opproperty -f $arg1 3Delight _3dl_override_visibility_refraction_group
+   opproperty -f $arg1 3Delight _3dl_override_visibility_shadow_group
    opproperty -f $arg1 3Delight _3dl_override_surface_shader
 endif

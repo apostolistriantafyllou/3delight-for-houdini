@@ -5,11 +5,13 @@
 #include "creation_callbacks.h"
 #include "exporter.h"
 #include "idisplay_port.h"
+#include "light.h"
 #include "object_attributes.h"
 #include "object_visibility_resolver.h"
 #include "scene.h"
 #include "shader_library.h"
 #include "vdb.h"
+#include "vop.h"
 #include "ui/select_layers_dialog.h"
 
 #include <CH/CH_Manager.h>
@@ -28,6 +30,7 @@
 #include <UT/UT_Spawn.h>
 #include <UT/UT_TempFileManager.h>
 #include <UT/UT_UI.h>
+#include <VOP/VOP_Node.h>
 
 #include <nsi_dynamic.hpp>
 
@@ -309,21 +312,25 @@ ROP_3Delight::ExportGlobals(const context& i_ctx)const
 			 NSI::DoubleArg( "maximumraylength.hair", max_distance)
 		) );
 
-	if(HasSpeedBoost(i_ctx.m_current_time))
-	{
+	int boost = HasSpeedBoost( i_ctx.m_current_time );
 
-		if(evalInt(settings::k_disable_displacement, 0, t))
-		{
-			i_ctx.m_nsi.SetAttribute(
-				".global", NSI::IntegerArg("show.displacement", 0));
-		}
+	int toggle = evalInt(settings::k_disable_displacement, 0, t);
+	i_ctx.m_nsi.SetAttribute(
+		".global", NSI::IntegerArg("show.displacement", !(toggle && boost)));
 
-		if(evalInt(settings::k_disable_subsurface, 0, t))
-		{
-			i_ctx.m_nsi.SetAttribute(
-				".global", NSI::IntegerArg("show.osl.subsurface", 0));
-		}
-	}
+	toggle = evalInt(settings::k_disable_subsurface, 0, t);
+	i_ctx.m_nsi.SetAttribute(
+		".global", NSI::IntegerArg("show.osl.subsurface", !(toggle && boost)));
+
+	toggle = evalInt(settings::k_disable_atmosphere, 0, t);
+	i_ctx.m_nsi.SetAttribute(
+		".global", NSI::IntegerArg("show.atmosphere", !(toggle && boost)));
+
+	toggle = evalFloat(settings::k_disable_multiple_scattering, 0, t);
+	i_ctx.m_nsi.SetAttribute(
+		".global",
+		NSI::DoubleArg("show.multiplescattering",
+			(toggle && boost) ? 0.0 : 1.0));
 }
 
 void ROP_3Delight::StopRender()
@@ -867,11 +874,17 @@ void ROP_3Delight::changed_cb(
 
 	ROP_3Delight* rop = dynamic_cast<ROP_3Delight*>(i_caller);
 	assert(rop);
-	
+
 	int parm_index = reinterpret_cast<intptr_t>(i_data);
+	if( parm_index == -1 )
+	{
+		/* Happens with File -> Save AS and Auto-Save */
+		return;
+	}
+
 	PRM_Parm& parm = rop->getParm(parm_index);
 	std::string name = parm.getToken();
-		
+
 	if(name == settings::k_atmosphere)
 	{
 		context* ctx = (context*)i_callee;
@@ -913,12 +926,10 @@ void ROP_3Delight::ExportTransparentSurface(const context& i_ctx) const
 void
 ROP_3Delight::ExportAtmosphere(const context& i_ctx, bool ipr_update)
 {
-	std::string atmo_handle;
 	VOP_Node* atmo_vop =
 		exporter::resolve_material_path(
 			this,
-			m_settings.GetAtmosphere(i_ctx.m_current_time).c_str(),
-			atmo_handle);
+			m_settings.GetAtmosphere(i_ctx.m_current_time).c_str());
 
 	std::string env_handle = "atmosphere|environment";
 	
@@ -935,7 +946,7 @@ ROP_3Delight::ExportAtmosphere(const context& i_ctx, bool ipr_update)
 	{
 		// Ensure that the shader exists before connecting to it
 		std::unordered_set<std::string> mat;
-		mat.insert(atmo_handle);
+		mat.insert(atmo_vop->getFullPath().toStdString());
 		scene::export_materials(mat, i_ctx);
 	}
 
@@ -947,7 +958,7 @@ ROP_3Delight::ExportAtmosphere(const context& i_ctx, bool ipr_update)
 	i_ctx.m_nsi.Create( attr_handle, "attributes" );
 
 	i_ctx.m_nsi.Connect(
-		atmo_handle, "",
+		vop::handle(*atmo_vop, i_ctx), "",
 		attr_handle, "volumeshader",
 		NSI::IntegerArg("strength", 1) );
 
@@ -1043,7 +1054,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 	i_ctx.m_nsi.Connect(
 		k_screen_name, "",
-		camera::get_nsi_handle(*cam), "screens");
+		camera::handle(*cam, i_ctx), "screens");
 
 	UT_String idisplay_driver = "idisplay";
 	UT_String file_driver;
@@ -1205,9 +1216,17 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					3Delight Display's Multi-Light tool needs some information,
 					called "feedback data" to communicate back the values.
 				*/
-				if( !category.second.empty() )
+				if( category.second.size() > 1 ||
+					category.second.size() == 1 &&
+						light::handle(*category.second[0], i_ctx) != category.first)
 				{
-					// We use a set to group lights together under the same layer
+					/*
+						We use a set to group lights together under the same
+						layer. This is also useful when the light category name
+						is different than a single light's handle (this occurs
+						with bundles containing only one light or single lights
+						in IPR mode, which uses different handles).
+					*/
 					/*
 						FIXME : exporting the lightsets should always be done,
 						even if idisplay_output, m_current_render->m_export_nsi
@@ -1224,8 +1243,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					i_ctx.m_nsi.Create( category.first, "set");
 					for( auto &light_source : category.second )
 					{
-						std::string light_handle =
-							light_source->getFullPath().toStdString();
+						std::string light_handle = light::handle(*light_source, i_ctx);
 						/*
 							FIXME : calling ExportLayerFeedbackData in a loop
 							with the same layer_name will simply overwrite the
@@ -1240,7 +1258,10 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 				}
 				else
 				{
-					std::string light_handle = category.first;
+					std::string light_handle =
+						category.second.empty()
+						?	std::string()
+						:	light::handle(*category.second.back(), i_ctx);
 					ExportLayerFeedbackData(
 						i_ctx, layer_name, light_handle );
 				}
@@ -1498,14 +1519,14 @@ void
 ROP_3Delight::ExportLayerFeedbackData(
 	const context& i_ctx,
 	const std::string& i_layer_handle,
-	const std::string& i_light_handle) const
+	const std::string& i_light_path) const
 {
 	idisplay_port *idp = idisplay_port::get_instance();
 
 	std::string host = idp->GetServerHost();
 	int port = idp->GetServerPort();
 
-	if( i_light_handle.empty() )
+	if( i_light_path.empty() )
 	{
 		i_ctx.m_nsi.SetAttribute( i_layer_handle,
 			(
@@ -1516,7 +1537,7 @@ ROP_3Delight::ExportLayerFeedbackData(
 		return;
 	}
 
-	OBJ_Node* obj_node = OPgetDirector()->findOBJNode(i_light_handle.c_str());
+	OBJ_Node* obj_node = OPgetDirector()->findOBJNode(i_light_path.c_str());
 	assert(obj_node);
 
 	if( !obj_node )
@@ -1556,7 +1577,7 @@ ROP_3Delight::ExportLayerFeedbackData(
 	/* Make the feedback message */
 	/* Name */
 	feedback_data = "{\"name\":\"";
-	feedback_data += i_light_handle;
+	feedback_data += i_light_path;
 	feedback_data += "\",";
 
 	/* Type */
@@ -1643,21 +1664,22 @@ void ROP_3Delight::BuildLightCategories(
 	assert(blist);
 	int numBundles = blist->entries();
 
-	for( auto light : i_lights )
+	for( auto light_source : i_lights )
 	{
 		bool foundInBundle = false;
 		bool incand =
-			light->getOperator()->getName() == "3Delight::IncandescenceLight";
-		bool isvdb = light->castToOBJLight() == nullptr;
+			light_source->getOperator()->getName() ==
+			"3Delight::IncandescenceLight";
+		bool isvdb = light_source->castToOBJLight() == nullptr;
 
 		for (int i = 0; !incand && !isvdb && i < numBundles; i++)
 		{
 			OP_Bundle* bundle = blist->getBundle(i);
 			assert(bundle);
-			if( bundle && bundle->contains(light, false) )
+			if( bundle && bundle->contains(light_source, false) )
 			{
 				std::string bundle_name = bundle->getName();
-				o_light_categories[bundle_name].push_back(light);
+				o_light_categories[bundle_name].push_back(light_source);
 				foundInBundle = true;
 			}
 		}
@@ -1665,14 +1687,21 @@ void ROP_3Delight::BuildLightCategories(
 		if( !foundInBundle )
 		{
 			/* Make a category for this single light */
-			std::string category = light->getFullPath().toStdString();
-			o_light_categories[category] = {};
+			std::string category = light_source->getFullPath().toStdString();
+			o_light_categories[category].push_back(light_source);
 		}
 	}
 }
 
-bool
-ROP_3Delight::HasSpeedBoost( double t )const
+/*
+	\brief returns true if speed boost is enabled for this render and this
+	particular rendering mode.
+
+	Speed boost is only active for an interactive render. We also make an
+	exception when outputting to stdout as this output is a purely debugging
+	output and is only done interactively.
+*/
+bool ROP_3Delight::HasSpeedBoost( double t )const
 {
 	bool batch = !UTisUIAvailable();
 	if(batch)
@@ -1680,11 +1709,11 @@ ROP_3Delight::HasSpeedBoost( double t )const
 		return false;
 	}
 
-	if( m_current_render && m_current_render->m_export_nsi )
+	std::string render_mode = m_settings.get_render_mode(t).toStdString();
+	if(render_mode == settings::k_rm_export_file )
 		return false;
 
-	int speed_boost = evalInt(settings::k_speed_boost, 0, t);
-	return speed_boost;
+	return evalInt(settings::k_speed_boost, 0, t);
 }
 
 bool

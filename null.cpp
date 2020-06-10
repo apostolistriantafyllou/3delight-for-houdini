@@ -13,6 +13,7 @@ null::null( const context& i_ctx, OBJ_Node *i_object )
 :
 	exporter( i_ctx, i_object )
 {
+	m_handle = handle(*m_object, i_ctx);
 }
 
 void null::create( void ) const
@@ -54,7 +55,7 @@ void null::connect( void ) const
 {
 	if( m_instanced )
 	{
-		/* This tansform is used by the OBJ-level instancer. Don't connect. */
+		/* This transform is used by the OBJ-level instancer. Don't connect. */
 		return;
 	}
 
@@ -71,12 +72,14 @@ void null::connect( void ) const
 		parent_object ?
 			parent_object->getFullPath().toStdString() : std::string() );
 
-	std::string parent = parent_object_path.size() > parent_node_path.size() ?
-		parent_object_path : parent_node_path;
+	OP_Node* parent = parent_object_path.size() > parent_node_path.size() ?
+		parent_object : parent_node;
 
-	if( parent != "/obj" )
+	if( parent && parent->getFullPath() != "/obj" )
 	{
-		m_nsi.Connect( m_handle, "", parent, "objects" );
+		m_nsi.Connect(
+			m_handle, "",
+			null::handle(*parent, m_context), "objects" );
 	}
 	else
 	{
@@ -95,7 +98,17 @@ void null::changed_cb(
 	void* i_data)
 {
 	context* ctx = (context*)i_callee;
-	if(i_type == OP_PARM_CHANGED)
+
+	/*
+		FIXME : We normally shouldn't react to OP_UI_MOVED because this type of
+		event is supposed to be generated only when the node's location in the
+		graph view changes, which has nothing to do with its actual position in
+		the 3D scene. However, it seems to be the only event we can trap after
+		the copy & paste of an object, once its transform has been updated.
+		Otherwise, it remains (incorrectly) set to the identity transform in the
+		NSI scene.
+	*/
+	if(i_type == OP_PARM_CHANGED || i_type == OP_UI_MOVED)
 	{
 		if(!is_transform_parameter_index(reinterpret_cast<intptr_t>(i_data)))
 		{
@@ -107,5 +120,11 @@ void null::changed_cb(
 		null_node.set_attributes_at_time(ctx->m_current_time);
 
 		ctx->m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
+	}
+	else if(i_type == OP_NODE_PREDELETE)
+	{
+		OBJ_Node* obj = i_caller->castToOBJNode();
+		assert(obj);
+		ctx->m_nsi.Delete(handle(*obj, *ctx));
 	}
 }

@@ -1,15 +1,28 @@
 #include "instance.h"
 
 #include "context.h"
+#include "vop.h"
 
 #include <nsi.hpp>
 
 #include <GT/GT_PrimInstance.h>
 #include <OBJ/OBJ_Node.h>
 #include <OP/OP_Operator.h>
+#include <VOP/VOP_Node.h>
 
 #include <unordered_map>
 
+/**
+	\brief Constructor.
+	
+	\param i_ctx
+	\param i_object
+	\param i_time
+	\param i_gt_primitive
+	\param i_primitive_index
+	\param i_source_models
+		NSI handles of the instancer's source models.
+*/
 instance::instance(
 	const context& i_ctx,
 	OBJ_Node *i_object,
@@ -40,13 +53,13 @@ void instance::connect( void ) const
 		"sourcemodel" that we can select using sourcemodels plug of the
 		instance node.
 	*/
-	std::map< std::pair<std::string, std::string>, int> modelindices;
-	std::vector< const std::pair< std::string,std::string> * > merge_points;
+	std::map<merge_point, int> modelindices;
+	std::vector<const merge_point*> merge_points;
 	get_merge_points( modelindices, merge_points );
 
 	if( merge_points.empty() )
 	{
-		std::string merge_h = merge_handle( {}, {} );
+		std::string merge_h = merge_handle( merge_point() );
 		m_nsi.Create( merge_h, "transform" );
 		for( const auto &sm : m_source_models )
 			m_nsi.Connect(
@@ -66,17 +79,15 @@ void instance::connect( void ) const
 	*/
 	while( it != modelindices.end() )
 	{
-		const auto &merge_point = it->first;
-		const std::string &instance = merge_point.first;
-		const std::string &material = merge_point.second;
+		const auto &merge = it->first;
 
-		std::string merge_h = merge_handle( instance, material );
-
+		std::string merge_h = merge_handle(merge);
 		m_nsi.Create( merge_h, "transform" );
 
-		if( !instance.empty() )
+		const std::string &object = merge.first;
+		if( !object.empty() )
 		{
-			m_nsi.Connect( instance, "", merge_h, "objects" );
+			m_nsi.Connect( object, "", merge_h, "objects" );
 		}
 		else
 		{
@@ -87,13 +98,14 @@ void instance::connect( void ) const
 		m_nsi.Connect( merge_h, "", m_handle, "sourcemodels",
 			NSI::IntegerArg( "index", modelindex ) );
 
-		if( !material.empty() )
+		const VOP_Node* material = merge.second;
+		if( material )
 		{
 			std::string attribute_handle = merge_h + "|attribute";
 			m_nsi.Create( attribute_handle, "attributes" );
 			m_nsi.Connect( attribute_handle, "", merge_h, "geometryattributes");
 			m_nsi.Connect(
-				material, "",
+				vop::handle(*material, m_context), "",
 				attribute_handle, "surfaceshader",
 				(
 					NSI::IntegerArg("priority", 2),
@@ -267,11 +279,14 @@ void instance::set_attributes_at_time(
 	delete [] matrices;
 }
 
-std::string instance::merge_handle(
-	const std::string &i_instance,
-	const std::string &i_material ) const
+std::string instance::merge_handle(const merge_point& i_merge_point) const
 {
-	return m_handle + "|" + i_instance + "|" + i_material + "|merge";
+	VOP_Node* node = i_merge_point.second;
+	return
+		m_handle +
+		"|" + i_merge_point.first +
+		"|" + (node ? vop::handle(*node, m_context) : std::string()) +
+		"|merge";
 }
 
 /**
@@ -280,7 +295,7 @@ std::string instance::merge_handle(
 
 	Note that there could be *alot* of strings in here. Millions of them
 	if we are note careful, because o_merge_points could have as many
-	entires as the total number of instances. But, we know that there
+	entries as the total number of instances. But, we know that there
 	aren't that many possible *different* instances so we just
 	store a pointer in o_merge_points that points to the uniqed map.
 
@@ -291,8 +306,8 @@ std::string instance::merge_handle(
 	but our design also permits s@instance on the SOP-level.
 */
 void instance::get_merge_points(
-	std::map<std::pair<std::string, std::string>, int> &o_uniqued,
-	std::vector< const std::pair<std::string, std::string> *> &o_merge_points ) const
+	std::map<merge_point, int> &o_uniqued,
+	std::vector<const merge_point*> &o_merge_points ) const
 {
 	GT_Owner type;
 	auto instance =
@@ -312,9 +327,9 @@ void instance::get_merge_points(
 		std::string M =	(material && i<material->entries()) ?
 					(const char*)(material->getS(i)) : "";
 
-		resolve_material_path(m_object, M.c_str(), M);
+		VOP_Node* vop = resolve_material_path(m_object, M.c_str());
 
-		std::pair< std::string, std::string > m = std::make_pair(I, M);
+		merge_point m(I, vop);
 
 		if( o_uniqued.find(m) == o_uniqued.end() )
 			o_uniqued[m] = 0;

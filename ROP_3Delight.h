@@ -156,7 +156,7 @@ private:
 	void ExportLayerFeedbackData(
 		const context& i_ctx,
 		const std::string& i_layer_handle,
-		const std::string& i_light_handle) const;
+		const std::string& i_light_path) const;
 
 	void ExportGlobals(const context& i_ctx)const;
 	void ExportDefaultMaterial( const context &i_context ) const;
@@ -181,15 +181,31 @@ private:
 		std::map<std::string, std::vector<OBJ_Node*>> &, fpreal t) const;
 
 	bool HasSpeedBoost( double i_time )const;
+
+	/** volumesm can be disabled in speed boost */
+	bool atmosphere_enabled( double t ) const;
+	double multi_scatter_multipier( double t ) const;
+
 	/// Retrieves the image resolution, scaled by the Speed Boost res factor
 	bool GetScaledResolution(int& o_x, int& o_y)const;
+
+	/** Returns the resolution multiplier from Speed Boost */
 	float GetResolutionFactor()const;
+
+	/** Returns the sampling multiplier from Speed Boost */
 	float GetSamplingFactor()const;
+
+	/** Returns the pixel samples (AA oversampling) in this ROP */
 	int GetPixelSamples()const;
+
+	/** Returns camera used to Render. */
 	OBJ_Camera* GetCamera( double i_time )const;
+
 	double GetShutterInterval(double i_time)const;
+
 	bool HasDepthOfField( double i_time )const;
 
+private:
 	std::vector<OBJ_Node*> m_lights;
 	bool m_cloud;
 
