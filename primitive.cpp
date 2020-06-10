@@ -282,8 +282,8 @@ void primitive::export_bind_attributes( OP_Node *i_obj_level_material ) const
 	{
 		for( int i=0; i<materials->entries(); i++ )
 		{
-			VOP_Node *vop =
-				resolve_material_path( materials->getS(i).c_str() );
+			std::string m( materials->getS(i) );
+			VOP_Node *vop = resolve_material_path( m.c_str() );
 			to_scan.push_back( vop );
 		}
 	}
