@@ -282,7 +282,7 @@ void primitive::export_bind_attributes( OP_Node *i_obj_level_material ) const
 	{
 		UT_StringArray mats;
 		materials->getStrings(mats);
-		for (int i = 0; i < mats->entries(); i++)
+		for (int i = 0; i < mats.entries(); i++)
 		{
 			std::string m( mats[i] );
 			VOP_Node *vop = resolve_material_path( m.c_str() );
