@@ -1,6 +1,7 @@
 #include "VOP_ExternalOSL.h"
 
 #include "osl_utilities.h"
+#include "dl_system.h"
 
 #include <PRM/PRM_Include.h>
 #include <PRM/PRM_SpareData.h>
@@ -1135,7 +1136,7 @@ VOP_ExternalOSL::SetRampParametersDefaults()
 		{
 			continue;
 		}
-
+		
 		const DlShaderInfo::Parameter* knots = nullptr;
 		const DlShaderInfo::Parameter* interpolation = nullptr;
 		const DlShaderInfo::Parameter* shared_interpolation = nullptr;
@@ -1303,4 +1304,24 @@ VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
 		see the networks there.
 	*/
 	vop_info->setRenderMask("nsi");
+}
+
+/*
+	Setting a custom help URL by overriding the virtual GetOPHelpURL    
+	function of OP_Operator class.
+*/
+bool VOP_ExternalOSLOperator::getOpHelpURL(UT_String &url)
+{
+	const char* name = m_shader_info.m_dl.shadername().c_str();
+	osl_utilities::FindMetaData(name, m_shader_info.m_dl.metadata(), "niceName");
+
+	std::string shader_ui_name = name;
+	if (shader_ui_name == "vdbVolume")
+		shader_ui_name = "Open+VDB";
+
+	//Replacing " " with "+" so it adapts to 3Delight URL.
+	std::replace(shader_ui_name.begin(), shader_ui_name.end(), ' ', '+');
+	std::string url_name = dl_system::delight_doc_url() + shader_ui_name;
+	url.hardenIfNeeded(url_name.c_str());
+	return true;
 }

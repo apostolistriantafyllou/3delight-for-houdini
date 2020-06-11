@@ -24,4 +24,5 @@ namespace dl_system
 		const std::string& i_path,
 		std::unordered_map<std::string, std::string>& io_list );
 	bool create_directory_for_file( const std::string &i_file );
+	std::string delight_doc_url();
 }

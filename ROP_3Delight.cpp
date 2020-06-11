@@ -12,6 +12,7 @@
 #include "shader_library.h"
 #include "vdb.h"
 #include "vop.h"
+#include "dl_system.h"
 #include "ui/select_layers_dialog.h"
 
 #include <CH/CH_Manager.h>
@@ -1911,4 +1912,11 @@ void ROP_3Delight::export_render_notes( const context &i_context ) const
 double ROP_3Delight::current_time( void ) const
 {
 	return m_current_render ? m_current_render->m_current_time : 0.0;
+}
+
+bool OP_Operator::getOpHelpURL(UT_String& url)
+{
+	std::string url_name = dl_system::delight_doc_url()+"The+3Delight+ROP";
+	url.hardenIfNeeded(url_name.c_str());
+	return true;
 }
