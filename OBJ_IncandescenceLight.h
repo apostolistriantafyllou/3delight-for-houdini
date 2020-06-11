@@ -46,9 +46,5 @@ struct OP_IncandescenceLightOperator : public OP_Operator
 {
 	/// Constructor.
 	OP_IncandescenceLightOperator();
-	virtual bool getOpHelpURL(UT_String& url)
-	{
-		url.harden("https://www.3delight.com/documentation/display/3DfH/Incandescence+Light"); 
-		return true;
-	}
+	virtual bool getOpHelpURL(UT_String& url);
 };

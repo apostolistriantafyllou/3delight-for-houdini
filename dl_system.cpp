@@ -191,4 +191,10 @@ bool create_directory_for_file( const std::string &i_file )
 	return UTcreateDirectoryForFile( i_file.data() );
 }
 
+std::string delight_doc_url()
+{
+	std::string url_name = "https://www.3delight.com/documentation/display/3DfH/";
+	return url_name;
+}
+
 } /* namespace dl_system */

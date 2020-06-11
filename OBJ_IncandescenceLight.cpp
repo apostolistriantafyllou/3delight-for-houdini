@@ -1,4 +1,5 @@
 #include "OBJ_IncandescenceLight.h"
+#include "dl_system.h"
 
 #include <OP/OP_OperatorTable.h>
 #include <PRM/PRM_SpareData.h>
@@ -93,4 +94,11 @@ OP_IncandescenceLightOperator::OP_IncandescenceLightOperator()
 {
 	setIconName("OBJ_3Delight-dlIncandescenceLight");
 	setOpTabSubMenuPath("3Delight");
+}
+
+bool OP_IncandescenceLightOperator::getOpHelpURL(UT_String& url)
+{
+	std::string url_name = dl_system::delight_doc_url() + "Incandescence+Light";
+	url.harden(url_name.c_str());
+	return true;
 }

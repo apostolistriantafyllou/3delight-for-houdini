@@ -210,10 +210,9 @@ struct VOP_ExternalOSLOperator : public VOP_Operator
 		const StructuredShaderInfo& i_shader_info,
 		const std::string& i_menu_name);
 
+	// overriding function which is responsible for help URL
+	virtual bool getOpHelpURL(UT_String& url);
+
 	/// The shader information we want to pass to the VOP_ExternalOSL node
 	StructuredShaderInfo m_shader_info;
-
-	// overriding function which is resposnible for help URL
-	virtual bool getOpHelpURL(UT_String& url);
 };
-
