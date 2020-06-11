@@ -255,9 +255,9 @@ bool primitive::has_velocity(const GT_PrimitiveHandle& i_gt_prim)
 }
 
 /**
-	We scan for all assigned shaders on this primitive. If we don't
-	have attribute-level assignments (SOP assignment) then  we scan
-	the OBJ-level shader.
+	We scan for all assigned shaders on this primitive. We scan
+	both SOP-level and OBJ-level shaders as both could be used
+	at the same time.
 */
 void primitive::export_bind_attributes( OP_Node *i_obj_level_material ) const
 {
@@ -280,18 +280,22 @@ void primitive::export_bind_attributes( OP_Node *i_obj_level_material ) const
 	std::vector< OP_Node * > to_scan;
 	if( materials )
 	{
-		for( int i=0; i<materials->entries(); i++ )
+		UT_StringArray mats;
+		materials->getStrings(mats);
+		for (int i = 0; i < mats->entries(); i++)
 		{
-			std::string m( materials->getS(i) );
+			std::string m( mats[i] );
 			VOP_Node *vop = resolve_material_path( m.c_str() );
 			to_scan.push_back( vop );
 		}
 	}
-	else
-	{
-		/* Revert to object level */
-		to_scan.push_back( i_obj_level_material );
-	}
+
+	/*
+		Also scan OBJ-level assignment. It could be used for empty SOP-level
+		assignments.
+	*/
+	if( i_obj_level_material )
+		to_scan.push_back(i_obj_level_material);
 
 	std::vector< std::string > binds;
 	get_bind_attributes( to_scan, binds );
