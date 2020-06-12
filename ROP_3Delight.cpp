@@ -98,38 +98,30 @@ namespace
 	}
 }
 
+ROP_3DelightOperator::ROP_3DelightOperator(bool i_cloud)
+	:OP_Operator(
+		i_cloud ? "3DelightCloud":"3Delight",
+		i_cloud ? "3Delight Cloud":"3Delight",
+		i_cloud ? ROP_3Delight::cloud_alloc : ROP_3Delight::alloc,
+		settings::GetTemplatePair(i_cloud),
+		0,
+		0,
+		settings::GetVariablePair(),
+		0u,
+		nullptr,
+		0,
+		"Render"){}
+
 void
 ROP_3Delight::Register(OP_OperatorTable* io_table)
 {
-	OP_Operator* rop =
-		new OP_Operator(
-			"3Delight",
-			"3Delight",
-			ROP_3Delight::alloc,
-			settings::GetTemplatePair(false),
-			0,
-			0,
-			settings::GetVariablePair(),
-			0u,
-			nullptr,
-			0,
-			"Render");
+	ROP_3DelightOperator* rop =
+		new ROP_3DelightOperator(false);
 	rop->setObsoleteTemplates(settings::GetObsoleteParameters());
 	io_table->addOperator(rop);
 
-	OP_Operator* cloud_rop =
-		new OP_Operator(
-			"3DelightCloud",
-			"3Delight Cloud",
-			ROP_3Delight::cloud_alloc,
-			settings::GetTemplatePair(true),
-			0,
-			0,
-			settings::GetVariablePair(),
-			0u,
-			nullptr,
-			0,
-			"Render");
+	ROP_3DelightOperator* cloud_rop =
+		new ROP_3DelightOperator(true);
 	cloud_rop->setObsoleteTemplates(settings::GetObsoleteParameters());
 	io_table->addOperator(cloud_rop);
 }
@@ -1914,7 +1906,7 @@ double ROP_3Delight::current_time( void ) const
 	return m_current_render ? m_current_render->m_current_time : 0.0;
 }
 
-bool ROP_3Delight::getOpHelpURL(UT_String& url)
+bool ROP_3DelightOperator::getOpHelpURL(UT_String& url)
 {
 	std::string url_name = dl_system::delight_doc_url()+"The+3Delight+ROP";
 	url.hardenIfNeeded(url_name.c_str());
