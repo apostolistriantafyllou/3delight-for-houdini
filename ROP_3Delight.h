@@ -76,6 +76,8 @@ public:
 	virtual unsigned maxOutputs() const;
 	virtual unsigned getNumVisibleOutputs() const;
 
+	virtual bool getOpHelpURL(UT_String &url);
+
 	/**
 		\brief Returns the current time.
 	*/

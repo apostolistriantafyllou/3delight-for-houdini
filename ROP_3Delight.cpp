@@ -1914,7 +1914,7 @@ double ROP_3Delight::current_time( void ) const
 	return m_current_render ? m_current_render->m_current_time : 0.0;
 }
 
-bool OP_Operator::getOpHelpURL(UT_String& url)
+bool ROP_3Delight::getOpHelpURL(UT_String& url)
 {
 	std::string url_name = dl_system::delight_doc_url()+"The+3Delight+ROP";
 	url.hardenIfNeeded(url_name.c_str());
