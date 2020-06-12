@@ -146,7 +146,7 @@ static void addColorSpaceDropDown (std::vector<PRM_Template>& templates, const c
 {
 	std::string meta_colorspace = ".meta.colorspace";
 	char* color_space = LEAKED(strdup((color_space_str + meta_colorspace).c_str()));
-	static PRM_Default color_space_items_val(0, "Linear");
+	static PRM_Default color_space_items_val(0, "auto");
 	static PRM_Item color_space_items[] =
 	{
 		PRM_Item("Linear", "Linear"),
