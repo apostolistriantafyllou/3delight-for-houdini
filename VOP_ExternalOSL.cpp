@@ -784,7 +784,7 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 		const char* color_space_meta = "";
 		osl_utilities::FindMetaData(color_space_meta, param.metadata, "defaultColorSpace");
 
-		if (strcmp(color_space_meta, "") == 1)
+		if( color_space_meta[0] )
 		{
 			std::string str = param.name.c_str();
 			addColorSpace(page);
