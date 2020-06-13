@@ -2,6 +2,7 @@
 
 class context;
 class exporter;
+class ROP_3Delight;
 class safe_interest;
 class OBJ_Node;
 class OP_Node;
@@ -46,8 +47,9 @@ public:
 		\brief Find the bind export nodes that can produce custom AOVs
 	*/
 	static void find_custom_aovs(
-		const object_visibility_resolver &,
-		std::vector<VOP_Node*>& o_custom_aovs );
+		ROP_3Delight *i_rop,
+		double i_time,
+		std::vector<VOP_Node *> &o_custom_aovs);
 
 private:
 	static void obj_scan(
@@ -62,10 +64,15 @@ private:
 		const std::unordered_set<std::string>& i_materials,
 		std::vector<VOP_Node*> &o_vops );
 
+	static void create_exporters(
+		const context &i_context,
+		std::vector<exporter *> &o_to_export);
+
 	static void create_materials_exporters(
 		const std::unordered_set<std::string>& i_materials,
 		const context &i_context,
 		std::vector<exporter *> &io_to_export );
+
 	static void create_atmosphere_shader_exporter(
 		const context& i_context,
 		std::vector<exporter *>& io_to_export );

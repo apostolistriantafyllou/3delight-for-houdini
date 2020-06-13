@@ -25,6 +25,15 @@ class ROP_3Delight;
 class context
 {
 public:
+
+	/**
+		\brief A non-rendering context. Could be used in various scene-
+		scanning methods for other purposes than expot.
+
+		\ref scene::find_custom_aovs
+	*/
+	context( ROP_3Delight *, fpreal t );
+
 	context(
 		const settings &i_settings,
 		NSI::Context &i_nsi,
@@ -116,16 +125,16 @@ public:
 public:
 	NSI::Context &m_nsi;
 	NSI::Context &m_static_nsi;
-	fpreal m_start_time, m_end_time;
-	fpreal m_current_time;
-	fpreal m_frame_duration;
-	fpreal m_shutter;
+	fpreal m_start_time{0.0f}, m_end_time{.0f};
+	fpreal m_current_time{.0f};
+	fpreal m_frame_duration{.0f};
+	fpreal m_shutter{.0f};
 	// True if depth-of-field is enabled
-	bool m_dof;
-	bool m_batch;
-	bool m_ipr;
-	bool m_export_nsi;
-	bool m_cloud;
+	bool m_dof{false};
+	bool m_batch{false};
+	bool m_ipr{false};
+	bool m_export_nsi{false};
+	bool m_cloud{false};
 
 	// Full path of the 3Delight ROP from where rendering originates
 	std::string m_rop_path;

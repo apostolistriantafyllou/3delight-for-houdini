@@ -796,7 +796,7 @@ int settings::add_layer_cb(
 	object_visibility_resolver resolver(
 		node->getFullPath().toStdString(), node->m_settings, t );
 
-	scene::find_custom_aovs( resolver, custom_aovs );
+	scene::find_custom_aovs( node, t, custom_aovs );
 	aov::updateCustomVariables(custom_aovs);
 
 	delete sm_dialog;

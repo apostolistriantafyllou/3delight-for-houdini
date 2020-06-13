@@ -94,6 +94,11 @@ public:
 	/// Called by creation_callbacks when a new OBJ is created in IPR
 	void NewOBJNode(OBJ_Node& i_node);
 
+	const settings &get_settings( void ) const
+	{
+		return m_settings;
+	}
+
 protected:
 
 	ROP_3Delight(

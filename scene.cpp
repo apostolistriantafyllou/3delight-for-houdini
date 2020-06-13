@@ -325,8 +325,8 @@ void scene::create_atmosphere_shader_exporter(
 /**
 	\brief Scans for geometry, cameras, lights and produces a list of exporters.
 
-	We just scan the scene recursively, looking for objects.
-	FIXME: can we do better and avoid scanning through unnecessary nodes ?
+	We just scan the scene recursively, looking for OBJ nodes. We skip  SOPs and
+	DOPs and TOPs.
 
 	\ref geometry
 */
@@ -455,10 +455,34 @@ void scene::scan_for_instanced(
 }
 
 /**
+	\brief Converts a scene into exporters.
+	\see process_obj_node
+*/
+void scene::create_exporters(
+	const context &i_context,
+	std::vector<exporter*> &o_to_export )
+{
+	/*
+		Start by getting the list of all OBJ exporters.
+	*/
+	obj_scan( i_context, o_to_export );
+
+	/*
+		Make sure instanced geometry is included in the list, regardless of
+		display flag or scene elements.
+	*/
+	scan_for_instanced( i_context, o_to_export );
+
+	/*
+		Now, for the OBJs that are geometries, gather the list of materials and
+		build a list of VOP exporters for these.
+	*/
+	vop_scan( i_context, o_to_export );
+}
+
+/**
 	\brief Contains the high-level logic of scene conversion to
 	a NSI representation.
-
-	\see process_obj_node
 */
 void scene::convert_to_nsi( const context &i_context )
 {
@@ -466,19 +490,7 @@ void scene::convert_to_nsi( const context &i_context )
 		Start by getting the list of all OBJ exporters.
 	*/
 	std::vector<exporter *> to_export;
-	obj_scan( i_context, to_export );
-
-	/*
-		Make sure instanced geometry is included in the list, regardless of
-		display flag or scene elements.
-	*/
-	scan_for_instanced( i_context, to_export );
-
-	/*
-		Now, for the OBJs that are geometries, gather the list of materials and
-		build a list of VOP exporters for these.
-	*/
-	vop_scan( i_context, to_export );
+	create_exporters( i_context, to_export );
 
 	export_nsi(i_context, to_export);
 }
@@ -632,62 +644,38 @@ void scene::find_lights(
 	}
 }
 
+/*
+	\brief find the "bind exports" in the scene. 
+
+	This is relly heavy duty as it uses a scene export to find the vops.
+	But it is also robust as we use the same logic as scen export.
+*/
 void scene::find_custom_aovs(
-	const object_visibility_resolver &i_resolver,
+	ROP_3Delight *i_node,
+	double i_time,
 	std::vector<VOP_Node*>& o_custom_aovs )
 {
-	/* A traversal stack to avoid recursion */
-	std::vector< OP_Node * > traversal;
+	context ctx( i_node, i_time );
 
-	OP_Node *our_dear_leader = OPgetDirector();
-	traversal.push_back( our_dear_leader->findNode( "/obj") );
+	/*
+		Start by getting the list of all OBJ exporters.
+	*/
+	std::vector<exporter *> exporters;
+	create_exporters( ctx, exporters );
 
-	std::unordered_set< std::string > materials;
-
-	while( traversal.size() )
+	for( auto exporter : exporters )
 	{
-		OP_Node *network = traversal.back();
-		traversal.pop_back();
+		vop *v = dynamic_cast<vop *>( exporter );
+		if( !v )
+			continue;
 
-		assert( network->isNetwork() );
+		VOP_Node *vop_node = CAST_VOPNODE( v->node() );
+		assert( vop_node);
 
-		int nkids = network->getNchildren();
-		for( int i=0; i< nkids; i++ )
-		{
-			OP_Node *node = network->getChild(i);
-			OBJ_Node *obj_node = node->castToOBJNode();
+		if( vop::is_aov_definition(vop_node) )
+			o_custom_aovs.push_back( vop_node );
 
-			if( !obj_node || !i_resolver.object_displayed(*obj_node) )
-			{
-				continue;
-			}
-
-			OP_Node* material =
-				obj_node->getMaterialNode(i_resolver.m_current_time);
-
-			if( material )
-			{
-				materials.insert( material->getFullPath().toStdString() );
-			}
-
-			if( !node->isNetwork() )
-				continue;
-
-			OP_Network *kidnet = (OP_Network *)node;
-			if( kidnet->getNchildren() )
-			{
-				traversal.push_back( kidnet );
-			}
-		}
-	}
-
-	std::vector< VOP_Node * > vops;
-	get_material_vops( materials, vops );
-
-	for( auto vop : vops )
-	{
-		if( vop::is_aov_definition(vop) )
-			o_custom_aovs.push_back( vop );
+		delete exporter;
 	}
 }
 
