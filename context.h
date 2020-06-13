@@ -28,7 +28,7 @@ public:
 
 	/**
 		\brief A non-rendering context. Could be used in various scene-
-		scanning methods for other purposes than expot.
+		scanning methods for other purposes than export.
 
 		\ref scene::find_custom_aovs
 	*/
