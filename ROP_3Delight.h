@@ -6,6 +6,7 @@
 #include "ui/settings.h"
 
 #include <ROP/ROP_Node.h>
+#include <OP/OP_Operator.h>
 
 #include <nsi.hpp>
 
@@ -75,8 +76,6 @@ public:
 
 	virtual unsigned maxOutputs() const;
 	virtual unsigned getNumVisibleOutputs() const;
-
-	virtual bool getOpHelpURL(UT_String &url);
 
 	/**
 		\brief Returns the current time.
@@ -271,6 +270,16 @@ private:
 
 	/* The UI part of the ROP */
 	settings m_settings;
+};
+
+struct ROP_3DelightOperator : public OP_Operator
+{
+	/// Constructor.
+	ROP_3DelightOperator(bool i_cloud);
+
+	// overriding function which is responsible for help URL
+	virtual bool getOpHelpURL(UT_String& url);
+
 };
 
 #endif
