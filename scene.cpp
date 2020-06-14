@@ -409,7 +409,20 @@ void scene::scan_for_instanced(
 
 	for( const auto E : io_to_export )
 	{
-		auto it = instanced.find( E->handle() );
+		/*
+			Only interested in null which represents the obj with
+			getFullPathName().
+		*/
+
+		if( !dynamic_cast<null*>(E) )
+			continue;
+
+		/*
+			Get the path of E. We can't use E->handle() as in IPR this
+			could be a unique ID and not a path.
+		*/
+		std::string E_path( E->node()->getFullPath().toStdString() );
+		auto it = instanced.find( E_path );
 		if( it == instanced.end() )
 			continue;
 
@@ -435,9 +448,12 @@ void scene::scan_for_instanced(
 	*/
 	for( auto E : instanced )
 	{
-		OBJ_Node *o = OPgetDirector()->findOBJNode( E.data() );
+		OBJ_Node *o = OPgetDirector()->findOBJNode( E.c_str() );
 		if( !o )
+		{
+			assert( false );
 			continue;
+		}
 
 		process_obj_node(
 			i_context, o, true /* re-export instance */, io_to_export );
@@ -448,8 +464,14 @@ void scene::scan_for_instanced(
 		*/
 		for( int i=0; i<io_to_export.size(); i++ )
 		{
-			if( io_to_export[i]->handle() == E )
+			if( !dynamic_cast<null*>(io_to_export[i]))
+				continue;
+				
+			if( io_to_export[i]->node()->getFullPath().toStdString() == E )
+			{
 				io_to_export[i]->set_as_instanced();
+				break;
+			}
 		}
 	}
 }

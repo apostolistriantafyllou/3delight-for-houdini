@@ -14,7 +14,7 @@
 
 /**
 	\brief Constructor.
-	
+
 	\param i_ctx
 	\param i_object
 	\param i_time
@@ -457,28 +457,42 @@ void instance::get_transforms(
 }
 
 /**
-	\brief Get paths to instanced objects.
+	\brief Get paths to instanced objects. SOP-level instancer has no external
+	OBJs to reference so it returns nothing.
 
 	\ref scene::scan_for_instanced
 */
 void instance::get_instanced(
 	std::unordered_set<std::string> &o_instanced ) const
 {
+	const UT_StringRef &op_name = m_object->getOperator()->getName();
+	if( op_name != "instance" )
+	{
+		/* SOP-level */
+		return;
+	}
+
+	UT_String path;
+	m_object->evalString( path, "instancepath", 0, m_context.m_current_time );
+	OP_Node* instanced = OPgetDirector()->findNode(path);
+	if(!instanced)
+		instanced = m_object->findNode(path);
+
+	if( instanced )
+		o_instanced.insert( instanced->getFullPath().toStdString() );
+
 	GT_Owner type;
 	auto instance =
 		default_gt_primitive().get()->findAttribute( "instance", type, 0 );
 
-	if( instance && instance->getStorage()==GT_STORE_STRING )
-	{
-
-		for( int i=0; i<instance->entries(); i++ )
-			o_instanced.insert( (const char *)instance->getS(i) );
-
+	if( !instance )
 		return;
+
+	UT_StringArray instances;
+	instance->getStrings(instances);
+
+	for( int i=0; i<instances.entries(); i++ )
+	{
+		o_instanced.insert( instances[i].toStdString() );
 	}
-
-	for( const auto &I : m_source_models )
-		o_instanced.insert( I );
-
-	return;
 }
