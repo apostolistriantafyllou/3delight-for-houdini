@@ -39,14 +39,19 @@ surface hlight(
 			point localO = transform( "object", O );
 			vector Iobj = localO - point(0);
 
-			float s = Iobj[0] + 0.5;
-			float t = Iobj[1] + 0.5;
+			if( Iobj[2]<0 )
+			{
+				Iobj /= -Iobj[2];
 
-			color tex_value = texture(
-				projmap, s, t,
-				"swrap", "clamp",
-				"twrap", "clamp" );
-			light_col = light_color * tex_value;
+				float s = Iobj[0] + 0.5;
+				float t = Iobj[1] + 0.5;
+
+				color tex_value = texture(
+						projmap, s, t,
+						"swrap", "clamp",
+						"twrap", "clamp" );
+				light_col = light_color * tex_value;
+			}
 		}
 	}
 	else
