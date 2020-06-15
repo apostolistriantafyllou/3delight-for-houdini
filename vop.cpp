@@ -26,8 +26,7 @@ vop::vop(
 
 void vop::create( void ) const
 {
-	const shader_library &library = shader_library::get_instance();
-	std::string path = library.get_shader_path( vop_name().c_str() );
+	std::string path = shader_path( m_vop );
 	assert( !path.empty() );
 
 	m_nsi.Create( m_handle, "shader" );
@@ -48,7 +47,7 @@ void vop::set_attributes_at_time( double i_time ) const
 	list_shader_parameters(
 		m_context,
 		m_vop,
-		m_vop->getOperator()->getName(),
+		nullptr,
 		i_time,
 		-1,
 		list, uv_coord_connection );
@@ -210,11 +209,19 @@ void vop::list_shader_parameters(
 	NSI::ArgumentList &o_list,
 	std::string &o_uv_connection )
 {
-	assert( i_shader );
 	assert( i_parameters );
 
 	const shader_library &library = shader_library::get_instance();
-	std::string path = library.get_shader_path( i_shader );
+	std::string path;
+	if(i_shader)
+	{
+		path = library.get_shader_path( i_shader );
+	} else {
+		const VOP_Node *vop = dynamic_cast<const VOP_Node*>(
+				i_parameters );
+		assert( vop );
+		path = shader_path( vop );
+	}
 	if( path.size() == 0 )
 	{
 		return;
@@ -422,16 +429,16 @@ void vop::list_shader_parameters(
 	}
 }
 
-std::string vop::vop_name( void ) const
+std::string vop::vop_name( const VOP_Node *i_vop )
 {
-	return m_vop->getOperator()->getName().toStdString();
+	return i_vop->getOperator()->getName().toStdString();
 }
 
 
 bool vop::ignore_subnetworks( void ) const
 {
 	const shader_library &library = shader_library::get_instance();
-	std::string path = library.get_shader_path( vop_name().c_str() );
+	std::string path = shader_path( m_vop );
 	if( path.size() == 0 )
 	{
 		return false;
@@ -474,7 +481,7 @@ void vop::add_and_connect_aov_group() const
 		aovGroup input to which we can connect AOV nodes.
 	*/
 	const shader_library &library = shader_library::get_instance();
-	std::string path = library.get_shader_path( vop_name().c_str() );
+	std::string path = shader_path( m_vop );
 	assert( !path.empty() );
 
 	DlShaderInfo *shader_info = library.get_shader_info( path.c_str() );
@@ -597,7 +604,7 @@ bool vop::set_single_attribute(int i_parm_index)const
 	list_shader_parameters(
 		m_context,
 		m_vop,
-		m_vop->getOperator()->getName(),
+		nullptr,
 		m_context.m_current_time,
 		i_parm_index,
 		list, dummy );
@@ -712,9 +719,24 @@ bool vop::is_aov_definition( VOP_Node *i_vop )
 
 bool vop::is_renderable( VOP_Node *i_vop )
 {
-	const shader_library &library = shader_library::get_instance();
-	std::string vop_name( i_vop->getOperator()->getName().toStdString() );
-	std::string path = library.get_shader_path( vop_name.c_str() );
+	return !shader_path( i_vop ).empty();
+}
 
-	return !path.empty();
+std::string vop::shader_path( const VOP_Node *i_vop )
+{
+	std::string path;
+
+	UT_StringHolder shaderParmName("_3dl_osl_shader");
+
+	if( i_vop->hasParm( shaderParmName ) )
+	{
+		UT_String shaderfilename;
+		i_vop->evalString( shaderfilename, shaderParmName, 0, 0 );
+		path = shaderfilename;
+	} else {
+		const shader_library &library = shader_library::get_instance();
+		path = library.get_shader_path( vop_name( i_vop ).c_str() );
+	}
+
+	return path;
 }

@@ -42,15 +42,17 @@ public:
 	void connect( void ) const override;
 
 	/**
-		\returns m_vop->getOperator()->getName()
+		\returns i_vop->getOperator()->getName()
 	*/
-	std::string vop_name( void ) const;
+	static std::string vop_name( const VOP_Node *i_vop );
 
 	/**
 		Returns true if the VOP node has a corresponding
 		OSL shader.
 	*/
 	static bool is_renderable( VOP_Node *i_vop );
+
+        static std::string shader_path( const VOP_Node *i_vop );
 
 	static void changed_cb(
 		OP_Node* i_caller,
@@ -69,7 +71,9 @@ protected:
 		\param i_parameters
 			The node where to get parameter values.
 		\param i_shader
-			The OSL shader from where to get parameter names.
+			Optional OSL shader from where to get parameter names.
+			If non-null, the specified shader is used. If null, the
+			default OSL shader is determined from i_parameters.
 		\param i_time
 			The time to use for the parameter's eval. Note that this can be
 			different from i_context.m_current_time.
