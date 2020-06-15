@@ -847,7 +847,13 @@ void geometry::changed_cb(
 	void* i_data)
 {
 	OBJ_Node* obj = i_caller->castToOBJNode();
-	assert(obj);
+
+	if( !obj )
+	{
+		assert( false );
+		return;
+	}
+
 	context* ctx = (context*)i_callee;
 
 	intptr_t parm_index = -1;
