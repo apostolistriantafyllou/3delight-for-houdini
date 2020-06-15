@@ -120,6 +120,26 @@ bool primitive::add_time_sample(
 		}
 	}
 
+
+	/*
+		Do not try to output mismatching moving geo. 3DelightNSI will complain
+		and refuse to render it. This can happen in simulations and the solution
+		is to use a velocity attribute.
+	*/
+	if( !m_gt_primitives.empty() )
+	{
+		GT_Owner type1, type2;
+		auto P_main =
+			m_gt_primitives.back().second->findAttribute( "P", type1, 0 );
+		auto P_new = i_primitive->findAttribute( "P", type2, 0 );
+
+		if( P_main->entries() != P_new->entries() ||
+			type1 != type2 )
+		{
+			return false;
+		}
+	}
+
 	m_gt_primitives.push_back(TimedPrimitive(i_time, i_primitive));
 
 	return true;
