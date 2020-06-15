@@ -36,6 +36,33 @@ instance::instance(
 {
 }
 
+instance::instance(
+	const context& i_ctx,
+	OBJ_Node *i_object,
+	double i_time,
+	const GT_PrimitiveHandle &i_gt_primitive,
+	unsigned i_primitive_index )
+:
+	primitive( i_ctx, i_object, i_time, i_gt_primitive, i_primitive_index )
+{
+	/*
+		OBJ-level instancer. Note that "instancepath" will always
+		return "" if there is a s@instance on the geo.
+	*/
+	UT_String path;
+	m_object->evalString(path, "instancepath", 0, m_context.m_current_time );
+	OP_Node *instanced = OPgetDirector()->findNode(path);
+	if( !instanced )
+	{
+		instanced = m_object->findNode(path);
+	}
+
+	if( instanced )
+	{
+		m_source_models.push_back( exporter::handle(*instanced, m_context));
+	}
+}
+
 void instance::create( void ) const
 {
 	m_nsi.Create( m_handle.c_str(), "instances" );

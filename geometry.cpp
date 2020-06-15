@@ -147,33 +147,9 @@ struct OBJ_Node_Refiner : public GT_Refine
 			const UT_StringRef &op_name = m_node->getOperator()->getName();
 			if( op_name == "instance" && m_node->hasParm("instancepath") )
 			{
-				/*
-					OBJ-level instancer. Note that "instancepath" will always
-					return "" if there is a s@instance on the geo.
-				*/
-				UT_String path;
-				m_node->evalString( path, "instancepath", 0, m_time );
-				OP_Node* instanced = OPgetDirector()->findNode(path);
-				if(!instanced)
-				{
-					instanced = m_node->findNode(path);
-				}
-
-				if(!instanced)
-				{
-#ifdef VERBOSE
-					std::cerr
-						<< "3Delight for Houdini: unable to find instanced model for "
-						<< m_node->getFullPath() << std::endl;
-#endif
-					break;
-				}
-
-				std::vector<std::string>
-					models(1, exporter::handle(*instanced, m_context));
+				
 				m_result.push_back(
-					new instance(
-						m_context, m_node, m_time, i_primitive, index, models));
+					new instance(m_context, m_node, m_time, i_primitive, index));
 			}
 			else
 			{

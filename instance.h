@@ -38,6 +38,13 @@ public:
 		unsigned i_primitive_index,
 		const std::vector<std::string> & );
 
+	instance(
+		const context&,
+		OBJ_Node *,
+		double,
+		const GT_PrimitiveHandle &,
+		unsigned i_primitive_index );
+
 	void create( void ) const override;
 	void connect( void ) const override;
 
