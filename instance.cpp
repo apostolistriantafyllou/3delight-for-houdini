@@ -114,7 +114,13 @@ void instance::connect( void ) const
 		const std::string &object = merge.first;
 		if( !object.empty() )
 		{
-			m_nsi.Connect( object, "", merge_h, "objects" );
+			OP_Node *node = OPgetDirector()->findOBJNode( object.c_str() );
+			assert( node );
+			if( node )
+			{
+				m_nsi.Connect(
+					exporter::handle(*node, m_context), "", merge_h, "objects");
+			}
 		}
 		else
 		{
@@ -506,7 +512,11 @@ void instance::get_instanced(
 		instanced = m_object->findNode(path);
 
 	if( instanced )
+	{
 		o_instanced.insert( instanced->getFullPath().toStdString() );
+		/* You can't have both instancedpath and s@instance */
+		return;
+	}
 
 	GT_Owner type;
 	auto instance =
