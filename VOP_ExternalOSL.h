@@ -191,6 +191,8 @@ private:
 
 	void SetVDBVolumeDefaults();
 
+	void CollapseMaterialsInputGroups();
+
 	// Description of the shader this node stands for
 	StructuredShaderInfo m_shader_info;
 };

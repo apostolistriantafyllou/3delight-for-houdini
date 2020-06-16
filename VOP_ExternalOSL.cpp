@@ -5,6 +5,7 @@
 
 #include <PRM/PRM_Include.h>
 #include <PRM/PRM_SpareData.h>
+#include <unordered_set>
 
 
 /**
@@ -761,10 +762,10 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 			continue;
 		}
 
-		const char* page_name = "";
+		const char* page_name = nullptr;
 		osl_utilities::FindMetaData(page_name, param.metadata, "page");
 
-		if( ::strcmp(page_name, "") == 0 )
+		if( page_name == nullptr )
 		{
 			page_name = "Main";
 		}
@@ -1039,6 +1040,8 @@ VOP_ExternalOSL::runCreateScript()
 		SetVDBVolumeDefaults();
 	}
 
+	CollapseMaterialsInputGroups();
+
 	return ret;
 }
 
@@ -1233,6 +1236,45 @@ void VOP_ExternalOSL::SetVDBVolumeDefaults()
 	setString(velocity_default, CH_STRING_LITERAL, velocity_name, 0, 0.f);
 }
 
+
+/*
+	Collapse input groups of materials. Because some nodes have many parameters,
+	this would result in a very long node network which would take up too much
+	screen. To solve this we are collaping the input groups of the nodes except
+	the main group (first one) for nodes having "surface" tag.
+*/
+void VOP_ExternalOSL::CollapseMaterialsInputGroups()
+{
+	/*
+		Insert all input groups ("pages") in a set so we can collapse them later.
+		we are using set so we can insert a page only once (have page name unique).
+	*/
+	std::unordered_set <std::string> pages;
+	for (unsigned p = 0; p < m_shader_info.NumInputs(); p++)
+	{
+
+		const DlShaderInfo::Parameter& param = m_shader_info.GetInput(p);
+		const char* page = nullptr;
+		osl_utilities::FindMetaData(page, param.metadata, "page");
+
+		if (page != nullptr)
+		{
+			pages.insert(page);
+		}
+	}
+
+	std::unordered_set <std::string> ::iterator page_it = pages.begin();
+	/*
+		We ignore the first input group for all materials
+		with surface tag and collapse the rest of the groups.
+	*/
+	if (m_shader_info.IsTerminal())
+		page_it++;
+	for (; page_it != pages.end(); page_it++)
+	{
+		VOP_ExternalOSL::setInputGroupExpanded(*page_it, false);
+	}
+}
 
 VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
 	const StructuredShaderInfo& i_shader_info,
