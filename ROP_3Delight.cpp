@@ -426,6 +426,10 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		?	m_idisplay_ipr
 		:	m_settings.get_render_mode(tstart).toStdString() ==
 			settings::k_rm_live_render;
+	bool archive =
+		!m_idisplay_rendering &&
+		m_settings.get_render_mode(tstart).toStdString() ==
+			settings::k_rm_export_archive;
 
 	m_current_render = new context(
 		m_settings,
@@ -439,6 +443,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		batch,
 		ipr,
 		!render,
+		archive,
 		m_cloud,
 		getFullPath().toStdString() );
 
@@ -512,7 +517,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		attributes.
 	*/
 	m_static_nsi_file.clear();
-	if(m_current_render->m_export_nsi)
+	if(m_current_render->m_export_nsi && !m_current_render->m_archive)
 	{
 		std::string first_frame = GetNSIExportFilename(0.0);
 		if(first_frame != "stdout")
@@ -593,13 +598,15 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 
 	scene::convert_to_nsi( *m_current_render );
 
-	ExportAtmosphere(*m_current_render);
-	ExportOutputs(*m_current_render);
-
-	ExportGlobals(*m_current_render);
 	ExportDefaultMaterial(*m_current_render);
 
-	export_render_notes( *m_current_render );
+	if(!m_current_render->m_archive)
+	{
+		ExportAtmosphere(*m_current_render);
+		ExportOutputs(*m_current_render);
+		ExportGlobals(*m_current_render);
+		export_render_notes( *m_current_render );
+	}
 
 	if(m_current_render->m_ipr)
 	{
@@ -686,8 +693,11 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	}
 	else
 	{
-		// Export an NSIRenderControl "start" command at the end of the frame
-		m_nsi.RenderControl(NSI::CStringPArg("action", "start"));
+		if(!m_current_render->m_archive)
+		{
+			// Export an NSIRenderControl "start" command at the end of the frame
+			m_nsi.RenderControl(NSI::CStringPArg("action", "start"));
+		}
 
 		/*
 			If we're rendering in batch mode from the current process, then we

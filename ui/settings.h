@@ -54,6 +54,7 @@ public:
 	static const std::string k_rm_render;
 	static const std::string k_rm_live_render;
 	static const std::string k_rm_export_file;
+	static const std::string k_rm_export_archive;
 	static const std::string k_rm_export_stdout;
 	static const char* k_stop_render;
 	static const char* k_export;

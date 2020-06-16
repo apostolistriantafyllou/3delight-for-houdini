@@ -26,6 +26,7 @@ const char* settings::k_render_mode = "render_mode";
 const std::string settings::k_rm_render = "render";
 const std::string settings::k_rm_live_render = "live_render";
 const std::string settings::k_rm_export_file = "export_file";
+const std::string settings::k_rm_export_archive = "export_archive";
 const std::string settings::k_rm_export_stdout = "export_stdout";
 const char* settings::k_stop_render = "stop_render";
 const char* settings::k_export = "export";
@@ -94,7 +95,10 @@ settings::settings( ROP_3Delight &i_rop )
 		Export button replace it.
 	*/
 	static PRM_Conditional render_h(
-		("{ " + std::string(k_rendering) + " != 0 } { " + std::string(k_render_mode) + " == \"" + k_rm_export_file + "\" } { " + std::string(k_render_mode) + " == \"" + k_rm_export_stdout + "\" }").c_str(),
+		("{ " + std::string(k_rendering) + " != 0 } "
+		"{ " + std::string(k_render_mode) + " == \"" + k_rm_export_file + "\" } "
+		"{ " + std::string(k_render_mode) + " == \"" + k_rm_export_archive + "\" } "
+		"{ " + std::string(k_render_mode) + " == \"" + k_rm_export_stdout + "\" }").c_str(),
 		PRM_CONDTYPE_HIDE);
 	execute_tmpl->setConditionalBasePtr(&render_h);
 }
@@ -129,6 +133,7 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 	static PRM_Name export_n(k_export, "Export");
 	static PRM_Conditional export_h(
 		("{ " + std::string(k_render_mode) + " != \"" + k_rm_export_file +
+			"\" " + std::string(k_render_mode) + " != \"" + k_rm_export_archive +
 			"\" " + std::string(k_render_mode) + " != \"" + k_rm_export_stdout +
 			"\" }").c_str(),
 		PRM_CONDTYPE_HIDE);
@@ -160,6 +165,7 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 		PRM_Item(k_rm_render.c_str(), "Render"),
 		PRM_Item(k_rm_live_render.c_str(), "IPR Render"),
 		PRM_Item(k_rm_export_file.c_str(), "Export to File"),
+		PRM_Item(k_rm_export_archive.c_str(), "Export to Archive"),
 		PRM_Item(k_rm_export_stdout.c_str(), "Export to Console Window"),
 		PRM_Item(),
 	};
@@ -169,7 +175,9 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 	static PRM_Name default_export_nsi_filename(k_default_export_nsi_filename, "Output File");
 	static PRM_Default default_export_nsi_filename_d(
 		0.0f, "$HIP/render/`$HIPNAME`_`$OS`_$F4.nsi");
-	static PRM_Conditional default_export_nsi_filename_g(("{ " + std::string(k_render_mode) + " != \"" + k_rm_export_file + "\" }").c_str());
+	static PRM_Conditional default_export_nsi_filename_g(
+		("{ " + std::string(k_render_mode) + " != \"" + k_rm_export_file + "\" " +
+		std::string(k_render_mode) + " != \"" + k_rm_export_archive + "\" }").c_str());
 
 	// Quality
 	static PRM_Name shading_samples(k_shading_samples, "Shading Samples");

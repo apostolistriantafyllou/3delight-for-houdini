@@ -110,15 +110,28 @@ void scene::process_obj_node(
 		}
 
 		/*
-			We don't return here because an OBJ_Light is also an OBJ_Camera
-			and we want to export both. This will allow to render the scene
-			from the point of view of a light source.
+			We normally don't return here because an OBJ_Light is also an
+			OBJ_Camera and we might be trying to render the scene from the point
+			of view of a light source.
+			
+			However, this can never be true when we are exporting an archive, so
+			let's avoid exporting a flurry of unused cameras in that case!
 		*/
+		if(i_context.m_archive)
+		{
+			return;
+		}
 	}
 
 	if( obj->castToOBJCamera() && !is_incand )
 	{
+		/*
+			For now, we export all cameras because we don't know which ones are
+			required, even though they might not be part of the "objects to
+			render" bundle or their display flag might be turned off.
+		*/
 		o_to_export.push_back( new camera(i_context, obj) );
+
 		if(i_context.m_ipr)
 		{
 			i_context.register_interest(obj, &camera::changed_cb);
