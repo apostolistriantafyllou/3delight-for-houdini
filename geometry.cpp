@@ -591,7 +591,7 @@ void geometry::export_override_attributes() const
 			arguments.Add(
 				new NSI::IntegerArg("visibility.camera.priority", 10));
 		}
-		else
+		else if(m_context.m_ipr)
 		{
 			m_nsi.DeleteAttribute( override_nsi_handle, "visibility.camera" );
 			m_nsi.DeleteAttribute(
@@ -615,7 +615,7 @@ void geometry::export_override_attributes() const
 			arguments.Add(
 				new NSI::IntegerArg("visibility.diffuse.priority", 10));
 		}
-		else
+		else if(m_context.m_ipr)
 		{
 			m_nsi.DeleteAttribute(
 				override_nsi_handle, "visibility.diffuse" );
@@ -641,7 +641,7 @@ void geometry::export_override_attributes() const
 			arguments.Add(
 				new NSI::IntegerArg("visibility.reflection.priority", 10));
 		}
-		else
+		else if(m_context.m_ipr)
 		{
 			m_nsi.DeleteAttribute(
 				override_nsi_handle, "visibility.reflection" );
@@ -666,7 +666,7 @@ void geometry::export_override_attributes() const
 			arguments.Add(
 				new NSI::IntegerArg("visibility.refraction.priority", 10));
 		}
-		else
+		else if(m_context.m_ipr)
 		{
 			m_nsi.DeleteAttribute(
 				override_nsi_handle, "visibility.refraction" );
@@ -691,7 +691,7 @@ void geometry::export_override_attributes() const
 			arguments.Add(
 				new NSI::IntegerArg("visibility.shadow.priority", 10));
 		}
-		else
+		else if(m_context.m_ipr)
 		{
 			m_nsi.DeleteAttribute(
 				override_nsi_handle, "visibility.shadow" );
@@ -720,7 +720,7 @@ void geometry::export_override_attributes() const
 			arguments.Add( new NSI::IntegerArg("prelit", prelit));
 			arguments.Add( new NSI::IntegerArg("prelit.priority", 10));
 		}
-		else
+		else if(m_context.m_ipr)
 		{
 			m_nsi.DeleteAttribute( override_nsi_handle, "matte" );
 			m_nsi.DeleteAttribute( override_nsi_handle, "matte.priority" );
