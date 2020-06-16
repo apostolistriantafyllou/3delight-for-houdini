@@ -762,10 +762,10 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 			continue;
 		}
 
-		const char* page_name = "";
+		const char* page_name = nullptr;
 		osl_utilities::FindMetaData(page_name, param.metadata, "page");
 
-		if( ::strcmp(page_name, "") == 0 )
+		if( page_name == nullptr )
 		{
 			page_name = "Main";
 		}
