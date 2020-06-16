@@ -1,3 +1,6 @@
+/*
+    For the name encoding, see hou.text.encodeParm() and hou.text.decodeParm()
+*/
 {
     name        "nsi"
     label       "NSI"
