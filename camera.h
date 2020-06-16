@@ -40,9 +40,6 @@ public:
 	/**
 		\brief Computes the "screenwindow" attribute of an NSI screen node.
 
-		Since the default screen window is sufficient for non-orthographic
-		cameras, this function only computes it when i_camera is orthographic.
-
 		\param o_screen_window
 			Pointer to 4 doubles where the screen window is to be output.
 		\param i_camera
@@ -52,7 +49,7 @@ public:
 		\returns
 			True if the screen window was output, false otherwise.
 	*/
-	static bool get_ortho_screen_window(
+	static void get_screen_window(
 		double* o_screen_window,
 		OBJ_Camera& i_camera,
 		double i_time);

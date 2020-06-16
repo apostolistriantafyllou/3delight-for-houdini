@@ -517,7 +517,7 @@ camera::get_shutter_duration(OBJ_Camera& i_camera, double i_time)
 	return i_camera.SHUTTER(i_time);
 }
 
-bool camera::get_ortho_screen_window(
+void camera::get_screen_window(
 	double* o_screen_window,
 	OBJ_Camera& i_camera,
 	double i_time)
@@ -525,19 +525,30 @@ bool camera::get_ortho_screen_window(
 	std::string type;
 	std::string mapping;
 	get_projection(i_camera, i_time, type, mapping);
-	if(type != "orthographiccamera")
+	if(type == "orthographiccamera")
 	{
-		return false;
+		double half_width = i_camera.ORTHOW(i_time) / 2.0f;
+		double half_height =
+			half_width * i_camera.RESY(i_time) / i_camera.RESX(i_time);
+
+		o_screen_window[0] = -half_width;
+		o_screen_window[1] = -half_height;
+		o_screen_window[2] = half_width;
+		o_screen_window[3] = half_height;
 	}
+	else
+	{
+		double A = i_camera.RESX(i_time) / double(i_camera.RESY(i_time));
 
-	double half_width = i_camera.ORTHOW(i_time) / 2.0f;
-	double half_height =
-		half_width * i_camera.RESY(i_time) / i_camera.RESX(i_time);
+		float screen_window_x = i_camera.evalFloat( "win", 0, i_time );
+		float screen_window_y = i_camera.evalFloat( "win", 1, i_time );
 
-	o_screen_window[0] = -half_width;
-	o_screen_window[1] = -half_height;
-	o_screen_window[2] = half_width;
-	o_screen_window[3] = half_height;
+		float screen_window_size_x = i_camera.evalFloat( "winsize", 0, i_time );
+		float screen_window_size_y = i_camera.evalFloat( "winsize", 1, i_time );
 
-	return true;
+		o_screen_window[0] = -A * screen_window_size_x + 2 * screen_window_x*A;
+		o_screen_window[1] = -1.f * screen_window_size_y + 2 * screen_window_y;
+		o_screen_window[2] = A * screen_window_size_x + 2 * screen_window_x*A;
+		o_screen_window[3] = 1.f * screen_window_size_y + 2 * screen_window_y;
+	}
 }
