@@ -447,6 +447,13 @@
 
 		parm
 		{
+			SOHO_FLOAT(_3dl_lense_squeeze, "Anamorphic Squeeze", "3Delight", 1)
+			range { 0.5! 2! }
+			disablewhen "{_3dl_enable_dof == 0}"
+		}
+
+		parm
+		{
 			SOHO_TOGGLE(_3dl_enable_aperture_blades, "Use Finite Number of Blades", "3Delight", 0)
 			disablewhen  "{ _3dl_enable_dof == 0 }"
 		}

@@ -456,6 +456,12 @@ void camera::set_attributes_at_time( double i_time ) const
 		bool enable_blades =
 			get_aperture_blades(*cam, i_time, nb_blades, blades_angle);
 
+		double squeeze = 1;
+		if( cam->getParmIndex("_3dl_lense_squeeze") != -1 )
+		{
+			squeeze = cam->evalFloat("_3dl_lense_squeeze", 0, i_time );
+		}
+
 		/*
 			We use SetAttributeAtTime even though 3Delight doesn't support
 			motion-blurring those attributes, yet.
@@ -471,7 +477,8 @@ void camera::set_attributes_at_time( double i_time ) const
 				NSI::DoubleArg("depthoffield.focaldistance", get_focal_distance(*cam, i_time)),
 				NSI::IntegerArg("depthoffield.aperture.enable", (int)enable_blades),
 				NSI::IntegerArg("depthoffield.aperture.sides", nb_blades),
-				NSI::DoubleArg("depthoffield.aperture.angle", blades_angle)
+				NSI::DoubleArg("depthoffield.aperture.angle", blades_angle),
+				NSI::DoubleArg("depthoffield.focallengthratio", squeeze )
 			) );
 	}
 	else if(m_type == "fisheyecamera")
