@@ -12,6 +12,12 @@ endif()
 # Shut up 'Up-to-date' install messages.
 set(CMAKE_INSTALL_MESSAGE LAZY)
 
+if (MSVC)
+	# Remove cmake's default warning level. Houdini adds /W1 which conflicts
+	# and the compiler complains loudly.
+	string (REGEX REPLACE "/W[0-4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+endif()
+
 # Locate Houdini's libraries and header files.
 # Registers an imported library target named 'Houdini'.
 list( APPEND CMAKE_PREFIX_PATH "$ENV{HFS}/toolkit/cmake" )
@@ -70,6 +76,9 @@ add_subdirectory( osl )
 
 # 3Delight includes
 target_include_directories( ${library_name} PRIVATE "${DELIGHT}/include" )
+
+# Must use windows.h instead of boost redeclarations or there are conflicts.
+target_compile_definitions( ${library_name} PRIVATE HBOOST_USE_WINDOWS_H )
 
 # Link against the Houdini libraries, and add required include directories and
 # compile definitions. Special handling needed for tbb on macOS.
