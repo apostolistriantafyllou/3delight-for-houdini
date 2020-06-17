@@ -81,5 +81,130 @@ parm {
         disablewhen  "{ xn__nsiglobalvolumesamples_control_upbg == block } { xn__nsiglobalvolumesamples_control_upbg == none }"
         help "Quality of volumes."
     }
+
+/* Max Diffuse Depth */
+parm {
+        name    "xn__nsiglobalmaximumdiffusedepth_control_mzbg"
+        label   "Maximume Diffuse Depth"
+        type    string
+        default { "none" }
+        menujoin {
+            [ "import loputils" ]
+            [ "return loputils.createEditPropertiesControlMenu(kwargs, 'int')" ]
+            language python
+        }
+    }
+    parm {
+        name    "xn__nsiglobalmaximumdiffusedepth_lmbg"
+        label   "Max Diffuse Depth"
+        type    int
+        size    1
+        parmtag { "spare_category" "Quality" }
+        parmtag { "usdvaluetype" "int" }
+        default { 2 }
+        range { 0! 100 }
+        disablewhen  "{ xn__nsiglobalmaximumdiffusedepth_control_mzbg == block } { xn__nsiglobalmaximumdiffusedepth_control_mzbg == none }"
+        help "Maximum number of diffuse bounces"
+    }
+
+/* Max Reflection Depth */
+parm {
+        name    "xn__nsiglobalmaximumreflectiondepth_control_i4bg"
+        label   "Maximume Reflection Depth"
+        type    string
+        default { "none" }
+        menujoin {
+            [ "import loputils" ]
+            [ "return loputils.createEditPropertiesControlMenu(kwargs, 'int')" ]
+            language python
+        }
+    }
+    parm {
+        name    "xn__nsiglobalmaximumreflectiondepth_hrbg"
+        label   "Max Reflection Depth"
+        type    int
+        size    1
+        parmtag { "spare_category" "Quality" }
+        parmtag { "usdvaluetype" "int" }
+        default { 2 }
+        range { 0! 100 }
+        disablewhen  "{ xn__nsiglobalmaximumreflectiondepth_control_i4bg == block } { xn__nsiglobalmaximumreflectiondepth_control_i4bg == none }"
+        help "Maximum number of reflection (specular) bounces"
+    }
+
+/* Max Refraction Depth */
+parm {
+        name    "xn__nsiglobalmaximumrefractiondepth_control_i4bg"
+        label   "Maximume Refraction Depth"
+        type    string
+        default { "none" }
+        menujoin {
+            [ "import loputils" ]
+            [ "return loputils.createEditPropertiesControlMenu(kwargs, 'int')" ]
+            language python
+        }
+    }
+    parm {
+        name    "xn__nsiglobalmaximumrefractiondepth_hrbg"
+        label   "Max Refraction Depth"
+        type    int
+        size    1
+        parmtag { "spare_category" "Quality" }
+        parmtag { "usdvaluetype" "int" }
+        default { 4 }
+        range { 0! 100 }
+        disablewhen  "{ xn__nsiglobalmaximumrefractiondepth_control_i4bg == block } { xn__nsiglobalmaximumrefractiondepth_control_i4bg == none }"
+        help "Maximum number of refraction bounces"
+    }
+/* Max Hair Depth */
+parm {
+        name    "xn__nsiglobalmaximumhairdepth_control_qubg"
+        label   "Max Refraction Depth"
+        type    string
+        default { "none" }
+        menujoin {
+            [ "import loputils" ]
+            [ "return loputils.createEditPropertiesControlMenu(kwargs, 'int')" ]
+            language python
+        }
+    }
+    parm {
+        name    "xn__nsiglobalmaximumhairdepth_phbg"
+        label   "Max Hair Depth"
+        type    int
+        size    1
+        parmtag { "spare_category" "Quality" }
+        parmtag { "usdvaluetype" "int" }
+        default { 5 }
+        range { 0! 100 }
+        disablewhen  "{ xn__nsiglobalmaximumhairdepth_control_qubg == block } { xn__nsiglobalmaximumhairdepth_control_qubg == none }"
+        help "Maximum number of hair bounces"
+    }
+
+    /* Max Distance */
+    parm {
+        name    "xn__nsiglobalmaximumdistance_control_3sbg"
+        label   "Maximume Refraction Depth"
+        type    string
+        default { "none" }
+        menujoin {
+            [ "import loputils" ]
+            [ "return loputils.createEditPropertiesControlMenu(kwargs, 'int')" ]
+            language python
+        }
+    }
+    parm {
+        name    "xn__nsiglobalmaximumdistance_2fbg"
+        label   "Max Distance"
+        type    float
+        size    1
+        parmtag { "spare_category" "Quality" }
+        parmtag { "usdvaluetype" "float" }
+        default { 1000 }
+        range { 0! 10000 }
+        disablewhen  "{ xn__nsiglobalmaximumdistance_control_3sbg == block } { xn__nsiglobalmaximumdistance_control_3sbg == none }"
+        help "Maximum number of hair bounces"
+    }
 }
+
 // vim: set softtabstop=4 expandtab shiftwidth=4:
