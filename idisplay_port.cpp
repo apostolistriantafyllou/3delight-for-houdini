@@ -65,6 +65,50 @@ namespace
 		return true;
 	}
 
+	// Retrieves a JSON array from a layer's "feedback data" JSON object
+	UT_JSONValueArray*
+	GetLayerArray(UT_JSONValueMap& i_map, const char* i_name)
+	{
+		UT_JSONValue* layer_obj = i_map.get("layer");
+		assert(layer_obj);
+		if(!layer_obj) return nullptr;
+
+		UT_JSONValueMap* layer_map = layer_obj->getMap();
+		assert(layer_map);
+		if(!layer_map) return nullptr;
+
+		UT_JSONValue* array_obj = layer_map->get(i_name);
+		assert(array_obj);
+		if(!array_obj) return nullptr;
+
+		UT_JSONValueArray* array = array_obj->getArray();
+		assert(array);
+		return array;
+	}
+
+	/*
+		Returns the node accessible through the full path at index i_index of
+		array i_nodes.
+	*/
+	OBJ_Node*
+	GetOBJNode(const UT_JSONValueArray& i_nodes, unsigned i_index)
+	{
+		assert(i_index < i_nodes.size());
+		const UT_JSONValue* node_obj = i_nodes[i_index];
+		assert(node_obj);
+		assert(node_obj->getType() == UT_JSONValue::JSON_STRING);
+		if(!node_obj || node_obj->getType() != UT_JSONValue::JSON_STRING)
+		{
+			return nullptr;
+		}
+
+		const char* node = node_obj->getS();
+		assert(node);
+
+		OBJ_Node* obj_node = OPgetDirector()->findOBJNode(node);
+		assert(obj_node);
+		return obj_node;
+	}
 }
 
 
@@ -240,7 +284,7 @@ void idisplay_port::ExecuteJSonCommand(const UT_JSONValue& i_object)
 
 		if( !liveObj || liveObj->getType() != UT_JSONValue::JSON_INT )
 		{
-			Log( "unsufficient data to start render" );
+			Log( "insufficient data to start render" );
 			return;
 		}
 
@@ -251,7 +295,7 @@ void idisplay_port::ExecuteJSonCommand(const UT_JSONValue& i_object)
 
 		if( !fromObj )
 		{
-			Log( "unsufficient data to select render node" );
+			Log( "insufficient data to select render node" );
 			return;
 		}
 
@@ -283,7 +327,7 @@ void idisplay_port::ExecuteJSonCommand(const UT_JSONValue& i_object)
 
 		if( !fromObj )
 		{
-			Log( "unsufficient data to select render node" );
+			Log( "insufficient data to select render node" );
 			return;
 		}
 
@@ -304,176 +348,134 @@ void idisplay_port::ExecuteJSonCommand(const UT_JSONValue& i_object)
 	}
 	else if (op == "select layer")
 	{
-		UT_JSONValue* layerObj = object_map->get("layer");
-
-		if( !layerObj )
+		UT_JSONValueArray* nodes = GetLayerArray(*object_map, "nodes");
+		assert(nodes);
+		if(!nodes)
 		{
-			Log( "unsufficient data to select light sources" );
+			Log("insufficient data to select light nodes");
 			return;
 		}
-
-		UT_JSONValueMap* layer_map = layerObj->getMap();
-		UT_JSONValue* nameObj = layer_map ? layer_map->get("name") : nullptr;
-
-		if( !nameObj )
-		{
-			Log( "unsufficient data to select light sources (2)" );
-			return;
-		}
-
-		const char *light = nameObj->getS();
-		if( !light )
-			light = "";
 
 		HOM_AutoLock hom_lock;
-		OBJ_Node* obj_node = OPgetDirector()->findOBJNode( light );
-		if(!obj_node)
-		{
-			Log( "light source `%s` hasn't been found, selection impossible",
-				light );
-			return;
-		}
 
-		obj_node->setEditPicked(1);
+		OP_Director* director = OPgetDirector();
+		director->clearPickedItems();
+
+		for (unsigned i = 0; i < nodes->size(); i++)
+		{
+			OBJ_Node* obj_node = GetOBJNode(*nodes, i);
+			if(obj_node)
+			{
+				obj_node->setEditPicked(1);
+			}
+		}
 	}
 	else if (op == "scale layer intensity")
 	{
-		UT_JSONValue* layerObj = object_map->get("layer");
-		UT_JSONValue* factorObj = object_map->get("scale factor");
-
-		if( !factorObj ||
-			layerObj->getType() != UT_JSONValue::JSON_MAP ||
-		   (factorObj->getType() != UT_JSONValue::JSON_INT &&
-			factorObj->getType() != UT_JSONValue::JSON_REAL) )
+		UT_JSONValue* factor_obj = object_map->get("scale factor");
+		assert(factor_obj);
+		if(!factor_obj)
 		{
-			Log( "data missing, no light adjustemnt is possible");
+			Log("insufficient data to adjust light intensities");
 			return;
 		}
 
-		fpreal factor = factorObj->getF();
-		UT_JSONValueMap* layer_map = layerObj->getMap();
-		UT_JSONValue* valuesObj = layer_map ? layer_map->get("values") : nullptr;
-		UT_JSONValueArray* values = valuesObj ? valuesObj->getArray() : nullptr;
+		assert(factor_obj->getType() == UT_JSONValue::JSON_INT ||
+			factor_obj->getType() == UT_JSONValue::JSON_REAL);
+		double factor = factor_obj->getF();
 
-		if( !values )
+		UT_JSONValueArray* nodes = GetLayerArray(*object_map, "nodes");
+		assert(nodes);
+		UT_JSONValueArray* intensities = GetLayerArray(*object_map, "intensities");
+		assert(intensities);
+
+		if(!nodes || !intensities)
 		{
-			Log( "values not found" );
+			Log("insufficient data to adjust light intensities");
 			return;
 		}
 
-		fpreal newValue;
-		for (unsigned i = 0; i < values->size(); i++)
-		{
-			UT_JSONValue* value = (*values)[i];
-			assert(value);
-			if (value->getType() != UT_JSONValue::JSON_INT &&
-				value->getType() != UT_JSONValue::JSON_REAL)
-			{
-				Log( "bad type for 'value' in values array" );
-				return;
-			}
-			newValue =
-				value->getType() == UT_JSONValue::JSON_INT
-				? value->getI() * factor
-				: value->getF() * factor;
-		}
-
-		UT_JSONValue* nameObj = layer_map->get("name");
-		const char *light = nameObj ? nameObj->getS() : nullptr;
-		if( !light )
-		{
-			Log( "light name not provided for intensity scale");
-			return;
-		}
+		assert(nodes->size() == intensities->size());
 
 		HOM_AutoLock hom_lock;
 
-		OBJ_Node* obj_node = OPgetDirector()->findOBJNode( light );
-		if(!obj_node)
+		for(unsigned i = 0; i < nodes->size(); i++)
 		{
-			Log( "light '%s' not found", light);
-			return;
-		}
+			OBJ_Node* obj_node = GetOBJNode(*nodes, i);
+			assert(obj_node);
 
-		obj_node->setParameterOrProperty("light_intensity", 0, 0, newValue);
+			UT_JSONValue* intensity_obj = (*intensities)[i];
+			assert(intensity_obj->getType() == UT_JSONValue::JSON_INT ||
+				intensity_obj->getType() == UT_JSONValue::JSON_REAL);
+			double intensity = intensity_obj->getF();
+
+			obj_node->setParameterOrProperty(
+				"light_intensity", 0, 0, factor*intensity);
+		}
 	}
 	else if (op == "update layer filter")
 	{
-		UT_JSONValue* layerObj = object_map->get("layer");
-		UT_JSONValue* colorMultObj = object_map->get("color multiplier");
-
-		if( !layerObj || layerObj->getType() != UT_JSONValue::JSON_MAP  ||
-			!colorMultObj || colorMultObj->getType() != UT_JSONValue::JSON_ARRAY)
+		UT_JSONValue* multiplier_obj = object_map->get("color multiplier");
+		assert(multiplier_obj);
+		assert(multiplier_obj->getType() == UT_JSONValue::JSON_ARRAY);
+		if(!multiplier_obj ||
+			multiplier_obj->getType() != UT_JSONValue::JSON_ARRAY)
 		{
-			Log( "invalid color multiplier operation");
+			Log("insufficient data to adjust light intensities");
 			return;
 		}
 
-		UT_JSONValueArray* colMult = colorMultObj->getArray();
-		assert(colMult);
+		UT_JSONValueArray* multiplier_array = multiplier_obj->getArray();
+		assert(multiplier_array);
+		assert(multiplier_array->size() == 3);
 
-		fpreal mult[3];
-		for (unsigned i = 0; i < colMult->size(); i++)
+		double multiplier[3];
+		for(unsigned j = 0; j < 3; j++)
 		{
-			UT_JSONValue* value = (*colMult)[i];
-			assert(value);
-			if (value->getType() != UT_JSONValue::JSON_INT &&
-				value->getType() != UT_JSONValue::JSON_REAL)
-			{
-				Log( "bad value in color multiplier");
-				return;
-			}
-			mult[i] = value->getF();
+			UT_JSONValue* m = (*multiplier_array)[j];
+			assert(m);
+			assert(m->getType() == UT_JSONValue::JSON_INT ||
+				m->getType() == UT_JSONValue::JSON_REAL);
+			multiplier[j] = m->getF();
 		}
 
-		UT_JSONValueMap* layer_map = layerObj->getMap();
-		UT_JSONValue* colorValuesObj = layer_map->get("color_values");
+		UT_JSONValueArray* nodes = GetLayerArray(*object_map, "nodes");
+		assert(nodes);
+		UT_JSONValueArray* colors = GetLayerArray(*object_map, "colors");
+		assert(colors);
 
-		if( !colorValuesObj ||
-			colorValuesObj->getType() != UT_JSONValue::JSON_ARRAY )
+		if(!nodes || !colors)
 		{
-			Log( "key color_values not found");
+			Log("insufficient data to adjust light intensities");
 			return;
 		}
 
-		UT_JSONValueArray* colorValues = colorValuesObj->getArray();
-		assert( colorValues );
-
-		fpreal newValues[3];
-		for (unsigned i = 0; i < colorValues->size(); i++)
-		{
-			UT_JSONValue* value = (*colorValues)[i];
-			assert(value);
-			if (value->getType() != UT_JSONValue::JSON_INT &&
-				value->getType() != UT_JSONValue::JSON_REAL)
-			{
-				Log( "bad value in color_values");
-				return;
-			}
-			newValues[i] = value->getF() * mult[i];
-		}
-
-		UT_JSONValue* nameObj = layer_map->get("name");
-		const char *light = nameObj ? nameObj->getS() : nullptr;
-
-		if (!light)
-		{
-			Log( "light not provided for color multiplier");
-			return;
-		}
+		assert(nodes->size() == colors->size());
 
 		HOM_AutoLock hom_lock;
 
-		OBJ_Node* obj_node = OPgetDirector()->findOBJNode( light );
-		if(!obj_node)
+		for(unsigned i = 0; i < nodes->size(); i++)
 		{
-			Log( "light '%s' not found", light);
-			return;
-		}
+			OBJ_Node* obj_node = GetOBJNode(*nodes, i);
+			assert(obj_node);
 
-		obj_node->setParameterOrProperty("light_color", 0, 0, newValues[0]);
-		obj_node->setParameterOrProperty("light_color", 1, 0, newValues[1]);
-		obj_node->setParameterOrProperty("light_color", 2, 0, newValues[2]);
+			UT_JSONValue* color_obj = (*colors)[i];
+			assert(color_obj->getType() == UT_JSONValue::JSON_ARRAY);
+			UT_JSONValueArray* color_array = color_obj->getArray();
+			assert(color_array);
+			assert(color_array->size() == 3);
+
+			for(unsigned j = 0; j < 3; j++)
+			{
+				UT_JSONValue* c = (*color_array)[j];
+				assert(c);
+				assert(c->getType() == UT_JSONValue::JSON_INT ||
+					c->getType() == UT_JSONValue::JSON_REAL);
+				double component = c->getF();
+				obj_node->setParameterOrProperty(
+					"light_color", j, 0, multiplier[j]*component);
+			}
+		}
 	}
 	else
 	{

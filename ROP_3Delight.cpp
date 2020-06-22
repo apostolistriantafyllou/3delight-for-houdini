@@ -1212,25 +1212,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					3Delight Display's Multi-Light tool needs some information,
 					called "feedback data" to communicate back the values.
 				*/
-				if(category.second.empty())
-				{
-					ExportLayerFeedbackData( i_ctx, layer_name, std::string() );
-				}
-				else
-				{
-					for( auto &light_source : category.second )
-					{
-						std::string light_handle = light::handle(*light_source, i_ctx);
-						/*
-							FIXME : calling ExportLayerFeedbackData in a loop
-							with the same layer_name will simply overwrite the
-							"feedbackdata" attribute of the layer.  Only the
-							last light will end up in the attribute.
-						*/
-						ExportLayerFeedbackData(
-							i_ctx, layer_name, light_handle );
-					}
-				}
+				ExportLayerFeedbackData( i_ctx, layer_name, category.first, category.second );
 			}
 
 			if (file_output)
@@ -1485,83 +1467,69 @@ void
 ROP_3Delight::ExportLayerFeedbackData(
 	const context& i_ctx,
 	const std::string& i_layer_handle,
-	const std::string& i_light_path) const
+	const std::string& i_light_category,
+	const std::vector<OBJ_Node*>& i_lights) const
 {
-	idisplay_port *idp = idisplay_port::get_instance();
+	// Build nodes, intensities and colors JSON arrays
 
+	std::string nodes = "\"nodes\":[";
+	std::string intensities = "\"intensities\":[";
+	std::string colors = "\"colors\":[";
+
+	double time = i_ctx.m_current_time;
+	for(OBJ_Node* light : i_lights)
+	{
+		double intensity = 1.0;
+		if(light->hasParm("light_intensity"))
+		{
+			intensity = light->evalFloat("light_intensity", 0, time);
+		}
+
+		double color[3] = { 1.0, 1.0, 1.0 };
+		if(light->hasParm("light_color"))
+		{
+			color[0] = light->evalFloat("light_color", 0, time);
+			color[1] = light->evalFloat("light_color", 1, time);
+			color[2] = light->evalFloat("light_color", 2, time);
+		}
+
+		nodes += "\"" + light->getFullPath().toStdString() + "\",";
+		intensities += std::to_string(intensity) + ",";
+		colors +=
+			"[" + std::to_string(color[0]) + "," + std::to_string(color[1]) +
+			"," + std::to_string(color[2]) + "],";
+	}
+
+	// Remove trailing commas
+	if(!i_lights.empty())
+	{
+		nodes.pop_back();
+		intensities.pop_back();
+		colors.pop_back();
+	}
+
+	nodes += "]";
+	intensities += "]";
+	colors += "]";
+
+	// Build name and type JSON attributes
+	std::string name = "\"name\":\"" + i_light_category + "\"";
+	std::string light_type =
+		std::string("\"type\":") +
+		(i_lights.size() == 1 ? "\"single light\"" : "\"light group\"");
+
+	// Put all attributes together in a single JSON object.
+	std::string feedback_data =
+		"{" + name + "," + light_type + "," + nodes + "," + intensities + "," +
+		colors + "}";
+
+	// Retrieve connection information
+	idisplay_port *idp = idisplay_port::get_instance();
 	std::string host = idp->GetServerHost();
 	int port = idp->GetServerPort();
 
-	if( i_light_path.empty() )
-	{
-		i_ctx.m_nsi.SetAttribute( i_layer_handle,
-			(
-				NSI::StringArg( "sourceapp", "Houdini" ),
-				NSI::StringArg( "feedbackhost", host ),
-				NSI::IntegerArg( "feedbackport", port )
-			));
-		return;
-	}
-
-	OBJ_Node* obj_node = OPgetDirector()->findOBJNode(i_light_path.c_str());
-	assert(obj_node);
-
-	if( !obj_node )
-		return;
-
-	fpreal r = 1.0f;
-	fpreal g = 1.0f;
-	fpreal b = 1.0f;
-	fpreal intensity = 1.0f;
-
-	double time = i_ctx.m_current_time;
-	if( obj_node->getParmIndex("light_color")>=0 )
-	{
-		r = obj_node->evalFloat( "light_color", 0, time );
-		g = obj_node->evalFloat( "light_color", 1, time );
-		b = obj_node->evalFloat( "light_color", 2, time );
-	}
-
-	if( obj_node->getParmIndex("light_intensity")>=0 )
-	{
-		intensity = obj_node->evalFloat( "light_intensity", 0, time );
-	}
-
-	std::string values;
-	std::stringstream ss1;
-	ss1 << intensity;
-	values = ss1.str();
-
-	std::string color_values;
-	std::stringstream ss2;
-	ss2 << r << "," << g << "," << b;
-	color_values = ss2.str();
-
-	std::string light_type = "don't care";
-	std::string feedback_data;
-
-	/* Make the feedback message */
-	/* Name */
-	feedback_data = "{\"name\":\"";
-	feedback_data += i_light_path;
-	feedback_data += "\",";
-
-	/* Type */
-	feedback_data += "\"type\":\"";
-	feedback_data += light_type;
-	feedback_data += "\",";
-
-	/* Value */
-	feedback_data += "\"values\":[";
-	feedback_data += values;
-	feedback_data += "],";
-
-	/* Color values */
-	feedback_data += "\"color_values\":[";
-	feedback_data += color_values;
-	feedback_data += "]}";
-
-	i_ctx.m_nsi.SetAttribute( i_layer_handle,
+	i_ctx.m_nsi.SetAttribute(
+		i_layer_handle,
 		(
 			NSI::StringArg( "sourceapp", "Houdini" ),
 			NSI::StringArg( "feedbackhost", host ),

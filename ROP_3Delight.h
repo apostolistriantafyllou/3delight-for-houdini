@@ -162,7 +162,8 @@ private:
 	void ExportLayerFeedbackData(
 		const context& i_ctx,
 		const std::string& i_layer_handle,
-		const std::string& i_light_path) const;
+		const std::string& i_light_category,
+		const std::vector<OBJ_Node*>& i_lights) const;
 
 	void ExportGlobals(const context& i_ctx)const;
 	void ExportDefaultMaterial( const context &i_context ) const;
