@@ -1115,7 +1115,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	// Create a category with empty name and empty list (which means ALL lights)
 	light_categories[std::string()];
 
-	BuildLightCategories( light_categories, current_time );
+	ExportLightCategories( i_ctx, light_categories, current_time );
 
 	bool has_frame_buffer = false;
 	for (int i = 0; i < nb_aovs; i++)
@@ -1212,31 +1212,12 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					3Delight Display's Multi-Light tool needs some information,
 					called "feedback data" to communicate back the values.
 				*/
-				if( category.second.size() > 1 ||
-					category.second.size() == 1 &&
-						light::handle(*category.second[0], i_ctx) != category.first)
+				if(category.second.empty())
 				{
-					/*
-						We use a set to group lights together under the same
-						layer. This is also useful when the light category name
-						is different than a single light's handle (this occurs
-						with bundles containing only one light or single lights
-						in IPR mode, which uses different handles).
-					*/
-					/*
-						FIXME : exporting the lightsets should always be done,
-						even if idisplay_output, m_current_render->m_export_nsi
-						or m_current_render->m_batch is true. Only the layer
-						feedback data could be omitted when not sending the
-						render to i-display. 
-					*/
-					/*
-						FIXME : there is no reason to export those sets set once
-						for each AOV. Also, they should be exported *before* we
-						try to connect them to the layers in ExportOneOutputLayer.
-						This part could be moved out of the loop. 
-					*/
-					i_ctx.m_nsi.Create( category.first, "set");
+					ExportLayerFeedbackData( i_ctx, layer_name, std::string() );
+				}
+				else
+				{
 					for( auto &light_source : category.second )
 					{
 						std::string light_handle = light::handle(*light_source, i_ctx);
@@ -1248,18 +1229,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 						*/
 						ExportLayerFeedbackData(
 							i_ctx, layer_name, light_handle );
-						i_ctx.m_nsi.Connect( light_handle, "",
-							category.first, "members" );
 					}
-				}
-				else
-				{
-					std::string light_handle =
-						category.second.empty()
-						?	std::string()
-						:	light::handle(*category.second.back(), i_ctx);
-					ExportLayerFeedbackData(
-						i_ctx, layer_name, light_handle );
 				}
 			}
 
@@ -1646,7 +1616,8 @@ ROP_3Delight::BuildImageUniqueName(
 	into bundles. Doesn't make sense for Incandescent and 3Delight NSI doesn't
 	support grouping them yet.
 */
-void ROP_3Delight::BuildLightCategories(
+void ROP_3Delight::ExportLightCategories(
+	const context& i_ctx,
 	std::map<std::string, std::vector<OBJ_Node*>>& o_light_categories,
 	fpreal t ) const
 {
@@ -1667,6 +1638,7 @@ void ROP_3Delight::BuildLightCategories(
 			light_source->getOperator()->getName() ==
 			"3Delight::IncandescenceLight";
 		bool isvdb = light_source->castToOBJLight() == nullptr;
+		std::string light_handle = light::handle(*light_source, i_ctx);
 
 		for (int i = 0; !incand && !isvdb && i < numBundles; i++)
 		{
@@ -1674,8 +1646,19 @@ void ROP_3Delight::BuildLightCategories(
 			assert(bundle);
 			if( bundle && bundle->contains(light_source, false) )
 			{
-				std::string bundle_name = bundle->getName();
-				o_light_categories[bundle_name].push_back(light_source);
+				std::string category = bundle->getName();
+
+				if(o_light_categories[category].empty())
+				{
+					// Create a set the first time we encounter a bundle
+					i_ctx.m_nsi.Create(category, "set");
+				}
+
+				o_light_categories[category].push_back(light_source);
+
+				// Connect the light to the set
+				i_ctx.m_nsi.Connect(light_handle, "", category, "members");
+
 				foundInBundle = true;
 			}
 		}
@@ -1684,6 +1667,19 @@ void ROP_3Delight::BuildLightCategories(
 		{
 			/* Make a category for this single light */
 			std::string category = light_source->getFullPath().toStdString();
+
+			if(category != light_handle)
+			{
+				/*
+					In IPR, the light handle is not the same as its full path,
+					but we still want to ue the full path as a category name, so
+					we create a set with the proper name.
+				*/
+				assert(i_ctx.m_ipr);
+				i_ctx.m_nsi.Create(category, "set");
+				i_ctx.m_nsi.Connect(light_handle, "", category, "members");
+			}
+
 			o_light_categories[category].push_back(light_source);
 		}
 	}

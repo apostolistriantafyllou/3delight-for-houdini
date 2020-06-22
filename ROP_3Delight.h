@@ -179,12 +179,14 @@ private:
 		UT_String& o_image_unique_name) const;
 
 	/**
-		\brief Builds light categories, either a bundle, or a single light.
+		\brief Exports light categories, either bundles or single lights.
 
 		Each category name is returned with the list of light nodes.
 	*/
-	void BuildLightCategories(
-		std::map<std::string, std::vector<OBJ_Node*>> &, fpreal t) const;
+	void ExportLightCategories(
+		const context& i_ctx,
+		std::map<std::string, std::vector<OBJ_Node*>> &,
+		fpreal t) const;
 
 	bool HasSpeedBoost( double i_time )const;
 
