@@ -1252,7 +1252,6 @@ void VOP_ExternalOSL::CollapseMaterialsInputGroups()
 	std::unordered_set <std::string> pages;
 	for (unsigned p = 0; p < m_shader_info.NumInputs(); p++)
 	{
-
 		const DlShaderInfo::Parameter& param = m_shader_info.GetInput(p);
 		const char* page = nullptr;
 		osl_utilities::FindMetaData(page, param.metadata, "page");
@@ -1268,8 +1267,10 @@ void VOP_ExternalOSL::CollapseMaterialsInputGroups()
 		We ignore the first input group for all materials
 		with surface tag and collapse the rest of the groups.
 	*/
-	if (m_shader_info.IsTerminal())
+	if (m_shader_info.IsTerminal() && page_it != pages.end())
+	{
 		page_it++;
+	}
 	for (; page_it != pages.end(); page_it++)
 	{
 		VOP_ExternalOSL::setInputGroupExpanded(*page_it, false);
