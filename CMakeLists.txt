@@ -163,6 +163,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/HydraNSI/CMakeLists.txt"
 	install(
 		FILES
 			Solaris/HdNSIRendererPlugin_Global.ds
+			Solaris/HdNSIRendererPlugin_Geometry.ds
 			Solaris/HdNSIRendererPlugin_Viewport.ds
 		DESTINATION soho/parameters)
 endif()

@@ -1,0 +1,131 @@
+/*
+    For the name encoding, see hou.text.encodeParm() and hou.text.decodeParm()
+*/
+{
+    name        "nsi"
+    label       "NSI"
+    parmtag     { spare_opfilter        "!!SHOP/PROPERTIES!!" }
+    parmtag     { spare_classtags       "render" }
+
+	/* Camera */
+	parm {
+        name    "xn__nsigeometryvisibility_camera_control_mzbi"
+        label   "Visible to Camera"
+        type    string
+        default { "none" }
+        menujoin {
+            [ "import loputils" ]
+            [ "return loputils.createEditPropertiesControlMenu(kwargs, 'int')" ]
+            language python
+        }
+    }
+    parm {
+        name    "xn__nsigeometryvisibility_camera_lmbi"
+        label   "Visible to Camera"
+        type    toggle
+        size    1
+        parmtag { "spare_category" "Visibility" }
+        parmtag { "usdvaluetype" "bool[]" }
+        default { 1 }
+        disablewhen  "{ xn__nsigeometryvisibility_camera_control_mzbi == block } { xn__nsigeometryvisibility_camera_control_mzbi == none }"
+        help "Enable or disables geometry's visibility to camera rays"
+    }
+
+	/* Diffusion */
+	parm {
+        name    "xn__nsigeometryvisibility_diffuse_control_80bi"
+        label   "Visible to Diffuse"
+        type    string
+        default { "none" }
+        menujoin {
+            [ "import loputils" ]
+            [ "return loputils.createEditPropertiesControlMenu(kwargs, 'int')" ]
+            language python
+        }
+    }
+    parm {
+        name    "xn__nsigeometryvisibility_diffuse_7nbi"
+        label   "Visible to Diffuse"
+        type    toggle
+        size    1
+        parmtag { "spare_category" "Visibility" }
+        parmtag { "usdvaluetype" "bool[]" }
+        default { 1 }
+        disablewhen  "{ xn__nsigeometryvisibility_diffuse_control_80bi == block } { xn__nsigeometryvisibility_diffuse_control_80bi == none }"
+        help "Enable or disables geometry's visibility to diffuse rays"
+    }
+
+	/* Reflection */
+	parm {
+        name    "xn__nsigeometryvisibility_reflection_control_45bi"
+        label   "Visible to Reflection"
+        type    string
+        default { "none" }
+        menujoin {
+            [ "import loputils" ]
+            [ "return loputils.createEditPropertiesControlMenu(kwargs, 'int')" ]
+            language python
+        }
+    }
+    parm {
+        name    "nsi:geometry:visibility_reflection"
+        label   "Visible to Reflection"
+        type    toggle
+        size    1
+        parmtag { "spare_category" "Visibility" }
+        parmtag { "usdvaluetype" "bool[]" }
+        default { 1 }
+        disablewhen  "{ xn__nsiglobalshadingsamples_control_hrbg == block } { xn__nsigeometryvisibility_reflection_control_45bi == none }"
+        help "Enable or disables geometry's visibility to reflection rays"
+    }
+
+	/* Refraction */
+	parm {
+        name    "xn__nsigeometryvisibility_refraction_control_45bi"
+        label   "Visible to Refraction"
+        type    string
+        default { "none" }
+        menujoin {
+            [ "import loputils" ]
+            [ "return loputils.createEditPropertiesControlMenu(kwargs, 'int')" ]
+            language python
+        }
+    }
+    parm {
+        name    "xn__nsigeometryvisibility_refraction_3sbi"
+        label   "Visible to Refraction"
+        type    toggle
+        size    1
+        parmtag { "spare_category" "Visibility" }
+        parmtag { "usdvaluetype" "bool[]" }
+        default { 1 }
+        disablewhen  "{ xn__nsigeometryvisibility_refraction_control_45bi == block } { xn__nsigeometryvisibility_refraction_control_45bi == none }"
+        help "Enable or disables geometry's visibility to refraction rays"
+    }
+
+	/* Casts Shadows*/
+	parm {
+        name    "xn__nsigeometryvisibility_casts_shadows_control_0bci"
+        label   "Visible to Refraction"
+        type    string
+        default { "none" }
+        menujoin {
+            [ "import loputils" ]
+            [ "return loputils.createEditPropertiesControlMenu(kwargs, 'int')" ]
+            language python
+        }
+    }
+    parm {
+        name    "xn__nsigeometryvisibility_casts_shadows_zxbaia"
+        label   "Casts Shadows"
+        type    toggle
+        size    1
+        parmtag { "spare_category" "Visibility" }
+        parmtag { "usdvaluetype" "bool[]" }
+        default { 1 }
+        disablewhen  "{ xn__nsigeometryvisibility_casts_shadows_control_0bci == block } { xn__nsigeometryvisibility_casts_shadows_control_0bci == none }"
+        help "Toggles geometry's visiblity to shadow rays"
+    }
+}
+
+// vim: set softtabstop=4 expandtab shiftwidth=4:
