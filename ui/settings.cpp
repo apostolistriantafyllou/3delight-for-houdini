@@ -165,7 +165,7 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 		PRM_Item(k_rm_render.c_str(), "Render"),
 		PRM_Item(k_rm_live_render.c_str(), "IPR Render"),
 		PRM_Item(k_rm_export_file.c_str(), "Export to File"),
-		PRM_Item(k_rm_export_archive.c_str(), "Export to Archive"),
+		PRM_Item(k_rm_export_archive.c_str(), "Export Stand-in"),
 		PRM_Item(k_rm_export_stdout.c_str(), "Export to Console Window"),
 		PRM_Item(),
 	};
