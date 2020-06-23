@@ -29,6 +29,40 @@
 
 #include <set>
 
+namespace
+{
+	/**
+		\brief Utility exporter that simply deletes its associated NSI node(s).
+		
+		It's used to ensure that animated objects are deleted before being
+		re-exported after a time change. We can't count on the exporters
+		allocated inside process_obj_node to do that, because some of them will
+		be missing if they just became invisible.
+
+		The deleter class being a template (and the various exporters' "Delete"
+		method being static), allows each exporter class to delete their NSI
+		nodes properly, using the right handle and the correct "recursive" flag.
+	*/
+	template<typename node_exporter>
+	struct deleter : public exporter
+	{
+		deleter(const context& i_context, OBJ_Node* i_node)
+			:	exporter(i_context, i_node)
+		{
+			assert(m_object);
+		}
+
+		void create()const override
+		{
+			node_exporter::Delete(*m_object, m_context);
+		}
+
+		void set_attributes()const override {}	
+		void connect()const override {}
+	};
+}
+
+
 /**
 	\brief Decide what to do with the given OP_Node.
 
@@ -54,6 +88,13 @@ void scene::process_obj_node(
 	std::vector<exporter *> &o_to_export )
 {
 	/*
+		We register callbacks so we can react to parameter changes in IPR, but
+		we don't need to register them when we're re-scanning the scene after a
+		time change.
+	*/
+	bool register_callbacks = i_context.m_ipr && !i_context.m_time_dependent;
+
+	/*
 		Each object is its own null transform. When re-exporting an invisible
 		object that was tagged as an instance, we don't need to output the
 		null exported as it is already present since the first scene
@@ -61,9 +102,37 @@ void scene::process_obj_node(
 	*/
 	if( !i_re_export_instanced )
 	{
-		o_to_export.push_back( new null(i_context, obj) );
+		bool time_dependent_obj =
+			time_sampler::is_time_dependent(
+				*obj,
+				i_context.current_time(),
+				time_sampler::e_transformation);
 
-		if(i_context.m_ipr)
+		/*
+			We delete all NSI nodes associated to time-dependent Houdini nodes,
+			indiscriminately, because we don't know if they were visible or not
+			at the previous time, or even if they had the same sub-structure
+			(for example, a simulated geometry node by end up being refined into
+			completely different components). This is probably not the most
+			efficient way, but it should always work and is easy to understand.
+		*/
+		bool needs_delete = i_context.m_time_dependent && time_dependent_obj;
+		/*
+			We export non-animated nodes the first time and time-dependent nodes
+			each time.
+		*/
+		bool needs_export = !i_context.m_time_dependent || time_dependent_obj;
+
+		if(needs_delete)
+		{
+			o_to_export.push_back(new deleter<null>(i_context, obj));
+		}
+		if(needs_export)
+		{
+			o_to_export.push_back( new null(i_context, obj) );
+		}
+
+		if(register_callbacks)
 		{
 			i_context.register_interest(obj, &null::changed_cb);
 		}
@@ -81,6 +150,14 @@ void scene::process_obj_node(
 	bool is_incand = obj->getOperator()->getName().toStdString() ==
 		"3Delight::IncandescenceLight";
 
+	bool time_dependent_obj =
+		time_sampler::is_time_dependent(
+			*obj,
+			i_context.current_time(),
+			time_sampler::e_deformation);
+	bool needs_delete = i_context.m_time_dependent && time_dependent_obj;
+	bool needs_export = !i_context.m_time_dependent || time_dependent_obj;
+
 	if( obj->castToOBJLight() || is_incand )
 	{
 		if( is_incand && !i_re_export_instanced)
@@ -93,15 +170,22 @@ void scene::process_obj_node(
 			o_to_export.pop_back();
 		}
 
-		if( visible )
+		if(needs_delete)
 		{
 			o_to_export.push_back(
-				is_incand ?
-					(exporter*)new incandescence_light(i_context, obj) :
-					(exporter*)new light(i_context, obj) );
+				is_incand
+				?	(exporter*)new deleter<incandescence_light>(i_context, obj)
+				:	(exporter*)new deleter<light>(i_context, obj));
+		}
+		if(needs_export && visible)
+		{
+			o_to_export.push_back(
+				is_incand
+					?	(exporter*)new incandescence_light(i_context, obj)
+					:	(exporter*)new light(i_context, obj) );
 		}
 
-		if(i_context.m_ipr)
+		if(register_callbacks)
 		{
 			i_context.register_interest( obj,
 				is_incand ?
@@ -130,9 +214,16 @@ void scene::process_obj_node(
 			required, even though they might not be part of the "objects to
 			render" bundle or their display flag might be turned off.
 		*/
-		o_to_export.push_back( new camera(i_context, obj) );
+		if(needs_delete)
+		{
+			o_to_export.push_back( new deleter<camera>(i_context, obj) );
+		}
+		if(needs_export)
+		{
+			o_to_export.push_back( new camera(i_context, obj) );
+		}
 
-		if(i_context.m_ipr)
+		if(register_callbacks)
 		{
 			i_context.register_interest(obj, &camera::changed_cb);
 		}
@@ -145,11 +236,15 @@ void scene::process_obj_node(
 	}
 
 	SOP_Node *sop = obj->getRenderSopPtr();
-	if(sop && visible)
+	if(needs_delete)
+	{
+		o_to_export.push_back(new deleter<geometry>(i_context, obj));
+	}
+	if(needs_export && sop && visible)
 	{
 		o_to_export.push_back( new geometry(i_context, obj) );
 	}
-	if(i_context.m_ipr)
+	if(register_callbacks)
 	{
 		// Watch for OBJ-level changes
 		i_context.register_interest(obj, &geometry::changed_cb);

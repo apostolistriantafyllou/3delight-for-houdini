@@ -23,6 +23,7 @@ class OBJ_Node;
 class UT_ReadWritePipe;
 class UT_String;
 class exporter;
+class time_notifier;
 
 class ROP_3Delight : public ROP_Node
 {
@@ -214,6 +215,9 @@ private:
 
 	bool HasDepthOfField( double i_time )const;
 
+	/// Called when the application's current time has changed.
+	void time_change_cb(double i_time);
+
 private:
 	std::vector<OBJ_Node*> m_lights;
 	bool m_cloud;
@@ -248,6 +252,12 @@ private:
 		notified of it.
 	*/
 	std::thread m_renderdl_waiter;
+
+	/*
+		Notifies the ROP of time changes during an IPR render, so that it can
+		re-export the time-dependent components of the scene.
+	*/
+	time_notifier* m_time_notifier;
 
 	/*
 		True while rendering is in progress.

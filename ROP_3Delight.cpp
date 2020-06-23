@@ -10,6 +10,7 @@
 #include "object_visibility_resolver.h"
 #include "scene.h"
 #include "shader_library.h"
+#include "time_notifier.h"
 #include "vdb.h"
 #include "vop.h"
 #include "dl_system.h"
@@ -150,6 +151,7 @@ ROP_3Delight::ROP_3Delight(
 		m_nsi(GetNSIAPI()),
 		m_static_nsi(GetNSIAPI()),
 		m_renderdl(nullptr),
+		m_time_notifier(nullptr),
 		m_rendering(false),
 		m_idisplay_rendering(false),
 		m_idisplay_ipr(false),
@@ -614,6 +616,10 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 		creation_callbacks::register_ROP(this);
 		// Get notifications for changes to this ROP
 		m_current_render->register_interest(this, &ROP_3Delight::changed_cb);
+		m_time_notifier =
+			new time_notifier(
+				[this](double time) { time_change_cb(time); },
+				false);
 	}
 
 	// Close the static attributes file if one was opened
@@ -651,6 +657,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 
 				if(rop->m_current_render->m_ipr)
 				{
+					delete rop->m_time_notifier; rop->m_time_notifier = nullptr;
 					creation_callbacks::unregister_ROP(rop);
 				}
 
@@ -1787,6 +1794,21 @@ bool
 ROP_3Delight::HasDepthOfField( double t )const
 {
 	return !(HasSpeedBoost(t) && evalInt(settings::k_disable_depth_of_field, 0, t));
+}
+
+void ROP_3Delight::time_change_cb(double i_time)
+{
+	assert(m_current_render);
+	assert(m_current_render->m_ipr);
+
+	m_current_render->m_time_dependent = true;
+	m_current_render->set_current_time(i_time);
+
+	scene::convert_to_nsi(*m_current_render);
+	ExportAtmosphere(*m_current_render, true);
+
+	m_current_render->m_nsi.RenderControl(
+		NSI::CStringPArg("action", "synchronize"));
 }
 
 std::string

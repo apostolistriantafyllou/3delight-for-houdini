@@ -152,6 +152,7 @@ public:
 	bool m_dof{false};
 	bool m_batch{false};
 	bool m_ipr{false};
+	bool m_time_dependent{false};
 	bool m_export_nsi{false};
 	bool m_archive{false};
 	bool m_cloud{false};
