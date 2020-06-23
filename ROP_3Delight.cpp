@@ -1208,12 +1208,6 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					idisplay_driver_name, idisplay_driver.toStdString(),
 					sort_key );
 
-				if( m_current_render->m_export_nsi ||
-					m_current_render->m_batch )
-				{
-					continue;
-				}
-
 				/*
 					3Delight Display's Multi-Light tool needs some information,
 					called "feedback data" to communicate back the values.
