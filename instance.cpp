@@ -12,6 +12,8 @@
 
 #include <unordered_map>
 
+const char *k_procedural_prefix = "__procedural:";
+
 /**
 	\brief Constructor.
 
@@ -114,12 +116,28 @@ void instance::connect( void ) const
 		const std::string &object = merge.first;
 		if( !object.empty() )
 		{
-			OP_Node *node = OPgetDirector()->findOBJNode( object.c_str() );
-			assert( node );
-			if( node )
+			if( object.find(k_procedural_prefix)==0)
 			{
-				m_nsi.Connect(
-					exporter::handle(*node, m_context), "", merge_h, "objects");
+				m_nsi.Create( object, "procedural" );
+				m_nsi.SetAttribute( object,
+					(
+						NSI::CStringPArg("type", "apistream"),
+						NSI::CStringPArg(
+							"filename",
+							object.c_str()+ ::strlen(k_procedural_prefix))
+					) );
+				m_nsi.Connect(object, "", merge_h, "objects" );
+			}
+			else
+			{
+				OP_Node *node = OPgetDirector()->findOBJNode(object.c_str());
+				assert(node);
+				if (node)
+				{
+					m_nsi.Connect(
+						exporter::handle(*node, m_context), "",
+						merge_h, "objects");
+				}
 			}
 		}
 		else
@@ -324,7 +342,7 @@ std::string instance::merge_handle(const merge_point& i_merge_point) const
 
 /**
 	\brief Returns as many merge points as necessary to render all the
-	<instance,material> combinations for this instancer
+	<instance[file],material> combinations for this instancer
 
 	Note that there could be *alot* of strings in here. Millions of them
 	if we are note careful, because o_merge_points could have as many
@@ -345,6 +363,13 @@ void instance::get_merge_points(
 	GT_Owner type;
 	auto instance =
 		default_gt_primitive().get()->findAttribute( "instance", type, 0 );
+	auto instancefile =
+		default_gt_primitive().get()->findAttribute( "instancefile", type, 0 );
+
+	/* give priority to s@instancefile */
+	if( instancefile )
+		instance = instancefile;
+
 	auto material =
 		default_gt_primitive().get()->findAttribute( "shop_materialpath", type, 0 );
 
@@ -354,11 +379,18 @@ void instance::get_merge_points(
 
 	for( int i=0; i<max_count; i ++ )
 	{
-
 		std::string I = (instance && i<instance->entries()) ?
 					(const char *)(instance->getS(i)) : "";
 		std::string M =	(material && i<material->entries()) ?
 					(const char*)(material->getS(i)) : "";
+
+		if( instancefile )
+		{
+			/*  This will be a an NSI procedural node. So prefix it so that we
+			don't have any collisions */
+
+			I = k_procedural_prefix + I;
+		}
 
 		VOP_Node* vop = resolve_material_path(m_object, M.c_str());
 

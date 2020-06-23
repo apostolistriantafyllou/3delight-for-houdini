@@ -598,10 +598,10 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 
 	scene::convert_to_nsi( *m_current_render );
 
-	ExportDefaultMaterial(*m_current_render);
 
 	if(!m_current_render->m_archive)
 	{
+		ExportDefaultMaterial(*m_current_render);
 		ExportAtmosphere(*m_current_render);
 		ExportOutputs(*m_current_render);
 		ExportGlobals(*m_current_render);
