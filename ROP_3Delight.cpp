@@ -1076,7 +1076,9 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 	UT_String image_display_name =
 		image_file_name.replaceExtension(idisplay_driver);
-	image_file_name = image_file_name.replaceExtension(file_driver);
+
+	image_file_name = image_file_name.replaceExtension
+		(file_driver == "deepexr" ? "exr":file_driver);
 
 	std::string idisplay_driver_name;
 	std::string file_driver_name;
