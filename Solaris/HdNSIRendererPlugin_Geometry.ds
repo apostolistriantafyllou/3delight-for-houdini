@@ -9,7 +9,7 @@
 
 	/* Camera */
 	parm {
-        name    "xn__nsigeometryvisibility_camera_control_mzbi"
+        name    "xn__primvarsnsiobjectvisibility_camera_control_j9bdg"
         label   "Visible to Camera"
         type    string
         default { "none" }
@@ -20,20 +20,20 @@
         }
     }
     parm {
-        name    "xn__nsigeometryvisibility_camera_lmbi"
+        name    "xn__primvarsnsiobjectvisibility_camera_iwbdg"
         label   "Visible to Camera"
         type    toggle
         size    1
         parmtag { "spare_category" "Visibility" }
-        parmtag { "usdvaluetype" "bool[]" }
+        parmtag { "usdvaluetype" "bool" }
         default { 1 }
-        disablewhen  "{ xn__nsigeometryvisibility_camera_control_mzbi == block } { xn__nsigeometryvisibility_camera_control_mzbi == none }"
+        disablewhen  "{ xn__primvarsnsiobjectvisibility_camera_control_j9bdg == block } { xn__primvarsnsiobjectvisibility_camera_control_j9bdg == none }"
         help "Enable or disables geometry's visibility to camera rays"
     }
 
-	/* Diffusion */
+	/* Diffuse */
 	parm {
-        name    "xn__nsigeometryvisibility_diffuse_control_80bi"
+        name    "xn__primvarsnsiobjectvisibility_diffuse_control_5bcdg"
         label   "Visible to Diffuse"
         type    string
         default { "none" }
@@ -44,20 +44,20 @@
         }
     }
     parm {
-        name    "xn__nsigeometryvisibility_diffuse_7nbi"
+        name    "xn__primvarsnsiobjectvisibility_diffuse_4xbdg"
         label   "Visible to Diffuse"
         type    toggle
         size    1
         parmtag { "spare_category" "Visibility" }
-        parmtag { "usdvaluetype" "bool[]" }
+        parmtag { "usdvaluetype" "bool" }
         default { 1 }
-        disablewhen  "{ xn__nsigeometryvisibility_diffuse_control_80bi == block } { xn__nsigeometryvisibility_diffuse_control_80bi == none }"
+        disablewhen  "{ xn__primvarsnsiobjectvisibility_diffuse_control_5bcdg == block } { xn__primvarsnsiobjectvisibility_diffuse_control_5bcdg == none }"
         help "Enable or disables geometry's visibility to diffuse rays"
     }
 
 	/* Reflection */
 	parm {
-        name    "xn__nsigeometryvisibility_reflection_control_45bi"
+        name    "xn__nsiobjectvisibility_reflection_control_v2bg"
         label   "Visible to Reflection"
         type    string
         default { "none" }
@@ -68,20 +68,20 @@
         }
     }
     parm {
-        name    "nsi:geometry:visibility_reflection"
+        name    "xn__primvarsnsiobjectvisibility_reflection_02bdg"
         label   "Visible to Reflection"
         type    toggle
         size    1
         parmtag { "spare_category" "Visibility" }
-        parmtag { "usdvaluetype" "bool[]" }
+        parmtag { "usdvaluetype" "bool" }
         default { 1 }
-        disablewhen  "{ xn__nsiglobalshadingsamples_control_hrbg == block } { xn__nsigeometryvisibility_reflection_control_45bi == none }"
+        disablewhen  "{xn__nsiobjectvisibility_reflection_control_v2bg  == block } {xn__nsiobjectvisibility_reflection_control_v2bg  == none }"
         help "Enable or disables geometry's visibility to reflection rays"
     }
 
 	/* Refraction */
 	parm {
-        name    "xn__nsigeometryvisibility_refraction_control_45bi"
+        name    "xn__primvarsnsiobjectvisibility_refraction_control_1gcdg"
         label   "Visible to Refraction"
         type    string
         default { "none" }
@@ -92,20 +92,20 @@
         }
     }
     parm {
-        name    "xn__nsigeometryvisibility_refraction_3sbi"
+        name    "xn__primvarsnsiobjectvisibility_refraction_02bdg"
         label   "Visible to Refraction"
         type    toggle
         size    1
         parmtag { "spare_category" "Visibility" }
-        parmtag { "usdvaluetype" "bool[]" }
+        parmtag { "usdvaluetype" "bool" }
         default { 1 }
-        disablewhen  "{ xn__nsigeometryvisibility_refraction_control_45bi == block } { xn__nsigeometryvisibility_refraction_control_45bi == none }"
+        disablewhen  "{xn__primvarsnsiobjectvisibility_refraction_control_1gcdg  == block } {  xn__primvarsnsiobjectvisibility_refraction_control_1gcdg == none }"
         help "Enable or disables geometry's visibility to refraction rays"
     }
 
 	/* Casts Shadows*/
 	parm {
-        name    "xn__nsigeometryvisibility_casts_shadows_control_0bci"
+        name    "xn__primvarsnsiobjectvisibility_shadow_control_j9bdg"
         label   "Visible to Refraction"
         type    string
         default { "none" }
@@ -116,14 +116,14 @@
         }
     }
     parm {
-        name    "xn__nsigeometryvisibility_casts_shadows_zxbaia"
+        name    "xn__primvarsnsiobjectvisibility_shadow_iwbdg"
         label   "Casts Shadows"
         type    toggle
         size    1
         parmtag { "spare_category" "Visibility" }
-        parmtag { "usdvaluetype" "bool[]" }
+        parmtag { "usdvaluetype" "bool" }
         default { 1 }
-        disablewhen  "{ xn__nsigeometryvisibility_casts_shadows_control_0bci == block } { xn__nsigeometryvisibility_casts_shadows_control_0bci == none }"
+        disablewhen  "{xn__primvarsnsiobjectvisibility_shadow_control_j9bdg  == block } {xn__primvarsnsiobjectvisibility_shadow_control_j9bdg  == none }"
         help "Toggles geometry's visiblity to shadow rays"
     }
 }
