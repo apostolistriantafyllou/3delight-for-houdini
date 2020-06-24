@@ -69,6 +69,20 @@ VOP_3DelightMaterialBuilder::getNumVisibleInputs() const
 	return 0;
 }
 
+/*
+	Automatically instance dlTerminal node inside dlMaterialBuilder
+	when it is created. This is done using createNode() function
+	which adds a new OP_Node of the specified type (dlTerminal)
+	as a child of this node (dlMaterialBuilder).
+*/
+bool
+VOP_3DelightMaterialBuilder::runCreateScript()
+{
+	const char* dlTerminalShader = "3Delight::dlTerminal";
+	createNode(dlTerminalShader);
+	return VOP_Node::runCreateScript();
+}
+
 /**
 	First try to find a Terminal node. And get the surface shader from
 	there.
