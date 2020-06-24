@@ -1240,7 +1240,7 @@ void VOP_ExternalOSL::SetVDBVolumeDefaults()
 /*
 	Collapse input groups of materials. Because some nodes have many parameters,
 	this would result in a very long node network which would take up too much
-	screen. To solve this we are collaping the input groups of the nodes except
+	screen. To solve this we are collapsing the input groups of the nodes except
 	the main group (first one) for nodes having "surface" tag.
 */
 void VOP_ExternalOSL::CollapseMaterialsInputGroups()
@@ -1248,31 +1248,34 @@ void VOP_ExternalOSL::CollapseMaterialsInputGroups()
 	/*
 		Insert all input groups ("pages") in a set so we can collapse them later.
 		we are using set so we can insert a page only once (have page name unique).
+		We also find the first page seperately because if we insert it in the
+		unordered set, there is no guarantee that the page  we are skipping is
+		the first page or not.
 	*/
+	const char* first_page = nullptr;
+	osl_utilities::FindMetaData(first_page, m_shader_info.GetInput(0).metadata, "page");
+	if (first_page == nullptr)
+		first_page = "Main";
+
 	std::unordered_set <std::string> pages;
-	for (unsigned p = 0; p < m_shader_info.NumInputs(); p++)
+	for (unsigned p = 1; p < m_shader_info.NumInputs(); p++)
 	{
 		const DlShaderInfo::Parameter& param = m_shader_info.GetInput(p);
 		const char* page = nullptr;
 		osl_utilities::FindMetaData(page, param.metadata, "page");
+		if (page == nullptr)
+			page = "Main";
 
-		if (page != nullptr)
-		{
-			pages.insert(page);
-		}
+		pages.insert(page);
 	}
 
-	std::unordered_set <std::string> ::iterator page_it = pages.begin();
 	/*
 		We ignore the first input group for all materials
 		with surface tag and collapse the rest of the groups.
 	*/
-	if (m_shader_info.IsTerminal() && page_it != pages.end())
+	for (auto page_it = pages.begin(); page_it != pages.end(); page_it++)
 	{
-		page_it++;
-	}
-	for (; page_it != pages.end(); page_it++)
-	{
+		if(*page_it != first_page || !m_shader_info.IsTerminal())
 		VOP_ExternalOSL::setInputGroupExpanded(*page_it, false);
 	}
 }

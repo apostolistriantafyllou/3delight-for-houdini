@@ -37,6 +37,9 @@ public:
 	/// Returns the number input ports that should be visible
 	virtual unsigned getNumVisibleInputs()const override;
 
+	//Called when a new dlMaterialBuilder node is created.
+	virtual bool runCreateScript();
+
 	VOP_Node* get_material();
 
 protected:
