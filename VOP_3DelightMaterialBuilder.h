@@ -38,7 +38,7 @@ public:
 	virtual unsigned getNumVisibleInputs()const override;
 
 	//Called when a new dlMaterialBuilder node is created.
-	virtual bool runCreateScript();
+	virtual bool runCreateScript() override;
 
 	VOP_Node* get_material();
 
