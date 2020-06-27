@@ -119,7 +119,7 @@ install(
 	DESTINATION config/Applications )
 
 install(
-	FILES ui/geo_OnCreated.cmd ui/cam_OnCreated.cmd ui/hlight--2.0_OnCreated.cmd ui/envlight_OnCreated.cmd ui/null_OnCreated.cmd ui/3Delight--VOP_OnCreated.cmd
+	FILES ui/geo_OnCreated.cmd ui/cam_OnCreated.cmd ui/hlight--2.0_OnCreated.cmd ui/envlight_OnCreated.cmd ui/null_OnCreated.cmd ui/3Delight--VOP_OnCreated.cmd ui/instance_OnCreated.cmd
 	DESTINATION scripts/private )
 
 install(
