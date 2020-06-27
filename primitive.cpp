@@ -421,7 +421,10 @@ void primitive::assign_sop_materials( void ) const
 
 	std::unordered_set<std::string> uniqued;
 	for( int i = 0; i<materials->entries(); i++ )
-		uniqued.insert( materials->getS(i).toStdString() );
+	{
+		std::string m( materials->getS(i) );
+		uniqued.insert(m );
+	}
 
 	bool single_material = uniqued.size() == 1u;
 
