@@ -32,6 +32,9 @@ public:
 	/// Returns the NSI handle used for the camera i_camera
 	static std::string handle(OBJ_Node& i_camera, const context& i_ctx);
 
+	/// Deletes the NSI nodes associated to Houdini node i_node.
+	static void Delete(OBJ_Node& i_node, const context& i_context);
+
 	/// Returns the time during which i_camera's shutter is open, around i_time
 	static double get_shutter_duration(
 		OBJ_Camera& i_camera,

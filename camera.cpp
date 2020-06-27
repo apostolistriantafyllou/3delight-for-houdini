@@ -511,6 +511,11 @@ camera::handle(OBJ_Node& i_camera, const context& i_ctx)
 	return exporter::handle(i_camera, i_ctx) + "|camera";
 }
 
+void camera::Delete(OBJ_Node& i_node, const context& i_context)
+{
+	i_context.m_nsi.Delete(handle(i_node, i_context));
+}
+
 double
 camera::get_shutter_duration(OBJ_Camera& i_camera, double i_time)
 {

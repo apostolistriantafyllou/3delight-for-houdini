@@ -128,3 +128,8 @@ void null::changed_cb(
 		ctx->m_nsi.Delete(handle(*obj, *ctx));
 	}
 }
+
+void null::Delete(OBJ_Node& i_node, const context& i_context)
+{
+	i_context.m_nsi.Delete(handle(i_node, i_context));
+}

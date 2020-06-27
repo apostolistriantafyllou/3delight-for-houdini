@@ -37,7 +37,7 @@ light::light( const context& i_ctx, OBJ_Node *i_object )
 :
 	exporter( i_ctx, i_object )
 {
-	m_handle += "|light";
+	m_handle = handle(*m_object, i_ctx);
 
 	m_is_env_light = m_object->getParmPtr("env_map") != nullptr;
 }
@@ -493,3 +493,14 @@ std::string light::get_geometry_path( void ) const
 	return obj_node->getFullPath().toStdString();
 }
 
+std::string light::handle(const OP_Node& i_light, const context& i_ctx)
+{
+	return exporter::handle(i_light, i_ctx) + "|light";
+}
+
+void light::Delete(OBJ_Node& i_node, const context& i_context)
+{
+	i_context.m_nsi.Delete(
+		handle(i_node, i_context),
+		NSI::IntegerArg("recursive", 1));
+}

@@ -46,6 +46,12 @@ public:
 	*/
 	std::string get_geometry_path( void ) const;
 
+	/// Returns the NSI handle used for the light node i_light
+	static std::string handle(const OP_Node& i_light, const context& i_ctx);
+
+	/// Deletes the NSI nodes associated to Houdini node i_node.
+	static void Delete(OBJ_Node& i_node, const context& i_context);
+
 private:
 
 	/// Exports time-dependent attributes to NSI

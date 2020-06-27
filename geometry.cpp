@@ -979,14 +979,19 @@ void geometry::sop_changed_cb(
 
 }
 
+void geometry::Delete(OBJ_Node& i_node, const context& i_context)
+{
+	i_context.m_nsi.Delete(
+		hub_handle(i_node, i_context),
+		NSI::IntegerArg("recursive", 1));
+}
+
 void geometry::re_export(
 	const context& i_ctx,
 	OBJ_Node& i_node,
 	bool i_new_material)
 {
-	i_ctx.m_nsi.Delete(
-		hub_handle(i_node, i_ctx),
-		NSI::IntegerArg("recursive", 1));
+	Delete(i_node, i_ctx);
 
 	if(!i_node.getRenderSopPtr() || !i_ctx.object_displayed(i_node))
 	{

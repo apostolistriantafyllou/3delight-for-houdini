@@ -157,6 +157,11 @@ void incandescence_light::changed_cb(
 	ctx->m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
 }
 
+void incandescence_light::Delete(OBJ_Node& i_node, const context& i_context)
+{
+	i_context.m_nsi.Delete(handle(i_node, i_context));
+}
+
 void incandescence_light::disconnect()const
 {
 	/*
