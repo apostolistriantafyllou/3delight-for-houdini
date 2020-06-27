@@ -25,6 +25,11 @@ namespace
 		for (int i = 0; i < i_shader_info->nparams(); i++)
 		{
 			const DlShaderInfo::Parameter* parameter = i_shader_info->getparam(i);
+			/*
+				FIXME : will always be false because param_name is always
+				k_incandescence_multiplier, while parameter->name is allocated
+				by the DlShaderInfo module.
+			*/
 			if (parameter->name == param_name)
 			{
 				return true;
@@ -42,8 +47,8 @@ incandescence_light::incandescence_light(
 }
 
 /**
-	We do not create antyhgin for the incandlight. We will be using
-	the parent's handle, which is a null, to connect to
+	We do not create anything for the incandescence light. We will be using
+	the parent's handle, which is a null, to connect to.
 */
 void incandescence_light::create() const
 {
@@ -154,6 +159,14 @@ void incandescence_light::changed_cb(
 
 void incandescence_light::disconnect()const
 {
+	/*
+		FIXME : will always be false since m_current_multipliers is only filled
+		by connect(), which is never called before disconnect(). (Exporters are
+		not kept during IPR rendering : disconnect() is only ever called on a
+		local exporter from changed_cb()).
+		Also, ParameterExists() always returns false, so nothing will ever be
+		added to m_current_multipliers anyway.
+	*/
 	if( !m_current_multipliers.empty() )
 	{
 		/*
@@ -175,6 +188,7 @@ void incandescence_light::disconnect()const
 		}
 
 		/* This will take care of the Multi-Light output */
+		// FIXME : we connect to "members" but we disconnect from "objects"
 		m_nsi.Disconnect( NSI_ALL_NODES, "", handle().c_str(), "objects" );
 
 		m_current_multipliers.clear();
