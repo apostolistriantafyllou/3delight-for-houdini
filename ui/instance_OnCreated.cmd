@@ -5,7 +5,7 @@ if ( "$arg1" != "" ) then
 
 	# The 3Delight tab is erroneously added inside an existing tab instead of at
 	# the root.  Let's fix this by removing the 3Delight folder from the node
-	# and re-inserting it after the "Misc" folder, which is always present.
+	# and re-inserting it after the "Render" folder, which is always present.
 	# This can't seem to be done in HScript, so we do it in Python.
 	# However, we have to move the folder to its correct position only once,
 	# before any of our separator-label-separator titles are inserted, otherwise
