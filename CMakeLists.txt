@@ -74,6 +74,13 @@ add_library( ${library_name} SHARED
 
 add_subdirectory( osl )
 
+# The plugin library never has a 'lib' prefix.
+set_target_properties(${library_name} PROPERTIES PREFIX "")
+
+install(
+	TARGETS ${library_name}
+	DESTINATION "dso")
+
 # 3Delight includes
 target_include_directories( ${library_name} PRIVATE "${DELIGHT}/include" )
 
@@ -146,10 +153,6 @@ install(
 install(
 	FILES ui/MainMenuCommon.xml
 	DESTINATION . )
-
-# Configure several common target properties, such as its output directory.
-# Has the lousy behavior of building the lib directly to its install location.
-houdini_configure_target( ${library_name} "INSTDIR" "${CMAKE_INSTALL_PREFIX}/dso" )
 
 # Add the Hydra plugin, if present, for Houdini >= 18.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/HydraNSI/CMakeLists.txt"
