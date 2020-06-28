@@ -334,6 +334,21 @@ void vop::list_shader_parameters(
 		switch( parameter->type.elementtype )
 		{
 		case NSITypeFloat:
+			/*
+				Insert as an array if arraylen is greater then 0.
+				Happens when the current parameter of the OSL
+				shader is a float[] value.
+			*/
+			if (parameter->type.arraylen > 0)
+			{
+				std::vector<float> values;
+				for (int j = 0; j < parameter->type.arraylen; j++)
+					values.push_back(i_parameters->evalFloat(index, j, i_time));
+				o_list.Add(NSI::Argument::New(parameter->name.c_str())
+					->SetArrayType(NSITypeFloat, parameter->type.arraylen)
+					->CopyValue(&values[0], values.size() * sizeof(values[0])));
+			}
+			else
 			o_list.Add(
 				new NSI::FloatArg(
 					parameter->name.c_str(),
@@ -358,6 +373,21 @@ void vop::list_shader_parameters(
 		}
 
 		case NSITypeInteger:
+			/*
+				Insert as an array if arraylen is greater then 0.
+				Happens when the current parameter of the OSL
+				shader is an int[] value.
+			*/
+			if (parameter->type.arraylen > 0)
+			{
+				std::vector<int> values;
+				for (int j = 0; j < parameter->type.arraylen; j++)
+					values.push_back(i_parameters->evalInt(index, j, i_time));
+				o_list.Add(NSI::Argument::New(parameter->name.c_str())
+					->SetArrayType(NSITypeInteger, parameter->type.arraylen)
+					->CopyValue(&values[0], values.size() * sizeof(values[0])));
+			}
+			else
 			o_list.Add(
 				new NSI::IntegerArg(
 					parameter->name.c_str(),
