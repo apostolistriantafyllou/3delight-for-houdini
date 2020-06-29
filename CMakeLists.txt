@@ -99,7 +99,7 @@ if(INSTALL_PACKAGE_DEF)
 	message(STATUS "Getting houdini install dir. This will take a while and may crash if it loads an invalid plugin.")
 	houdini_get_default_install_dir(HOUDINI_USER_DIR)
 	set(package_file ${HOUDINI_USER_DIR}/packages/3Delight_for_Houdini.json)
-	message(STATUS "Writing package tile to ${package_file}")
+	message(STATUS "Writing package file to ${package_file}")
 	file(WRITE ${package_file} "{
 \"env\" : [
 	{ \"HOUDINI_PATH\" : \"${CMAKE_INSTALL_PREFIX}\" }
