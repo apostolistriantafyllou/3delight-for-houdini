@@ -64,18 +64,21 @@ public:
 		m_archive(i_archive),
 		m_cloud(i_cloud),
 		m_rop_path(i_rop_path),
-		m_object_visibility_resolver(i_rop_path, i_settings, i_start_time)
+		m_settings(i_settings)
 	{
 		assert(!m_ipr || !m_export_nsi);
+		m_object_visibility_resolver =
+			new object_visibility_resolver(i_rop_path, i_settings, i_start_time);
 	}
 
 	~context()
 	{
-
 		for( const auto &f : m_temp_filenames )
 		{
 			UT_TempFileManager::removeTempFile( f.data() );
 		}
+
+		delete m_object_visibility_resolver;
 	}
 
 	/// Returns true if motion blur is required for this render
@@ -110,6 +113,9 @@ public:
 	/// Returns true if an object is in the mattes bundle.
 	bool object_is_matte(const OBJ_Node& i_node)const;
 
+	/// Returns the bundle pattern built from the "lights to render" setting
+	const OP_BundlePattern* lights_to_render()const;
+	
 	/**
 		\brief Registers a callback to be notified of changes to a node.
 
@@ -124,11 +130,22 @@ public:
 		m_interests.emplace_back(i_node, const_cast<context*>(this), i_cb);
 	}
 
+	/**
+		\brief Returns the animation time used for rendering.
+		
+		Please use this instead of directly accessing the m_current_time member.
+	*/
+	fpreal current_time()const { return m_current_time; }
+	
+	/// Sets the animation time to be used for rendering.
+	void set_current_time(fpreal i_time);
+
 public:
 	NSI::Context &m_nsi;
 	NSI::Context &m_static_nsi;
 	fpreal m_start_time{0.0f}, m_end_time{.0f};
-	fpreal m_current_time{.0f};
+	/// Animation time to render (please use current_time() accessor instead).
+	const fpreal m_current_time{.0f};
 	fpreal m_frame_duration{.0f};
 	fpreal m_shutter{.0f};
 	// True if depth-of-field is enabled
@@ -145,9 +162,12 @@ public:
 	/** files to be deleted at render end. */
 	mutable std::vector< std::string > m_temp_filenames;
 
-	object_visibility_resolver m_object_visibility_resolver;
-
 private:
+
+	object_visibility_resolver* m_object_visibility_resolver;
+
+	const settings& m_settings;
+
 	/*
 		List of interests (callbacks) created in IPR mode.
 		We don't use a vector because there might be a lot of items (1 or 2 per

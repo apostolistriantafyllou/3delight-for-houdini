@@ -774,7 +774,7 @@ void scene::export_light_categories(
 		if(io_lights_to_render.empty())
 		{
 			find_lights(
-				i_context.m_object_visibility_resolver.m_lights_to_render_pattern,
+				i_context.lights_to_render(),
 				i_context.m_rop_path.c_str(),
 				false,
 				io_lights_to_render);

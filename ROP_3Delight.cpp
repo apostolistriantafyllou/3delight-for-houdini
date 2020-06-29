@@ -545,7 +545,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	assert(m_current_render);
 	assert(m_nsi.Handle() == NSI_BAD_CONTEXT);
 
-	m_current_render->m_current_time = time;
+	m_current_render->set_current_time(time);
 
 	std::string frame_nsi_file;
 	if(m_current_render->m_export_nsi)
