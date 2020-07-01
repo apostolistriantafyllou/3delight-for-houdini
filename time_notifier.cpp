@@ -38,5 +38,5 @@ void time_notifier::ohHandleTimeChange(UI_Event* i_event)
 	assert(value);
 	assert(value->getType() == UI_VALUE_FLOAT);
 
-	m_cb(double(*i_event->value));
+	m_cb(double(*value));
 }
