@@ -49,6 +49,18 @@
         help "Quality of volumes."
     }
 
+/* Viewport camera shutter */
+    parm {
+        name "xn__nsiglobaldefaultshutter_gebg"
+        label "Camera Shutter"
+        type float
+        size 2
+        parmtag { "spare_category" "Quality" }
+        parmtag { "uiscope" "viewport" }
+        parmtag { "usdvaluetype" "float2" }
+        default { -0.25 0.25 }
+    }
+
 /* Max Diffuse Depth */
     parm {
         name    "xn__nsiglobalmaximumdiffusedepth_lmbg"
