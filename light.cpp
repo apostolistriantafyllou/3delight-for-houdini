@@ -104,7 +104,14 @@ void light::create_geometry( void ) const
 	{
 		if(is_spot)
 		{
-			y_size = x_size = 0.001f;
+			/*
+				Instead of setting y_size and x_size equal to 0.001 we set it
+				to the value of the _3dl_radius parameter so we can control
+				it's shadow sharpness based on radius value.
+			*/
+			float radius =
+				m_object->evalFloat("_3dl_radius", 0, m_context.m_current_time);
+			y_size = x_size = radius;
 		}
 		else
 		{
