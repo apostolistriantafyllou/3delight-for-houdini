@@ -13,8 +13,12 @@ std::vector<aov::description> descriptions =
 {
 	{ aov::e_shading, "Ci", "rgba", "Ci", "shader", "color", true, true },
 	{ aov::e_shading, "Diffuse", "diffuse", "diffuse", "shader", "color", false, true },
+	{ aov::e_shading, "Diffuse (direct)", "directdiffuse", "diffuse.direct", "shader", "color", false, true },
+	{ aov::e_shading, "Diffuse (indirect)", "indirectdiffuse", "diffuse.indirect", "shader", "color", false, true },
 	{ aov::e_shading, "Subsurface scattering", "subsurface", "subsurface", "shader", "color", false, true },
 	{ aov::e_shading, "Reflection", "reflection", "reflection", "shader", "color", false, true },
+	{ aov::e_shading, "Reflection (direct)", "directreflection", "reflection.direct", "shader", "color", false, true },
+	{ aov::e_shading, "Reflection (indirect)", "indirectreflection", "reflection.indirect", "shader", "color", false, true },
 	{ aov::e_shading, "Refraction", "refraction", "refraction", "shader", "color", false, true },
 	{ aov::e_shading, "Volume scattering", "volume", "volume", "shader", "color", false, true },
 	{ aov::e_shading, "Incandescence", "incandescence", "incandescence", "shader", "color", false, true },

@@ -21,8 +21,12 @@ dlg.gad = DIALOG "AOV Selector"
         {
             ci.gad = TOGGLE_BUTTON "Ci":LABEL_WIDTH VALUE(Ci.val);
             TOGGLE_BUTTON "Diffuse":LABEL_WIDTH VALUE(diffuse.val);
+            TOGGLE_BUTTON "Diffuse (direct)":LABEL_WIDTH VALUE(diffuse.direct.val);
+            TOGGLE_BUTTON "Diffuse (indirect)":LABEL_WIDTH VALUE(diffuse.indirect.val);
             TOGGLE_BUTTON "Subsurface scattering":LABEL_WIDTH VALUE(subsurface.val);
             TOGGLE_BUTTON "Reflection":LABEL_WIDTH VALUE(reflection.val);
+            TOGGLE_BUTTON "Reflection (direct)":LABEL_WIDTH VALUE(reflection.direct.val);
+            TOGGLE_BUTTON "Reflection (indirect)":LABEL_WIDTH VALUE(reflection.indirect.val);
             TOGGLE_BUTTON "Refraction":LABEL_WIDTH VALUE(refraction.val);
             TOGGLE_BUTTON "Volume scattering":LABEL_WIDTH VALUE(volume.val);
             TOGGLE_BUTTON "Incandescence":LABEL_WIDTH VALUE(incandescence.val);
