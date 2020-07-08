@@ -109,24 +109,11 @@ void scene::process_obj_node(
 				time_sampler::e_transformation);
 
 		/*
-			We delete all NSI nodes associated to time-dependent Houdini nodes,
-			indiscriminately, because we don't know if they were visible or not
-			at the previous time, or even if they had the same sub-structure
-			(for example, a simulated geometry node by end up being refined into
-			completely different components). This is probably not the most
-			efficient way, but it should always work and is easy to understand.
-		*/
-		bool needs_delete = i_context.m_time_dependent && time_dependent_obj;
-		/*
 			We export non-animated nodes the first time and time-dependent nodes
 			each time.
 		*/
 		bool needs_export = !i_context.m_time_dependent || time_dependent_obj;
 
-		if(needs_delete)
-		{
-			o_to_export.push_back(new deleter<null>(i_context, obj));
-		}
 		if(needs_export)
 		{
 			o_to_export.push_back( new null(i_context, obj) );

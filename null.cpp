@@ -23,6 +23,13 @@ void null::create( void ) const
 
 void null::set_attributes( void ) const
 {
+	if(m_context.m_ipr)
+	{
+		m_context.m_nsi.DeleteAttribute(
+			m_handle,
+			"transformationmatrix");
+	}
+
 	for(time_sampler t(m_context, *m_object, time_sampler::e_transformation); t; t++)
 	{
 		set_attributes_at_time(*t);
@@ -37,7 +44,7 @@ void null::set_attributes_at_time( double i_time ) const
 
 	/* The stars are aligned for Houdini and NSI */
 	m_nsi.SetAttributeAtTime(
-		m_handle.c_str(),
+		m_handle,
 		i_time,
 		NSI::DoubleMatrixArg( "transformationmatrix", local.data() ) );
 }
