@@ -104,7 +104,15 @@ void light::create_geometry( void ) const
 	{
 		if(is_spot)
 		{
-			y_size = x_size = 0.001f;
+			/*
+				Instead of setting y_size and x_size equal to 0.001 we use another
+				paramter (_3dl_spotlight_size) as a multiplier (*0.001) so we can
+				control it's shadow sharpness based on _3dl_spotlight_size value.
+			*/
+			float spotlight_size =
+				m_object->evalFloat("_3dl_spotlight_size", 0, time);
+			y_size = x_size = 0.001*spotlight_size;
+
 		}
 		else
 		{
@@ -402,7 +410,7 @@ void light::changed_cb(
 		}
 		else if(name == "light_type" || name == "coneenable" ||
 			name == "areasize" || name == "areageometry" ||
-			name == "vm_envangle")
+			name == "vm_envangle" || name == "_3dl_spotlight_size")
 		{
 			// Rebuild the whole geometry
 			node.delete_geometry();

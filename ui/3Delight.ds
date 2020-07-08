@@ -348,6 +348,15 @@
 		disablewhen	"{ light_type == "point"  coneenable == "off" }"
 	}
 
+	parm
+	{
+		//Add Radius parameter to control shadow sharpness when we add a spotlight.
+		SOHO_FLOAT(_3dl_spotlight_size, "Spot Light Size", "3Delight", 1)
+		range { 1.0! 100 }
+		hidewhen "{coneenable == "off"}"
+	}
+
+
 	DELIGHT_FULL_TITLE(_3dl_obj_light_contrib, "Contributions")
 
 	collection
