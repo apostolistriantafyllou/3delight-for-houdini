@@ -20,6 +20,8 @@ dlg.gad = DIALOG "AOV Selector"
         COL
         {
             ci.gad = TOGGLE_BUTTON "Ci":LABEL_WIDTH VALUE(Ci.val);
+            TOGGLE_BUTTON "Ci (direct)":LABEL_WIDTH VALUE(Ci.direct.val);
+            TOGGLE_BUTTON "Ci (indirect)":LABEL_WIDTH VALUE(Ci.indirect.val);
             TOGGLE_BUTTON "Diffuse":LABEL_WIDTH VALUE(diffuse.val);
             TOGGLE_BUTTON "Diffuse (direct)":LABEL_WIDTH VALUE(diffuse.direct.val);
             TOGGLE_BUTTON "Diffuse (indirect)":LABEL_WIDTH VALUE(diffuse.indirect.val);
