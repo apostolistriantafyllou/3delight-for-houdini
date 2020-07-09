@@ -9,6 +9,7 @@
 #include <UT/UT_UI.h>
 #include <VOP/VOP_Operator.h>
 
+#include <iostream>
 #include <vector>
 #include <functional>
 
