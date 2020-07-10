@@ -619,7 +619,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 		m_time_notifier =
 			new time_notifier(
 				[this](double time) { time_change_cb(time); },
-				false);
+				true);
 	}
 
 	// Close the static attributes file if one was opened
