@@ -19,8 +19,7 @@ pointmesh::pointmesh(
 		i_object,
 		i_time,
 		i_gt_primitive,
-		i_primitive_index,
-		has_velocity(i_gt_primitive))
+		i_primitive_index )
 {
 }
 
@@ -41,21 +40,21 @@ void pointmesh::set_attributes( void ) const
 		the "id" attribute seems updated correctly, but the other attributes
 		(such as "P") have funky values.
 	*/
-	if(!requires_frame_aligned_sample() ||
-		time_sampler(
-			m_context,
-			*m_object, time_sampler::e_deformation).nb_samples() <= 1 ||
-		!export_extrapolated_P())
+	if( has_velocity_blur() )
 	{
-		// Export attributes at each time sample
-		primitive::set_attributes();
-		return;
-	}
+		export_extrapolated_P();
 
-	// Export particle width
-	export_basic_attributes(
-		m_context.m_current_time, default_gt_primitive(),
-		true /* width ony */ );
+		export_basic_attributes(
+			m_context.m_current_time, default_gt_primitive(),
+			true /* width ony */);
+	}
+	else
+	{
+		/*
+			Will call set_attribute_at_time() for each time sample.
+		*/
+		primitive::set_attributes();
+	}
 }
 
 void pointmesh::set_attributes_at_time(

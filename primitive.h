@@ -28,17 +28,13 @@ public:
 		\param i_primitive_index
 			The index of this primitive exporter inside the associated object's
 			geometry exporter.
-		\param i_requires_frame_aligned_sample
-			Indicates whether the primitive requires a single sample aligned on
-			the exact time of a frame, even when motion blur is enabled.
 	*/
 	primitive(
 		const context& i_context,
 		OBJ_Node* i_object,
 		double i_time,
 		const GT_PrimitiveHandle& i_gt_primitive,
-		unsigned i_primitive_index,
-		bool i_requires_frame_aligned_sample = false);
+		unsigned i_primitive_index );
 
 	void connect()const override;
 
@@ -109,8 +105,11 @@ protected:
 	bool export_extrapolated_P(
 		GT_DataArrayHandle i_vertices_list = GT_DataArrayHandle())const;
 
-	/// Returns true if i_gt_prim has a velocity attribute "v".
-	static bool has_velocity(const GT_PrimitiveHandle& i_gt_prim);
+	/*
+		\brief Returns true if thi primitive has the "v" attribute specified
+		_and_ motion blur is enabled.
+	*/
+	bool has_velocity_blur( void ) const;
 
 	/**
 		\brief Export all the attributes that the user wishes to "bind".

@@ -318,6 +318,35 @@ void instance::set_attributes_at_time(
 			it += 16;
 		}
 		num_matrices = transforms->entries();
+
+	}
+
+	/*
+		Add velocity to the matrices if needed. We support per point velocity
+		or detail velocity. This works for SOP-level and OBJ-level instancers.
+	*/
+	GT_DataArrayHandle tmp;
+	const float *velocity = nullptr;
+	double time = i_time;
+	GT_Owner owner;
+	GT_DataArrayHandle velocity_data =
+		has_velocity_blur() ?
+			i_gt_primitive->findAttribute("v", owner, 0) : GT_DataArrayHandle();
+
+	int v_inc = 0;
+	if( velocity_data )
+	{
+		v_inc = velocity_data->entries() == num_matrices ? 3 : 0;
+		const float *v = velocity = velocity_data->getF32Array(tmp);
+		double velocity_weight = m_context.ShutterOpen() - i_time;
+		for (int i = 0; i < num_matrices; i++, v+=v_inc)
+		{
+			double *trs = matrices + 16*i + 12; /* X/Y/Z transform */
+			trs[0] += v[0] * velocity_weight;
+			trs[1] += v[1] * velocity_weight;
+			trs[2] += v[2] * velocity_weight;
+		}
+		time = m_context.ShutterOpen();
 	}
 
 	NSI::ArgumentList args;
@@ -325,8 +354,29 @@ void instance::set_attributes_at_time(
 		->SetType( NSITypeDoubleMatrix )
 		->SetCount( num_matrices )
 		->SetValuePointer(matrices) );
-	nsi.SetAttributeAtTime( m_handle.c_str(), i_time, args );
+	nsi.SetAttributeAtTime( m_handle.c_str(), time, args );
 
+	if( velocity_data && velocity_data->entries() == num_matrices )
+	{
+		/* Extrapolate shutter end matrix */
+		const float *v = velocity;
+		double velocity_weight =
+			m_context.ShutterClose() - m_context.ShutterOpen();
+		for (int i = 0; i < num_matrices; i++, v+=v_inc)
+		{
+			double *trs = matrices + 16*i + 12;
+			trs[0] += v[0] * velocity_weight;
+			trs[1] += v[1] * velocity_weight;
+			trs[2] += v[2] * velocity_weight;
+		}
+		NSI::ArgumentList args;
+		args.Add(NSI::Argument::New("transformationmatrices")
+			 ->SetType(NSITypeDoubleMatrix)
+			 ->SetCount(num_matrices)
+			 ->SetValuePointer(matrices));
+		nsi.SetAttributeAtTime(
+			m_handle.c_str(), m_context.ShutterClose(), args);
+	}
 	delete [] matrices;
 }
 

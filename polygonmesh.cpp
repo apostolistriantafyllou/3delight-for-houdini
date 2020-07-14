@@ -23,8 +23,7 @@ polygonmesh::polygonmesh(
 		i_object,
 		i_time,
 		i_gt_primitive,
-		i_primitive_index,
-		has_velocity(i_gt_primitive)),
+		i_primitive_index ),
 	m_is_subdiv(i_force_subdivision)
 {
 	if(!m_is_subdiv)
@@ -97,26 +96,40 @@ void polygonmesh::set_attributes( void ) const
 		nvertices.get(),
 		count_array.entries() );
 
-	if(!requires_frame_aligned_sample() ||
-		time_sampler(
-			m_context,
-			*m_object, time_sampler::e_deformation).nb_samples() <= 1 ||
-		!export_extrapolated_P(polygon_mesh->getVertexList()))
+	/*
+		Export rest attributes. Note that we don't output them per time-sample
+		as this goes against the logic of rest attibutes.
+	*/
+	std::vector< std::string > rest{ "rest" };
+	if( !m_is_subdiv )
+	{
+		rest.push_back( "rnml" );
+	}
+	exporter::export_attributes(
+		to_export, *polygon_mesh,
+		m_context.ShutterOpen(), polygon_mesh->getVertexList() );
+
+	/*
+		Now export actual geo (P,N). This could be either interpolated ("v") or
+		sampled.
+	*/
+	if( has_velocity_blur() )
+	{
+		export_extrapolated_P(polygon_mesh->getVertexList());
+		if(!m_is_subdiv)
+		{
+			std::vector<std::string> to_export(1, "N");
+			exporter::export_attributes(
+				to_export,
+				*polygon_mesh,
+				m_context.m_current_time,
+				polygon_mesh->getVertexList());
+		}
+	}
+	else
 	{
 		// Export attributes at each time sample
 		primitive::set_attributes();
-		return;
-	}
-
-	// Export normals at a single time sample
-	if(!m_is_subdiv)
-	{
-		std::vector<std::string> to_export(1, "N");
-		exporter::export_attributes(
-			to_export,
-			*polygon_mesh,
-			m_context.m_current_time,
-			polygon_mesh->getVertexList());
 	}
 }
 
@@ -132,11 +145,10 @@ void polygonmesh::set_attributes_at_time(
 	const GT_PrimPolygonMesh *polygon_mesh =
 		static_cast<const GT_PrimPolygonMesh *>(i_gt_primitive.get());
 
-	std::vector< std::string > to_export{ "P", "rest" };
+	std::vector< std::string > to_export{ "P" };
 	if( !m_is_subdiv )
 	{
 		to_export.push_back( "N" );
-		to_export.push_back( "rnml" );
 	}
 
 	exporter::export_attributes(

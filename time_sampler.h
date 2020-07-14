@@ -11,6 +11,10 @@
 
 	The number of time samples may vary depending on the rendering context and
 	the object that is to be sampled over time.
+
+	When velocity attribute "v" is attached to the primitive, only one time
+	sample is generated and primitives should use extrapolation to create
+	time varying geometry.
 */
 class time_sampler
 {

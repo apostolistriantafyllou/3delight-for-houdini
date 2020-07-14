@@ -24,10 +24,8 @@ primitive::primitive(
 	OBJ_Node* i_object,
 	double i_time,
 	const GT_PrimitiveHandle& i_gt_primitive,
-	unsigned i_primitive_index,
-	bool i_requires_frame_aligned_sample)
-	:	exporter(i_context, i_object),
-		m_requires_frame_aligned_sample(i_requires_frame_aligned_sample)
+	unsigned i_primitive_index )
+	:	exporter(i_context, i_object)
 {
 	add_time_sample(i_time, i_gt_primitive);
 
@@ -99,27 +97,7 @@ bool primitive::add_time_sample(
 		return false;
 	}
 
-	if(i_time != m_context.m_current_time && m_requires_frame_aligned_sample)
-	{
-		// We simply don't need this time sample. Not an error.
-		return true;
-	}
-
-	if(!m_gt_primitives.empty() && i_time < m_gt_primitives.back().first)
-	{
-		/*
-			This sample arrived out of chronological order. This is supposed to
-			happen only when creating an additional time sample for primitives
-			that require one that is aligned on a frame. It can be safely
-			ignored by the others.
-		*/
-		assert(i_time == m_context.m_current_time);
-		if(!m_requires_frame_aligned_sample)
-		{
-			return true;
-		}
-	}
-
+	assert(m_gt_primitives.empty() || i_time > m_gt_primitives.back().first);
 
 	/*
 		Do not try to output mismatching moving geo. 3DelightNSI will complain
@@ -268,10 +246,14 @@ bool primitive::export_extrapolated_P(GT_DataArrayHandle i_vertices_list)const
 	return true;
 }
 
-bool primitive::has_velocity(const GT_PrimitiveHandle& i_gt_prim)
+bool primitive::has_velocity_blur( void ) const
 {
+	if( !m_context.MotionBlur() )
+		return false;
+
 	GT_Owner owner;
-	return (bool)i_gt_prim->findAttribute(k_velocity_attribute, owner, 0);
+	return (bool)default_gt_primitive()->findAttribute(
+		k_velocity_attribute, owner, 0);
 }
 
 /**

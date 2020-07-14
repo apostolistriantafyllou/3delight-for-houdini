@@ -69,15 +69,31 @@ time_sampler::time_sampler(
 		}
 	}
 
-	/*
-		If we need only one time sample, after all, use the current time instead
-		of the "shutter open" time. This shouldn't change anything to the
-		rendered image since an attribute specified at a single time will be
-		considered as a constant, regardless of its associated sampling time.
-		However, it makes the NSI output clearer and debugging easier.
-	*/
-	if(m_nb_intervals == 0)
+	if( i_type == e_deformation )
 	{
-		m_last = m_first = i_context.m_current_time;
+		/*
+			If we have a "v" vector, we don't need any time segments we will
+			be extrapolating P/matrices instead.
+		*/
+		OP_Context op_ctx( i_context.m_start_time );
+		GU_DetailHandle gdh = i_node.getRenderGeometryHandle(op_ctx);
+		GU_DetailHandleAutoReadLock rlock(gdh);
+		const GU_Detail *gdp = rlock.getGdp();
+
+		if (gdp->findAttribute(GA_ATTRIB_PRIMITIVE, "v") ||
+			gdp->findAttribute(GA_ATTRIB_POINT, "v") ||
+			gdp->findAttribute(GA_ATTRIB_DETAIL, "v") )
+		{
+			m_nb_intervals = 0;
+		}
+	}
+
+	if( m_nb_intervals == 0 )
+	{
+		/*
+			This is needed for velocity blur to make sure we centered
+			on the frame.
+		*/
+		m_first = m_last = i_context.m_current_time;
 	}
 }

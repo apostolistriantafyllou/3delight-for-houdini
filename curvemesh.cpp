@@ -20,8 +20,7 @@ curvemesh::curvemesh(
 			i_object,
 			i_time,
 			i_gt_primitive,
-			i_primitive_index,
-			has_velocity(i_gt_primitive))
+			i_primitive_index )
 {
 }
 
@@ -95,29 +94,20 @@ void curvemesh::set_attributes( void ) const
 		m_nsi.SetAttribute( m_handle, NSI::CStringPArg("basis", "linear") );
 	}
 
-	/*
-		If the curves mesh is not motion-blurred (ie : it needs only one time
-		sample or if it has no velocity attribute) we simply output the
-		attributes' values at each time sample. When there is no motion blur,
-		it's simpler this way. However, we generally try to implement motion 
-		blur using the velocity attribute, in Houdini (mostly because particles
-		get funky values otherwise).
-	*/
-	if(!requires_frame_aligned_sample() ||
-		time_sampler(
-			m_context,
-			*m_object, time_sampler::e_deformation).nb_samples() <= 1 ||
-		!export_extrapolated_P())
+	if( has_velocity_blur() )
+	{
+		export_extrapolated_P();
+
+		// Export curves widths only
+		export_basic_attributes(
+			m_context.m_current_time, default_gt_primitive(),
+			true /* width only */);
+	}
+	else
 	{
 		// Export attributes at each time sample
 		primitive::set_attributes();
-		return;
 	}
-
-	// Export curves widths
-	export_basic_attributes(
-		m_context.m_current_time, default_gt_primitive(),
-		true /* width only */ );
 }
 
 void curvemesh::set_attributes_at_time(

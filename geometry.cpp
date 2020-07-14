@@ -39,7 +39,6 @@ std::vector<primitive *> Refine(
 	double i_time,
 	std::vector<primitive*>& io_result,
 	unsigned& io_primitive_index,
-	bool& io_requires_frame_aligned_sample,
 	int i_level = 0 );
 
 
@@ -67,7 +66,6 @@ struct OBJ_Node_Refiner : public GT_Refine
 	*/
 	std::vector<primitive*> m_return;
 
-	bool& m_requires_frame_aligned_sample;
 	const context &m_context;
 	double m_time;
 	int m_level;
@@ -80,12 +78,10 @@ struct OBJ_Node_Refiner : public GT_Refine
 		double i_time,
 		std::vector<primitive*> &io_result,
 		unsigned& io_primitive_index,
-		bool& io_requires_frame_aligned_sample,
 		int level)
 	:
 		m_node(i_node),
 		m_result(io_result),
-		m_requires_frame_aligned_sample(io_requires_frame_aligned_sample),
 		m_context(i_context),
 		m_time(i_time),
 		m_level(level),
@@ -147,7 +143,6 @@ struct OBJ_Node_Refiner : public GT_Refine
 			const UT_StringRef &op_name = m_node->getOperator()->getName();
 			if( op_name == "instance" && m_node->hasParm("instancepath") )
 			{
-				
 				m_result.push_back(
 					new instance(m_context, m_node, m_time, i_primitive, index));
 			}
@@ -205,7 +200,6 @@ struct OBJ_Node_Refiner : public GT_Refine
 					m_time,
 					m_result,
 					m_primitive_index,
-					m_requires_frame_aligned_sample,
 					m_level+1);
 			}
 
@@ -292,7 +286,6 @@ struct OBJ_Node_Refiner : public GT_Refine
 				m_time,
 				m_result,
 				m_primitive_index,
-				m_requires_frame_aligned_sample,
 				m_level+1);
 
 			if( ret.empty() )
@@ -314,13 +307,6 @@ struct OBJ_Node_Refiner : public GT_Refine
 			m_return.insert( m_return.end(), ret.begin(), ret.end() );
 		}
 		}
-
-		if(!m_result.empty())
-		{
-			m_requires_frame_aligned_sample =
-				m_requires_frame_aligned_sample ||
-				m_result.back()->requires_frame_aligned_sample();
-		}
 	}
 };
 
@@ -331,7 +317,6 @@ std::vector<primitive *> Refine(
 	double i_time,
 	std::vector<primitive*>& io_result,
 	unsigned& io_primitive_index,
-	bool& io_requires_frame_aligned_sample,
 	int i_level)
 {
 	OBJ_Node_Refiner refiner(
@@ -340,7 +325,6 @@ std::vector<primitive *> Refine(
 		i_time,
 		io_result,
 		io_primitive_index,
-		io_requires_frame_aligned_sample,
 		i_level);
 
 	GT_RefineParms params;
@@ -361,32 +345,11 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 	SOP_Node *sop = m_object->getRenderSopPtr();
 
 	assert( sop );
-	/*
-		Refine the geometry once per time sample, and maybe also at the current
-		time (if it contains primitives that require frame-aligned time samples
-		and such a sample is not part of the ones returned by the time_sampler).
-	*/
-	bool requires_frame_aligned_sample = false;
-	bool exported_frame_aligned_sample = false;
-	for(time_sampler t(m_context, *m_object, time_sampler::e_deformation);
-		t || (requires_frame_aligned_sample && !exported_frame_aligned_sample);
-		t ? t++,0 : 0)
-	{
-		double time;
-		if(t)
-		{
-			time = *t;
-		}
-		else
-		{
-			/*
-				This is an extra time sample meant only for primitives that
-				require one that is aligned on a frame.
-			*/
-			assert(requires_frame_aligned_sample);
-			time = m_context.m_current_time;
-		}
 
+	for(
+		time_sampler t(m_context, *m_object, time_sampler::e_deformation); t ; t++)
+	{
+		double time = *t;
 		OP_Context context(time);
 		GU_DetailHandle detail_handle( sop->getCookedGeoHandle(context) );
 
@@ -416,8 +379,7 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 			m_context,
 			time,
 			result,
-			primitive_index,
-			requires_frame_aligned_sample );
+			primitive_index );
 
 
 		if( result.empty() )
@@ -447,10 +409,6 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 			for( auto R : result )
 				delete R;
 		}
-
-		exported_frame_aligned_sample =
-			exported_frame_aligned_sample ||
-			time == m_context.m_current_time;
 	}
 
 #ifdef VERBOSE
