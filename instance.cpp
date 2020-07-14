@@ -356,7 +356,7 @@ void instance::set_attributes_at_time(
 		->SetValuePointer(matrices) );
 	nsi.SetAttributeAtTime( m_handle.c_str(), time, args );
 
-	if( velocity_data && velocity_data->entries() == num_matrices )
+	if( velocity_data )
 	{
 		/* Extrapolate shutter end matrix */
 		const float *v = velocity;
