@@ -13,7 +13,32 @@ static void check_houdini_version()
 {
 	const char build_version[] =
 		SYS_VERSION_MAJOR "." SYS_VERSION_MINOR "." SYS_VERSION_BUILD;
-	std::string runtime_version = ::HOM().applicationVersionString();
+	std::string runtime_version;
+	try
+	{
+		runtime_version = ::HOM().applicationVersionString();
+	}
+	catch(...)
+	{
+		/*
+			According to header comments, this should not happen. But it does
+			when running hython. If we ever want the warning for that case, we
+			could possibly parse ${HFS}/toolkit/include/SYS/SYS_Version.h
+		*/
+		return;
+	}
+
+	/*
+		Check the version only once. We try multiple times because of the above
+		failure case. With hython, the call from newVopOperator() works. But we
+		still want to try checking as early as possible when not in hython.
+	*/
+	static bool checked = false;
+	if(checked)
+	{
+		return;
+	}
+	checked = true;
 
 	if(runtime_version != build_version)
 	{
@@ -35,6 +60,7 @@ HoudiniDSOInit(UT_DSOInfo&)
 extern "C" SYS_VISIBILITY_EXPORT void
 newDriverOperator(OP_OperatorTable* io_table)
 {
+	check_houdini_version();
 	ROP_3Delight::Register(io_table);
 	creation_callbacks::init();
 }
@@ -42,6 +68,7 @@ newDriverOperator(OP_OperatorTable* io_table)
 extern "C" SYS_VISIBILITY_EXPORT void
 newVopOperator(OP_OperatorTable* io_table)
 {
+	check_houdini_version();
 	VOP_3DelightMaterialBuilder::Register(io_table);
 	shader_library::get_instance().Register(io_table);
 }
@@ -49,6 +76,7 @@ newVopOperator(OP_OperatorTable* io_table)
 extern "C" SYS_VISIBILITY_EXPORT void
 newObjectOperator(OP_OperatorTable* io_table)
 {
+	check_houdini_version();
 	OBJ_IncandescenceLight::Register(io_table);
 }
 
