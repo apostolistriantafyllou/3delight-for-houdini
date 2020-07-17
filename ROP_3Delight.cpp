@@ -1623,7 +1623,8 @@ void ROP_3Delight::ExportLightCategories(
 			light_source->getOperator()->getName() ==
 			"3Delight::IncandescenceLight";
 		bool isvdb = light_source->castToOBJLight() == nullptr;
-		std::string light_handle = light::handle(*light_source, i_ctx);
+
+		std::string light_handle = exporter::handle(*light_source, i_ctx);
 
 		for (int i = 0; !incand && !isvdb && i < numBundles; i++)
 		{
@@ -1657,8 +1658,8 @@ void ROP_3Delight::ExportLightCategories(
 			{
 				/*
 					In IPR, the light handle is not the same as its full path,
-					but we still want to ue the full path as a category name, so
-					we create a set with the proper name.
+					but we still want to use the full path as a category name,
+					so we create a set with the proper name.
 				*/
 				assert(i_ctx.m_ipr);
 				i_ctx.m_nsi.Create(category, "set");
