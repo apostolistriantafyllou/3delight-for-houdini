@@ -106,7 +106,7 @@ void polygonmesh::set_attributes( void ) const
 		rest.push_back( "rnml" );
 	}
 	exporter::export_attributes(
-		to_export, *polygon_mesh,
+		rest, *polygon_mesh,
 		m_context.ShutterOpen(), polygon_mesh->getVertexList() );
 
 	/*
