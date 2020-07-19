@@ -1177,16 +1177,27 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		char prefix[12] = "";
 		::sprintf(prefix, "%d", i+1);
 
+		/*
+			Some of the AOVs cannot be exported in Multi-light.
+			For example, "Z"
+		*/
+		std::map<std::string, std::vector<OBJ_Node*>> aov_light_categories;
 		unsigned nb_light_categories = 1;
 		if (desc.m_support_multilight)
 		{
+			aov_light_categories = light_categories;
 			nb_light_categories = light_categories.size();
+		}
+		else
+		{
+			/* Empty category = All lights */
+			aov_light_categories[ std::string() ];
 		}
 
 		assert( nb_light_categories>0 );
 
 		int j = -1;
-		for( auto &category : light_categories )
+		for( auto &category : aov_light_categories )
 		{
 			j++;
 			std::string layer_name = prefix;
