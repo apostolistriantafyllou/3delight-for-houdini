@@ -3,6 +3,7 @@
 #include <string>
 
 class context;
+class ROP_3Delight;
 
 /**
 	Utility class to convet COPs into texture files rendeable by 3DelightNSI.
@@ -13,5 +14,5 @@ struct cop_utilities
 		const context &i_context, const std::string & );
 
 private:
-	static std::string create_cop_directory( const std::string &i_rop );
+	static std::string create_cop_directory( const ROP_3Delight * );
 };

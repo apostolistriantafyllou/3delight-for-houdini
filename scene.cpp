@@ -389,11 +389,7 @@ void scene::create_atmosphere_shader_exporter(
 	const context& i_context,
 	std::vector<exporter *>& io_to_export )
 {
-	OP_Node *rop = OPgetDirector()->findNode( i_context.m_rop_path.c_str() );
-	if( !rop )
-	{
-		return;
-	}
+	ROP_Node *rop = (ROP_Node *)i_context.rop();
 
 	int index;
 	if( (index=rop->getParmIndex("atmosphere")) == -1 )
@@ -857,7 +853,7 @@ void scene::export_light_categories(
 		{
 			find_lights(
 				i_context.lights_to_render(),
-				i_context.m_rop_path.c_str(),
+				i_context.rop()->getFullPath().c_str(),
 				false,
 				io_lights_to_render);
 		}

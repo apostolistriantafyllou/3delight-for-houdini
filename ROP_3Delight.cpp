@@ -434,6 +434,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 			settings::k_rm_export_archive;
 
 	m_current_render = new context(
+		this,
 		m_settings,
 		m_nsi,
 		m_static_nsi,
@@ -446,8 +447,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		ipr,
 		!render,
 		archive,
-		m_cloud,
-		getFullPath().toStdString() );
+		m_cloud );
 
 	m_end_time = tend;
 
@@ -1901,7 +1901,7 @@ void ROP_3Delight::export_render_notes( const context &i_context ) const
 
 	std::string notes = scene_name.empty() ? "No scene name" : scene_name;
 	notes += "\n";
-	notes += i_context.m_rop_path;
+	notes += getFullPath().toStdString();
 	notes += "  |  ";
 	notes += frameid;
 

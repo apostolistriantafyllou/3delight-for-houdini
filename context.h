@@ -14,6 +14,7 @@
 #include <vector>
 
 class OBJ_Node;
+class ROP_Node;
 class ROP_3Delight;
 
 /**
@@ -34,7 +35,11 @@ public:
 	*/
 	context( ROP_3Delight *, fpreal t );
 
+	/*
+		\brief A context for rendering or scene export.
+	*/
 	context(
+		ROP_3Delight *,
 		const settings &i_settings,
 		NSI::Context &i_nsi,
 		NSI::Context &i_static_nsi,
@@ -47,29 +52,7 @@ public:
 		bool i_ipr,
 		bool i_export_nsi,
 		bool i_archive,
-		bool i_cloud,
-		const std::string& i_rop_path)
-	:
-		m_nsi(i_nsi),
-		m_static_nsi(i_static_nsi),
-		m_start_time(i_start_time),
-		m_end_time(i_end_time),
-		m_current_time(i_start_time),
-		m_frame_duration(1.0f / i_fps),
-		m_shutter(i_shutter_interval * m_frame_duration),
-		m_dof(i_dof),
-		m_batch(i_batch),
-		m_ipr(i_ipr),
-		m_export_nsi(i_export_nsi),
-		m_archive(i_archive),
-		m_cloud(i_cloud),
-		m_rop_path(i_rop_path),
-		m_settings(i_settings)
-	{
-		assert(!m_ipr || !m_export_nsi);
-		m_object_visibility_resolver =
-			new object_visibility_resolver(i_rop_path, i_settings, i_start_time);
-	}
+		bool i_cloud );
 
 	~context()
 	{
@@ -92,10 +75,7 @@ public:
 	bool SingleFrame()const { return m_start_time == m_end_time; }
 
 	/// Returns true if rendering should be done in a background thread
-	bool BackgroundThreadRendering()const
-	{
-		return SingleFrame() && !m_cloud && !m_export_nsi && !m_batch;
-	}
+	bool BackgroundThreadRendering()const;
 
 	/**
 		\brief Returns true if rendering should be done in a background process.
@@ -140,6 +120,8 @@ public:
 	/// Sets the animation time to be used for rendering.
 	void set_current_time(fpreal i_time);
 
+	const ROP_3Delight *rop( void ) const { return m_rop; }
+
 public:
 	NSI::Context &m_nsi;
 	NSI::Context &m_static_nsi;
@@ -157,9 +139,6 @@ public:
 	bool m_archive{false};
 	bool m_cloud{false};
 
-	// Full path of the 3Delight ROP from where rendering originates
-	std::string m_rop_path;
-
 	/** files to be deleted at render end. */
 	mutable std::vector< std::string > m_temp_filenames;
 
@@ -168,6 +147,9 @@ private:
 	object_visibility_resolver* m_object_visibility_resolver;
 
 	const settings& m_settings;
+
+	// Full path of the 3Delight ROP from where rendering originates
+	std::string m_rop_path;
 
 	/*
 		List of interests (callbacks) created in IPR mode.
@@ -179,4 +161,6 @@ private:
 		safe_interest object.
 	*/
 	mutable std::deque<safe_interest> m_interests;
+
+	ROP_3Delight *m_rop{ nullptr };
 };

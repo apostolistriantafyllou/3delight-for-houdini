@@ -108,7 +108,7 @@ std::string cop_utilities::convert_to_texture(
 			file_name = s+1; /* skip first '-' */
 			::free( s );
 
-			std::string dir = create_cop_directory( i_context.m_rop_path );
+			std::string dir = create_cop_directory( i_context.rop() );
 
 			if( dir.empty() )
 			{
@@ -153,13 +153,10 @@ std::string cop_utilities::convert_to_texture(
 }
 
 /** */
-std::string cop_utilities::create_cop_directory( const std::string &i_rop )
+std::string cop_utilities::create_cop_directory( const ROP_3Delight *i_rop )
 {
-	ROP_3Delight *rop = (ROP_3Delight *)
-		OPgetDirector()->findNode( i_rop.data() )->castToROPNode();
-
 	std::string path =
-		rop->GetNSIExportFilename( 0 /* time doesn't matter */ );
+		i_rop->GetNSIExportFilename( 0 /* time doesn't matter */ );
 
 	if( path.empty() || path == "stdout" )
 	{
