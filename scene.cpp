@@ -391,6 +391,8 @@ void scene::create_atmosphere_shader_exporter(
 {
 	ROP_Node *rop = (ROP_Node *)i_context.rop();
 
+	assert( rop );
+
 	if( !rop )
 		return;
 
@@ -578,6 +580,8 @@ void scene::create_exporters(
 	const context &i_context,
 	std::vector<exporter*> &o_to_export )
 {
+	assert( i_context.rop() );
+
 	/*
 		Start by getting the list of all OBJ exporters.
 	*/
@@ -771,6 +775,7 @@ void scene::find_custom_aovs(
 	double i_time,
 	std::vector<VOP_Node*>& o_custom_aovs )
 {
+	assert( i_node );
 	context ctx( i_node, i_time );
 
 	/*

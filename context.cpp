@@ -47,6 +47,7 @@ context::context(
 context::context(
 	ROP_3Delight *i_rop, fpreal i_time )
 :
+	m_rop(i_rop),
 	m_start_time(i_time),
 	m_end_time(i_time), m_current_time(i_time),
 	m_rop_path(i_rop->getFullPath().toStdString()),
