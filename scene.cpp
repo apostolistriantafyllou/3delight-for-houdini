@@ -391,6 +391,9 @@ void scene::create_atmosphere_shader_exporter(
 {
 	ROP_Node *rop = (ROP_Node *)i_context.rop();
 
+	if( !rop )
+		return;
+
 	int index;
 	if( (index=rop->getParmIndex("atmosphere")) == -1 )
 		return;
