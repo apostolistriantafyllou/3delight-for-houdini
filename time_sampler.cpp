@@ -80,9 +80,10 @@ time_sampler::time_sampler(
 		GU_DetailHandleAutoReadLock rlock(gdh);
 		const GU_Detail *gdp = rlock.getGdp();
 
-		if (gdp->findAttribute(GA_ATTRIB_PRIMITIVE, "v") ||
+		if (gdp &&
+			(gdp->findAttribute(GA_ATTRIB_PRIMITIVE, "v") ||
 			gdp->findAttribute(GA_ATTRIB_POINT, "v") ||
-			gdp->findAttribute(GA_ATTRIB_DETAIL, "v") )
+			gdp->findAttribute(GA_ATTRIB_DETAIL, "v")) )
 		{
 			m_nb_intervals = 0;
 		}
