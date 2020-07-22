@@ -892,9 +892,7 @@ void geometry::changed_cb(
 
 		case OP_NODE_PREDELETE:
 		{
-			ctx->m_nsi.Delete(
-				hub_handle(*obj, *ctx),
-				NSI::IntegerArg("recursive", 1));
+			Delete(*obj, *ctx);
 			break;
 		}
 		
