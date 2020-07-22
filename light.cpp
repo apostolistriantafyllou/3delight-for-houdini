@@ -380,6 +380,15 @@ void light::changed_cb(
 	void* i_data)
 {
 	context* ctx = (context*)i_callee;
+	OBJ_Node* obj = i_caller->castToOBJNode();
+	assert(obj);
+	
+	if(i_type == OP_NODE_PREDELETE)
+	{
+		Delete(*obj, *ctx);
+		return;
+	}
+
 	if(i_type != OP_PARM_CHANGED)
 	{
 		return;
@@ -392,7 +401,7 @@ void light::changed_cb(
 		return;
 	}
 
-	light node(*ctx, i_caller->castToOBJNode());
+	light node(*ctx, obj);
 	if(!node.set_single_shader_attribute(parm_index))
 	{
 		PRM_Parm& parm = node.m_object->getParm(parm_index);

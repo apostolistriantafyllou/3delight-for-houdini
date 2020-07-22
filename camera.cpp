@@ -407,6 +407,23 @@ void camera::changed_cb(
 	void* i_data)
 {
 	context* ctx = (context*)i_callee;
+	OBJ_Node* obj = i_caller->castToOBJNode();
+	assert(obj);
+	
+	if(i_type == OP_NODE_PREDELETE)
+	{
+		/*
+			Avoid deleting lights from the camera exporter. It won't cause any
+			actual problem, but NSI will complain that the node doesn't exist
+			(because the light exporter has already taken care of deleting it).
+		*/
+		if(!obj->castToOBJLight())
+		{
+			Delete(*obj, *ctx);
+		}
+		return;
+	}
+
 	if(i_type != OP_PARM_CHANGED)
 	{
 		return;
@@ -419,7 +436,7 @@ void camera::changed_cb(
 		return;
 	}
 
-	camera node(*ctx, i_caller->castToOBJNode());
+	camera node(*ctx, obj);
 
 	// Simply re-export all attributes.  It's not that expensive.
 	node.set_attributes();
