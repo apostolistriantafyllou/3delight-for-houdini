@@ -12,8 +12,8 @@ namespace
 std::vector<aov::description> descriptions =
 {
 	{ aov::e_shading, "Ci", "rgba", "Ci", "shader", "color", true, true },
-	{ aov::e_shading, "Ci (direct)", "directrgba", "Ci.direct", "shader", "color", false, true },
-	{ aov::e_shading, "Ci (indirect)", "indirectrgba", "Ci.indirect", "shader", "color", false, true },
+	{ aov::e_shading, "Ci (direct)", "direct", "Ci.direct", "shader", "color", false, true },
+	{ aov::e_shading, "Ci (indirect)", "indirect", "Ci.indirect", "shader", "color", false, true },
 	{ aov::e_shading, "Diffuse", "diffuse", "diffuse", "shader", "color", false, true },
 	{ aov::e_shading, "Diffuse (direct)", "directdiffuse", "diffuse.direct", "shader", "color", false, true },
 	{ aov::e_shading, "Diffuse (indirect)", "indirectdiffuse", "diffuse.indirect", "shader", "color", false, true },
