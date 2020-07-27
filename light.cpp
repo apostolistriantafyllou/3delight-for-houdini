@@ -200,13 +200,17 @@ void light::create_geometry( void ) const
 		m_nsi.Create( geo_name, "particles" );
 		m_nsi.SetAttribute( geo_name, args );
 	}
-	else if( type == e_tube )
+	else if( type == e_tube || type == e_line)
 	{
 		m_nsi.Create( geo_name, "mesh" );
 
 		// The base cylinder is 1 unit long (in X) and has a diameter of 0.15.
 		x_size *= 0.5f;
 		y_size *= 0.075f;
+
+		/* Create a cylinder with a very small diameter so it looks like a line*/
+		if (type == e_line)
+			y_size = 0.0005;
 
 		std::vector<float> P;
 		std::vector<int> indices, nvertices;
@@ -382,7 +386,7 @@ void light::changed_cb(
 	context* ctx = (context*)i_callee;
 	OBJ_Node* obj = i_caller->castToOBJNode();
 	assert(obj);
-	
+
 	if(i_type == OP_NODE_PREDELETE)
 	{
 		Delete(*obj, *ctx);
