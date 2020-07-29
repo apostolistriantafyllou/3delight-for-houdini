@@ -128,6 +128,7 @@ void curvemesh::export_basic_attributes(
 	if(!i_width_only)
 	{
 		to_export.push_back("P");
+		to_export.push_back("N");
 	}
 	to_export.push_back("width");
 
