@@ -162,6 +162,12 @@ void exporter::export_attributes(
 			nsi_type = NSITypeNormal;
 		}
 
+		if( name == "P" )
+		{
+			/* heightfields declare this as float[3] :( */
+			nsi_type = NSITypePoint;
+		}
+
 		if( name == "pscale" )
 		{
 			name = "width";
