@@ -333,8 +333,8 @@ std::vector<primitive *> Refine(
 	params.setAddVertexNormals( true );
 	params.setCuspAngle( GEO_DEFAULT_ADJUSTED_CUSP_ANGLE );
 
-	params.setCoalesceVolumes( true );
 #if SYS_VERSION_FULL_INT >= 0x12000214
+	params.setCoalesceVolumes( true );
 	params.setHeightFieldConvert( true );
 #endif
 
