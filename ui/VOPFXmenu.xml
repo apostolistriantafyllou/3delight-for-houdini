@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <!-- 
+  This will add 3Delight Shaders to Motion FX menu
+  to the right if parameters on VOP nodes.
+  -->
+<menuDocument>
+  
+    <menu>
+	<actionItem id="create_parm"/>
+	<actionItem id="create_subnet_input"/>
+	<actionItem id="create_const"/>
+
+	<separatorItem/>
+
+	<subMenu id="vopfx_delight_shader_nodes">
+	    <label>3Delight</label>
+<!-- Place 3Delight below Shaders (index 10)-->
+		<insertAtIndex>10</insertAtIndex>
+			<subMenu id="vopfx_delight_patterns">
+			<label>Patterns</label>
+			<scriptMenuStripDynamic id="vopfx_delight_patterns_dynamic">
+			<contentsScriptCode><![CDATA[
+import delightvopfxmenu
+return delightvopfxmenu.generateMenuItems(kwargs, 'delight_pattern_nodes')
+]]></contentsScriptCode>
+		<scriptCode><![CDATA[
+import delightvopfxmenu
+delightvopfxmenu.executeMenuAction(kwargs, 'delight_pattern_nodes')
+]]></scriptCode>
+	    </scriptMenuStripDynamic>
+	</subMenu>
+
+
+	<subMenu id="vopfx_delight_patterns3d">
+			<label>Patterns 3D</label>
+			<scriptMenuStripDynamic id="vopfx_delight_patterns3d_dynamic">
+			<contentsScriptCode><![CDATA[
+import delightvopfxmenu
+return delightvopfxmenu.generateMenuItems(kwargs, 'delight_pattern3d_nodes')
+]]></contentsScriptCode>
+		<scriptCode><![CDATA[
+import delightvopfxmenu
+delightvopfxmenu.executeMenuAction(kwargs, 'delight_pattern3d_nodes')
+]]></scriptCode>
+	    </scriptMenuStripDynamic>
+	</subMenu>
+
+	<subMenu id="vopfx_delight_utilities">
+			<label>Utilities</label>
+			<scriptMenuStripDynamic id="vopfx_delight_utilities_dynamic">
+			<contentsScriptCode><![CDATA[
+import delightvopfxmenu
+return delightvopfxmenu.generateMenuItems(kwargs, 'delight_utilities_nodes')
+]]></contentsScriptCode>
+		<scriptCode><![CDATA[
+import delightvopfxmenu
+delightvopfxmenu.executeMenuAction(kwargs, 'delight_utilities_nodes')
+]]></scriptCode>
+	    </scriptMenuStripDynamic>
+	</subMenu>
+
+	<subMenu id="vopfx_delight_shaders">
+			<label>Shaders</label>
+			<scriptMenuStripDynamic id="vopfx_delight_shader_dynamic">
+			<contentsScriptCode><![CDATA[
+import delightvopfxmenu
+return delightvopfxmenu.generateMenuItems(kwargs, 'delight_shader_nodes')
+]]></contentsScriptCode>
+		<scriptCode><![CDATA[
+import delightvopfxmenu
+delightvopfxmenu.executeMenuAction(kwargs, 'delight_shader_nodes')
+]]></scriptCode>
+	    </scriptMenuStripDynamic>
+	</subMenu>
+
+	</subMenu>
+
+	<separatorItem/>
+</menu>
+</menuDocument>
