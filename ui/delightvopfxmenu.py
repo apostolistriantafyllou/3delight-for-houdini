@@ -202,6 +202,10 @@ class VopEffect(object):
     def __repr__(self):
         return '<VopEffect label:\'%s\'>' % self.label
 
+""" 
+	TODO: Restrict 3Delight Materials(delight_shader_nodes)
+	to connect to closure data type only
+"""
 effects = {
     'delight_pattern_nodes': [
         VopEffect('3Delight::bulge'),
@@ -250,7 +254,7 @@ effects = {
         VopEffect('3Delight::setRange'),
         VopEffect('3Delight::dlUV'),
     ],
-""" TODO: Restrict 3Delight Materials for closure data type only"""
+	
 	'delight_shader_nodes': [
         VopEffect('3Delight::dlAtmosphere',data_types=['color']),
         VopEffect('3Delight::dlCarPaint',data_types=['color']),
