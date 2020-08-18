@@ -158,6 +158,10 @@ install(
 	FILES ui/VOPFXMenu.xml
 	DESTINATION . )
 
+install(
+	FILES ui/delightvopfxmenu.py
+	DESTINATION python2.7libs )
+
 # Add the Hydra plugin, if present, for Houdini >= 18.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/HydraNSI/CMakeLists.txt"
 	AND Houdini_VERSION_MAJOR GREATER_EQUAL 18)
