@@ -3,6 +3,7 @@
 #include <DM/DM_VPortAgent.h>
 #include <HOM/HOM_Module.h>
 #include <OP/OP_Director.h>
+#include <SYS/SYS_Version.h>
 
 #include <ndspy.h>
 #include <nsi_dynamic.hpp>
@@ -306,14 +307,13 @@ private:
 	double m_time;
 	double m_clip[2];
 	double m_focal_length;
-	double m_focus_distance;
-	double m_fstop;
-	float m_fov;
+	double m_focus_distance{0.0};
+	double m_fstop{0.0};
+	float m_fov{-1.0f};
 };
 
 
 viewport_camera::viewport_camera()
-	:	m_fov(-1.0f)
 {
 }
 
@@ -323,8 +323,10 @@ viewport_camera::viewport_camera(double i_time, GUI_ViewParameter& i_view)
 	m_time = i_time;
 	i_view.getLimits(m_clip+0, m_clip+1);
 	m_focal_length = i_view.getFocalLength();
+#if SYS_VERSION_MAJOR_INT >= 18
 	m_focus_distance = i_view.getFocusDistance();
 	m_fstop = i_view.getFStop();
+#endif
 
 	double resolution[2] =
 		{ double(i_view.getViewWidth()), double(i_view.getViewHeight()) };
@@ -949,7 +951,12 @@ viewport_hook_builder::disconnect()
 
 
 viewport_hook_builder::viewport_hook_builder()
-	:	DM_SceneHook("3Delight Viewport Renderer", 0, DM_HOOK_ALL_VIEWS)
+	:	DM_SceneHook(
+			"3Delight Viewport Renderer", 0
+#if SYS_VERSION_MAJOR_INT >= 18
+			, DM_HOOK_ALL_VIEWS
+#endif
+		)
 {
 	// Register our custom display driver
 
