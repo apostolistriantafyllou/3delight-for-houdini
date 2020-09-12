@@ -53,6 +53,7 @@ public:
 	static const char* k_render_mode;
 	static const std::string k_rm_render;
 	static const std::string k_rm_live_render;
+	static const std::string k_rm_viewport_render;
 	static const std::string k_rm_export_file;
 	static const std::string k_rm_export_archive;
 	static const std::string k_rm_export_stdout;
