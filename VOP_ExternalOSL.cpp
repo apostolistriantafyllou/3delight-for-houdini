@@ -1052,7 +1052,7 @@ VOP_ExternalOSL::updateParmsFlags()
 	{
 		const DlShaderInfo::Parameter* param = m_shader_info.m_dl.getparam(p);
 		assert(param);
-		if (param->isclosure)
+		if (param->isclosure && param->name != "aovGroup")
 		{
 			changed |= enableParm(param->name.c_str(), false);
 		}

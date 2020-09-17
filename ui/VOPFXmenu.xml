@@ -14,8 +14,8 @@
 
 	<subMenu id="vopfx_delight_shader_nodes">
 	    <label>3Delight</label>
-<!-- Place 3Delight below Shaders (index 10)-->
-		<insertAtIndex>10</insertAtIndex>
+		<!-- Place 3Delight below Shaders-->
+		<insertAfter>vopfx_shader_nodes</insertAfter>
 			<subMenu id="vopfx_delight_patterns">
 			<label>Patterns</label>
 			<scriptMenuStripDynamic id="vopfx_delight_patterns_dynamic">
