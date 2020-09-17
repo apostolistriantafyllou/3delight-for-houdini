@@ -130,6 +130,15 @@ public:
 	*/
 	virtual bool runCreateScript() override;
 
+	/*
+		Disables Closure data type parameter. For now we are
+		displaying these data types as colors, but since they do not
+		affect the shader surface when used as color we are disabling
+		them and leaving the possibility to connect a shader through
+		VOPFX menu or gear menu as we call it.
+	*/
+	virtual bool updateParmsFlags();
+
 #if HDK_API_VERSION >= 18000000
 	/// From VOP_Node
 	virtual UT_StringHolder getShaderName(
@@ -159,7 +168,7 @@ protected:
 	virtual int getInputFromNameSubclass(const UT_String &in)const override;
 	/// Fills the info about the source of an input parameter
 	virtual void getInputTypeInfoSubclass(
-		VOP_TypeInfo &o_type_info, 
+		VOP_TypeInfo &o_type_info,
 		int i_idx) override;
 	/**
 		Fills the info about the acceptable types for the source of an input
@@ -173,7 +182,7 @@ protected:
 	virtual void getOutputNameSubclass(UT_String &out, int i_idx)const override;
 	/// Fills the info about an output parameter
 	virtual void getOutputTypeInfoSubclass(
-		VOP_TypeInfo &o_type_info, 
+		VOP_TypeInfo &o_type_info,
 		int i_idx) override;
 
 private:

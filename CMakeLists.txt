@@ -109,7 +109,6 @@ if(INSTALL_PACKAGE_DEF)
 }
 ")
 endif()
-
 install(
 	FILES ui/ROP_3Delight.svg
 	DESTINATION config/Icons )
@@ -155,6 +154,14 @@ install(
 install(
 	FILES ui/MainMenuCommon.xml
 	DESTINATION . )
+
+install(
+	FILES ui/VOPFXMenu.xml
+	DESTINATION . )
+
+install(
+	FILES ui/delightvopfxmenu.py
+	DESTINATION python2.7libs )
 
 # Add the Hydra plugin, if present, for Houdini >= 18.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/HydraNSI/CMakeLists.txt"

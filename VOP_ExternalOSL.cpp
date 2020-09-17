@@ -119,8 +119,8 @@ static const std::vector<const DlShaderInfo::Parameter*> GetVolumeParams()
 
 
 /*
-	Checking for texture parameters which support colorspace 
-	meta data and when finding it we add a new parameter below 
+	Checking for texture parameters which support colorspace
+	meta data and when finding it we add a new parameter below
 	it for Color Space which later will be replaced by a dropdown
 */
 static void addColorSpace (std::vector<const DlShaderInfo::Parameter*>& page)
@@ -137,9 +137,9 @@ static void addColorSpace (std::vector<const DlShaderInfo::Parameter*>& page)
 }
 
 /*
-	Function below it used to add a DropDown Menu with color space 
-	options for parameters which support colorSpaces. The attribute 
-	name of these new "variables" will be the attribute name of 
+	Function below is used to add a DropDown Menu with color space
+	options for parameters which support colorSpaces. The attribute
+	name of these new "variables" will be the attribute name of
 	textureFile variables concatenated with meta.colorspace, which is
 	exactly the same as the colorspace attribute name supported by NSI.
 */
@@ -196,7 +196,7 @@ static unsigned GetNumChannels(const DlShaderInfo::TypeDesc& i_osl_type)
 
 		case NSITypePointer:
 			// We don't want to show "closure color" inputs in the UI
-			assert(false);
+			return 3;
 			break;
 
 		default:
@@ -252,7 +252,7 @@ static PRM_Type GetPRMType(
 
 		case NSITypePointer:
 			// We don't want to show "closure color" inputs in the UI
-			assert(false);
+			return PRM_RGB;
 			break;
 
 		default:
@@ -359,6 +359,7 @@ static PRM_Default* NewPRMDefault(
 		case NSITypePoint:
 		case NSITypeVector:
 		case NSITypeNormal:
+		case NSITypePointer:
 			if(i_param.fdefault.size() >= i_nb_defaults)
 			{
 				PRM_Default* def = new PRM_Default[i_nb_defaults];
@@ -373,11 +374,6 @@ static PRM_Default* NewPRMDefault(
 		case NSITypeMatrix:
 		case NSITypeDoubleMatrix:
 			// We don't want to show matrix inputs in the UI
-			assert(false);
-			break;
-
-		case NSITypePointer:
-			// We don't want to show "closure color" inputs in the UI
 			assert(false);
 			break;
 
@@ -500,8 +496,6 @@ VOP_Type VOP_ExternalOSL::GetVOPType(const DlShaderInfo::Parameter& i_osl_param)
 			return VOP_TYPE_MATRIX4;
 
 		case NSITypePointer:
-			// Corresponds to "closure color"
-			assert(false);
 			return VOP_TYPE_COLOR;
 
 		default:
@@ -732,8 +726,11 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 	{
 		const DlShaderInfo::Parameter& param = i_shader_info.GetInput(p);
 
-		// Closures can only be read through connections
-		if(param.isclosure)
+		/*
+			Since we are showing Closures as Colors on the UI we exclude
+			aovGroup from it since on OSL shader aovGroup is defined as a closure.
+		*/
+		if(param.isclosure && param.name == "aovGroup")
 		{
 			continue;
 		}
@@ -779,7 +776,7 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 
 		/*
 			Here we check the attributes with contain defaultColorSpace
-			meta data and then we add the ColorSpace menu below the 
+			meta data and then we add the ColorSpace menu below the
 			attributes which have it.
 		*/
 		const char* color_space_meta = "";
@@ -913,7 +910,7 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 			else
 			{
 				/*
-					Here we add the dropdown menu for Color Space on 
+					Here we add the dropdown menu for Color Space on
 					the reserved param "shader_color_space"
 				*/
 				if (param->name == "shader_color_space")
@@ -1045,6 +1042,25 @@ VOP_ExternalOSL::runCreateScript()
 	return ret;
 }
 
+bool
+VOP_ExternalOSL::updateParmsFlags()
+{
+	bool changed = OP_Network::updateParmsFlags();
+
+	unsigned nparams = m_shader_info.m_dl.nparams();
+	for (unsigned p = 0; p < nparams; p++)
+	{
+		const DlShaderInfo::Parameter* param = m_shader_info.m_dl.getparam(p);
+		assert(param);
+		if (param->isclosure && param->name != "aovGroup")
+		{
+			changed |= enableParm(param->name.c_str(), false);
+		}
+	}
+	return changed;
+}
+
+
 #if HDK_API_VERSION >= 18000000
 UT_StringHolder VOP_ExternalOSL::getShaderName(
 	VOP_ShaderNameStyle style,
@@ -1139,7 +1155,7 @@ VOP_ExternalOSL::SetRampParametersDefaults()
 		{
 			continue;
 		}
-		
+
 		const DlShaderInfo::Parameter* knots = nullptr;
 		const DlShaderInfo::Parameter* interpolation = nullptr;
 		const DlShaderInfo::Parameter* shared_interpolation = nullptr;
@@ -1353,7 +1369,7 @@ VOP_ExternalOSLOperator::VOP_ExternalOSLOperator(
 }
 
 /*
-	Setting a custom help URL by overriding the virtual GetOPHelpURL    
+	Setting a custom help URL by overriding the virtual GetOPHelpURL
 	function of OP_Operator class.
 */
 bool VOP_ExternalOSLOperator::getOpHelpURL(UT_String &url)
