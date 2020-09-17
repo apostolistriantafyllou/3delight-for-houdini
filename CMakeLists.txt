@@ -155,7 +155,7 @@ install(
 	DESTINATION . )
 
 install(
-	FILES ui/VOPFXMenu.xml
+	FILES ui/VOPFXmenu.xml
 	DESTINATION . )
 
 install(
