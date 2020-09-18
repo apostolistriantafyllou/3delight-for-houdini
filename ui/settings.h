@@ -23,10 +23,10 @@ public:
 	~settings();
 
 	/// Notifies the object of the ROP's rendering state
-	void Rendering(bool i_render);
+	void Rendering(bool i_render, bool i_ipr);
 
-	static PRM_Template* GetTemplates(bool i_cloud);
-	static OP_TemplatePair* GetTemplatePair(bool i_cloud);
+	static PRM_Template* GetTemplates(bool i_cloud, bool standin);
+	static OP_TemplatePair* GetTemplatePair(bool i_cloud,bool standin);
 	static OP_VariablePair* GetVariablePair();
 	static PRM_Template* GetObsoleteParameters();
 
@@ -42,6 +42,38 @@ public:
 		void* data, int index, fpreal t,
 		const PRM_Template* tplate);
 
+	static int setSave(
+		void* data, int index, fpreal t,
+		const PRM_Template* tplate);
+
+	static int setDisplay(
+		void* data, int index, fpreal t,
+		const PRM_Template* tplate);
+
+	static int setSaveDislay(
+		void* data, int index, fpreal t,
+		const PRM_Template* tplate);
+
+	static int setOutput(
+		void* data, int index, fpreal t,
+		const PRM_Template* tplate);
+
+	static int ipr_render(
+		void* data, int index, fpreal t,
+		const PRM_Template* tplate);
+
+	static int sequence_render(
+		void* data, int index, fpreal t,
+		const PRM_Template* tplate);
+
+	static int export_standin(
+		void* data, int index, fpreal t,
+		const PRM_Template* tplate);
+
+	static int export_standin_sequence(
+		void* data, int index, fpreal t,
+		const PRM_Template* tplate);
+
 	UT_String GetObjectsToRender( fpreal ) const;
 	UT_String GetLightsToRender( fpreal ) const;
 	UT_String get_matte_objects( fpreal ) const;
@@ -50,7 +82,12 @@ public:
 public:
 
 	static const char* k_rendering;
-	static const char* k_render_mode;
+	static const char* k_old_render_mode;
+	static const char* k_ipr_rendering;
+	static const char* k_ipr_start;
+	static const char* k_export_file;
+	static const char* k_sequence_rendering;
+	static const char* k_sequence_start;
 	static const std::string k_rm_render;
 	static const std::string k_rm_live_render;
 	static const std::string k_rm_export_file;
@@ -58,6 +95,7 @@ public:
 	static const std::string k_rm_export_stdout;
 	static const char* k_stop_render;
 	static const char* k_export;
+	static const char* k_export_sequence;
 	static const char* k_old_export_nsi;
 	static const char* k_old_ipr;
 	static const char* k_shading_samples;
@@ -82,6 +120,12 @@ public:
 	static const char* k_default_image_bits;
 	static const char* k_batch_output_mode;
 	static const char* k_interactive_output_mode;
+	static const char* k_display_rendered_images;
+	static const char* k_display_and_save_rendered_images;
+	static const char* k_save_rendered_images;
+	static const char* k_save_jpeg_copy;
+	static const char* k_output_nsi_files;
+	static const char* k_output_standin;
 	static const char* k_aovs;
 	static const char* k_aov;
 	static const char* k_aov_clear;
@@ -95,6 +139,7 @@ public:
 	static const char* k_disable_subsurface;
 	static const char* k_disable_atmosphere;
 	static const char* k_disable_multiple_scattering;
+	static const char* k_disable_extra_image_layers;
 	static const char* k_resolution_factor;
 	static const char* k_sampling_factor;
 	static const char* k_default_export_nsi_filename;
@@ -109,6 +154,7 @@ private:
 	UT_String GetAtmosphere( fpreal t ) const;
 	bool EnableMultiLight( fpreal t )const;
 	UT_String get_render_mode( fpreal t )const;
+	bool export_to_nsi( fpreal t )const;
 
 	/// Called when the Abort button is pressed
 	static int StopRenderCB(void* i_node, int, double, const PRM_Template*);

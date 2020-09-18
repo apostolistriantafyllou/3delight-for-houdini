@@ -37,6 +37,7 @@
 #include <nsi_dynamic.hpp>
 
 #include "delight.h"
+#include "HOM/HOM_ui.h"
 
 #include <iostream>
 
@@ -99,12 +100,12 @@ namespace
 	}
 }
 
-ROP_3DelightOperator::ROP_3DelightOperator(bool i_cloud)
+ROP_3DelightOperator::ROP_3DelightOperator(bool i_cloud,bool standin)
 	:OP_Operator(
-		i_cloud ? "3DelightCloud":"3Delight",
-		i_cloud ? "3Delight Cloud":"3Delight",
-		i_cloud ? ROP_3Delight::cloud_alloc : ROP_3Delight::alloc,
-		settings::GetTemplatePair(i_cloud),
+		i_cloud ? "3DelightCloud":standin ? "3DelightStandin":"3Delight",
+		i_cloud ? "3Delight Cloud":standin ? "3Delight Standin":"3Delight",
+		i_cloud ? ROP_3Delight::cloud_alloc : standin ? ROP_3Delight::standin_alloc: ROP_3Delight::alloc,
+		settings::GetTemplatePair(i_cloud,standin),
 		0,
 		0,
 		settings::GetVariablePair(),
@@ -117,35 +118,48 @@ void
 ROP_3Delight::Register(OP_OperatorTable* io_table)
 {
 	ROP_3DelightOperator* rop =
-		new ROP_3DelightOperator(false);
+		new ROP_3DelightOperator(false,false);
 	rop->setObsoleteTemplates(settings::GetObsoleteParameters());
 	io_table->addOperator(rop);
 
 	ROP_3DelightOperator* cloud_rop =
-		new ROP_3DelightOperator(true);
+		new ROP_3DelightOperator(true,false);
 	cloud_rop->setObsoleteTemplates(settings::GetObsoleteParameters());
 	io_table->addOperator(cloud_rop);
+
+	ROP_3DelightOperator* standin_rop =
+		new ROP_3DelightOperator(false,true);
+	standin_rop->setObsoleteTemplates(settings::GetObsoleteParameters());
+	io_table->addOperator(standin_rop);
 }
 
 OP_Node*
 ROP_3Delight::alloc(OP_Network* net, const char* name, OP_Operator* op)
 {
-	return new ROP_3Delight(net, name, op, false);
+	return new ROP_3Delight(net, name, op, false, false);
 }
 
 OP_Node*
 ROP_3Delight::cloud_alloc(OP_Network* net, const char* name, OP_Operator* op)
 {
-	return new ROP_3Delight(net, name, op, true);
+	return new ROP_3Delight(net, name, op, true, false);
+}
+
+OP_Node*
+ROP_3Delight::standin_alloc(OP_Network* net, const char* name, OP_Operator* op)
+{
+	return new ROP_3Delight(net, name, op, false, true);
 }
 
 ROP_3Delight::ROP_3Delight(
 	OP_Network* net,
 	const char* name,
 	OP_Operator* entry,
-	bool i_cloud)
+	bool i_cloud,
+	bool standin)
 	:	ROP_Node(net, name, entry),
 		m_cloud(i_cloud),
+		m_standin(standin),
 		m_current_render(nullptr),
 		m_end_time(0.0),
 		m_nsi(GetNSIAPI()),
@@ -384,7 +398,7 @@ void ROP_3Delight::StopRender()
 	}
 
 	// Notify the UI that rendering has stopped
-	m_settings.Rendering(false);
+	m_settings.Rendering(false,false);
 }
 
 unsigned ROP_3Delight::maxInputs() const
@@ -415,7 +429,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	bool render = m_idisplay_rendering || GetNSIExportFilename(tstart).empty();
 
 	/*
-		Get the number of frames per second. This is equivalent to	
+		Get the number of frames per second. This is equivalent to
 		OPgetDirector()->getChannelManager()->getSamplesPerSec(), except it's
 		not inline, and so doesn't suffer from CH_Manager class layout changes
 		between versions.
@@ -426,12 +440,9 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	bool ipr =
 		m_idisplay_rendering
 		?	m_idisplay_ipr
-		:	m_settings.get_render_mode(tstart).toStdString() ==
-			settings::k_rm_live_render;
+		:	evalInt(settings::k_ipr_start,0, tstart);
 	bool archive =
-		!m_idisplay_rendering &&
-		m_settings.get_render_mode(tstart).toStdString() ==
-			settings::k_rm_export_archive;
+		evalInt("export_standin", 0, tstart);
 
 	m_current_render = new context(
 		this,
@@ -454,7 +465,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	m_rendering = render;
 
 	// Notify the UI that a new render might have started
-	m_settings.Rendering(render);
+	m_settings.Rendering(render,ipr);
 
 	if(m_current_render->BackgroundProcessRendering())
 	{
@@ -506,7 +517,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 					m_rendering = false;
 
 					// Notify the UI that rendering has stopped
-					m_settings.Rendering(false);
+					m_settings.Rendering(false,false);
 
 					delete m_renderdl; m_renderdl = nullptr;
 
@@ -675,7 +686,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 					rop->m_rendering = false;
 
 					// Notify the UI that rendering has stopped
-					rop->m_settings.Rendering(false);
+					rop->m_settings.Rendering(false,false);
 					// Avoid keeping a reference to a soon invalid context
 					rop->m_static_nsi.SetHandle(NSI_BAD_CONTEXT);
 					// Close the main rendering context
@@ -717,7 +728,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 		}
 
 		// The frame has finished exporting or rendering, close the contexts
-		
+
 		/*
 			This will either close the static NSI file context or simply prevent
 			m_static_nsi from keeping a reference to a soon invalid context
@@ -786,7 +797,7 @@ ROP_3Delight::endRender()
 	{
 		delete m_current_render; m_current_render = nullptr;
 		m_rendering = false;
-		m_settings.Rendering(false);
+		m_settings.Rendering(false,false);
 	}
 	m_render_end_mutex.unlock();
 
@@ -797,19 +808,24 @@ bool
 ROP_3Delight::updateParmsFlags()
 {
 	bool changed = OP_Network::updateParmsFlags();
-
-	PRM_Parm& parm = getParm(settings::k_aov);
-	int size = parm.getMultiParmNumItems();
-
-	if (size > 0) changed |= enableParm("aov_clear_1", size > 1);
-
-	for (int i = 0; i < size; i++)
+	setVisibleState("trange", false);
+	if (m_standin)
 	{
-		changed |= enableParm(aov::getAovStrToken(i), false);
+		setVisibleState("take", false);
+		return changed;
 	}
+	PRM_Parm& parm = getParm(settings::k_aov);
+	{
+		int size = parm.getMultiParmNumItems();
+		if (size > 0) changed |= enableParm("aov_clear_1", size > 1);
 
-	changed |= enableParm(settings::k_view_layer, false);
+		for (int i = 0; i < size; i++)
+		{
+			changed |= enableParm(aov::getAovStrToken(i), false);
+		}
 
+		changed |= enableParm(settings::k_view_layer, false);
+	}
 	return changed;
 }
 
@@ -819,7 +835,7 @@ ROP_3Delight::loadFinished()
 	ROP_Node::loadFinished();
 
 	// Ensure that the ROP's initial rendering state is reflected in the UI
-	m_settings.Rendering(false);
+	m_settings.Rendering(false,false);
 }
 
 void
@@ -831,6 +847,7 @@ ROP_3Delight::resolveObsoleteParms(PRM_ParmList* i_old_parms)
 void
 ROP_3Delight::resolve_obsolete_render_mode(PRM_ParmList* i_old_parms)
 {
+
 	PRM_Parm* export_nsi = i_old_parms->getParmPtr(settings::k_old_export_nsi);
 	if(export_nsi)
 	{
@@ -841,7 +858,7 @@ ROP_3Delight::resolve_obsolete_render_mode(PRM_ParmList* i_old_parms)
 			setString(
 				settings::k_rm_export_stdout,
 				CH_STRING_LITERAL,
-				settings::k_render_mode,
+				settings::k_old_render_mode,
 				0, 0.0f);
 			return;
 		}
@@ -850,7 +867,7 @@ ROP_3Delight::resolve_obsolete_render_mode(PRM_ParmList* i_old_parms)
 			setString(
 				settings::k_rm_export_file,
 				CH_STRING_LITERAL,
-				settings::k_render_mode,
+				settings::k_old_render_mode,
 				0, 0.0f);
 			return;
 		}
@@ -864,8 +881,21 @@ ROP_3Delight::resolve_obsolete_render_mode(PRM_ParmList* i_old_parms)
 			setString(
 				settings::k_rm_live_render,
 				CH_STRING_LITERAL,
-				settings::k_render_mode,
+				settings::k_old_render_mode,
 				0, 0.0f);
+			return;
+		}
+	}
+
+	PRM_Parm* render_mode = i_old_parms->getParmPtr(settings::k_old_render_mode);
+	if (render_mode)
+	{
+		UT_String render_mode_val;
+		i_old_parms->evalString(render_mode_val, settings::k_old_render_mode, 0, 0.0);
+		if (render_mode_val == "Export to File")
+		{
+			setInt(settings::k_display_rendered_images, 0, 0.0f, false);
+			setInt(settings::k_output_nsi_files, 0, 0.0f, true);
 			return;
 		}
 	}
@@ -942,7 +972,7 @@ ROP_3Delight::ExportAtmosphere(const context& i_ctx, bool ipr_update)
 			m_settings.GetAtmosphere(i_ctx.m_current_time).c_str());
 
 	std::string env_handle = "atmosphere|environment";
-	
+
 	if(!atmo_vop)
 	{
 		if(ipr_update)
@@ -1098,21 +1128,6 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	std::string png_driver_name;
 	std::string jpeg_driver_name;
 
-	e_fileOutputMode output_mode = e_disabled;
-
-	if (i_ctx.m_export_nsi || i_ctx.m_batch)
-	{
-		int mode = evalInt(settings::k_batch_output_mode, 0, current_time);
-		if (mode == 0) output_mode = e_useToggleStates;
-		else output_mode = e_allFilesAndSelectedJpeg;
-	}
-	else
-	{
-		int mode = evalInt(settings::k_interactive_output_mode, 0, current_time);
-		if (mode == 0) output_mode = e_useToggleStates;
-		else if (mode == 1) output_mode = e_useToggleAndFramebufferStates;
-	}
-
 	int nb_aovs = evalInt(settings::k_aov, 0, current_time);
 	unsigned sort_key = 0;
 
@@ -1135,6 +1150,11 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	bool has_frame_buffer = false;
 	for (int i = 0; i < nb_aovs; i++)
 	{
+		bool is_layer_active = evalInt(aov::getAovActiveLayerToken(i), 0, current_time);
+		//Don't do anything if layer is not active
+		if (!is_layer_active)
+			continue;
+
 		UT_String label;
 		evalString(label, aov::getAovStrToken(i), 0, current_time );
 
@@ -1142,33 +1162,33 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 		bool idisplay_output =
 			!i_ctx.m_batch && !i_ctx.m_export_nsi &&
-			evalInt(aov::getAovFrameBufferOutputToken(i), 0, current_time) != 0;
-		bool file_output = evalInt(aov::getAovFileOutputToken(i), 0, current_time);
+			evalInt(settings::k_display_rendered_images, 0, current_time) != 0;
+		bool file_output = evalInt(settings::k_save_rendered_images, 0, current_time);
+
+		if (evalInt(settings::k_display_and_save_rendered_images, 0, current_time))
+		{
+			//Render in both display and image.
+			idisplay_output = true;
+			file_output = true;
+		}
+
 		bool png_output = file_output;
 		file_output = file_output && file_driver.toStdString() != "png";
 		png_output = png_output && file_driver.toStdString() == "png";
-		bool jpeg_output = evalInt(aov::getAovJpegOutputToken(i), 0, current_time);
+		bool jpeg_output = evalInt(settings::k_save_jpeg_copy, 0, current_time);
 
-		if (output_mode == e_disabled)
+		//We only output Jpeg images for beauth layer
+		if (desc.m_variable_name != "Ci")
+			jpeg_output = false;
+
+		//Always render to iDisplay if "Start IPR" button is clicked
+		if (evalInt(settings::k_ipr_start, 0, current_time))
 		{
+			idisplay_output = true;
 			file_output = false;
 			png_output = false;
 			jpeg_output = false;
 		}
-		else if (output_mode == e_allFilesAndSelectedJpeg)
-		{
-			// Ignore toggle state for file_output/png_output
-			file_output = file_driver.toStdString() != "png";
-			png_output = file_driver.toStdString() == "png";
-		}
-		else if (output_mode == e_useToggleAndFramebufferStates)
-		{
-			// Files output depends of toggle state idisplay_output
-			file_output = file_output && idisplay_output;
-			png_output = png_output && idisplay_output;
-			jpeg_output = jpeg_output && idisplay_output;
-		}
-
 		if (!idisplay_output && !file_output && !png_output && !jpeg_output)
 		{
 			continue;
@@ -1365,6 +1385,12 @@ ROP_3Delight::ExportOneOutputLayer(
 	const std::string& i_driver_name,
 	unsigned& io_sort_key) const
 {
+	//Output only RGBA layer if Disable extra Image Layer has been selected.
+	if (evalInt(settings::k_disable_extra_image_layers, 0, i_ctx.m_current_time)
+		&& i_desc.m_variable_name!="Ci")
+	{
+		return;
+	}
 	i_ctx.m_nsi.Create(i_layer_handle, "outputlayer");
 	i_ctx.m_nsi.SetAttribute(
 		i_layer_handle,
@@ -1697,9 +1723,8 @@ bool ROP_3Delight::HasSpeedBoost( double t )const
 	{
 		return false;
 	}
-
-	std::string render_mode = m_settings.get_render_mode(t).toStdString();
-	if(render_mode == settings::k_rm_export_file )
+	bool export_to_nsi = m_settings.export_to_nsi(t);
+	if(export_to_nsi)
 		return false;
 
 	return evalInt(settings::k_speed_boost, 0, t);
@@ -1828,19 +1853,9 @@ void ROP_3Delight::time_change_cb(double i_time)
 std::string
 ROP_3Delight::GetNSIExportFilename(double i_time)const
 {
-	std::string render_mode = m_settings.get_render_mode(i_time).toStdString();
-
-	if(render_mode == settings::k_rm_render ||
-		render_mode == settings::k_rm_live_render)
-	{
+	bool export_to_nsi = m_settings.export_to_nsi(i_time);
+	if (!export_to_nsi)
 		return {};
-	}
-
-	if(render_mode == settings::k_rm_export_stdout)
-	{
-		// A filename of "stdout" actually makes NSI output to standard output
-		return std::string("stdout");
-	}
 
 	UT_String export_file;
 	evalString(export_file, settings::k_default_export_nsi_filename, 0, i_time);

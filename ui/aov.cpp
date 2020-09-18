@@ -133,11 +133,18 @@ aov::getDescription(const std::string& i_ui_name)
 	return dummy;
 }
 
+static const char* k_active_layer = "active_layer_#";
 static const char* k_framebuffer_output = "framebuffer_output_#";
 static const char* k_file_output = "file_output_#";
 static const char* k_jpeg_output = "jpeg_output_#";
 static const char* k_aov_label = "aov_label_#";
 static const char* k_aov_name = "aov_name_#";
+
+const char*
+aov::getActiveLayerOutputStr()
+{
+	return k_active_layer;
+}
 
 const char*
 aov::getAovFrameBufferOutputStr()
@@ -170,10 +177,10 @@ aov::getAovStrStr()
 }
 
 const char*
-aov::getAovFrameBufferOutputToken(int index)
+aov::getAovActiveLayerToken(int index)
 {
 	static std::string framebuffer_output_token;
-	framebuffer_output_token = k_framebuffer_output;
+	framebuffer_output_token = k_active_layer;
 	framebuffer_output_token.pop_back();
 
 	char suffix[12] = "";
@@ -181,34 +188,6 @@ aov::getAovFrameBufferOutputToken(int index)
 	framebuffer_output_token += suffix;
 
 	return framebuffer_output_token.c_str();
-}
-
-const char*
-aov::getAovFileOutputToken(int index)
-{
-	static std::string file_output_token;
-	file_output_token = k_file_output;
-	file_output_token.pop_back();
-
-	char suffix[12] = "";
-	::sprintf(suffix, "%d", index+1);
-	file_output_token += suffix;
-
-	return file_output_token.c_str();
-}
-
-const char*
-aov::getAovJpegOutputToken(int index)
-{
-	static std::string jpeg_output_token;
-	jpeg_output_token = k_jpeg_output;
-	jpeg_output_token.pop_back();
-
-	char suffix[12] = "";
-	::sprintf(suffix, "%d", index+1);
-	jpeg_output_token += suffix;
-
-	return jpeg_output_token.c_str();
 }
 
 const char*

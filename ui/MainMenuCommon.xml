@@ -27,11 +27,21 @@ newnode = roptoolutils.createRenderNode('3Delight')
 	  <scriptCode><![CDATA[import roptoolutils
 
 newnode = roptoolutils.createRenderNode('3DelightCloud')
+]]>
+</scriptCode>
+        </scriptItem>
+
+        <scriptItem id="h.create_3DelightStandin">
+          <label>3Delight Standin</label>
+		  <insertAtIndex>2</insertAtIndex>
+	  <scriptCode><![CDATA[import roptoolutils
+
+newnode = roptoolutils.createRenderNode('3DelightStandin')
 ]]></scriptCode>
         </scriptItem>
 
 		<separatorItem>
-		  <insertAtIndex>2</insertAtIndex>
+		  <insertAtIndex>3</insertAtIndex>
 		</separatorItem>
 	  </subMenu>
     </subMenu>

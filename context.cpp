@@ -38,7 +38,7 @@ context::context(
 	m_rop_path(i_rop->getFullPath().c_str()),
 	m_settings(i_settings)
 {
-	assert(!m_ipr || !m_export_nsi);
+	//assert(!m_ipr || !m_export_nsi);
 	m_object_visibility_resolver =
 		new object_visibility_resolver(m_rop_path, i_settings, i_start_time);
 }
