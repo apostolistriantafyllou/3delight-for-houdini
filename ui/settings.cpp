@@ -26,6 +26,7 @@ const char* settings::k_old_render_mode = "render_mode";
 const char* settings::k_ipr_rendering = "ipr_rendering";
 const char* settings::k_ipr_start = "ipr_start";
 const char* settings::k_export_file = "export_file";
+const char* settings::k_export_sequence_file = "export_sequencefile";
 const char* settings::k_sequence_rendering = "sequence_rendering";
 const char* settings::k_sequence_start = "sequence_start";
 const std::string settings::k_rm_render = "render";
@@ -67,6 +68,7 @@ const char* settings::k_display_and_save_rendered_images = "display_and_save_ren
 const char* settings::k_save_jpeg_copy = "save_jpeg_copy";
 const char* settings::k_output_nsi_files = "output_nsi_files";
 const char* settings::k_output_standin = "output_standin";
+const char* settings::k_export_standin = "export_standin";
 const char* settings::k_aovs = "aovs";
 const char* settings::k_aov = "aov";
 const char* settings::k_aov_clear = "aov_clear_#";
@@ -186,7 +188,7 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 	static PRM_Name ipr_start(k_ipr_start, "Ipr Start");
 	static PRM_Default ipr_start_h(false);
 
-	static PRM_Name export_standin("export_standin", "Standin");
+	static PRM_Name export_standin(k_export_standin, "Standin");
 	static PRM_Default export_standin_h(false);
 
 	static PRM_Name sequence_rendering(k_sequence_rendering, "Sequence Rendering");
@@ -198,16 +200,32 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 
 	static PRM_Name export_file(k_export_file, "          Export           ");
 	static PRM_Default export_file_d(false);
-	static PRM_Conditional export_file_h(("{ " + std::string(k_output_nsi_files) + " == 0 }").c_str(), PRM_CONDTYPE_HIDE);
+	static PRM_Name export_sequence_file(k_export_sequence_file, " Export Sequence");
+	static PRM_Default export_sequence_file_d(false);
+
+	static PRM_Conditional export_file_hide(
+		("{ " + std::string(k_output_nsi_files) + " == 0 }").c_str(), PRM_CONDTYPE_HIDE);
+
+	static PRM_Conditional export_file_disable(
+		("{ " + std::string(k_sequence_rendering) + " != 0 }").c_str(), PRM_CONDTYPE_DISABLE);
+	static PRM_ConditionalGroup export_file_group;
+	export_file_group.addConditional(export_file_hide);
+	export_file_group.addConditional(export_file_disable);
+
+	static PRM_Conditional export_sequence_file_h(
+		("{ " + std::string(k_output_nsi_files) + " == 0 }"
+			"{ " + std::string(k_sequence_rendering) + " != 0 }").c_str(), PRM_CONDTYPE_HIDE);
 
 	/*Hide Start Sequence Button when rendering a sequence of frames
 	(pressing Start Sequence button or disable it when rendering a
 	single frame or in IPR
 	*/
-	static PRM_Conditional start_sequence_h(("{ " + std::string(k_sequence_rendering) + " != 0 }").c_str(), PRM_CONDTYPE_HIDE);
+	static PRM_Conditional start_sequence_h(
+		("{ " + std::string(k_sequence_rendering) + " != 0 }"
+		 "{ " + std::string(k_output_nsi_files) + " != 0 }").c_str(), PRM_CONDTYPE_HIDE);
 	static PRM_Conditional start_sequence_disable(
 		("{ " + std::string(k_rendering) + " != 0 }"
-			"{ " + std::string(k_ipr_rendering) + " != 0 }").c_str(), PRM_CONDTYPE_DISABLE);
+		 "{ " + std::string(k_ipr_rendering) + " != 0 }").c_str(), PRM_CONDTYPE_DISABLE);
 	static PRM_ConditionalGroup start_sequence_group_h;
 	start_sequence_group_h.addConditional(start_sequence_h);
 	start_sequence_group_h.addConditional(start_sequence_disable);
@@ -247,7 +265,7 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 		PRM_Template(
 			PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &export_file, nullptr, nullptr,
 			nullptr, &ROP_3Delight::doRenderCback, nullptr, 0, nullptr,
-			&export_file_h),
+			&export_file_group),
 		PRM_Template(
 			PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &stop_render, nullptr, nullptr,
 			nullptr, &settings::StopRenderCB, nullptr, 0, nullptr,
@@ -263,6 +281,10 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 		PRM_Template(
 			PRM_TOGGLE | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1,
 			&sequence_start, &sequence_start_h),
+		PRM_Template(
+			PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &export_sequence_file, nullptr, nullptr,
+			nullptr, &settings::sequence_render, nullptr, 0, nullptr,
+			&export_sequence_file_h),
 		PRM_Template(PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &SequenceRender, 0, 0, 0,
 					&settings::sequence_render,0,0,nullptr,&start_sequence_group_h),
 	};
@@ -618,9 +640,9 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 	static std::vector<PRM_Template> image_layers_templates =
 	{
 		PRM_Template(PRM_TOGGLE, 1, &enable_multi_light, &enable_multi_light_d),
-		PRM_Template(PRM_LABEL, 0, &multi_light_note1),
-		PRM_Template(PRM_LABEL, 0, &multi_light_note2),
-		PRM_Template(PRM_LABEL, 0, &multi_light_note3),
+		//PRM_Template(PRM_LABEL, 0, &multi_light_note1),
+		//PRM_Template(PRM_LABEL, 0, &multi_light_note2),
+		//PRM_Template(PRM_LABEL, 0, &multi_light_note3),
 		PRM_Template(PRM_SEPARATOR, 0, &separator4),
 		PRM_Template(PRM_LABEL|PRM_TYPE_JOIN_NEXT, 1, &aovs_titles1),
 		PRM_Template(PRM_LABEL, 1, &aovs_titles2),
@@ -1245,9 +1267,9 @@ int settings::export_standin(
 	const PRM_Template* tplate)
 {
 	ROP_3Delight *node = reinterpret_cast<ROP_3Delight*>(data);
-	node->get_settings().m_parameters.setInt("export_standin", 0, 0.0, true);
+	node->get_settings().m_parameters.setInt(k_export_standin, 0, 0.0, true);
 	node->doRenderCback(data, index, t, tplate);
-	node->get_settings().m_parameters.setInt("export_standin", 0, 0.0, false);
+	node->get_settings().m_parameters.setInt(k_export_standin, 0, 0.0, false);
 	return 1;
 }
 
@@ -1257,9 +1279,9 @@ int settings::export_standin_sequence(
 {
 	ROP_3Delight *node = reinterpret_cast<ROP_3Delight*>(data);
 	node->get_settings().m_parameters.setInt("trange", 0, 0.0, 1);
-	node->get_settings().m_parameters.setInt("export_standin", 0, 0.0, true);
+	node->get_settings().m_parameters.setInt(k_export_standin, 0, 0.0, true);
 	node->doRenderCback(data, index, t, tplate);
-	node->get_settings().m_parameters.setInt("export_standin", 0, 0.0, false);
+	node->get_settings().m_parameters.setInt(k_export_standin, 0, 0.0, false);
 	node->get_settings().m_parameters.setInt("trange", 0, 0.0, 0);
 	return 1;
 }

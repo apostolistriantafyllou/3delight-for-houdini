@@ -86,6 +86,7 @@ public:
 	static const char* k_ipr_rendering;
 	static const char* k_ipr_start;
 	static const char* k_export_file;
+	static const char* k_export_sequence_file;
 	static const char* k_sequence_rendering;
 	static const char* k_sequence_start;
 	static const std::string k_rm_render;
@@ -126,6 +127,7 @@ public:
 	static const char* k_save_jpeg_copy;
 	static const char* k_output_nsi_files;
 	static const char* k_output_standin;
+	static const char* k_export_standin;
 	static const char* k_aovs;
 	static const char* k_aov;
 	static const char* k_aov_clear;

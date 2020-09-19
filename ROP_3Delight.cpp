@@ -442,7 +442,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		?	m_idisplay_ipr
 		:	evalInt(settings::k_ipr_start,0, tstart);
 	bool archive =
-		evalInt("export_standin", 0, tstart);
+		evalInt(settings::k_export_standin, 0, tstart);
 
 	m_current_render = new context(
 		this,
