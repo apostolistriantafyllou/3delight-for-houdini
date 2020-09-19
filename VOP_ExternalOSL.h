@@ -137,7 +137,7 @@ public:
 		them and leaving the possibility to connect a shader through
 		VOPFX menu or gear menu as we call it.
 	*/
-	virtual bool updateParmsFlags();
+	virtual bool updateParmsFlags() override;
 
 #if HDK_API_VERSION >= 18000000
 	/// From VOP_Node
