@@ -3,7 +3,9 @@
 #include "VOP_3DelightMaterialBuilder.h"
 #include "creation_callbacks.h"
 #include "shader_library.h"
+#include "viewport_hook.h"
 
+#include <DM/DM_RenderTable.h>
 #include <HOM/HOM_Module.h>
 #include <HOM/HOM_ui.h>
 #include <UT/UT_DSOVersion.h>
@@ -80,3 +82,12 @@ newObjectOperator(OP_OperatorTable* io_table)
 	OBJ_IncandescenceLight::Register(io_table);
 }
 
+extern "C" SYS_VISIBILITY_EXPORT void
+newRenderHook(DM_RenderTable* io_table)
+{
+	check_houdini_version();
+	io_table->registerSceneHook(
+		&viewport_hook_builder::instance(),
+		DM_HOOK_BEAUTY,
+		DM_HOOK_AFTER_NATIVE);
+}

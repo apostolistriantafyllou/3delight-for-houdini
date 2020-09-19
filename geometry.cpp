@@ -21,6 +21,7 @@
 #include <OP/OP_Operator.h>
 #include <VOP/VOP_Node.h>
 #include <SOP/SOP_Node.h>
+#include <SYS/SYS_Version.h>
 
 #include <iostream>
 #include <algorithm>
@@ -331,6 +332,11 @@ std::vector<primitive *> Refine(
 	params.setAllowSubdivision( true );
 	params.setAddVertexNormals( true );
 	params.setCuspAngle( GEO_DEFAULT_ADJUSTED_CUSP_ANGLE );
+
+#if SYS_VERSION_FULL_INT >= 0x12000214
+	params.setCoalesceVolumes( true );
+	params.setHeightFieldConvert( true );
+#endif
 
 	i_primitive->refine( refiner, &params );
 

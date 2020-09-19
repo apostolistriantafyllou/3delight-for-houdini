@@ -31,6 +31,7 @@ const char* settings::k_sequence_rendering = "sequence_rendering";
 const char* settings::k_sequence_start = "sequence_start";
 const std::string settings::k_rm_render = "render";
 const std::string settings::k_rm_live_render = "live_render";
+const std::string settings::k_rm_viewport_render = "viewport_render";
 const std::string settings::k_rm_export_file = "export_file";
 const std::string settings::k_rm_export_archive = "export_archive";
 const std::string settings::k_rm_export_stdout = "export_stdout";

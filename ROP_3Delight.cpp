@@ -12,6 +12,7 @@
 #include "shader_library.h"
 #include "time_notifier.h"
 #include "vdb.h"
+#include "viewport_hook.h"
 #include "vop.h"
 #include "dl_system.h"
 #include "ui/select_layers_dialog.h"
@@ -616,7 +617,19 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	{
 		ExportDefaultMaterial(*m_current_render);
 		ExportAtmosphere(*m_current_render);
-		ExportOutputs(*m_current_render);
+
+		if(m_settings.get_render_mode(time).toStdString() ==
+			settings::k_rm_viewport_render)
+		{
+			viewport_hook_builder::instance().connect(&m_nsi);
+			m_nsi.SetAttribute(
+				NSI_SCENE_GLOBAL,
+				NSI::CStringPArg("bucketorder", "circle"));
+		}
+		else
+		{
+			ExportOutputs(*m_current_render);
+		}
 		ExportGlobals(*m_current_render);
 		export_render_notes( *m_current_render );
 	}
@@ -670,6 +683,14 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 				{
 					delete rop->m_time_notifier; rop->m_time_notifier = nullptr;
 					creation_callbacks::unregister_ROP(rop);
+
+					double time = rop->m_current_render->m_current_time;
+					std::string mode =
+						rop->m_settings.get_render_mode(time).toStdString();
+					if(mode == settings::k_rm_viewport_render)
+					{
+						viewport_hook_builder::instance().disconnect();
+					}
 				}
 
 				delete rop->m_current_render; rop->m_current_render = nullptr;
@@ -1352,12 +1373,11 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		pattern. When only file output is request, we will use the more
 		efficient (at least, memory wise) scanline pattern.
 	*/
-	i_ctx.m_nsi.SetAttribute( NSI_SCENE_GLOBAL,
-	(
+	i_ctx.m_nsi.SetAttribute(
+		NSI_SCENE_GLOBAL,
 		NSI::CStringPArg(
 			"bucketorder",
-			has_frame_buffer ? "circle" : "horizontal")
-	) );
+			has_frame_buffer ? "circle" : "horizontal"));
 
 	/* Don't take too much CPU if the Houdini UI is present */
 	if( UTisUIAvailable() )

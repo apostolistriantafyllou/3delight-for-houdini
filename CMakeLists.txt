@@ -68,6 +68,7 @@ add_library( ${library_name} SHARED
 	time_notifier.cpp
 	time_sampler.cpp
 	vdb.cpp
+	viewport_hook.cpp
 	vop.cpp
 	ui/settings.cpp
 	ui/aov.cpp

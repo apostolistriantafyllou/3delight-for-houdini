@@ -102,6 +102,8 @@ const char* exporter::transparent_surface_handle()
 	  to "Pref" and "Nref". We also need to put them as point/normals
 	  for correct transform to object space (as they are defined as
 	  float[3]).
+	- When converting heightfields to meshes, the GT API use float[3] for P
+	  insteda of a point type. We patch that as well.
 	- \ref find_attribute() will scan the attibutes in the right order
 	  so to respect Houdini's attribute priorities.
 */
@@ -160,6 +162,12 @@ void exporter::export_attributes(
 		{
 			name = "Nref";
 			nsi_type = NSITypeNormal;
+		}
+
+		if( name == "P" )
+		{
+			/* heightfields declare this as float[3] :( */
+			nsi_type = NSITypePoint;
 		}
 
 		if( name == "pscale" )
