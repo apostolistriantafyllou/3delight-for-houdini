@@ -7,6 +7,20 @@
     parmtag     { spare_opfilter        "!!SHOP/PROPERTIES!!" }
     parmtag     { spare_classtags       "render" }
 
+/* Disable Lighting */
+    parm {
+        name    "xn__nsiglobaldisablelighting_2fbg"
+        label   "Disable Lighting"
+        type    toggle
+        size    1
+        parmtag { "spare_category" "Quality" }
+        parmtag { "uiscope" "viewport toolbar" }
+        parmtag { "usdvaluetype" "bool" }
+        default { 0 }
+        parmtag { "uiicon" VIEW_lighting_none }
+        help "Enables a fast rendering mode for previews."
+    }
+
 /* Shading Samples */
     parm {
         name    "xn__nsiglobalshadingsamples_gebg"
