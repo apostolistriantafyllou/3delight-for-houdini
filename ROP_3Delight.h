@@ -46,6 +46,7 @@ public:
 	static void Register(OP_OperatorTable* io_table);
 	static OP_Node* alloc(OP_Network* net, const char* name, OP_Operator* op);
 	static OP_Node* cloud_alloc(OP_Network* net, const char* name, OP_Operator* op);
+	static OP_Node* standin_alloc(OP_Network* net, const char* name, OP_Operator* op);
 
 	/** \brief Returns true if motion blur is enabled. */
 	bool HasMotionBlur( double i_time )const;
@@ -105,7 +106,8 @@ protected:
 		OP_Network* net,
 		const char* name,
 		OP_Operator* entry,
-		bool i_cloud);
+		bool i_cloud,
+		bool standin);
 	virtual ~ROP_3Delight();
 
 	virtual int startRender(int nframes, fpreal s, fpreal e);
@@ -126,7 +128,7 @@ private:
 
 	/**
 		\brief Called when the ROP changes in any way during an IPR render.
-		
+
 		This is used to detect changes that require updating the scene in IPR.
 		An atmosphere shader assignment is an example of this.
 
@@ -141,7 +143,7 @@ private:
 		void* i_callee,
 		OP_EventType i_type,
 		void* i_data);
-	
+
 	void export_render_notes( const context &i_context ) const;
 
 	void ExportTransparentSurface(const context& i_ctx) const;
@@ -221,6 +223,7 @@ private:
 private:
 	std::vector<OBJ_Node*> m_lights;
 	bool m_cloud;
+	bool m_standin;
 
 	context* m_current_render{nullptr};
 
@@ -288,7 +291,7 @@ private:
 struct ROP_3DelightOperator : public OP_Operator
 {
 	/// Constructor.
-	ROP_3DelightOperator(bool i_cloud);
+	ROP_3DelightOperator(bool i_cloud, bool standin);
 
 	// overriding function which is responsible for help URL
 	virtual bool getOpHelpURL(UT_String& url);

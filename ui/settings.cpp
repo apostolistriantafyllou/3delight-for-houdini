@@ -22,7 +22,13 @@
 static const float k_one_line = 0.267;
 
 const char* settings::k_rendering = "rendering";
-const char* settings::k_render_mode = "render_mode";
+const char* settings::k_old_render_mode = "render_mode";
+const char* settings::k_ipr_rendering = "ipr_rendering";
+const char* settings::k_ipr_start = "ipr_start";
+const char* settings::k_export_file = "export_file";
+const char* settings::k_export_sequence_file = "export_sequencefile";
+const char* settings::k_sequence_rendering = "sequence_rendering";
+const char* settings::k_sequence_start = "sequence_start";
 const std::string settings::k_rm_render = "render";
 const std::string settings::k_rm_live_render = "live_render";
 const std::string settings::k_rm_viewport_render = "viewport_render";
@@ -31,6 +37,7 @@ const std::string settings::k_rm_export_archive = "export_archive";
 const std::string settings::k_rm_export_stdout = "export_stdout";
 const char* settings::k_stop_render = "stop_render";
 const char* settings::k_export = "export";
+const char* settings::k_export_sequence = "export_sequence";
 const char* settings::k_old_export_nsi = "export_nsi";
 const char* settings::k_old_ipr = "ipr";
 const char* settings::k_shading_samples = "shading_samples";
@@ -56,6 +63,13 @@ const char* settings::k_default_image_format = "default_image_format";
 const char* settings::k_default_image_bits = "default_image_bits";
 const char* settings::k_batch_output_mode = "batch_output_mode";
 const char* settings::k_interactive_output_mode = "interactive_output_mode";
+const char* settings::k_display_rendered_images = "display_rendered_images";
+const char* settings::k_save_rendered_images = "save_rendered_images";
+const char* settings::k_display_and_save_rendered_images = "display_and_save_rendered_images";
+const char* settings::k_save_jpeg_copy = "save_jpeg_copy";
+const char* settings::k_output_nsi_files = "output_nsi_files";
+const char* settings::k_output_standin = "output_standin";
+const char* settings::k_export_standin = "export_standin";
 const char* settings::k_aovs = "aovs";
 const char* settings::k_aov = "aov";
 const char* settings::k_aov_clear = "aov_clear_#";
@@ -69,6 +83,7 @@ const char* settings::k_disable_displacement = "disable_displacement";
 const char* settings::k_disable_subsurface = "disable_subsurface";
 const char* settings::k_disable_atmosphere = "disable_atmosphere";
 const char* settings::k_disable_multiple_scattering = "disable_multiple_scattering";
+const char* settings::k_disable_extra_image_layers = "disable_extra_image_layers";
 const char* settings::k_resolution_factor = "resolution_factor";
 const char* settings::k_sampling_factor = "sampling_factor";
 const char* settings::k_default_export_nsi_filename = "default_export_nsi_filename";
@@ -89,19 +104,23 @@ settings::settings( ROP_3Delight &i_rop )
 	assert(execute_tmpl);
 	PRM_Name* execute_name = execute_tmpl->getNamePtr();
 	assert(execute_name);
-	execute_name->setLabel("Render");
-
+	execute_name->setLabel("          Render          ");
 	/*
-		Hide the Render button when rendering or in export mode, so the Abort or
-		Export button replace it.
+		Hide the Render button when rendering and disable it when rendering in IPR
+		mode or render a sequence of frames.
 	*/
 	static PRM_Conditional render_h(
 		("{ " + std::string(k_rendering) + " != 0 } "
-		"{ " + std::string(k_render_mode) + " == \"" + k_rm_export_file + "\" } "
-		"{ " + std::string(k_render_mode) + " == \"" + k_rm_export_archive + "\" } "
-		"{ " + std::string(k_render_mode) + " == \"" + k_rm_export_stdout + "\" }").c_str(),
+		 "{ " + std::string(k_output_nsi_files) + " != 0 }").c_str(),
 		PRM_CONDTYPE_HIDE);
-	execute_tmpl->setConditionalBasePtr(&render_h);
+
+	static PRM_Conditional render_disable(
+		("{ " + std::string(k_ipr_rendering) + " != 0 }"
+		 "{ " + std::string(k_sequence_rendering) + " != 0 }").c_str(), PRM_CONDTYPE_DISABLE);
+	static PRM_ConditionalGroup render_group_h;
+	render_group_h.addConditional(render_h);
+	render_group_h.addConditional(render_disable);
+	execute_tmpl->setConditionalBasePtr(&render_group_h);
 }
 
 settings::~settings()
@@ -109,12 +128,27 @@ settings::~settings()
 	delete sm_dialog; sm_dialog = nullptr;
 }
 
-void settings::Rendering(bool i_render)
+void settings::Rendering(bool i_render,bool ipr)
 {
-	m_parameters.setInt(k_rendering, 0, 0.0, i_render);
+	if (m_parameters.m_standin)
+		return;
+
+	m_parameters.setInt(k_ipr_rendering, 0, 0.0, ipr);
+	if (!ipr)
+	{
+		if (m_parameters.evalInt("trange", 0, 0))
+		{
+			m_parameters.setInt(k_sequence_rendering, 0, 0.0, true);
+		}
+		else
+		{
+			m_parameters.setInt(k_rendering, 0, 0.0, i_render);
+			m_parameters.setInt(k_sequence_rendering, 0, 0.0, false);\
+		}
+	}
 }
 
-PRM_Template* settings::GetTemplates(bool i_cloud)
+PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 {
 	static PRM_Name separator1("separator1", "");
 	static PRM_Name separator2("separator2", "");
@@ -122,63 +156,160 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 	static PRM_Name separator4("separator4", "");
 	static PRM_Name separator5("separator5", "");
 	static PRM_Name separator6("separator6", "");
+	static PRM_Name separator8("separator8", "");
+	static PRM_Name separator9("separator9", "");
 	// separator7 is obsolete : don't use it
 
 	// Actions
 	static PRM_Name rendering(k_rendering, "Rendering");
 	static PRM_Default rendering_d(false);
 
-	static PRM_Name stop_render(k_stop_render, "Abort");
+	static PRM_Name stop_render(k_stop_render, "    Abort Render    ");
 	static PRM_Conditional stop_render_h(("{ " + std::string(k_rendering) + " == 0 }").c_str(), PRM_CONDTYPE_HIDE);
+	//stop_render_group_h.addConditional(stop_render_ipr_h);
+	//stop_render_group_h.addConditional(stop_render_seq_h);
 
 	static PRM_Name export_n(k_export, "Export");
-	static PRM_Conditional export_h(
-		("{ " + std::string(k_render_mode) + " != \"" + k_rm_export_file +
-			"\" " + std::string(k_render_mode) + " != \"" + k_rm_export_archive +
-			"\" " + std::string(k_render_mode) + " != \"" + k_rm_export_stdout +
-			"\" }").c_str(),
-		PRM_CONDTYPE_HIDE);
+	static PRM_Name export_sequence_n(k_export_sequence, "Export Sequence");
 
-	static std::vector<PRM_Template> actions_templates =
+	static PRM_Name ipr_rendering(k_ipr_rendering, "Ipr Rendering");
+	static PRM_Default ipr_rendering_d(false);
+	static PRM_Name RenderIPR("ipr_render", "        Start IPR         ");
+	static PRM_Name stop_ipr("ipr_stop", "        Stop IPR         ");
+	static PRM_Conditional stop_ipr_h(("{ " + std::string(k_ipr_rendering) + " == 0 }").c_str(), PRM_CONDTYPE_HIDE);
+	static PRM_Conditional start_ipr_hide(
+		("{ " + std::string(k_ipr_rendering) + " != 0 }").c_str(), PRM_CONDTYPE_HIDE);
+	static PRM_Conditional start_ipr_disable(
+		("{ " + std::string(k_rendering) + " != 0 }"
+		"{ " + std::string(k_sequence_rendering) + " != 0 }").c_str(), PRM_CONDTYPE_DISABLE);
+	static PRM_ConditionalGroup start_ipr_group_h;
+	start_ipr_group_h.addConditional(start_ipr_hide);
+	start_ipr_group_h.addConditional(start_ipr_disable);
+
+	static PRM_Name ipr_start(k_ipr_start, "Ipr Start");
+	static PRM_Default ipr_start_h(false);
+
+	static PRM_Name export_standin(k_export_standin, "Standin");
+	static PRM_Default export_standin_h(false);
+
+	static PRM_Name sequence_rendering(k_sequence_rendering, "Sequence Rendering");
+	static PRM_Default sequence_rendering_d(false);
+	static PRM_Name SequenceRender("sequence_render", "Render Sequence");
+	static PRM_Name stop_sequence("sequence_stop", "  Abort Sequence ");
+	//Hide Abort Sequence Button when aborting sequence rendering.
+	static PRM_Conditional stop_sequence_h(("{ " + std::string(k_sequence_rendering) + " == 0 }").c_str(), PRM_CONDTYPE_HIDE);
+
+	static PRM_Name export_file(k_export_file, "          Export           ");
+	static PRM_Default export_file_d(false);
+	static PRM_Name export_sequence_file(k_export_sequence_file, " Export Sequence");
+	static PRM_Default export_sequence_file_d(false);
+
+	static PRM_Conditional export_file_hide(
+		("{ " + std::string(k_output_nsi_files) + " == 0 }").c_str(), PRM_CONDTYPE_HIDE);
+
+	static PRM_Conditional export_file_disable(
+		("{ " + std::string(k_sequence_rendering) + " != 0 }").c_str(), PRM_CONDTYPE_DISABLE);
+	static PRM_ConditionalGroup export_file_group;
+	export_file_group.addConditional(export_file_hide);
+	export_file_group.addConditional(export_file_disable);
+
+	static PRM_Conditional export_sequence_file_h(
+		("{ " + std::string(k_output_nsi_files) + " == 0 }"
+			"{ " + std::string(k_sequence_rendering) + " != 0 }").c_str(), PRM_CONDTYPE_HIDE);
+
+	/*Hide Start Sequence Button when rendering a sequence of frames
+	(pressing Start Sequence button or disable it when rendering a
+	single frame or in IPR
+	*/
+	static PRM_Conditional start_sequence_h(
+		("{ " + std::string(k_sequence_rendering) + " != 0 }"
+		 "{ " + std::string(k_output_nsi_files) + " != 0 }").c_str(), PRM_CONDTYPE_HIDE);
+	static PRM_Conditional start_sequence_disable(
+		("{ " + std::string(k_rendering) + " != 0 }"
+		 "{ " + std::string(k_ipr_rendering) + " != 0 }").c_str(), PRM_CONDTYPE_DISABLE);
+	static PRM_ConditionalGroup start_sequence_group_h;
+	start_sequence_group_h.addConditional(start_sequence_h);
+	start_sequence_group_h.addConditional(start_sequence_disable);
+	static PRM_Name sequence_start("sequence_start", "Sequence Start");
+	static PRM_Default sequence_start_h(false);
+
+	static std::vector<PRM_Template> ipr_render_templates =
 	{
+		PRM_Template(
+		PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &stop_ipr, nullptr, nullptr,
+		nullptr, &settings::StopRenderCB, nullptr, 0, nullptr,
+			&stop_ipr_h),
+		PRM_Template(
+			PRM_TOGGLE | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1,
+			&ipr_rendering, &ipr_rendering_d),
+		PRM_Template(
+			PRM_TOGGLE | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1,
+			&ipr_start, &ipr_start_h),
+		PRM_Template(PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &RenderIPR, 0, 0, 0,
+					&settings::ipr_render,0,0,nullptr,&start_ipr_group_h),
+		/*
+		Add this on our 3Delight ROP_Node so we don't get a warning regarding
+		evaluating the value of export_standin_h as it is only called from the
+		executed command on Standin ROP, to determine m_archive parameter's value.
+		*/
+		PRM_Template(
+			PRM_TOGGLE | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1,
+			&export_standin, &export_standin_h),
+	};
+
+	static std::vector<PRM_Template> sequence_render_templates =
+	{
+
 		PRM_Template(
 			PRM_TOGGLE|PRM_TYPE_JOIN_NEXT|PRM_TYPE_INVISIBLE, 1,
 			&rendering, &rendering_d),
 		PRM_Template(
+			PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &export_file, nullptr, nullptr,
+			nullptr, &ROP_3Delight::doRenderCback, nullptr, 0, nullptr,
+			&export_file_group),
+		PRM_Template(
 			PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &stop_render, nullptr, nullptr,
 			nullptr, &settings::StopRenderCB, nullptr, 0, nullptr,
 			&stop_render_h),
+
+		PRM_Template(
+		PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &stop_sequence, nullptr, nullptr,
+		nullptr, &settings::StopRenderCB, nullptr, 0, nullptr,
+			&stop_sequence_h),
+		PRM_Template(
+			PRM_TOGGLE | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1,
+			&sequence_rendering, &sequence_rendering_d),
+		PRM_Template(
+			PRM_TOGGLE | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1,
+			&sequence_start, &sequence_start_h),
+		PRM_Template(
+			PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &export_sequence_file, nullptr, nullptr,
+			nullptr, &settings::sequence_render, nullptr, 0, nullptr,
+			&export_sequence_file_h),
+		PRM_Template(PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &SequenceRender, 0, 0, 0,
+					&settings::sequence_render,0,0,nullptr,&start_sequence_group_h),
+	};
+
+	static std::vector<PRM_Template> standin_actions
+	{
 		/*
 			The ROP_Node::doRenderCback callback usually renders, but since the
 			Export button is only visible when the ROP is in export mode, it
 			will export an NSI stream instead.
 		*/
-		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &export_n, nullptr,
+
+		PRM_Template(
+			PRM_TOGGLE | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1,
+			&export_standin, &export_standin_h),
+
+		PRM_Template(PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &export_n, nullptr,
 			nullptr, nullptr,
-			&ROP_Node::doRenderCback, nullptr, 0, nullptr, &export_h)
-	};
+			&settings::export_standin, nullptr, 0, nullptr, nullptr),
 
-	// Render Mode
-	static PRM_Name render_mode(k_render_mode, "Render Mode");
-	static PRM_Default render_mode_d(0.0, "render");
-	static PRM_Item render_mode_i[] =
-	{
-		PRM_Item(k_rm_render.c_str(), "Render"),
-		PRM_Item(k_rm_live_render.c_str(), "IPR Render"),
-		PRM_Item(k_rm_export_file.c_str(), "Export to File"),
-		PRM_Item(k_rm_export_archive.c_str(), "Export Stand-in"),
-		PRM_Item(k_rm_export_stdout.c_str(), "Export to Console Window"),
-		PRM_Item(),
+		PRM_Template(PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &export_sequence_n, nullptr,
+			nullptr, nullptr,
+			&settings::export_standin_sequence, nullptr, 0, nullptr, nullptr),
 	};
-	static PRM_ChoiceList render_mode_c(PRM_CHOICELIST_SINGLE, render_mode_i);
-
-	// Export filename
-	static PRM_Name default_export_nsi_filename(k_default_export_nsi_filename, "Output File");
-	static PRM_Default default_export_nsi_filename_d(
-		0.0f, "$HIP/render/`$HIPNAME`_`$OS`_$F4.nsi");
-	static PRM_Conditional default_export_nsi_filename_g(
-		("{ " + std::string(k_render_mode) + " != \"" + k_rm_export_file + "\" " +
-		std::string(k_render_mode) + " != \"" + k_rm_export_archive + "\" }").c_str());
 
 	// Quality
 	static PRM_Name shading_samples(k_shading_samples, "Shading Samples");
@@ -277,8 +408,8 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 	static PRM_Name objects_to_render(k_objects_to_render, "Objects to Render");
 	static PRM_Default objects_to_render_d(0.0f, "*");
 
-	static PRM_Name lights_to_render(k_lights_to_render, "Lights to Render");
-	static PRM_Default lights_to_render_d(0.0f, "*");
+	//static PRM_Name lights_to_render(k_lights_to_render, "Lights to Render");
+	//static PRM_Default lights_to_render_d(0.0f, "*");
 
 	static PRM_Name matte_objects(k_matte_objects, "Matte Objects");
 	static PRM_Default matte_objects_d(0.0f, ""); /* none */
@@ -289,11 +420,128 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &atmosphere, &atmosphere_d, nullptr, nullptr, nullptr),
 		PRM_Template(PRM_TOGGLE, 1, &override_display_flags, &override_display_flags_d),
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &objects_to_render, &objects_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objGeometryPath, 1, nullptr, &override_display_flags_g),
-		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &lights_to_render, &lights_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objLightPath, 1, nullptr, &override_display_flags_g),
+		//PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &lights_to_render, &lights_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objLightPath, 1, nullptr, &override_display_flags_g),
 		PRM_Template(
 			PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &matte_objects,
 			&matte_objects_d, nullptr, nullptr, nullptr,
 			&PRM_SpareData::objGeometryPath, 1, nullptr, nullptr)
+	};
+
+	//Output
+	static PRM_Name display_rendered_images(k_display_rendered_images, "Display");
+	static PRM_Default display_rendered_images_d(true);
+
+	static PRM_Name save_rendered_images(k_save_rendered_images, "Image File");
+	static PRM_Default save_rendered_images_d(false);
+
+	static PRM_Name display_and_save_rendered_images(k_display_and_save_rendered_images, "Display and Image File");
+	static PRM_Default display_and_save_rendered_images_d(false);
+
+	static PRM_Name default_image_filename(k_default_image_filename, "Image Filename");
+	static PRM_Default default_image_filename_d(
+		0.0f, "$HIP/render/`$HIPNAME`_`$OS`_$F4.exr");
+
+	static PRM_Name default_image_format(k_default_image_format, "Image Format");
+	static PRM_Default default_image_format_d(0.0f, "exr");
+	static PRM_Item default_image_format_i[] =
+	{
+		PRM_Item("tiff", "TIFF"),
+		PRM_Item("exr", "OpenEXR"),
+		PRM_Item("deepexr", "OpenEXR (deep)"),
+		//PRM_Item("jpeg", "JPEG"),
+		PRM_Item("png", "PNG"),
+		PRM_Item(),
+	};
+	static PRM_ChoiceList default_image_format_c(PRM_CHOICELIST_SINGLE, default_image_format_i);
+
+	static PRM_Name default_image_bits(k_default_image_bits, "Image Bits");
+	static PRM_Default default_image_bits_d(0.0f, "half");
+	static PRM_Item default_image_bits_i[] =
+	{
+		//PRM_Item("uint8", "8-bit"),
+		//PRM_Item("uint16", "16-bit"),
+		PRM_Item("half", "16-bit float"),
+		PRM_Item("float", "32-bit float"),
+		PRM_Item(),
+	};
+	static PRM_ChoiceList default_image_bits_c(PRM_CHOICELIST_SINGLE, default_image_bits_i);
+
+	static PRM_Name save_jpeg_copy(k_save_jpeg_copy, "When saving, create a JPEG copy (beauty layer only)");
+	static PRM_Default save_jpeg_copy_d(false);
+
+	static PRM_Name output_nsi_files(k_output_nsi_files, "NSI File");
+	static PRM_Default output_nsi_files_d(false);
+
+	static PRM_Name output_standin(k_output_standin, "Standin Output");
+	static PRM_Default output_standin_d(true);
+
+
+	// Export filename
+	static PRM_Name default_export_nsi_filename(k_default_export_nsi_filename, "NSI Filename");
+	static PRM_Default default_export_nsi_filename_d(
+		0.0f, "$HIP/render/`$HIPNAME`_`$OS`_$F4.nsi");
+
+	static PRM_Conditional default_export_nsi_filename_g(("{ " + std::string(k_output_nsi_files) + " == 0 }").c_str());
+	static PRM_Conditional export_nsi_filename_g(("{ " + std::string(k_output_nsi_files) + " != 0 }").c_str());
+
+	static PRM_Name nsi_file_note1(
+		"nsi_file_note1",
+		"The Image Filename, Format and JPEG copy selections are exported as");
+	static PRM_Name nsi_file_note2(
+		"nsi_file_note2",
+		"part of the NSI file to specify how images are saved when rendering");
+	static PRM_Name nsi_file_note3(
+		"nsi_file_note3",
+		"this NSI file using the \"renderdl\" command line'.");
+
+	static std::vector<PRM_Template>standin_elements_templates =
+	{
+		PRM_Template(PRM_STRING | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, PRM_TYPE_DYNAMIC_PATH, 1, &camera, &camera_d, nullptr, nullptr, nullptr, &PRM_SpareData::objCameraPath),
+		PRM_Template(PRM_TOGGLE, 1, &override_display_flags, &override_display_flags_d),
+		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &objects_to_render, &objects_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objGeometryPath, 1, nullptr, &override_display_flags_g),
+		//PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &lights_to_render, &lights_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objLightPath, 1, nullptr, &override_display_flags_g),
+		PRM_Template(
+			PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &matte_objects,
+			&matte_objects_d, nullptr, nullptr, nullptr,
+			&PRM_SpareData::objGeometryPath, 1, nullptr, nullptr),
+
+		PRM_Template(PRM_TOGGLE| PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1, &output_standin, &output_standin_d,0, 0,nullptr, nullptr, 1,
+					 nullptr),
+		PRM_Template(PRM_TOGGLE| PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1, &motion_blur, &motion_blur_d),
+	};
+
+	static std::vector<PRM_Template> output_templates =
+	{
+		PRM_Template(PRM_TOGGLE, 1, &display_rendered_images, &display_rendered_images_d,0, 0,  &settings::setDisplay, nullptr, 1,
+					 nullptr),
+
+		PRM_Template(PRM_TOGGLE, 1, &save_rendered_images, &save_rendered_images_d,0, 0, &settings::setSave, nullptr, 1,
+					 nullptr),
+
+		PRM_Template(PRM_TOGGLE, 1, &display_and_save_rendered_images, &display_and_save_rendered_images_d,0, 0, &settings::setSaveDislay, nullptr, 1,
+		nullptr),
+
+		PRM_Template(PRM_TOGGLE, 1, &output_nsi_files, &output_nsi_files_d,0, 0, &settings::setOutput, nullptr, 1,
+					 nullptr),
+
+		PRM_Template(PRM_SEPARATOR, 0, &separator8),
+
+		//PRM_Template(PRM_LABEL | PRM_TYPE_JOIN_NEXT, 1, &spacing1),
+		PRM_Template(PRM_FILE, 1, &default_image_filename, &default_image_filename_d,0, 0, nullptr, nullptr, 1,
+					 nullptr),
+		PRM_Template(PRM_STRING | PRM_TYPE_JOIN_NEXT, 1, &default_image_format, &default_image_format_d,
+					 &default_image_format_c, 0, &settings::image_format_cb,nullptr,1,nullptr),
+		PRM_Template(PRM_STRING | PRM_TYPE_LABEL_NONE, 1, &default_image_bits, &default_image_bits_d, &default_image_bits_c,
+					 0, nullptr,nullptr,1,nullptr),
+		PRM_Template(PRM_TOGGLE, 1, &save_jpeg_copy, &save_jpeg_copy_d,0, 0, nullptr, nullptr, 1,
+					 nullptr),
+		PRM_Template(PRM_SEPARATOR, 0, &separator9),
+
+		PRM_Template(PRM_FILE, 1, &default_export_nsi_filename,	&default_export_nsi_filename_d, 0, 0, nullptr, nullptr, 1,
+					 nullptr),
+		PRM_Template(PRM_LABEL, 0, &nsi_file_note1),
+		PRM_Template(PRM_LABEL, 0, &nsi_file_note2),
+		PRM_Template(PRM_LABEL, 0, &nsi_file_note3),
 	};
 
 /*
@@ -318,35 +566,8 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 
 	// Image Layers
 
-	static PRM_Name default_image_filename(k_default_image_filename, "Image Filename");
-	static PRM_Default default_image_filename_d(
-		0.0f, "$HIP/render/`$HIPNAME`_`$OS`_$F4.exr");
 
-	static PRM_Name default_image_format(k_default_image_format, "Image Format");
-	static PRM_Default default_image_format_d(0.0f, "exr");
-	static PRM_Item default_image_format_i[] =
-	{
-		PRM_Item("tiff", "TIFF"),
-		PRM_Item("exr", "OpenEXR"),
-		PRM_Item("deepexr", "OpenEXR (deep)"),
-//		PRM_Item("jpeg", "JPEG"),
-		PRM_Item("png", "PNG"),
-		PRM_Item(),
-	};
-	static PRM_ChoiceList default_image_format_c(PRM_CHOICELIST_SINGLE, default_image_format_i);
-
-	static PRM_Name default_image_bits(k_default_image_bits, "Image Bits");
-	static PRM_Default default_image_bits_d(0.0f, "half");
-	static PRM_Item default_image_bits_i[] =
-	{
-//		PRM_Item("uint8", "8-bit"),
-//		PRM_Item("uint16", "16-bit"),
-		PRM_Item("half", "16-bit float"),
-		PRM_Item("float", "32-bit float"),
-		PRM_Item(),
-	};
-	static PRM_ChoiceList default_image_bits_c(PRM_CHOICELIST_SINGLE, default_image_bits_i);
-
+	/*
 	static PRM_Name batch_output_mode(k_batch_output_mode, "Batch Output Mode");
 	static PRM_Default batch_output_mode_d(0);
 	static PRM_Item batch_output_mode_i[] =
@@ -367,33 +588,33 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 		PRM_Item(),
 	};
 	static PRM_ChoiceList interactive_output_mode_c(PRM_CHOICELIST_SINGLE, interactive_output_mode_i);
-
-	static PRM_Name aovs_titles1("aovs_titles1", "D   F   J                                  \t");
+	*/
+	static PRM_Name aovs_titles1("aovs_titles1", "                                  \t");
 	static PRM_Name aovs_titles2("aovs_titles2", "Layer Name                 ");
 
 	static PRM_Name aovs(k_aovs, "Image Layers");
 	static PRM_Name aov(k_aov, "Image Layer (AOV)");
-	static PRM_Name framebuffer_output(aov::getAovFrameBufferOutputStr(), "Preview");
-	static PRM_Default framebuffer_output_d(true);
+	static PRM_Name active_layer(aov::getActiveLayerOutputStr(), "Active");
+	static PRM_Default active_layer_d(true);
+
+	static PRM_Name frame_buffer(aov::getAovFrameBufferOutputStr(), "Preview");
+	static PRM_Default frame_buffer_d(true);
 	static PRM_Name file_output(aov::getAovFileOutputStr(), "File");
 	static PRM_Default file_output_d(true);
 	static PRM_Name jpeg_output(aov::getAovJpegOutputStr(), " ");
 	static PRM_Default jpeg_output_d(false);
-	static PRM_Name aov_label(aov::getAovLabelStr(), "Ci");
+
 	static PRM_Name aov_name(aov::getAovStrStr(), "Ci");
 	static PRM_Default aov_name_d(0.0f, "Ci");
 	static PRM_Name aov_clear(k_aov_clear, "Clear");
-//	static PRM_Name override_image_filename
-//	static PRM_Name override_image_format
-//	static PRM_Name override_image_bits
+
 	static PRM_Default nb_aovs(1);
 	static PRM_Template aov_templates[] =
 	{
-		PRM_Template(PRM_TOGGLE|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT, 1, &framebuffer_output, &framebuffer_output_d),
-		PRM_Template(PRM_TOGGLE|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT, 1, &file_output, &file_output_d),
-		PRM_Template(PRM_TOGGLE|PRM_TYPE_JOIN_NEXT, 1, &jpeg_output, &jpeg_output_d),
-//		PRM_Template(PRM_LABEL|PRM_TYPE_JOIN_NEXT, 1, &aov_label),
-//		PRM_Template(PRM_STRING|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT|PRM_TYPE_INVISIBLE, 1, &aov_name, &aov_name_d),
+		PRM_Template(PRM_TOGGLE|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT, 1, &active_layer, &active_layer_d),
+		PRM_Template(PRM_TOGGLE|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT|PRM_TYPE_INVISIBLE, 1, &frame_buffer, &frame_buffer_d),
+		PRM_Template(PRM_TOGGLE|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT|PRM_TYPE_INVISIBLE, 1, &file_output, &file_output_d),
+		PRM_Template(PRM_TOGGLE|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT|PRM_TYPE_INVISIBLE, 1, &jpeg_output, &file_output_d),
 		PRM_Template(PRM_STRING|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT, 1, &aov_name, &aov_name_d),
 		PRM_Template(PRM_CALLBACK, 1, &aov_clear, 0, 0, 0,
 					&settings::aov_clear_cb),
@@ -405,16 +626,24 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 	static PRM_Name dummy("dummy", "");
 
 	static PRM_Name enable_multi_light(k_enable_multi_light, "Multi-Light");
+	static PRM_Name multi_light_note1(
+		"multi_light_note1",
+		"Enables light mixing in 3Delight Display (or other application) by creating");
+	static PRM_Name multi_light_note2(
+		"multi_light_note2",
+		"an image layer (AOV) for each light or group of lights. For scenes with many");
+	static PRM_Name multi_light_note3(
+		"multi_light_note3",
+		"lights, they must be grouped to avoid creating an excessive amount of layers.");
+
 	static PRM_Default enable_multi_light_d(false);
 
 	static std::vector<PRM_Template> image_layers_templates =
 	{
-		PRM_Template(PRM_FILE, 1, &default_image_filename, &default_image_filename_d),
-		PRM_Template(PRM_STRING|PRM_TYPE_JOIN_NEXT, 1, &default_image_format, &default_image_format_d, &default_image_format_c, 0, &settings::image_format_cb),
-		PRM_Template(PRM_STRING|PRM_TYPE_LABEL_NONE, 1, &default_image_bits, &default_image_bits_d, &default_image_bits_c),
-		PRM_Template(PRM_ORD, 1, &batch_output_mode, &batch_output_mode_d, &batch_output_mode_c),
-		PRM_Template(PRM_ORD, 1, &interactive_output_mode, &interactive_output_mode_d, &interactive_output_mode_c),
 		PRM_Template(PRM_TOGGLE, 1, &enable_multi_light, &enable_multi_light_d),
+		//PRM_Template(PRM_LABEL, 0, &multi_light_note1),
+		//PRM_Template(PRM_LABEL, 0, &multi_light_note2),
+		//PRM_Template(PRM_LABEL, 0, &multi_light_note3),
 		PRM_Template(PRM_SEPARATOR, 0, &separator4),
 		PRM_Template(PRM_LABEL|PRM_TYPE_JOIN_NEXT, 1, &aovs_titles1),
 		PRM_Template(PRM_LABEL, 1, &aovs_titles2),
@@ -451,6 +680,9 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 	static PRM_Name disable_multiscatter(k_disable_multiple_scattering, "Disable Multiple Scattering");
 	static PRM_Default disable_multiscatter_d(false);
 
+	static PRM_Name disable_extra_layers(k_disable_extra_image_layers, "Disable extra Image Layers");
+	static PRM_Default disable_extra_layers_d(false);
+
 	static PRM_Name resolution_factor(k_resolution_factor, "Resolution");
 	static PRM_Default resolution_factor_d(1);
 	static PRM_Item resolution_factor_i[] =
@@ -476,9 +708,6 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 	};
 	static PRM_ChoiceList sampling_factor_c(PRM_CHOICELIST_SINGLE, sampling_factor_i);
 
-	static PRM_Name overrides_note_spacing("overrides_note_spacing", "");
-	static PRM_Name overrides_note("overrides_note", "These settings are ignored in batch rendering");
-
 	static std::vector<PRM_Template> overrides_templates =
 	{
 		PRM_Template(PRM_TOGGLE|PRM_TYPE_JOIN_NEXT, 1, &speed_boost, &speed_boost_d),
@@ -489,11 +718,10 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 		PRM_Template(PRM_TOGGLE, 1, &disable_subsurface, &disable_subsurface_d, 0, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
 		PRM_Template(PRM_TOGGLE, 1, &disable_atmospheres, &disable_atmospheres_d, 0, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
 		PRM_Template(PRM_TOGGLE, 1, &disable_multiscatter, &disable_multiscatter_d, 0, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
+		PRM_Template(PRM_TOGGLE, 1, &disable_extra_layers, &disable_extra_layers_d, 0, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
 		PRM_Template(PRM_SEPARATOR, 0, &separator6),
 		PRM_Template(PRM_ORD, 1, &resolution_factor, &resolution_factor_d, &resolution_factor_c, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
 		PRM_Template(PRM_ORD, 1, &sampling_factor, &sampling_factor_d, &sampling_factor_c, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
-		PRM_Template(PRM_LABEL, 0, &overrides_note_spacing),
-		PRM_Template(PRM_LABEL, 0, &overrides_note)
 	};
 
 	// Scripts
@@ -538,21 +766,27 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 	{
 		PRM_Default(quality_templates.size(), "Quality"),
 		PRM_Default(scene_elements_templates.size(), "Scene Elements"),
+		PRM_Default(output_templates.size(), "Output"),
 		PRM_Default(image_layers_templates.size(), "Image Layers"),
 		PRM_Default(overrides_templates.size(), "Overrides"),
 		PRM_Default(scripts_templates.size(), "Scripts"),
 		PRM_Default(debug_templates.size(), "Debug")
 	};
 
-	static std::vector<PRM_Template> rop_templates[2];
+	static PRM_Name standin_main_tabs_name("standin_main_tabs");
+	static std::vector<PRM_Default> standin_main_tabs=
+	{
+		PRM_Default(standin_elements_templates.size(), "Scene Elements"),
+		PRM_Default(scripts_templates.size(), "Scripts"),
+	};
+
+	static std::vector<PRM_Template> rop_templates[3];
 	std::vector<PRM_Template>& templates = rop_templates[i_cloud];
+	if (standin)
+		templates = rop_templates[2];
 	if(templates.size() == 0)
 	{
 		// Actions
-		templates.insert(
-			templates.end(),
-			actions_templates.begin(),
-			actions_templates.end());
 
 		// Add templates from the base ROP_Node into our own list
 		for(PRM_Template* base = ROP_Node::getROPbaseTemplate();
@@ -560,33 +794,75 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 			base++)
 		{
 			/*
-				Insert the render mode parameter above the "Valid Frame Range"
-				("trange") parameter, which should be on the second line.
+				Insert the export filename parameter above the "Frame Range"
+				("f") parameter, for Standin ROP
 			*/
-			if(base->getNamePtr()->getToken() == std::string("trange"))
+			if(standin && base->getNamePtr()->getToken() == std::string("f"))
 			{
-				PRM_Type type =
-					i_cloud ? PRM_STRING|PRM_TYPE_INVISIBLE : PRM_STRING;
 				templates.push_back(
-					PRM_Template(
-						type, 1,
-						&render_mode, &render_mode_d, &render_mode_c));
+					PRM_Template(PRM_FILE, 1, &default_export_nsi_filename, &default_export_nsi_filename_d));
 			}
 
-			templates.push_back(*base);
+
+			//Since we are now using buttons to determine whether we are rendering
+			//the current frame or a sequence of frames we do not need the valid
+			//frame range anymore to determine this.
+			//if (base->getNamePtr()->getToken() != std::string("trange"))
+			if (base->getNamePtr()->getToken() == std::string("execute"))
+			{
+				if (standin)
+				{
+					templates.insert(
+						templates.end(),
+						standin_actions.begin(),
+						standin_actions.end());
+					templates.push_back(*base);
+				}
+
+				else
+				{
+					//Insert IPR
+					templates.insert(
+						templates.end(),
+						ipr_render_templates.begin(),
+						ipr_render_templates.end());
+
+					//Insert Render Button
+					templates.push_back(*base);
+
+					//Insert Sequence
+					templates.insert(
+						templates.end(),
+						sequence_render_templates.begin(),
+						sequence_render_templates.end());
+				}
+
+			}
+			else
+				templates.push_back(*base);
 		}
+		if (standin)
+		{
+			templates.push_back(
+				PRM_Template(
+					PRM_SWITCHER,
+					standin_main_tabs.size(),
+					&standin_main_tabs_name,
+					&standin_main_tabs[0]));
 
-		templates.push_back(
-			PRM_Template(PRM_FILE, 1, &default_export_nsi_filename,
-				&default_export_nsi_filename_d, 0, 0, nullptr, nullptr, 1,
-				nullptr, &default_export_nsi_filename_g)),
-
-		templates.push_back(
-			PRM_Template(
-				PRM_SWITCHER,
-				main_tabs.size(),
-				&main_tabs_name,
-				&main_tabs[0]));
+			templates.insert(
+				templates.end(),
+				standin_elements_templates.begin(),
+				standin_elements_templates.end());
+		}
+		else
+		{
+			templates.push_back(
+				PRM_Template(
+					PRM_SWITCHER,
+					main_tabs.size(),
+					&main_tabs_name,
+					&main_tabs[0]));
 
 			// Quality
 			templates.insert(
@@ -600,6 +876,12 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 				scene_elements_templates.begin(),
 				scene_elements_templates.end());
 
+			// Output
+			templates.insert(
+				templates.end(),
+				output_templates.begin(),
+				output_templates.end());
+
 			// Image Layers
 			templates.insert(
 				templates.end(),
@@ -611,14 +893,15 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 				templates.end(),
 				overrides_templates.begin(),
 				overrides_templates.end());
-
-			// Scripts
+		}
+			// Scripts (Common on both ROP)
 			templates.insert(
 				templates.end(),
 				scripts_templates.begin(),
 				scripts_templates.end());
 
 			// Debug
+			if (!standin)
 			templates.insert(
 				templates.end(),
 				debug_templates.begin(),
@@ -630,12 +913,20 @@ PRM_Template* settings::GetTemplates(bool i_cloud)
 	return &templates[0];
 }
 
-OP_TemplatePair* settings::GetTemplatePair(bool i_cloud)
+OP_TemplatePair* settings::GetTemplatePair(bool i_cloud,bool standin)
 {
-	static OP_TemplatePair* ropPair[2] = { nullptr, nullptr };
+	static OP_TemplatePair* ropPair[3] = { nullptr, nullptr,nullptr };
 	if(!ropPair[i_cloud])
 	{
-		ropPair[i_cloud] = new OP_TemplatePair(GetTemplates(i_cloud));
+		ropPair[i_cloud] = new OP_TemplatePair(GetTemplates(i_cloud,standin));
+	}
+	if (standin)
+	{
+		if (!ropPair[2])
+		{
+			ropPair[2] = new OP_TemplatePair(GetTemplates(i_cloud, standin));
+		}
+		return ropPair[2];
 	}
 
 	return ropPair[i_cloud];
@@ -665,21 +956,147 @@ PRM_Template* settings::GetObsoleteParameters()
 	};
 	static PRM_ChoiceList export_nsi_c(PRM_CHOICELIST_SINGLE, export_nsi_i);
 
+	static PRM_Name framebuffer_output("framebuffer_output_#", "Preview");
+	static PRM_Default framebuffer_output_d(true);
+	static PRM_Name file_output(aov::getAovFileOutputStr(), "File");
+	static PRM_Default file_output_d(true);
+	static PRM_Name jpeg_output(aov::getAovJpegOutputStr(), " ");
+	static PRM_Default jpeg_output_d(false);
+
 	static PRM_Name ipr(k_old_ipr, "IPR");
 	static PRM_Default ipr_d(false);
 	static PRM_Conditional ipr_g(("{ " + std::string(k_old_export_nsi) + " != \"off\" }").c_str());
 
 	static PRM_Name separator7("separator7", "");
 
+	static PRM_Name render_mode(k_old_render_mode, "Render Mode");
+	static PRM_Default render_mode_d(0.0, "render");
+	static PRM_Item render_mode_i[] =
+	{
+		PRM_Item(k_rm_render.c_str(), "Render"),
+		PRM_Item(k_rm_live_render.c_str(), "IPR Render"),
+		PRM_Item(k_rm_export_file.c_str(), "Export to File"),
+		PRM_Item(k_rm_export_archive.c_str(), "Export Stand-in"),
+		PRM_Item(k_rm_export_stdout.c_str(), "Export to Console Window"),
+		PRM_Item(),
+	};
+	static PRM_ChoiceList render_mode_c(PRM_CHOICELIST_SINGLE, render_mode_i);
+
+	static PRM_Name batch_output_mode(k_batch_output_mode, "Batch Output Mode");
+	static PRM_Default batch_output_mode_d(0);
+	static PRM_Item batch_output_mode_i[] =
+	{
+		PRM_Item("as selected", "Enable file output as selected"),
+		PRM_Item("all files", "Enable all file output and selected JPEG"),
+		PRM_Item(),
+	};
+	static PRM_ChoiceList batch_output_mode_c(PRM_CHOICELIST_SINGLE, batch_output_mode_i);
+
+	static PRM_Name interactive_output_mode(k_interactive_output_mode, "Interactive Output Mode");
+	static PRM_Default interactive_output_mode_d(2);
+	static PRM_Item interactive_output_mode_i[] =
+	{
+		PRM_Item("as selected", "Enable file output as selected"),
+		PRM_Item("file with fb", "Enable file output only for selected layer"),
+		PRM_Item("no file", "Disable file output"),
+		PRM_Item(),
+	};
+	static PRM_ChoiceList interactive_output_mode_c(PRM_CHOICELIST_SINGLE, interactive_output_mode_i);
+
+	static PRM_Name export_n(k_export, "Export");
+	static PRM_Name lights_to_render(k_lights_to_render, "Lights to Render");
+	static PRM_Name overrides_note_spacing("overrides_note_spacing", "");
+	static PRM_Name overrides_note("overrides_note", "These settings are ignored in batch rendering");
+
 	static PRM_Template obsolete_templates[] =
 	{
 		PRM_Template(PRM_STRING, 1, &export_nsi, &export_nsi_d, &export_nsi_c),
 		PRM_Template(PRM_TOGGLE, 1, &ipr, &ipr_d, 0, 0, nullptr, nullptr, 1, nullptr, &ipr_g),
+		PRM_Template(PRM_TOGGLE, 1, &render_mode, &render_mode_d, &render_mode_c),
+		PRM_Template(PRM_TOGGLE | PRM_TYPE_LABEL_NONE | PRM_TYPE_JOIN_NEXT, 1, &framebuffer_output, &framebuffer_output_d),
+		PRM_Template(PRM_TOGGLE | PRM_TYPE_LABEL_NONE | PRM_TYPE_JOIN_NEXT, 1, &file_output, &file_output_d),
+		PRM_Template(PRM_TOGGLE | PRM_TYPE_JOIN_NEXT, 1, &jpeg_output, &jpeg_output_d),
+		PRM_Template(PRM_ORD, 1, &batch_output_mode, &batch_output_mode_d, &batch_output_mode_c),
+		PRM_Template(PRM_ORD, 1, &interactive_output_mode, &interactive_output_mode_d, &interactive_output_mode_c),
+		PRM_Template(PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &export_n),
+		PRM_Template(PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &lights_to_render),
+		PRM_Template(PRM_LABEL, 0, &overrides_note_spacing),
+		PRM_Template(PRM_LABEL, 0, &overrides_note),
 		PRM_Template(PRM_SEPARATOR, 0, &separator7),
 		PRM_Template()
 	};
 
 	return obsolete_templates;
+}
+
+//Unselecting other options when selecting Image option
+int settings::setSave(void* data, int index, fpreal t,
+	const PRM_Template* tplate)
+{
+	OP_Parameters* node = reinterpret_cast<OP_Parameters*>(data);
+	if (node->evalInt(k_save_rendered_images, 0, t))
+	{
+		node->setInt(k_display_rendered_images, 0, t, false);
+		node->setInt(k_display_and_save_rendered_images, 0, t, false);
+		node->setInt(k_output_nsi_files, 0, t, false);
+
+	}
+	//Don't let the user unselect all the options.
+	else
+		node->setInt(k_save_rendered_images, 0, t, true);
+
+	return 1;
+}
+
+//Unselecting other options when selecting Display option
+int settings::setDisplay(void* data, int index, fpreal t,
+	const PRM_Template* tplate)
+{
+	OP_Parameters* node = reinterpret_cast<OP_Parameters*>(data);
+	if(node->evalInt(k_display_rendered_images,0 , t))
+	{
+		node->setInt(k_save_rendered_images, 0, t, false);
+		node->setInt(k_display_and_save_rendered_images, 0, t, false);
+		node->setInt(k_output_nsi_files, 0, t, false);
+	}
+	//Don't let the user unselect all the options.
+	else
+		node->setInt(k_display_rendered_images, 0, t, true);
+	return 1;
+}
+
+//Unselecting other options when selecting NSI output option
+int settings::setOutput(void* data, int index, fpreal t,
+	const PRM_Template* tplate)
+{
+	OP_Parameters* node = reinterpret_cast<OP_Parameters*>(data);
+	if (node->evalInt(k_output_nsi_files, 0, t))
+	{
+		node->setInt(k_display_rendered_images, 0, t, false);
+		node->setInt(k_display_and_save_rendered_images, 0, t, false);
+		node->setInt(k_save_rendered_images, 0, t, false);
+	}
+	//Don't let the user unselect all the options.
+	else
+		node->setInt(k_output_nsi_files, 0, t, true);
+	return 1;
+}
+
+//Unselecting other options when selecting Image and Display option
+int settings::setSaveDislay(void* data, int index, fpreal t,
+	const PRM_Template* tplate)
+{
+	OP_Parameters* node = reinterpret_cast<OP_Parameters*>(data);
+	if (node->evalInt(k_display_and_save_rendered_images, 0, t) == true)
+	{
+		node->setInt(k_display_rendered_images, 0, t, false);
+		node->setInt(k_save_rendered_images, 0, t, false);
+		node->setInt(k_output_nsi_files, 0, t, false);
+	}
+	//Don't let the user unselect all the options.
+	else
+		node->setInt(k_display_and_save_rendered_images, 0, t, true);
+	return 1;
 }
 
 int settings::image_format_cb(
@@ -800,7 +1217,6 @@ int settings::add_layer_cb(
 	const PRM_Template* tplate)
 {
 	ROP_3Delight *node = reinterpret_cast<ROP_3Delight*>(data);
-
 	std::vector<VOP_Node*> custom_aovs;
 	object_visibility_resolver resolver(
 		node->getFullPath().toStdString(), node->m_settings, t );
@@ -817,6 +1233,57 @@ int settings::add_layer_cb(
 			"3Delight for Houdini: Could not parse select_layers_ui.ui file\n");
 	}
 
+	return 1;
+}
+
+int settings::ipr_render(
+	void* data, int index, fpreal t,
+	const PRM_Template* tplate)
+{
+	ROP_3Delight *node = reinterpret_cast<ROP_3Delight*>(data);
+	node->get_settings().m_parameters.setInt(k_ipr_start, 0, 0.0, true);
+	node->doRenderCback(data, index, t, tplate);
+	node->get_settings().m_parameters.setInt(k_ipr_start, 0, 0.0, false);
+	return 1;
+}
+
+int settings::sequence_render(
+	void* data, int index, fpreal t,
+	const PRM_Template* tplate)
+{
+	ROP_3Delight *node = reinterpret_cast<ROP_3Delight*>(data);
+	node->get_settings().m_parameters.setInt("trange", 0, 0.0, 1);
+	node->get_settings().m_parameters.setInt(k_sequence_start, 0, 0.0, true);
+	node->doRenderCback(data, index, t, tplate);
+	node->get_settings().m_parameters.setInt(k_sequence_start, 0, 0.0, false);
+	node->get_settings().m_parameters.setInt("trange", 0, 0.0, 0);
+	return 1;
+}
+
+/*
+	Let us know when we click Export Standin button,
+*/
+int settings::export_standin(
+	void* data, int index, fpreal t,
+	const PRM_Template* tplate)
+{
+	ROP_3Delight *node = reinterpret_cast<ROP_3Delight*>(data);
+	node->get_settings().m_parameters.setInt(k_export_standin, 0, 0.0, true);
+	node->doRenderCback(data, index, t, tplate);
+	node->get_settings().m_parameters.setInt(k_export_standin, 0, 0.0, false);
+	return 1;
+}
+
+int settings::export_standin_sequence(
+	void* data, int index, fpreal t,
+	const PRM_Template* tplate)
+{
+	ROP_3Delight *node = reinterpret_cast<ROP_3Delight*>(data);
+	node->get_settings().m_parameters.setInt("trange", 0, 0.0, 1);
+	node->get_settings().m_parameters.setInt(k_export_standin, 0, 0.0, true);
+	node->doRenderCback(data, index, t, tplate);
+	node->get_settings().m_parameters.setInt(k_export_standin, 0, 0.0, false);
+	node->get_settings().m_parameters.setInt("trange", 0, 0.0, 0);
 	return 1;
 }
 
@@ -866,11 +1333,11 @@ UT_String settings::GetObjectsToRender( fpreal t ) const
 	return objects_pattern;
 }
 
+
 UT_String settings::GetLightsToRender( fpreal t ) const
 {
-	UT_String lights_pattern("*");
-	m_parameters.evalString(lights_pattern, settings::k_lights_to_render, 0, t);
-	return lights_pattern;
+	//We render all lights, no matter it's display flag value
+	return "*";
 }
 
 UT_String settings::get_matte_objects( fpreal t ) const
@@ -887,8 +1354,16 @@ UT_String settings::get_matte_objects( fpreal t ) const
 UT_String settings::get_render_mode( fpreal t )const
 {
 	UT_String render_mode("*");
-	m_parameters.evalString(render_mode, settings::k_render_mode, 0, t);
+	m_parameters.evalString(render_mode, settings::k_old_render_mode, 0, t);
 	return render_mode;
+}
+
+bool settings::export_to_nsi(fpreal t)const
+{
+	if (m_parameters.m_standin)
+		return m_parameters.evalInt(settings::k_output_standin, 0, t);
+
+	return m_parameters.evalInt(settings::k_output_nsi_files, 0, t);
 }
 
 int settings::StopRenderCB(void* i_node, int, double, const PRM_Template*)

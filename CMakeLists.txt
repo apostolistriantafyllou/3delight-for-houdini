@@ -119,6 +119,11 @@ install(
 	DESTINATION config/Icons )
 
 install(
+	FILES ui/ROP_3Delight.svg
+	RENAME ROP_3DelightStandin.svg
+	DESTINATION config/Icons )
+
+install(
 	FILES ui/vdb_no_outline.png ui/shelf_ROP_3Delight.png ui/shelf_ROP_3Delight_cloud.png ui/shelf_ROP_render_3Delight.png ui/shelf_ROP_select_3Delight.png ui/VOP_3Delight-dlHairAndFur.png ui/VOP_3Delight-dlPrincipled.png ui/VOP_3Delight-dlMetal.png ui/VOP_3Delight-dlSkin.png ui/VOP_3Delight-dlGlass.png ui/VOP_3Delight-dlSubstance.png ui/VOP_3Delight-dlColorToFloat.png ui/VOP_3Delight-dlFloatToColor.png ui/VOP_3Delight-dlRamp.png ui/VOP_3Delight-dlToon.png ui/VOP_3Delight-dlThin.png ui/VOP_3Delight-vdbVolume.png ui/OBJ_3Delight-dlIncandescenceLight.png
 	DESTINATION config/Icons )
 

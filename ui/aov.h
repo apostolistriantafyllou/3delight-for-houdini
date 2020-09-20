@@ -53,6 +53,8 @@ namespace aov
 	// Returns the aov's description from the specified ui name
 	const description& getDescription(const std::string& i_ui_name);
 
+	// Returns the aov's active layer output string
+	const char* getActiveLayerOutputStr();
 	// Returns the aov's framebuffer output string
 	const char* getAovFrameBufferOutputStr();
 	// Returns the aov's file output string
@@ -64,12 +66,8 @@ namespace aov
 	// Returns the aov's string string
 	const char* getAovStrStr();
 
-	// Returns the aov's framebuffer output token for the specified index
-	const char* getAovFrameBufferOutputToken(int index);
-	// Returns the aov's file output token for the specified index
-	const char* getAovFileOutputToken(int index);
-	// Returns the aov's jpeg output token for the specified index
-	const char* getAovJpegOutputToken(int index);
+	// Returns the aov's active layer output for the specified index
+	const char* getAovActiveLayerToken(int index);
 	// Returns the aov's label token for the specified index
 	const char* getAovLabelToken(int index);
 	// Returns the aov's string token for the specified index
