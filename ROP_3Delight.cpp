@@ -444,8 +444,6 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		m_idisplay_rendering
 		?	m_idisplay_ipr
 		:	evalInt(settings::k_ipr_start,0, tstart);
-	bool archive =
-		evalInt(settings::k_export_standin, 0, tstart);
 
 	m_current_render = new context(
 		this,
@@ -837,7 +835,6 @@ ROP_3Delight::updateParmsFlags()
 		setVisibleState("take", false);
 		return changed;
 	}
-	return changed;
 
 	PRM_Parm& parm = getParm(settings::k_aov);
 	{
@@ -1185,19 +1182,34 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 		const aov::description& desc = aov::getDescription(label.toStdString());
 
-		bool idisplay_output =
-			!i_ctx.m_batch && !i_ctx.m_export_nsi &&
-			evalInt(settings::k_display_rendered_images, 0, current_time) != 0;
-		bool file_output =
-			i_ctx.m_export_nsi || i_ctx.m_batch ||
-			evalInt(settings::k_save_rendered_images, 0, current_time);
-
-		if (evalInt(settings::k_display_and_save_rendered_images, 0, current_time))
+		bool idisplay_output, file_output;
+		if( i_ctx.m_batch || i_ctx.m_export_nsi )
 		{
-			// Render in both display and image.
-			idisplay_output = true;
+			/*
+				In thise mode, we only output to files and we don't care
+				about the actual toggles.
+			*/
+			idisplay_output = false;
 			file_output = true;
 		}
+		else
+		{
+			if( evalInt(
+				settings::k_display_and_save_rendered_images, 0, current_time) )
+			{
+				idisplay_output = true;
+				file_output = true;
+			}
+			else
+			{
+				idisplay_output =
+					evalInt(
+						settings::k_display_rendered_images, 0, current_time) != 0;
+				file_output =
+					evalInt(settings::k_save_rendered_images, 0, current_time);
+			}
+		}
+
 
 		bool png_output = file_output;
 		file_output = file_output && file_driver.toStdString() != "png";
