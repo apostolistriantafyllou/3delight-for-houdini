@@ -38,7 +38,6 @@
 #include <nsi_dynamic.hpp>
 
 #include "delight.h"
-#include "HOM/HOM_ui.h"
 
 #include <iostream>
 
@@ -101,12 +100,17 @@ namespace
 	}
 }
 
-ROP_3DelightOperator::ROP_3DelightOperator(bool i_cloud,bool standin)
+ROP_3DelightOperator::ROP_3DelightOperator(int i_rop_type)
 	:OP_Operator(
-		i_cloud ? "3DelightCloud":standin ? "3DelightStandin":"3Delight",
-		i_cloud ? "3Delight Cloud":standin ? "3Delight Standin":"3Delight",
-		i_cloud ? ROP_3Delight::cloud_alloc : standin ? ROP_3Delight::standin_alloc: ROP_3Delight::alloc,
-		settings::GetTemplatePair(i_cloud,standin),
+		i_rop_type == rop_type::cloud ? "3DelightCloud":
+		i_rop_type == rop_type::stand_in ? "3DelightStandin":"3Delight",
+
+		i_rop_type == rop_type::cloud ? "3Delight Cloud":
+		i_rop_type == rop_type::stand_in ? "3Delight Standin":"3Delight",
+
+		i_rop_type == rop_type::cloud ? ROP_3Delight::cloud_alloc :
+		i_rop_type == rop_type::stand_in ? ROP_3Delight::standin_alloc: ROP_3Delight::alloc,
+		settings::GetTemplatePair(i_rop_type),
 		0,
 		0,
 		settings::GetVariablePair(),
@@ -119,17 +123,17 @@ void
 ROP_3Delight::Register(OP_OperatorTable* io_table)
 {
 	ROP_3DelightOperator* rop =
-		new ROP_3DelightOperator(false,false);
+		new ROP_3DelightOperator(rop_type::standard);
 	rop->setObsoleteTemplates(settings::GetObsoleteParameters());
 	io_table->addOperator(rop);
 
 	ROP_3DelightOperator* cloud_rop =
-		new ROP_3DelightOperator(true,false);
+		new ROP_3DelightOperator(rop_type::cloud);
 	cloud_rop->setObsoleteTemplates(settings::GetObsoleteParameters());
 	io_table->addOperator(cloud_rop);
 
 	ROP_3DelightOperator* standin_rop =
-		new ROP_3DelightOperator(false,true);
+		new ROP_3DelightOperator(rop_type::stand_in);
 	standin_rop->setObsoleteTemplates(settings::GetObsoleteParameters());
 	io_table->addOperator(standin_rop);
 }
@@ -137,30 +141,28 @@ ROP_3Delight::Register(OP_OperatorTable* io_table)
 OP_Node*
 ROP_3Delight::alloc(OP_Network* net, const char* name, OP_Operator* op)
 {
-	return new ROP_3Delight(net, name, op, false, false);
+	return new ROP_3Delight(net, name, op, rop_type::standard);
 }
 
 OP_Node*
 ROP_3Delight::cloud_alloc(OP_Network* net, const char* name, OP_Operator* op)
 {
-	return new ROP_3Delight(net, name, op, true, false);
+	return new ROP_3Delight(net, name, op, rop_type::cloud);
 }
 
 OP_Node*
 ROP_3Delight::standin_alloc(OP_Network* net, const char* name, OP_Operator* op)
 {
-	return new ROP_3Delight(net, name, op, false, true);
+	return new ROP_3Delight(net, name, op, rop_type::stand_in);
 }
 
 ROP_3Delight::ROP_3Delight(
 	OP_Network* net,
 	const char* name,
 	OP_Operator* entry,
-	bool i_cloud,
-	bool standin)
+	int i_rop_type)
 	:	ROP_Node(net, name, entry),
-		m_cloud(i_cloud),
-		m_standin(standin),
+		m_rop_type(i_rop_type),
 		m_current_render(nullptr),
 		m_end_time(0.0),
 		m_nsi(GetNSIAPI()),
@@ -458,8 +460,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		batch,
 		ipr,
 		!render,
-		archive,
-		m_cloud );
+		m_rop_type);
 
 	m_end_time = tend;
 
@@ -486,7 +487,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		m_renderdl = new UT_ReadWritePipe;
 		std::string renderdl_command = bin_dir + "renderdl -stdinfiles";
 
-		if(m_cloud)
+		if(m_rop_type == rop_type::cloud)
 		{
 			renderdl_command += " -cloud -cloudtag HOUDINI";
 			if( batch || !m_current_render->SingleFrame() )
@@ -530,8 +531,9 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		Initialize a file name for the NSI stream receiving non-animated
 		attributes.
 	*/
+
 	m_static_nsi_file.clear();
-	if(m_current_render->m_export_nsi && !m_current_render->m_archive)
+	if(m_current_render->m_export_nsi && m_current_render->m_rop_type != rop_type::stand_in)
 	{
 		std::string first_frame = GetNSIExportFilename(0.0);
 		if(first_frame != "stdout")
@@ -613,7 +615,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	scene::convert_to_nsi( *m_current_render );
 
 
-	if(!m_current_render->m_archive)
+	if(m_current_render->m_rop_type != rop_type::stand_in)
 	{
 		ExportDefaultMaterial(*m_current_render);
 		ExportAtmosphere(*m_current_render);
@@ -732,7 +734,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	}
 	else
 	{
-		if(!m_current_render->m_archive)
+		if(m_current_render->m_rop_type != rop_type::stand_in)
 		{
 			// Export an NSIRenderControl "start" command at the end of the frame
 			m_nsi.RenderControl(NSI::CStringPArg("action", "start"));
@@ -830,11 +832,13 @@ ROP_3Delight::updateParmsFlags()
 {
 	bool changed = OP_Network::updateParmsFlags();
 	setVisibleState("trange", false);
-	if (m_standin)
+	if (m_rop_type == rop_type::stand_in)
 	{
 		setVisibleState("take", false);
 		return changed;
 	}
+	return changed;
+
 	PRM_Parm& parm = getParm(settings::k_aov);
 	{
 		int size = parm.getMultiParmNumItems();
@@ -1172,7 +1176,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	for (int i = 0; i < nb_aovs; i++)
 	{
 		bool is_layer_active = evalInt(aov::getAovActiveLayerToken(i), 0, current_time);
-		//Don't do anything if layer is not active
+		// Don't do anything if layer is not active
 		if (!is_layer_active)
 			continue;
 
@@ -1184,11 +1188,13 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		bool idisplay_output =
 			!i_ctx.m_batch && !i_ctx.m_export_nsi &&
 			evalInt(settings::k_display_rendered_images, 0, current_time) != 0;
-		bool file_output = evalInt(settings::k_save_rendered_images, 0, current_time);
+		bool file_output =
+			i_ctx.m_export_nsi || i_ctx.m_batch ||
+			evalInt(settings::k_save_rendered_images, 0, current_time);
 
 		if (evalInt(settings::k_display_and_save_rendered_images, 0, current_time))
 		{
-			//Render in both display and image.
+			// Render in both display and image.
 			idisplay_output = true;
 			file_output = true;
 		}
@@ -1198,11 +1204,11 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		png_output = png_output && file_driver.toStdString() == "png";
 		bool jpeg_output = evalInt(settings::k_save_jpeg_copy, 0, current_time);
 
-		//We only output Jpeg images for beauth layer
+		// We only output Jpeg images for beauth layer
 		if (desc.m_variable_name != "Ci")
 			jpeg_output = false;
 
-		//Always render to iDisplay if "Start IPR" button is clicked
+		// Always render to iDisplay if "Start IPR" button is clicked
 		if (evalInt(settings::k_ipr_start, 0, current_time))
 		{
 			idisplay_output = true;
@@ -1405,7 +1411,7 @@ ROP_3Delight::ExportOneOutputLayer(
 	const std::string& i_driver_name,
 	unsigned& io_sort_key) const
 {
-	//Output only RGBA layer if Disable extra Image Layer has been selected.
+	// Output only RGBA layer if Disable extra Image Layer has been selected.
 	if (evalInt(settings::k_disable_extra_image_layers, 0, i_ctx.m_current_time)
 		&& i_desc.m_variable_name!="Ci")
 	{

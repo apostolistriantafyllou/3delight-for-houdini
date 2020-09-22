@@ -17,6 +17,13 @@ class OBJ_Node;
 class ROP_Node;
 class ROP_3Delight;
 
+enum rop_type
+{
+	standard,
+	cloud,
+	stand_in
+};
+
 /**
 	\brief An export context passed around to each exporter. Allows us
 	to be less verbose when passing parameters around.
@@ -51,8 +58,7 @@ public:
 		bool i_batch,
 		bool i_ipr,
 		bool i_export_nsi,
-		bool i_archive,
-		bool i_cloud );
+		int i_output_mode );
 
 	~context()
 	{
@@ -85,7 +91,7 @@ public:
 	*/
 	bool BackgroundProcessRendering()const
 	{
-		return (!SingleFrame() || m_cloud) && !m_export_nsi;
+		return (!SingleFrame() || m_rop_type == rop_type::cloud) && !m_export_nsi;
 	}
 
 	/// Returns true if an object is to be rendered.
@@ -95,7 +101,7 @@ public:
 
 	/// Returns the bundle pattern built from the "lights to render" setting
 	const OP_BundlePattern* lights_to_render()const;
-	
+
 	/**
 		\brief Registers a callback to be notified of changes to a node.
 
@@ -112,11 +118,11 @@ public:
 
 	/**
 		\brief Returns the animation time used for rendering.
-		
+
 		Please use this instead of directly accessing the m_current_time member.
 	*/
 	fpreal current_time()const { return m_current_time; }
-	
+
 	/// Sets the animation time to be used for rendering.
 	void set_current_time(fpreal i_time);
 
@@ -136,8 +142,7 @@ public:
 	bool m_ipr{false};
 	bool m_time_dependent{false};
 	bool m_export_nsi{false};
-	bool m_archive{false};
-	bool m_cloud{false};
+	int m_rop_type{rop_type::standard};
 
 	/** files to be deleted at render end. */
 	mutable std::vector< std::string > m_temp_filenames;

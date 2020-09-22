@@ -33,7 +33,7 @@ namespace
 {
 	/**
 		\brief Utility exporter that simply deletes its associated NSI node(s).
-		
+
 		It's used to ensure that animated objects are deleted before being
 		re-exported after a time change. We can't count on the exporters
 		allocated inside process_obj_node to do that, because some of them will
@@ -57,7 +57,7 @@ namespace
 			node_exporter::Delete(*m_object, m_context);
 		}
 
-		void set_attributes()const override {}	
+		void set_attributes()const override {}
 		void connect()const override {}
 	};
 }
@@ -184,11 +184,11 @@ void scene::process_obj_node(
 			We normally don't return here because an OBJ_Light is also an
 			OBJ_Camera and we might be trying to render the scene from the point
 			of view of a light source.
-			
+
 			However, this can never be true when we are exporting an archive, so
 			let's avoid exporting a flurry of unused cameras in that case!
 		*/
-		if(i_context.m_archive)
+		if(i_context.m_rop_type == rop_type::stand_in)
 		{
 			return;
 		}
@@ -562,7 +562,7 @@ void scene::scan_for_instanced(
 		{
 			if( !dynamic_cast<null*>(io_to_export[i]))
 				continue;
-				
+
 			if( io_to_export[i]->node()->getFullPath().toStdString() == E )
 			{
 				io_to_export[i]->set_as_instanced();
@@ -671,7 +671,7 @@ void scene::export_nsi(
 		it's filled lazily, at most once, by export_light_categories.
 	*/
 	std::vector<OBJ_Node*> lights_to_render;
-	
+
 	for( auto &exporter : i_to_export )
 	{
 		export_light_categories(
@@ -765,7 +765,7 @@ void scene::find_lights(
 }
 
 /*
-	\brief find the "bind exports" in the scene. 
+	\brief find the "bind exports" in the scene.
 
 	This is relly heavy duty as it uses a scene export to find the vops.
 	But it is also robust as we use the same logic as scen export.
@@ -849,7 +849,7 @@ void scene::export_light_categories(
 	}
 
 	NSI::Context& nsi = i_context.m_nsi;
-	
+
 	std::string cat_handle = k_light_category_prefix + categories.toStdString();
 	std::string cat_attr_handle = cat_handle + "|attributes";
 

@@ -31,18 +31,7 @@ class ROP_3Delight : public ROP_Node
 
 public:
 
-	/**
-		Image layer (convoluted) file output modes.
-	*/
-	enum e_fileOutputMode
-	{
-		e_disabled,
-		e_useToggleStates,
-		e_allFilesAndSelectedJpeg,
-		e_useToggleAndFramebufferStates
-	};
-
-	/// Registers the 3Delight ROP
+	// Registers the 3Delight ROP
 	static void Register(OP_OperatorTable* io_table);
 	static OP_Node* alloc(OP_Network* net, const char* name, OP_Operator* op);
 	static OP_Node* cloud_alloc(OP_Network* net, const char* name, OP_Operator* op);
@@ -106,8 +95,7 @@ protected:
 		OP_Network* net,
 		const char* name,
 		OP_Operator* entry,
-		bool i_cloud,
-		bool standin);
+		int i_rop_type);
 	virtual ~ROP_3Delight();
 
 	virtual int startRender(int nframes, fpreal s, fpreal e);
@@ -222,8 +210,7 @@ private:
 
 private:
 	std::vector<OBJ_Node*> m_lights;
-	bool m_cloud;
-	bool m_standin;
+	int m_rop_type;
 
 	context* m_current_render{nullptr};
 
@@ -291,7 +278,7 @@ private:
 struct ROP_3DelightOperator : public OP_Operator
 {
 	/// Constructor.
-	ROP_3DelightOperator(bool i_cloud, bool standin);
+	ROP_3DelightOperator(int i_output_mode);
 
 	// overriding function which is responsible for help URL
 	virtual bool getOpHelpURL(UT_String& url);
