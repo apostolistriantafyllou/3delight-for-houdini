@@ -3,7 +3,7 @@
 #include "select_layers_dialog.h"
 #include "../scene.h"
 #include "../ROP_3Delight.h"
-#include "../object_visibility_resolver.h"
+#include "../context.h"
 
 #include "delight.h"
 #include "nsi_dynamic.hpp"
@@ -56,7 +56,6 @@ const char* settings::k_atmosphere = "atmosphere";
 const char* settings::k_override_display_flags = "override_display_flags";
 const char* settings::k_objects_to_render = "objects_to_render";
 const char* settings::k_lights_to_render = "lights_to_render";
-//const char* settings::k_ignore_matte_attribute = "ignore_matte_attribute";
 const char* settings::k_matte_objects = "matte_objects";
 const char* settings::k_default_image_filename = "default_image_filename";
 const char* settings::k_default_image_format = "default_image_format";
@@ -130,7 +129,7 @@ settings::~settings()
 
 void settings::Rendering(bool i_render,bool ipr)
 {
-	if (m_parameters.m_standin)
+	if (m_parameters.m_rop_type == rop_type::stand_in)
 		return;
 
 	m_parameters.setInt(k_ipr_rendering, 0, 0.0, ipr);
@@ -148,7 +147,7 @@ void settings::Rendering(bool i_render,bool ipr)
 	}
 }
 
-PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
+PRM_Template* settings::GetTemplates(int i_rop_type)
 {
 	static PRM_Name separator1("separator1", "");
 	static PRM_Name separator2("separator2", "");
@@ -166,8 +165,6 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 
 	static PRM_Name stop_render(k_stop_render, "    Abort Render    ");
 	static PRM_Conditional stop_render_h(("{ " + std::string(k_rendering) + " == 0 }").c_str(), PRM_CONDTYPE_HIDE);
-	//stop_render_group_h.addConditional(stop_render_ipr_h);
-	//stop_render_group_h.addConditional(stop_render_seq_h);
 
 	static PRM_Name export_n(k_export, "Export");
 	static PRM_Name export_sequence_n(k_export_sequence, "Export Sequence");
@@ -196,7 +193,7 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 	static PRM_Default sequence_rendering_d(false);
 	static PRM_Name SequenceRender("sequence_render", "Render Sequence");
 	static PRM_Name stop_sequence("sequence_stop", "  Abort Sequence ");
-	//Hide Abort Sequence Button when aborting sequence rendering.
+	// Hide Abort Sequence Button when aborting sequence rendering.
 	static PRM_Conditional stop_sequence_h(("{ " + std::string(k_sequence_rendering) + " == 0 }").c_str(), PRM_CONDTYPE_HIDE);
 
 	static PRM_Name export_file(k_export_file, "          Export           ");
@@ -218,7 +215,7 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 			"{ " + std::string(k_sequence_rendering) + " != 0 }").c_str(), PRM_CONDTYPE_HIDE);
 
 	/*Hide Start Sequence Button when rendering a sequence of frames
-	(pressing Start Sequence button or disable it when rendering a
+	(pressing Start Sequence button) or disable it when rendering a
 	single frame or in IPR
 	*/
 	static PRM_Conditional start_sequence_h(
@@ -297,6 +294,10 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 			Export button is only visible when the ROP is in export mode, it
 			will export an NSI stream instead.
 		*/
+
+		PRM_Template(
+			PRM_TOGGLE | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1,
+			&ipr_start, &ipr_start_h),
 
 		PRM_Template(
 			PRM_TOGGLE | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1,
@@ -408,9 +409,6 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 	static PRM_Name objects_to_render(k_objects_to_render, "Objects to Render");
 	static PRM_Default objects_to_render_d(0.0f, "*");
 
-	//static PRM_Name lights_to_render(k_lights_to_render, "Lights to Render");
-	//static PRM_Default lights_to_render_d(0.0f, "*");
-
 	static PRM_Name matte_objects(k_matte_objects, "Matte Objects");
 	static PRM_Default matte_objects_d(0.0f, ""); /* none */
 
@@ -420,14 +418,13 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &atmosphere, &atmosphere_d, nullptr, nullptr, nullptr),
 		PRM_Template(PRM_TOGGLE, 1, &override_display_flags, &override_display_flags_d),
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &objects_to_render, &objects_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objGeometryPath, 1, nullptr, &override_display_flags_g),
-		//PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &lights_to_render, &lights_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objLightPath, 1, nullptr, &override_display_flags_g),
 		PRM_Template(
 			PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &matte_objects,
 			&matte_objects_d, nullptr, nullptr, nullptr,
 			&PRM_SpareData::objGeometryPath, 1, nullptr, nullptr)
 	};
 
-	//Output
+	// Output
 	static PRM_Name display_rendered_images(k_display_rendered_images, "Display");
 	static PRM_Default display_rendered_images_d(true);
 
@@ -448,7 +445,6 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 		PRM_Item("tiff", "TIFF"),
 		PRM_Item("exr", "OpenEXR"),
 		PRM_Item("deepexr", "OpenEXR (deep)"),
-		//PRM_Item("jpeg", "JPEG"),
 		PRM_Item("png", "PNG"),
 		PRM_Item(),
 	};
@@ -458,8 +454,6 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 	static PRM_Default default_image_bits_d(0.0f, "half");
 	static PRM_Item default_image_bits_i[] =
 	{
-		//PRM_Item("uint8", "8-bit"),
-		//PRM_Item("uint16", "16-bit"),
 		PRM_Item("half", "16-bit float"),
 		PRM_Item("float", "32-bit float"),
 		PRM_Item(),
@@ -499,7 +493,6 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 		PRM_Template(PRM_STRING | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, PRM_TYPE_DYNAMIC_PATH, 1, &camera, &camera_d, nullptr, nullptr, nullptr, &PRM_SpareData::objCameraPath),
 		PRM_Template(PRM_TOGGLE, 1, &override_display_flags, &override_display_flags_d),
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &objects_to_render, &objects_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objGeometryPath, 1, nullptr, &override_display_flags_g),
-		//PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &lights_to_render, &lights_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objLightPath, 1, nullptr, &override_display_flags_g),
 		PRM_Template(
 			PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &matte_objects,
 			&matte_objects_d, nullptr, nullptr, nullptr,
@@ -526,7 +519,6 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 
 		PRM_Template(PRM_SEPARATOR, 0, &separator8),
 
-		//PRM_Template(PRM_LABEL | PRM_TYPE_JOIN_NEXT, 1, &spacing1),
 		PRM_Template(PRM_FILE, 1, &default_image_filename, &default_image_filename_d,0, 0, nullptr, nullptr, 1,
 					 nullptr),
 		PRM_Template(PRM_STRING | PRM_TYPE_JOIN_NEXT, 1, &default_image_format, &default_image_format_d,
@@ -641,9 +633,9 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 	static std::vector<PRM_Template> image_layers_templates =
 	{
 		PRM_Template(PRM_TOGGLE, 1, &enable_multi_light, &enable_multi_light_d),
-		//PRM_Template(PRM_LABEL, 0, &multi_light_note1),
-		//PRM_Template(PRM_LABEL, 0, &multi_light_note2),
-		//PRM_Template(PRM_LABEL, 0, &multi_light_note3),
+		// PRM_Template(PRM_LABEL, 0, &multi_light_note1),
+		// PRM_Template(PRM_LABEL, 0, &multi_light_note2),
+		// PRM_Template(PRM_LABEL, 0, &multi_light_note3),
 		PRM_Template(PRM_SEPARATOR, 0, &separator4),
 		PRM_Template(PRM_LABEL|PRM_TYPE_JOIN_NEXT, 1, &aovs_titles1),
 		PRM_Template(PRM_LABEL, 1, &aovs_titles2),
@@ -781,9 +773,7 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 	};
 
 	static std::vector<PRM_Template> rop_templates[3];
-	std::vector<PRM_Template>& templates = rop_templates[i_cloud];
-	if (standin)
-		templates = rop_templates[2];
+	std::vector<PRM_Template>& templates = rop_templates[i_rop_type];
 	if(templates.size() == 0)
 	{
 		// Actions
@@ -797,20 +787,22 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 				Insert the export filename parameter above the "Frame Range"
 				("f") parameter, for Standin ROP
 			*/
-			if(standin && base->getNamePtr()->getToken() == std::string("f"))
+			if(i_rop_type == rop_type::stand_in && base->getNamePtr()->getToken() == std::string("f"))
 			{
 				templates.push_back(
 					PRM_Template(PRM_FILE, 1, &default_export_nsi_filename, &default_export_nsi_filename_d));
 			}
 
 
-			//Since we are now using buttons to determine whether we are rendering
-			//the current frame or a sequence of frames we do not need the valid
-			//frame range anymore to determine this.
-			//if (base->getNamePtr()->getToken() != std::string("trange"))
+			/*
+				Since we are now using buttons to determine whether we are rendering
+				the current frame or a sequence of frames we do not need the valid
+				frame range anymore to determine this.
+				if (base->getNamePtr()->getToken() != std::string("trange"))
+			*/
 			if (base->getNamePtr()->getToken() == std::string("execute"))
 			{
-				if (standin)
+				if (i_rop_type == rop_type::stand_in)
 				{
 					templates.insert(
 						templates.end(),
@@ -821,16 +813,16 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 
 				else
 				{
-					//Insert IPR
+					// Insert IPR
 					templates.insert(
 						templates.end(),
 						ipr_render_templates.begin(),
 						ipr_render_templates.end());
 
-					//Insert Render Button
+					// Insert Render Button
 					templates.push_back(*base);
 
-					//Insert Sequence
+					// Insert Sequence
 					templates.insert(
 						templates.end(),
 						sequence_render_templates.begin(),
@@ -841,7 +833,7 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 			else
 				templates.push_back(*base);
 		}
-		if (standin)
+		if (i_rop_type == rop_type::stand_in)
 		{
 			templates.push_back(
 				PRM_Template(
@@ -901,7 +893,7 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 				scripts_templates.end());
 
 			// Debug
-			if (!standin)
+			if (i_rop_type != rop_type::stand_in)
 			templates.insert(
 				templates.end(),
 				debug_templates.begin(),
@@ -913,23 +905,14 @@ PRM_Template* settings::GetTemplates(bool i_cloud, bool standin)
 	return &templates[0];
 }
 
-OP_TemplatePair* settings::GetTemplatePair(bool i_cloud,bool standin)
+OP_TemplatePair* settings::GetTemplatePair(int i_rop_type)
 {
 	static OP_TemplatePair* ropPair[3] = { nullptr, nullptr,nullptr };
-	if(!ropPair[i_cloud])
+	if(!ropPair[i_rop_type])
 	{
-		ropPair[i_cloud] = new OP_TemplatePair(GetTemplates(i_cloud,standin));
+		ropPair[i_rop_type] = new OP_TemplatePair(GetTemplates(i_rop_type));
+		return ropPair[i_rop_type];
 	}
-	if (standin)
-	{
-		if (!ropPair[2])
-		{
-			ropPair[2] = new OP_TemplatePair(GetTemplates(i_cloud, standin));
-		}
-		return ropPair[2];
-	}
-
-	return ropPair[i_cloud];
 }
 
 OP_VariablePair* settings::GetVariablePair()
@@ -1029,7 +1012,7 @@ PRM_Template* settings::GetObsoleteParameters()
 	return obsolete_templates;
 }
 
-//Unselecting other options when selecting Image option
+// Unselecting other options when selecting Image option
 int settings::setSave(void* data, int index, fpreal t,
 	const PRM_Template* tplate)
 {
@@ -1041,7 +1024,7 @@ int settings::setSave(void* data, int index, fpreal t,
 		node->setInt(k_output_nsi_files, 0, t, false);
 
 	}
-	//Don't let the user unselect all the options.
+	// Don't let the user unselect all the options.
 	else
 		node->setInt(k_save_rendered_images, 0, t, true);
 
@@ -1059,7 +1042,7 @@ int settings::setDisplay(void* data, int index, fpreal t,
 		node->setInt(k_display_and_save_rendered_images, 0, t, false);
 		node->setInt(k_output_nsi_files, 0, t, false);
 	}
-	//Don't let the user unselect all the options.
+	// Don't let the user unselect all the options.
 	else
 		node->setInt(k_display_rendered_images, 0, t, true);
 	return 1;
@@ -1076,13 +1059,13 @@ int settings::setOutput(void* data, int index, fpreal t,
 		node->setInt(k_display_and_save_rendered_images, 0, t, false);
 		node->setInt(k_save_rendered_images, 0, t, false);
 	}
-	//Don't let the user unselect all the options.
+	// Don't let the user unselect all the options.
 	else
 		node->setInt(k_output_nsi_files, 0, t, true);
 	return 1;
 }
 
-//Unselecting other options when selecting Image and Display option
+// Unselecting other options when selecting Image and Display option
 int settings::setSaveDislay(void* data, int index, fpreal t,
 	const PRM_Template* tplate)
 {
@@ -1093,7 +1076,7 @@ int settings::setSaveDislay(void* data, int index, fpreal t,
 		node->setInt(k_save_rendered_images, 0, t, false);
 		node->setInt(k_output_nsi_files, 0, t, false);
 	}
-	//Don't let the user unselect all the options.
+	// Don't let the user unselect all the options.
 	else
 		node->setInt(k_display_and_save_rendered_images, 0, t, true);
 	return 1;
@@ -1336,7 +1319,7 @@ UT_String settings::GetObjectsToRender( fpreal t ) const
 
 UT_String settings::GetLightsToRender( fpreal t ) const
 {
-	//We render all lights, no matter it's display flag value
+	// We render all lights, no matter it's display flag value
 	return "*";
 }
 
@@ -1354,13 +1337,21 @@ UT_String settings::get_matte_objects( fpreal t ) const
 UT_String settings::get_render_mode( fpreal t )const
 {
 	UT_String render_mode("*");
-	m_parameters.evalString(render_mode, settings::k_old_render_mode, 0, t);
+	/*
+		Since we are not using render_mode anymore to define where we are
+		rendering, we comment out the row below to avoid warning message
+		for trying to set unexistent parameter. This function is only called
+		for Houdini Scene view but since it is not completed yet we can leave
+		it like this for now. We can still add and use render_mode later as a hidden
+		parameter to define the pressed buttons for rendering.
+	*/
+	// m_parameters.evalString(render_mode, settings::k_old_render_mode, 0, t);
 	return render_mode;
 }
 
 bool settings::export_to_nsi(fpreal t)const
 {
-	if (m_parameters.m_standin)
+	if (m_parameters.m_rop_type == rop_type::stand_in)
 		return m_parameters.evalInt(settings::k_output_standin, 0, t);
 
 	return m_parameters.evalInt(settings::k_output_nsi_files, 0, t);
