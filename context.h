@@ -58,7 +58,7 @@ public:
 		bool i_batch,
 		bool i_ipr,
 		bool i_export_nsi,
-		int i_output_mode );
+		rop_type i_rop_type );
 
 	~context()
 	{

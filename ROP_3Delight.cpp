@@ -100,7 +100,7 @@ namespace
 	}
 }
 
-ROP_3DelightOperator::ROP_3DelightOperator(int i_rop_type)
+ROP_3DelightOperator::ROP_3DelightOperator(rop_type i_rop_type)
 	:OP_Operator(
 		i_rop_type == rop_type::cloud ? "3DelightCloud":
 		i_rop_type == rop_type::stand_in ? "3DelightStandin":"3Delight",
@@ -160,7 +160,7 @@ ROP_3Delight::ROP_3Delight(
 	OP_Network* net,
 	const char* name,
 	OP_Operator* entry,
-	int i_rop_type)
+	rop_type i_rop_type)
 	:	ROP_Node(net, name, entry),
 		m_rop_type(i_rop_type),
 		m_current_render(nullptr),

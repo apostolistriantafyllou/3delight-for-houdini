@@ -1,6 +1,7 @@
 #pragma once
 
 #include "aov.h"
+#include "../context.h"
 #include <SYS/SYS_Types.h>
 #include <UT/UT_String.h>
 #include <vector>
@@ -25,8 +26,8 @@ public:
 	/// Notifies the object of the ROP's rendering state
 	void Rendering(bool i_render, bool i_ipr);
 
-	static PRM_Template* GetTemplates(int i_output_mode);
-	static OP_TemplatePair* GetTemplatePair(int i_output_mode);
+	static PRM_Template* GetTemplates(rop_type i_rop_type);
+	static OP_TemplatePair* GetTemplatePair(rop_type i_rop_type);
 	static OP_VariablePair* GetVariablePair();
 	static PRM_Template* GetObsoleteParameters();
 

@@ -18,7 +18,7 @@ context::context(
 	bool i_batch,
 	bool i_ipr,
 	bool i_export_nsi,
-	int i_rop_type)
+	rop_type i_rop_type)
 :
 	m_rop(i_rop),
 	m_nsi(i_nsi),

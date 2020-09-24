@@ -95,7 +95,7 @@ protected:
 		OP_Network* net,
 		const char* name,
 		OP_Operator* entry,
-		int i_rop_type);
+		rop_type i_rop_type);
 	virtual ~ROP_3Delight();
 
 	virtual int startRender(int nframes, fpreal s, fpreal e);
@@ -210,7 +210,7 @@ private:
 
 private:
 	std::vector<OBJ_Node*> m_lights;
-	int m_rop_type;
+	rop_type m_rop_type;
 
 	context* m_current_render{nullptr};
 
@@ -278,7 +278,7 @@ private:
 struct ROP_3DelightOperator : public OP_Operator
 {
 	/// Constructor.
-	ROP_3DelightOperator(int i_output_mode);
+	ROP_3DelightOperator(rop_type i_rop_type);
 
 	// overriding function which is responsible for help URL
 	virtual bool getOpHelpURL(UT_String& url);
