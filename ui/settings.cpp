@@ -910,8 +910,8 @@ OP_TemplatePair* settings::GetTemplatePair(rop_type i_rop_type)
 	if(!ropPair[i_rop_type])
 	{
 		ropPair[i_rop_type] = new OP_TemplatePair(GetTemplates(i_rop_type));
-		return ropPair[i_rop_type];
 	}
+	return ropPair[i_rop_type];
 }
 
 OP_VariablePair* settings::GetVariablePair()
