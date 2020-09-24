@@ -58,7 +58,7 @@ public:
 		bool i_batch,
 		bool i_ipr,
 		bool i_export_nsi,
-		int i_output_mode );
+		rop_type i_rop_type );
 
 	~context()
 	{
@@ -142,7 +142,7 @@ public:
 	bool m_ipr{false};
 	bool m_time_dependent{false};
 	bool m_export_nsi{false};
-	int m_rop_type{rop_type::standard};
+	rop_type m_rop_type{rop_type::standard};
 
 	/** files to be deleted at render end. */
 	mutable std::vector< std::string > m_temp_filenames;

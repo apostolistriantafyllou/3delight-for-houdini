@@ -3,7 +3,6 @@
 #include "select_layers_dialog.h"
 #include "../scene.h"
 #include "../ROP_3Delight.h"
-#include "../context.h"
 
 #include "delight.h"
 #include "nsi_dynamic.hpp"
@@ -147,7 +146,7 @@ void settings::Rendering(bool i_render,bool ipr)
 	}
 }
 
-PRM_Template* settings::GetTemplates(int i_rop_type)
+PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 {
 	static PRM_Name separator1("separator1", "");
 	static PRM_Name separator2("separator2", "");
@@ -905,14 +904,14 @@ PRM_Template* settings::GetTemplates(int i_rop_type)
 	return &templates[0];
 }
 
-OP_TemplatePair* settings::GetTemplatePair(int i_rop_type)
+OP_TemplatePair* settings::GetTemplatePair(rop_type i_rop_type)
 {
 	static OP_TemplatePair* ropPair[3] = { nullptr, nullptr,nullptr };
 	if(!ropPair[i_rop_type])
 	{
 		ropPair[i_rop_type] = new OP_TemplatePair(GetTemplates(i_rop_type));
-		return ropPair[i_rop_type];
 	}
+	return ropPair[i_rop_type];
 }
 
 OP_VariablePair* settings::GetVariablePair()
