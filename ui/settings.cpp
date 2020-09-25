@@ -9,6 +9,7 @@
 
 #include <OBJ/OBJ_Node.h>
 #include <OP/OP_BundlePattern.h>
+#include <OP/OP_Director.h>
 #include <OP/OP_OperatorTable.h>
 #include <PRM/PRM_Conditional.h>
 #include <PRM/PRM_Include.h>
@@ -119,6 +120,13 @@ settings::settings( ROP_3Delight &i_rop )
 	render_group_h.addConditional(render_h);
 	render_group_h.addConditional(render_disable);
 	execute_tmpl->setConditionalBasePtr(&render_group_h);
+
+	// Update AOVs list so we're ready to render
+	double time =
+		OPgetDirector()->getChannelManager()->getEvaluateTime(SYSgetSTID());
+	std::vector<VOP_Node*> custom_aovs;
+	scene::find_custom_aovs(&i_rop, time, custom_aovs);
+	aov::updateCustomVariables(custom_aovs);
 }
 
 settings::~settings()
