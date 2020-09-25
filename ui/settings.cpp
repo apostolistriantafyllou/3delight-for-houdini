@@ -1069,7 +1069,7 @@ int settings::setSaveDislay(void* data, int index, fpreal t,
 	const PRM_Template* tplate)
 {
 	OP_Parameters* node = reinterpret_cast<OP_Parameters*>(data);
-	if (node->evalInt(k_display_and_save_rendered_images, 0, t) == true)
+	if (node->evalInt(k_display_and_save_rendered_images, 0, t))
 	{
 		node->setInt(k_display_rendered_images, 0, t, false);
 		node->setInt(k_save_rendered_images, 0, t, false);
