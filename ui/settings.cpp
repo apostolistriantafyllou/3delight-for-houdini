@@ -1200,9 +1200,6 @@ int settings::add_layer_cb(
 {
 	ROP_3Delight *node = reinterpret_cast<ROP_3Delight*>(data);
 	std::vector<VOP_Node*> custom_aovs;
-	object_visibility_resolver resolver(
-		node->getFullPath().toStdString(), node->m_settings, t );
-
 	scene::find_custom_aovs( node, t, custom_aovs );
 	aov::updateCustomVariables(custom_aovs);
 
