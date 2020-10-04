@@ -416,6 +416,9 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	static PRM_Name objects_to_render(k_objects_to_render, "Objects to Render");
 	static PRM_Default objects_to_render_d(0.0f, "*");
 
+	static PRM_Name lights_to_render(k_lights_to_render, "Lights to Render");
+	static PRM_Default lights_to_render_d(0.0f, "*");
+
 	static PRM_Name matte_objects(k_matte_objects, "Matte Objects");
 	static PRM_Default matte_objects_d(0.0f, ""); /* none */
 
@@ -425,6 +428,7 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &atmosphere, &atmosphere_d, nullptr, nullptr, nullptr),
 		PRM_Template(PRM_TOGGLE, 1, &override_display_flags, &override_display_flags_d),
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &objects_to_render, &objects_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objGeometryPath, 1, nullptr, &override_display_flags_g),
+		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &lights_to_render, &lights_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objLightPath, 1, nullptr, &override_display_flags_g),
 		PRM_Template(
 			PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &matte_objects,
 			&matte_objects_d, nullptr, nullptr, nullptr,
@@ -994,7 +998,6 @@ PRM_Template* settings::GetObsoleteParameters()
 	static PRM_ChoiceList interactive_output_mode_c(PRM_CHOICELIST_SINGLE, interactive_output_mode_i);
 
 	static PRM_Name export_n(k_export, "Export");
-	static PRM_Name lights_to_render(k_lights_to_render, "Lights to Render");
 	static PRM_Name overrides_note_spacing("overrides_note_spacing", "");
 	static PRM_Name overrides_note("overrides_note", "These settings are ignored in batch rendering");
 
@@ -1009,7 +1012,6 @@ PRM_Template* settings::GetObsoleteParameters()
 		PRM_Template(PRM_ORD, 1, &batch_output_mode, &batch_output_mode_d, &batch_output_mode_c),
 		PRM_Template(PRM_ORD, 1, &interactive_output_mode, &interactive_output_mode_d, &interactive_output_mode_c),
 		PRM_Template(PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &export_n),
-		PRM_Template(PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &lights_to_render),
 		PRM_Template(PRM_LABEL, 0, &overrides_note_spacing),
 		PRM_Template(PRM_LABEL, 0, &overrides_note),
 		PRM_Template(PRM_SEPARATOR, 0, &separator7),
@@ -1323,8 +1325,9 @@ UT_String settings::GetObjectsToRender( fpreal t ) const
 
 UT_String settings::GetLightsToRender( fpreal t ) const
 {
-	// We render all lights, no matter it's display flag value
-	return "*";
+	UT_String lights_pattern("*");
+	m_parameters.evalString(lights_pattern, settings::k_lights_to_render, 0, t);
+	return lights_pattern;
 }
 
 UT_String settings::get_matte_objects( fpreal t ) const
