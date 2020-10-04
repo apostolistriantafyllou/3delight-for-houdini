@@ -18,10 +18,10 @@ object_visibility_resolver::object_visibility_resolver(
 	{
 		m_objects_to_render_pattern =
 			OP_BundlePattern::allocPattern( i_settings.GetObjectsToRender(i_time) );
-	}
 
-	m_lights_to_render_pattern =
-		OP_BundlePattern::allocPattern(i_settings.GetLightsToRender(i_time));
+		m_lights_to_render_pattern =
+			OP_BundlePattern::allocPattern(i_settings.GetLightsToRender(i_time));
+	}
 
 	m_mattes_pattern =
 		OP_BundlePattern::allocPattern( i_settings.get_matte_objects(i_time) );
@@ -29,11 +29,11 @@ object_visibility_resolver::object_visibility_resolver(
 
 object_visibility_resolver::~object_visibility_resolver()
 {
-	if(m_objects_to_render_pattern )
+	if(m_lights_to_render_pattern  && m_objects_to_render_pattern )
 	{
+		OP_BundlePattern::freePattern(m_lights_to_render_pattern);
 		OP_BundlePattern::freePattern( m_objects_to_render_pattern );
 	}
-	OP_BundlePattern::freePattern(m_lights_to_render_pattern);
 	OP_BundlePattern::freePattern( m_mattes_pattern );
 }
 
