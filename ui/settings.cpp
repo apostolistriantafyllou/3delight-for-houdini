@@ -490,7 +490,6 @@ PRM_Template* settings::GetTemplates(int i_rop_type)
 
 	static std::vector<PRM_Template>standin_elements_templates =
 	{
-		PRM_Template(PRM_STRING | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, PRM_TYPE_DYNAMIC_PATH, 1, &camera, &camera_d, nullptr, nullptr, nullptr, &PRM_SpareData::objCameraPath),
 		PRM_Template(PRM_TOGGLE, 1, &override_display_flags, &override_display_flags_d),
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &objects_to_render, &objects_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objGeometryPath, 1, nullptr, &override_display_flags_g),
 		PRM_Template(
@@ -498,9 +497,9 @@ PRM_Template* settings::GetTemplates(int i_rop_type)
 			&matte_objects_d, nullptr, nullptr, nullptr,
 			&PRM_SpareData::objGeometryPath, 1, nullptr, nullptr),
 
-		PRM_Template(PRM_TOGGLE| PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1, &output_standin, &output_standin_d,0, 0,nullptr, nullptr, 1,
-					 nullptr),
-		PRM_Template(PRM_TOGGLE| PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1, &motion_blur, &motion_blur_d),
+		PRM_Template(PRM_STRING | PRM_TYPE_INVISIBLE, PRM_TYPE_DYNAMIC_PATH, 1, &camera, &camera_d, nullptr, nullptr, nullptr, &PRM_SpareData::objCameraPath),
+		PRM_Template(PRM_TOGGLE | PRM_TYPE_INVISIBLE, 1, &output_standin, &output_standin_d),
+		PRM_Template(PRM_TOGGLE | PRM_TYPE_INVISIBLE, 1, &motion_blur, &motion_blur_d),
 	};
 
 	static std::vector<PRM_Template> output_templates =
