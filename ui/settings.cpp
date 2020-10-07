@@ -503,6 +503,7 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	{
 		PRM_Template(PRM_TOGGLE, 1, &override_display_flags, &override_display_flags_d),
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &objects_to_render, &objects_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objGeometryPath, 1, nullptr, &override_display_flags_g),
+		PRM_Template(PRM_STRING | PRM_TYPE_INVISIBLE, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &lights_to_render, &lights_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objLightPath, 1, nullptr, &override_display_flags_g),
 		PRM_Template(
 			PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &matte_objects,
 			&matte_objects_d, nullptr, nullptr, nullptr,
