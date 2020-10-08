@@ -251,14 +251,6 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 			&ipr_start, &ipr_start_h),
 		PRM_Template(PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &RenderIPR, 0, 0, 0,
 					&settings::ipr_render,0,0,nullptr,&start_ipr_group_h),
-		/*
-		Add this on our 3Delight ROP_Node so we don't get a warning regarding
-		evaluating the value of export_standin_h as it is only called from the
-		executed command on Standin ROP, to determine m_archive parameter's value.
-		*/
-		PRM_Template(
-			PRM_TOGGLE | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1,
-			&export_standin, &export_standin_h),
 	};
 
 	static std::vector<PRM_Template> sequence_render_templates =
@@ -503,14 +495,15 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	{
 		PRM_Template(PRM_TOGGLE, 1, &override_display_flags, &override_display_flags_d),
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &objects_to_render, &objects_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objGeometryPath, 1, nullptr, &override_display_flags_g),
-		PRM_Template(PRM_STRING | PRM_TYPE_INVISIBLE, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &lights_to_render, &lights_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objLightPath, 1, nullptr, &override_display_flags_g),
 		PRM_Template(
 			PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &matte_objects,
 			&matte_objects_d, nullptr, nullptr, nullptr,
 			&PRM_SpareData::objGeometryPath, 1, nullptr, nullptr),
 
-		PRM_Template(PRM_STRING | PRM_TYPE_INVISIBLE, PRM_TYPE_DYNAMIC_PATH, 1, &camera, &camera_d, nullptr, nullptr, nullptr, &PRM_SpareData::objCameraPath),
+		//Defines whether we are exporting from standin or not.
 		PRM_Template(PRM_TOGGLE | PRM_TYPE_INVISIBLE, 1, &output_standin, &output_standin_d),
+
+		//Motion blur is set to invisible on Standin ROP as we are exporting it as enabled on NSI.
 		PRM_Template(PRM_TOGGLE | PRM_TYPE_INVISIBLE, 1, &motion_blur, &motion_blur_d),
 	};
 
@@ -615,9 +608,6 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	static PRM_Template aov_templates[] =
 	{
 		PRM_Template(PRM_TOGGLE|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT, 1, &active_layer, &active_layer_d),
-		PRM_Template(PRM_TOGGLE|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT|PRM_TYPE_INVISIBLE, 1, &frame_buffer, &frame_buffer_d),
-		PRM_Template(PRM_TOGGLE|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT|PRM_TYPE_INVISIBLE, 1, &file_output, &file_output_d),
-		PRM_Template(PRM_TOGGLE|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT|PRM_TYPE_INVISIBLE, 1, &jpeg_output, &file_output_d),
 		PRM_Template(PRM_STRING|PRM_TYPE_LABEL_NONE|PRM_TYPE_JOIN_NEXT, 1, &aov_name, &aov_name_d),
 		PRM_Template(PRM_CALLBACK, 1, &aov_clear, 0, 0, 0,
 					&settings::aov_clear_cb),
@@ -1326,7 +1316,15 @@ UT_String settings::GetObjectsToRender( fpreal t ) const
 UT_String settings::GetLightsToRender( fpreal t ) const
 {
 	UT_String lights_pattern("*");
-	m_parameters.evalString(lights_pattern, settings::k_lights_to_render, 0, t);
+	/*
+		Don't evaluate k_lights_to_render parameter on standin as
+		it does not exists. Even why we return "*" for standin, it
+		will not affect the output as we are not exporting light sources.
+	*/
+	if (m_parameters.m_rop_type != rop_type::stand_in)
+	{
+		m_parameters.evalString(lights_pattern, settings::k_lights_to_render, 0, t);
+	}
 	return lights_pattern;
 }
 
