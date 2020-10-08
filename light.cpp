@@ -44,8 +44,6 @@ light::light( const context& i_ctx, OBJ_Node *i_object )
 
 void light::create( void ) const
 {
-	if (m_context.m_rop_type == rop_type::stand_in)
-		return;
 	/*
 		We will be creating the light's geometry under this transform.
 		Note that we create the light even if not enabled. This will
@@ -81,8 +79,6 @@ void light::create( void ) const
 
 void light::create_geometry( void ) const
 {
-	if (m_context.m_rop_type == rop_type::stand_in)
-		return;
 	std::string geo_name = geometry_handle();
 
 	if( m_is_env_light )
@@ -319,9 +315,6 @@ void light::delete_geometry( void ) const
 
 void light::set_attributes( void ) const
 {
-	if (m_context.m_rop_type == rop_type::stand_in)
-		return;
-
 	create_geometry();
 
 	set_visibility_to_camera();
@@ -353,8 +346,6 @@ void light::set_attributes_at_time( double i_time ) const
 
 void light::connect( void ) const
 {
-	if (m_context.m_rop_type == rop_type::stand_in)
-		return;
 	/*
 		The light is always created, but connected only if visible, so its easy
 		to deal with visibility changes in IPR.

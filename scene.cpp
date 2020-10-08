@@ -164,7 +164,7 @@ void scene::process_obj_node(
 				?	(exporter*)new deleter<incandescence_light>(i_context, obj)
 				:	(exporter*)new deleter<light>(i_context, obj));
 		}
-		if(needs_export && visible)
+		if(needs_export && visible && i_context.m_rop_type != rop_type::stand_in)
 		{
 			o_to_export.push_back(
 				is_incand
