@@ -440,10 +440,18 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	fpreal fps = HOM().fps();
 
 	bool batch = !UTisUIAvailable();
-	bool ipr =
-		m_idisplay_rendering
-		?	m_idisplay_ipr
-		:	evalInt(settings::k_ipr_start,0, tstart);
+	bool ipr = false;
+	/*
+		Avoid evaluating ipr parameter for standin ROP which would
+		produce an error message on console.
+	*/
+	if (m_rop_type != rop_type::stand_in)
+	{
+		ipr =
+			m_idisplay_rendering
+			? m_idisplay_ipr
+			: evalInt(settings::k_ipr_start, 0, tstart);
+	}
 
 	m_current_render = new context(
 		this,
@@ -1861,6 +1869,17 @@ ROP_3Delight::GetShutterInterval(double i_time)const
 	if(!HasMotionBlur(i_time))
 	{
 		return 0.0;
+	}
+
+	/*
+		Since we do not export camera parameters on standin ROP
+		but we export motion blur as enabled, we return 1.0
+		for shutter interval as trying to get it from camera
+		when it does not exist would produce an error.
+	*/
+	if (m_rop_type == rop_type::stand_in)
+	{
+		return 1.0;
 	}
 
 	OBJ_Camera* cam = ROP_3Delight::GetCamera(i_time);
