@@ -348,10 +348,10 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 
 	static PRM_Name motion_blur_note1(
 		"motion_blur_note1",
-		"This enables linear blur with 2 samples. For motion blur with noticeable");
+		"                        This enables linear blur with 2 samples. For motion blur with noticeable");
 	static PRM_Name motion_blur_note2(
 		"motion_blur_note2",
-		"curvature, additional samples can be specified per object and per set.");
+		"                        curvature, additional samples can be specified per object and per set.");
 
 	static PRM_Name max_diffuse_depth(k_max_diffuse_depth, "Max Diffuse Depth");
 	static PRM_Default max_diffuse_depth_d(2);
@@ -483,13 +483,13 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 
 	static PRM_Name nsi_file_note1(
 		"nsi_file_note1",
-		"The Image Filename, Format and JPEG copy selections are exported as");
+		"                        The Image Filename, Format and JPEG copy selections are exported as");
 	static PRM_Name nsi_file_note2(
 		"nsi_file_note2",
-		"part of the NSI file to specify how images are saved when rendering");
+		"                        part of the NSI file to specify how images are saved when rendering");
 	static PRM_Name nsi_file_note3(
 		"nsi_file_note3",
-		"this NSI file using the \"renderdl\" command line'.");
+		"                        this NSI file using the \"renderdl\" command line'.");
 
 	static std::vector<PRM_Template>standin_elements_templates =
 	{
@@ -621,22 +621,22 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	static PRM_Name enable_multi_light(k_enable_multi_light, "Multi-Light");
 	static PRM_Name multi_light_note1(
 		"multi_light_note1",
-		"Enables light mixing in 3Delight Display (or other application) by creating");
+		"                        Enables light mixing in 3Delight Display (or other application) by creating");
 	static PRM_Name multi_light_note2(
 		"multi_light_note2",
-		"an image layer (AOV) for each light or group of lights. For scenes with many");
+		"                        an image layer (AOV) for each light or group of lights. For scenes with many");
 	static PRM_Name multi_light_note3(
 		"multi_light_note3",
-		"lights, they must be grouped to avoid creating an excessive amount of layers.");
+		"                        lights, they must be grouped to avoid creating an excessive amount of layers.");
 
 	static PRM_Default enable_multi_light_d(false);
 
 	static std::vector<PRM_Template> image_layers_templates =
 	{
 		PRM_Template(PRM_TOGGLE, 1, &enable_multi_light, &enable_multi_light_d),
-		// PRM_Template(PRM_LABEL, 0, &multi_light_note1),
-		// PRM_Template(PRM_LABEL, 0, &multi_light_note2),
-		// PRM_Template(PRM_LABEL, 0, &multi_light_note3),
+		PRM_Template(PRM_LABEL, 0, &multi_light_note1),
+		PRM_Template(PRM_LABEL, 0, &multi_light_note2),
+		PRM_Template(PRM_LABEL, 0, &multi_light_note3),
 		PRM_Template(PRM_SEPARATOR, 0, &separator4),
 		PRM_Template(PRM_LABEL|PRM_TYPE_JOIN_NEXT, 1, &aovs_titles1),
 		PRM_Template(PRM_LABEL, 1, &aovs_titles2),
