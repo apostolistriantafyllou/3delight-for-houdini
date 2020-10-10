@@ -68,7 +68,6 @@ const char* settings::k_display_and_save_rendered_images = "display_and_save_ren
 const char* settings::k_save_jpeg_copy = "save_jpeg_copy";
 const char* settings::k_output_nsi_files = "output_nsi_files";
 const char* settings::k_output_standin = "output_standin";
-const char* settings::k_export_standin = "export_standin";
 const char* settings::k_aovs = "aovs";
 const char* settings::k_aov = "aov";
 const char* settings::k_aov_clear = "aov_clear_#";
@@ -193,9 +192,6 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	static PRM_Name ipr_start(k_ipr_start, "Ipr Start");
 	static PRM_Default ipr_start_h(false);
 
-	static PRM_Name export_standin(k_export_standin, "Standin");
-	static PRM_Default export_standin_h(false);
-
 	static PRM_Name sequence_rendering(k_sequence_rendering, "Sequence Rendering");
 	static PRM_Default sequence_rendering_d(false);
 	static PRM_Name SequenceRender("sequence_render", "Render Sequence");
@@ -297,10 +293,6 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 		PRM_Template(
 			PRM_TOGGLE | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1,
 			&ipr_start, &ipr_start_h),
-
-		PRM_Template(
-			PRM_TOGGLE | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1,
-			&export_standin, &export_standin_h),
 
 		PRM_Template(PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &export_n, nullptr,
 			nullptr, nullptr,
@@ -1247,9 +1239,7 @@ int settings::export_standin(
 	const PRM_Template* tplate)
 {
 	ROP_3Delight *node = reinterpret_cast<ROP_3Delight*>(data);
-	node->get_settings().m_parameters.setInt(k_export_standin, 0, 0.0, true);
 	node->doRenderCback(data, index, t, tplate);
-	node->get_settings().m_parameters.setInt(k_export_standin, 0, 0.0, false);
 	return 1;
 }
 
@@ -1259,9 +1249,7 @@ int settings::export_standin_sequence(
 {
 	ROP_3Delight *node = reinterpret_cast<ROP_3Delight*>(data);
 	node->get_settings().m_parameters.setInt("trange", 0, 0.0, 1);
-	node->get_settings().m_parameters.setInt(k_export_standin, 0, 0.0, true);
 	node->doRenderCback(data, index, t, tplate);
-	node->get_settings().m_parameters.setInt(k_export_standin, 0, 0.0, false);
 	node->get_settings().m_parameters.setInt("trange", 0, 0.0, 0);
 	return 1;
 }
