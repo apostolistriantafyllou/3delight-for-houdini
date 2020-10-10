@@ -129,7 +129,6 @@ public:
 	static const char* k_save_jpeg_copy;
 	static const char* k_output_nsi_files;
 	static const char* k_output_standin;
-	static const char* k_export_standin;
 	static const char* k_aovs;
 	static const char* k_aov;
 	static const char* k_aov_clear;

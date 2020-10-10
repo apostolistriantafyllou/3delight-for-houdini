@@ -68,7 +68,6 @@ const char* settings::k_display_and_save_rendered_images = "display_and_save_ren
 const char* settings::k_save_jpeg_copy = "save_jpeg_copy";
 const char* settings::k_output_nsi_files = "output_nsi_files";
 const char* settings::k_output_standin = "output_standin";
-const char* settings::k_export_standin = "export_standin";
 const char* settings::k_aovs = "aovs";
 const char* settings::k_aov = "aov";
 const char* settings::k_aov_clear = "aov_clear_#";
@@ -145,11 +144,26 @@ void settings::Rendering(bool i_render,bool ipr)
 		if (m_parameters.evalInt("trange", 0, 0))
 		{
 			m_parameters.setInt(k_sequence_rendering, 0, 0.0, true);
+
+			/*
+				Do not set sequence render parameter to true when we export
+				a sequence of NSI files. This will also prevent Start IPR button
+				from getting disabled. We do not need an Abort Sequence button
+				for NSI export. This because when we have to deal with heavy
+				scenes export(which might take a while to export, the Houdini
+				interrupt window will appear, from where we can abort the sequence
+				export. This window does not allow us to have interaction with Houdini
+				(we can not even close it from X button) unless we abort it from this window.
+			*/
+			if (m_parameters.evalInt(k_output_nsi_files, 0, 0))
+			{
+				m_parameters.setInt(k_sequence_rendering, 0, 0.0, false);
+			}
 		}
 		else
 		{
 			m_parameters.setInt(k_rendering, 0, 0.0, i_render);
-			m_parameters.setInt(k_sequence_rendering, 0, 0.0, false);\
+			m_parameters.setInt(k_sequence_rendering, 0, 0.0, false);
 		}
 	}
 }
@@ -193,9 +207,6 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	static PRM_Name ipr_start(k_ipr_start, "Ipr Start");
 	static PRM_Default ipr_start_h(false);
 
-	static PRM_Name export_standin(k_export_standin, "Standin");
-	static PRM_Default export_standin_h(false);
-
 	static PRM_Name sequence_rendering(k_sequence_rendering, "Sequence Rendering");
 	static PRM_Default sequence_rendering_d(false);
 	static PRM_Name SequenceRender("sequence_render", "Render Sequence");
@@ -208,14 +219,8 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	static PRM_Name export_sequence_file(k_export_sequence_file, " Export Sequence");
 	static PRM_Default export_sequence_file_d(false);
 
-	static PRM_Conditional export_file_hide(
+	static PRM_Conditional export_file_h(
 		("{ " + std::string(k_output_nsi_files) + " == 0 }").c_str(), PRM_CONDTYPE_HIDE);
-
-	static PRM_Conditional export_file_disable(
-		("{ " + std::string(k_sequence_rendering) + " != 0 }").c_str(), PRM_CONDTYPE_DISABLE);
-	static PRM_ConditionalGroup export_file_group;
-	export_file_group.addConditional(export_file_hide);
-	export_file_group.addConditional(export_file_disable);
 
 	static PRM_Conditional export_sequence_file_h(
 		("{ " + std::string(k_output_nsi_files) + " == 0 }"
@@ -262,7 +267,7 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 		PRM_Template(
 			PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &export_file, nullptr, nullptr,
 			nullptr, &ROP_3Delight::doRenderCback, nullptr, 0, nullptr,
-			&export_file_group),
+			&export_file_h),
 		PRM_Template(
 			PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &stop_render, nullptr, nullptr,
 			nullptr, &settings::StopRenderCB, nullptr, 0, nullptr,
@@ -297,10 +302,6 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 		PRM_Template(
 			PRM_TOGGLE | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1,
 			&ipr_start, &ipr_start_h),
-
-		PRM_Template(
-			PRM_TOGGLE | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1,
-			&export_standin, &export_standin_h),
 
 		PRM_Template(PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &export_n, nullptr,
 			nullptr, nullptr,
@@ -1247,9 +1248,7 @@ int settings::export_standin(
 	const PRM_Template* tplate)
 {
 	ROP_3Delight *node = reinterpret_cast<ROP_3Delight*>(data);
-	node->get_settings().m_parameters.setInt(k_export_standin, 0, 0.0, true);
 	node->doRenderCback(data, index, t, tplate);
-	node->get_settings().m_parameters.setInt(k_export_standin, 0, 0.0, false);
 	return 1;
 }
 
@@ -1259,9 +1258,7 @@ int settings::export_standin_sequence(
 {
 	ROP_3Delight *node = reinterpret_cast<ROP_3Delight*>(data);
 	node->get_settings().m_parameters.setInt("trange", 0, 0.0, 1);
-	node->get_settings().m_parameters.setInt(k_export_standin, 0, 0.0, true);
 	node->doRenderCback(data, index, t, tplate);
-	node->get_settings().m_parameters.setInt(k_export_standin, 0, 0.0, false);
 	node->get_settings().m_parameters.setInt("trange", 0, 0.0, 0);
 	return 1;
 }
