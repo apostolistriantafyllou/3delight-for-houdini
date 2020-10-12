@@ -69,6 +69,10 @@ void curvemesh::set_attributes( void ) const
 			->SetValuePointer(nvertices.get())
 		);
 
+	std::vector< std::string > to_export{ "uv" };
+	exporter::export_attributes(
+		to_export, *curve, m_context.m_current_time, GT_DataArrayHandle() );
+
 	const char* smooth_parm = "_3dl_smooth_curves";
 
 	if( curve->getBasis() == GT_BASIS_BSPLINE )
