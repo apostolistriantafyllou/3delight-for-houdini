@@ -131,6 +131,11 @@ void vop::connect_input(int i_input_index)const
 		int source_index = input_ref->getNodeOutputIndex();
 		source->getOutputName(source_name, source_index);
 
+		if (vop_name(m_vop) == "makexform" && source_name == "xform")
+		{
+			source_name = "worldInverseMatrix[0]";
+		}
+
 		m_nsi.Connect(
 			vop::handle(*source, m_context), source_name.toStdString(),
 			m_handle, input_name.toStdString() );
@@ -763,9 +768,26 @@ std::string vop::shader_path( const VOP_Node *i_vop )
 		UT_String shaderfilename;
 		i_vop->evalString( shaderfilename, shaderParmName, 0, 0 );
 		path = shaderfilename;
-	} else {
+	}
+
+	else
+	{
 		const shader_library &library = shader_library::get_instance();
-		path = library.get_shader_path( vop_name( i_vop ).c_str() );
+		/*
+			Use place3dTexture osl shader if makexform node has been used.
+			We can avoid this checking if we add this osl shader in the same
+			path as other osl shader on our plugin but with the name changed 
+			to makexform.
+		*/
+		if (vop_name(i_vop) == "makexform")
+		{
+			std::string oslPlacementMatrix = "place3dTexture";
+			path = library.get_shader_path(oslPlacementMatrix.c_str());
+		}
+		else
+		{
+			path = library.get_shader_path(vop_name(i_vop).c_str());
+		}
 	}
 
 	return path;
