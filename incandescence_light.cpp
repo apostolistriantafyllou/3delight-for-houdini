@@ -25,11 +25,6 @@ namespace
 		for (int i = 0; i < i_shader_info->nparams(); i++)
 		{
 			const DlShaderInfo::Parameter* parameter = i_shader_info->getparam(i);
-			/*
-				FIXME : will always be false because param_name is always
-				k_incandescence_multiplier, while parameter->name is allocated
-				by the DlShaderInfo module.
-			*/
 			if (parameter->name == param_name)
 			{
 				return true;
@@ -53,10 +48,13 @@ incandescence_light::incandescence_light(
 void incandescence_light::create() const
 {
 	/*
-		This light is  really just a set to connect objecys to.
+		This light is  really just a set to connect objects to. We do not
+		use the object handle here as in IPR this is a meaningless name
+		(uuid) and it also creates problem down the road.
+		\ref ROP_3Delight::ExportLightCategories
 	*/
-	std::string set = handle();
-	m_nsi.Create( set, "set" );
+	std::string category = m_object->getFullPath().toStdString();
+	m_nsi.Create( category, "set" );
 }
 
 void incandescence_light::set_attributes() const
@@ -76,6 +74,7 @@ void incandescence_light::connect() const
 	geo_str.tokenize(obj_paths, ' ');
 
 	const shader_library& library = shader_library::get_instance();
+	std::string category = m_object->getFullPath().toStdString();
 
 	// Process each obj_path in the selection
 	for(int i = 0; i < obj_paths.getArgc(); i++)
@@ -115,7 +114,7 @@ void incandescence_light::connect() const
 
 			m_nsi.Connect(
 				geometry::handle(*obj_node, m_context), "",
-				handle(), "members" );
+				category, "members" );
 		}
 	}
 }
@@ -169,8 +168,6 @@ void incandescence_light::disconnect()const
 		by connect(), which is never called before disconnect(). (Exporters are
 		not kept during IPR rendering : disconnect() is only ever called on a
 		local exporter from changed_cb()).
-		Also, ParameterExists() always returns false, so nothing will ever be
-		added to m_current_multipliers anyway.
 	*/
 	if( !m_current_multipliers.empty() )
 	{
