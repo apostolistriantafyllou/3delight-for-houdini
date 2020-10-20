@@ -350,8 +350,7 @@ void light::connect( void ) const
 		The light is always created, but connected only if visible, so its easy
 		to deal with visibility changes in IPR.
 	*/
-	if( m_object->evalInt("light_enable", 0, m_context.m_current_time)
-		&& m_object->getDisplay())
+	if( m_object->evalInt("light_enable", 0, m_context.m_current_time))
 	{
 		std::string parent_handle = null::handle(*m_object, m_context);
 		m_nsi.Connect(m_handle, "", parent_handle, "objects");
@@ -394,7 +393,7 @@ void light::changed_cb(
 		return;
 	}
 
-	if(i_type != OP_PARM_CHANGED && i_type != OP_FLAG_CHANGED)
+	if(i_type != OP_PARM_CHANGED)
 	{
 		return;
 	}
@@ -408,14 +407,6 @@ void light::changed_cb(
 	}
 
 	light node(*ctx, obj);
-
-	if (i_type == OP_FLAG_CHANGED)
-	{
-		node.disconnect();
-		node.connect();
-		ctx->m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
-		return;
-	}
 
 	if(!node.set_single_shader_attribute(parm_index))
 	{

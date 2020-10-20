@@ -49,6 +49,13 @@ bool object_visibility_resolver::object_displayed(const OBJ_Node& i_node)const
 		return pattern->match(&i_node, m_rop_path.c_str(), true);
 	}
 
+	/*
+		Check only the display channel (light_enable parameter)
+		for light sources and ignore the display flag.
+	*/
+	if (const_cast<OBJ_Node&>(i_node).castToOBJLight())
+		return !i_node.isDisplayDisabled( m_current_time );
+
 	return i_node.getObjectDisplay( m_current_time );
 }
 
