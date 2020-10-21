@@ -85,20 +85,27 @@ void incandescence_light::connect() const
 			// Case relative path
 			obj_node = m_object->findOBJNode(obj_paths(i));
 		}
+
 		if (!obj_node)
 			continue;
 
 		UT_String mat_path;
 		obj_node->evalString(mat_path, "shop_materialpath", 0, time);
 
-		VOP_Node* vop_node = OPgetDirector()->findVOPNode(mat_path);
-		if (!vop_node)
+		VOP_Node *surface = nullptr;
+		VOP_Node* vop_node = resolve_material_path(
+			obj_node, mat_path, &surface);
+		if( !vop_node )
 			continue;
 
-		OP_Operator* op = vop_node->getOperator();
-		std::string path = library.get_shader_path(op->getName().c_str());
+		/*
+			In the case of a material builder, vop_node might contain dlTerminal
+			which doesn't have any capabilities. So we need the attached
+			surface shader (e.g. Pincipled) to connect to.
+		*/
+		DlShaderInfo* shader_info = library.get_shader_info(
+			surface ? surface : vop_node );
 
-		DlShaderInfo* shader_info = library.get_shader_info( path.c_str() );
 		if( !shader_info )
 			continue;
 

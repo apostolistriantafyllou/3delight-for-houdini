@@ -90,7 +90,7 @@ VOP_3DelightMaterialBuilder::runCreateScript()
 	If none found, loop through all the nodes in the material builder and just
 	take the first material we get.
 */
-VOP_Node* VOP_3DelightMaterialBuilder::get_material()
+VOP_Node* VOP_3DelightMaterialBuilder::get_material( VOP_Node **o_surface )
 {
 	int nkids = getNchildren();
 
@@ -102,6 +102,23 @@ VOP_Node* VOP_3DelightMaterialBuilder::get_material()
 			mat->getOperator()->getName().toStdString() ==
 				"3Delight::dlTerminal" )
 		{
+			if( o_surface )
+			{
+				for( int i=0; i< mat->nInputs(); i++ )
+				{
+					UT_String input_name;
+					mat->getInputName(input_name, i);
+					if( input_name != "Surface" )
+						continue;
+
+					VOP_Node *source = CAST_VOPNODE( mat->getInput(i) );
+					if( source )
+					{
+						*o_surface = source;
+						break;
+					}
+				}
+			}
 			return mat;
 		}
 	}
