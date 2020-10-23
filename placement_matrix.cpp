@@ -34,6 +34,7 @@ void placement_matrix::create(void) const
 	m_nsi.SetAttribute(m_handle,
 		NSI::CStringPArg("shaderfilename", path.c_str()));
 
+	//Set the space of the shader to the name of the transform.
 	m_nsi.SetAttribute(m_handle,
 		NSI::CStringPArg("space", transform_handle.c_str()));
 }
@@ -52,13 +53,33 @@ void placement_matrix::set_attributes(void) const
 
 void placement_matrix::set_attributes_at_time(double i_time) const
 {
-	//Evaluate transformation matrix from the makexform node parameters.
-	std::vector<double> matrix =
-	{
-	};
+	UT_Matrix4D transform_mat(1.0); //Identity Matrix
+	float transx = m_vop->evalFloat("trans", 0, i_time);
+	float transy = m_vop->evalFloat("trans", 1, i_time);
+	float transz = m_vop->evalFloat("trans", 2, i_time);
 
+	float scalex = m_vop->evalFloat("scale", 0, i_time);
+	float scaley = m_vop->evalFloat("scale", 1, i_time);
+	float scalez = m_vop->evalFloat("scale", 2, i_time);
+
+	float rotx = m_vop->evalFloat("rot", 0, i_time);
+	float roty = m_vop->evalFloat("rot", 1, i_time);
+	float rotz = m_vop->evalFloat("rot", 2, i_time);
+	int rotation_order = m_vop->evalInt("xyz", 0, i_time);
+	int transform_order = m_vop->evalInt("trs", 0, i_time);
+
+	float shearx = m_vop->evalFloat("shear", 0, i_time);
+	float sheary = m_vop->evalFloat("shear", 1, i_time);
+	float shearz = m_vop->evalFloat("shear", 2, i_time);
+
+	UT_XformOrder form;
+	form.reorder(UT_XformOrder::rstOrder(transform_order), UT_XformOrder::xyzOrder(rotation_order));
+
+	//Build transform matrix from the points calculated above.
+	transform_mat.xform(form, transx, transy, transz,rotx, roty, rotx,
+			scalex, scaley, scalez, shearx, sheary, shearz,0,0,0);
 	std::string transform_handle = m_handle + "|transform";
 
 	m_nsi.SetAttributeAtTime(transform_handle,i_time,
-		NSI::DoubleMatrixArg("transformationmatrix", &matrix[0]));
+		NSI::DoubleMatrixArg("transformationmatrix", transform_mat.data()));
 }
