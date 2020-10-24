@@ -200,6 +200,8 @@ private:
 
 	void SetVDBVolumeDefaults();
 
+	void Insert3DPlacementMatrix();
+
 	void CollapseMaterialsInputGroups();
 
 	// Description of the shader this node stands for
