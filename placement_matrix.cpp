@@ -54,23 +54,31 @@ void placement_matrix::set_attributes(void) const
 void placement_matrix::set_attributes_at_time(double i_time) const
 {
 	UT_Matrix4D transform_mat(1.0); //Identity Matrix
-	float transx = m_vop->evalFloat("trans", 0, i_time);
-	float transy = m_vop->evalFloat("trans", 1, i_time);
-	float transz = m_vop->evalFloat("trans", 2, i_time);
+	UT_String translate_param = "trans";
+	UT_String scale_param = "scale";
+	UT_String rotate_param = "rot";
+	UT_String shear_param = "shear";
+	UT_String rot_order_param = "xyz";
+	UT_String transform_order_param = "trs";
 
-	float scalex = m_vop->evalFloat("scale", 0, i_time);
-	float scaley = m_vop->evalFloat("scale", 1, i_time);
-	float scalez = m_vop->evalFloat("scale", 2, i_time);
+	float transx = m_vop->evalFloat(translate_param, 0, i_time);
+	float transy = m_vop->evalFloat(translate_param, 1, i_time);
+	float transz = m_vop->evalFloat(translate_param, 2, i_time);
 
-	float rotx = m_vop->evalFloat("rot", 0, i_time);
-	float roty = m_vop->evalFloat("rot", 1, i_time);
-	float rotz = m_vop->evalFloat("rot", 2, i_time);
-	int rotation_order = m_vop->evalInt("xyz", 0, i_time);
-	int transform_order = m_vop->evalInt("trs", 0, i_time);
+	float scalex = m_vop->evalFloat(scale_param, 0, i_time);
+	float scaley = m_vop->evalFloat(scale_param, 1, i_time);
+	float scalez = m_vop->evalFloat(scale_param, 2, i_time);
 
-	float shearx = m_vop->evalFloat("shear", 0, i_time);
-	float sheary = m_vop->evalFloat("shear", 1, i_time);
-	float shearz = m_vop->evalFloat("shear", 2, i_time);
+	float rotx = m_vop->evalFloat(rotate_param, 0, i_time);
+	float roty = m_vop->evalFloat(rotate_param, 1, i_time);
+	float rotz = m_vop->evalFloat(rotate_param, 2, i_time);
+
+	float shearx = m_vop->evalFloat(shear_param, 0, i_time);
+	float sheary = m_vop->evalFloat(shear_param, 1, i_time);
+	float shearz = m_vop->evalFloat(shear_param, 2, i_time);
+
+	int rotation_order = m_vop->evalInt(rot_order_param, 0, i_time);
+	int transform_order = m_vop->evalInt(transform_order_param, 0, i_time);
 
 	UT_XformOrder form;
 	form.reorder(UT_XformOrder::rstOrder(transform_order), UT_XformOrder::xyzOrder(rotation_order));
@@ -82,4 +90,29 @@ void placement_matrix::set_attributes_at_time(double i_time) const
 
 	m_nsi.SetAttributeAtTime(transform_handle,i_time,
 		NSI::DoubleMatrixArg("transformationmatrix", transform_mat.data()));
+}
+
+void placement_matrix::changed_cb(
+	OP_Node* i_caller,
+	void* i_callee,
+	OP_EventType i_type,
+	void* i_data)
+{
+	context* ctx = (context*)i_callee;
+	if (i_type == OP_PARM_CHANGED)
+	{
+		/*
+			Because our parameters on tranform matrix does not have a proper OSL shader
+			we can not use vop::changed_cb to set the attribute for the changed parameter
+			only.
+		*/
+		placement_matrix v(*ctx, i_caller->castToVOPNode());
+		v.set_attributes();
+		ctx->m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
+		return;
+	}
+	else
+	{
+		vop::changed_cb(i_caller, i_callee, i_type, i_data);
+	}
 }

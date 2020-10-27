@@ -1,6 +1,7 @@
 #pragma once
 
 #include "exporter.h"
+#include "vop.h"
 
 #include "3Delight/ShaderQuery.h"
 #include "osl_utilities.h"
@@ -24,5 +25,11 @@ public:
 	void set_attributes_at_time(double i_time) const;
 
 	void connect(void) const override;
+
+	static void changed_cb(
+		OP_Node* i_caller,
+		void* i_callee,
+		OP_EventType i_type,
+		void* i_data);
 
 };

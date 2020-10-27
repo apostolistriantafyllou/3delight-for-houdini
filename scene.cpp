@@ -372,6 +372,7 @@ void scene::create_materials_exporters(
 		if(i_context.m_ipr)
 		{
 			i_context.register_interest(V, &vop::changed_cb);
+			i_context.register_interest(V, &placement_matrix::changed_cb);
 		}
 		//Export placement_matrix for makexform VOP_Node.
 		if(V->getOperator()->getName().toStdString() == "makexform")
