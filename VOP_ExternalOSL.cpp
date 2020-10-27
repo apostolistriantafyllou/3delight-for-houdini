@@ -1266,7 +1266,7 @@ void VOP_ExternalOSL::Insert3DPlacementMatrix()
 		for (const DlShaderInfo::conststring& tag : param.sdefault)
 		{
 			/*
-				Connect our place3dTexture node with all the 3D Textures
+				Connect our placement matrix node with all the 3D Textures
 				upon their creation.
 			*/
 			if (tag == "texture/3d")

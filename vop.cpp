@@ -777,21 +777,7 @@ std::string vop::shader_path( const VOP_Node *i_vop )
 	else
 	{
 		const shader_library &library = shader_library::get_instance();
-		/*
-			Use place3dTexture osl shader if makexform node has been used.
-			We can avoid this checking if we add this osl shader in the same
-			path as other osl shader on our plugin but with the name changed 
-			to makexform.
-		*/
-		if (vop_name(i_vop) == "makexform")
-		{
-			std::string oslPlacementMatrix = "place3dTexture";
-			path = library.get_shader_path(oslPlacementMatrix.c_str());
-		}
-		else
-		{
-			path = library.get_shader_path(vop_name(i_vop).c_str());
-		}
+		path = library.get_shader_path(vop_name(i_vop).c_str());
 	}
 
 	return path;

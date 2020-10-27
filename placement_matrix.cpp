@@ -24,7 +24,7 @@ void placement_matrix::create(void) const
 	const shader_library& library = shader_library::get_instance();
 
 	//OSL shader responsible for the makexform node in Houdini
-	std::string oslPlacementMatrix = "place3dTexture";
+	std::string oslPlacementMatrix = "makexform";
 	std::string path = library.get_shader_path(oslPlacementMatrix.c_str());
 
 	std::string transform_handle = m_handle + "|transform";
