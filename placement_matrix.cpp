@@ -84,7 +84,7 @@ void placement_matrix::set_attributes_at_time(double i_time) const
 	form.reorder(UT_XformOrder::rstOrder(transform_order), UT_XformOrder::xyzOrder(rotation_order));
 
 	//Build transform matrix from the points calculated above.
-	transform_mat.xform(form, transx, transy, transz,rotx, roty, rotx,
+	transform_mat.xform(form, transx, transy, transz,rotx, roty, rotz,
 			scalex, scaley, scalez, shearx, sheary, shearz,0,0,0);
 	std::string transform_handle = m_handle + "|transform";
 
