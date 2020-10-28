@@ -52,6 +52,7 @@ add_library( ${library_name} SHARED
 	geometry.cpp
 	idisplay_port.cpp
 	incandescence_light.cpp
+	placement_matrix.cpp
 	instance.cpp
 	light.cpp
 	polygonmesh.cpp

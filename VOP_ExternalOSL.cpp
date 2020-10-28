@@ -1037,6 +1037,8 @@ VOP_ExternalOSL::runCreateScript()
 		SetVDBVolumeDefaults();
 	}
 
+	Insert3DPlacementMatrix();
+
 	CollapseMaterialsInputGroups();
 
 	return ret;
@@ -1250,6 +1252,31 @@ void VOP_ExternalOSL::SetVDBVolumeDefaults()
 	setString(temperature_default, CH_STRING_LITERAL, temperature_name, 0, 0.f);
 	setString(emission_default, CH_STRING_LITERAL, emission_name, 0, 0.f);
 	setString(velocity_default, CH_STRING_LITERAL, velocity_name, 0, 0.f);
+}
+
+void VOP_ExternalOSL::Insert3DPlacementMatrix()
+{
+	for (const DlShaderInfo::Parameter& param : m_shader_info.m_dl.metadata())
+	{
+		if (param.name != "tags" || param.type.elementtype != NSITypeString)
+		{
+			continue;
+		}
+
+		for (const DlShaderInfo::conststring& tag : param.sdefault)
+		{
+			/*
+				Connect our placement matrix node with all the 3D Textures
+				upon their creation.
+			*/
+			if (tag == "texture/3d")
+			{
+				int idx = m_shader_info.NumInputs() - 1;
+				const char* placementMatrix = "makexform";
+				insertNode(idx, placementMatrix, true);
+			}
+		}
+	}
 }
 
 

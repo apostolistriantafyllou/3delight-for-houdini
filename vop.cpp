@@ -131,6 +131,15 @@ void vop::connect_input(int i_input_index)const
 		int source_index = input_ref->getNodeOutputIndex();
 		source->getOutputName(source_name, source_index);
 
+		/*
+			Change the input name to worldInverseMatrix[0] for makexform
+			VOP_Node and xform input name.
+		*/
+		if (vop_name(source) == "makexform" && source_name == "xform")
+		{
+			source_name = "worldInverseMatrix[0]";
+		}
+
 		m_nsi.Connect(
 			vop::handle(*source, m_context), source_name.toStdString(),
 			m_handle, input_name.toStdString() );
@@ -763,9 +772,12 @@ std::string vop::shader_path( const VOP_Node *i_vop )
 		UT_String shaderfilename;
 		i_vop->evalString( shaderfilename, shaderParmName, 0, 0 );
 		path = shaderfilename;
-	} else {
+	}
+
+	else
+	{
 		const shader_library &library = shader_library::get_instance();
-		path = library.get_shader_path( vop_name( i_vop ).c_str() );
+		path = library.get_shader_path(vop_name(i_vop).c_str());
 	}
 
 	return path;
