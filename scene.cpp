@@ -369,13 +369,15 @@ void scene::create_materials_exporters(
 
 	for( auto &V : vops )
 	{
+		bool is_place3d_texture = V->getOperator()->getName().toStdString() == "makexform";
 		if(i_context.m_ipr)
 		{
 			i_context.register_interest(V, &vop::changed_cb);
-			i_context.register_interest(V, &placement_matrix::changed_cb);
+			if(is_place3d_texture)
+				i_context.register_interest(V, &placement_matrix::changed_cb);
 		}
 		//Export placement_matrix for makexform VOP_Node.
-		if(V->getOperator()->getName().toStdString() == "makexform")
+		if(is_place3d_texture)
 			io_to_export.push_back( (exporter*)new placement_matrix(i_context,V) );
 		else
 			io_to_export.push_back( new vop(i_context,V) );
