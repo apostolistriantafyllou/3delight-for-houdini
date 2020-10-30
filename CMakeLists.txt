@@ -41,6 +41,7 @@ add_library( ${library_name} SHARED
 	OBJ_IncandescenceLight.cpp
 	ROP_3Delight.cpp
 	VOP_3DelightMaterialBuilder.cpp
+	dlAOVGroup.cpp
 	VOP_ExternalOSL.cpp
 	camera.cpp
 	context.cpp
