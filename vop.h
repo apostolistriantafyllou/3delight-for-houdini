@@ -26,7 +26,6 @@ class vop : public exporter
 		light shader export.
 	*/
 	friend class light;
-	friend class placement_matrix;
 
 	/**
 		The scene needs to find out if a certain vop is an AOV definition.
