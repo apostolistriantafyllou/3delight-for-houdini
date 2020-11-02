@@ -1,3 +1,90 @@
+#pragma once
+
+//Calculate the rotation matrix values	
+void rotation_values(output matrix rx, output matrix ry, output matrix rz, point rot_value)
+{
+	//Rotate around x-axis, (0,y,z) => rotation (0, y', z'), think as rotation in 2d with y,z coord (x unchanged)
+	rx[1][1]=cos(rot_value[0]*M_PI/180);
+	rx[1][2]=-sin(rot_value[0]*M_PI/180);
+	rx[2][1]=sin(rot_value[0]*M_PI/180);
+	rx[2][2]=cos(rot_value[0]*M_PI/180);
+
+	//Rotate around y-axis, (x,0,z) => rotation (x', 0, z'), think as rotation in 2d with x,z coord (y unchanged)
+	ry[0][0]=cos(rot_value[1]*M_PI/180);
+	ry[0][2]=sin(rot_value[1]*M_PI/180);
+	ry[2][0]=-sin(rot_value[1]*M_PI/180);
+	ry[2][2]=cos(rot_value[1]*M_PI/180);
+
+	//Rotate around z-axis, (x,0,z) => rotation (x', y', 0), think as rotation in 2d with x,y coord (z unchanged)
+	rz[0][0]=cos(rot_value[2]*M_PI/180);
+	rz[0][1]=sin(rot_value[2]*M_PI/180);
+	rz[1][0]=-sin(rot_value[2]*M_PI/180);
+	rz[1][1]=cos(rot_value[2]*M_PI/180);
+}
+
+void calculateRotationMatrix(output matrix placement_matrix, int order, 
+					  matrix rx, matrix ry, matrix rz, point rot_value)
+{
+		rotation_values(rx,ry,rz,rot_value);
+		if(order==0)
+		{
+			placement_matrix*=rx;
+			placement_matrix*=ry;
+			placement_matrix*=rz;
+		}
+		
+		else if(order==1)
+		{
+			placement_matrix*=rx;
+			placement_matrix*=rz;
+			placement_matrix*=ry;
+		}
+		
+		else if(order==2)
+		{
+			placement_matrix*=ry;
+			placement_matrix*=rx;
+			placement_matrix*=rz;
+		}
+		
+		else if(order==3)
+		{
+			placement_matrix*=ry;
+			placement_matrix*=rz;
+			placement_matrix*=rx;
+		}
+		
+		else if(order==4)
+		{
+			placement_matrix*=rz;
+			placement_matrix*=rx;
+			placement_matrix*=ry;
+		}
+		
+		else if(order==5)
+		{
+			placement_matrix*=rz;
+			placement_matrix*=ry;
+			placement_matrix*=rx;
+		}
+}
+
+void calculateScaleMatrix(output matrix placement_matrix, output matrix scale_mat, point scale_val)
+{
+	scale_mat[0][0] = scale_val[0];
+	scale_mat[1][1] = scale_val[1];
+	scale_mat[2][2] = scale_val[2];
+	placement_matrix/=scale_mat;
+}
+
+void calculateTranslationMatrix(output matrix placement_matrix, point transform_val)
+{
+	//Translation Matrix
+    placement_matrix[3][0] = transform_val[0];
+    placement_matrix[3][1] = transform_val[1];
+    placement_matrix[3][2] = transform_val[2];
+}
+
 shader makexform
 (
     point trans = point(0.0)
@@ -15,49 +102,71 @@ shader makexform
 	 point shear = point(0.0)
         [[
             string label = "Shear"]],
+	
+	//Rotation order parameter 
+	int xyz = 0 
+		[[
+			string label = "Rotation Order"]],
+		
+	//Transform order parameter
+	int trs = 0 
+		[[
+			string label = "Transform Order"]],
 
-    output matrix xform = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
+    output matrix xform = 1
 )
+
 {
 	matrix scale_mat = 1;
-	matrix rotat = 1;
+	matrix rotatx = 1;
 	matrix rotaty = 1;
 	matrix rotatz = 1;
 
-	//Apply Scale.
-	scale_mat[0][0] = scale[0];
-	scale_mat[1][1] = scale[1];
-	scale_mat[2][2] = scale[2];
-	xform/=scale_mat;
+	//Calculate our placementMatrix values based on the "Transform Order" selected
 
-	//Apply Rotation
+	if(trs==0)
+	{
+		calculateScaleMatrix(xform,scale_mat,scale);
+		calculateRotationMatrix(xform,xyz,rotatx,rotaty,rotatz,rot);
+		calculateTranslationMatrix(xform,trans);
+	}
 
-	//Rotate around x-axis, (0,y,z) => rotation (0, y', z'), think as rotation in 2d with y,z coord (x unchanged)
-	rotat[1][1]=cos(rot[0]*M_PI/180);
-	rotat[1][2]=-sin(rot[0]*M_PI/180);
-	rotat[2][1]=sin(rot[0]*M_PI/180);
-	rotat[2][2]=cos(rot[0]*M_PI/180);
+	else if(trs==1)
+	{
+		calculateScaleMatrix(xform,scale_mat,scale);
+		calculateTranslationMatrix(xform,trans);
+		calculateRotationMatrix(xform,xyz,rotatx,rotaty,rotatz,rot);
+	}
 
-	//Rotate around y-axis, (x,0,z) => rotation (x', 0, z'), think as rotation in 2d with x,z coord (y unchanged)
-	rotaty[0][0]=cos(rot[1]*M_PI/180);
-	rotaty[0][2]=sin(rot[1]*M_PI/180);
-	rotaty[2][0]=-sin(rot[1]*M_PI/180);
-	rotaty[2][2]=cos(rot[1]*M_PI/180);
+	else if(trs==2)
+	{
+		calculateRotationMatrix(xform,xyz,rotatx,rotaty,rotatz,rot);
+		calculateScaleMatrix(xform,scale_mat,scale);
+		calculateTranslationMatrix(xform,trans);
+	}
 
-	//Rotate around z-axis, (x,0,z) => rotation (x', y', 0), think as rotation in 2d with x,y coord (z unchanged)
-	rotatz[0][0]=cos(rot[2]*M_PI/180);
-	rotatz[0][1]=sin(rot[2]*M_PI/180);
-	rotatz[1][0]=-sin(rot[2]*M_PI/180);
-	rotatz[1][1]=cos(rot[2]*M_PI/180);
-	xform*=rotat;
-	xform*=rotaty;
-	xform*=rotatz;
+	else if(trs==3)
+	{
+		calculateRotationMatrix(xform,xyz,rotatx,rotaty,rotatz,rot);
+		calculateTranslationMatrix(xform,trans);
+		calculateScaleMatrix(xform,scale_mat,scale);
+	}
 
-	//Translation Matrix
-    xform[3][0] = trans[0];
-    xform[3][1] = trans[1];
-    xform[3][2] = trans[2];
+	else if(trs==4)
+	{
+		calculateTranslationMatrix(xform,trans);
+		calculateScaleMatrix(xform,scale_mat,scale);
+		calculateRotationMatrix(xform,xyz,rotatx,rotaty,rotatz,rot);
+	}
 
+	else if(trs==5)
+	{
+		calculateTranslationMatrix(xform,trans);
+		calculateRotationMatrix(xform,xyz,rotatx,rotaty,rotatz,rot);
+		calculateScaleMatrix(xform,scale_mat,scale);
+	}
+	
+	
 	//Apply Shear Matrix.
 	xform[0][0] += xform[0][1]*shear[0] + xform[0][2]*shear[1];
 	xform[0][1] += xform[0][2]*shear[2];
