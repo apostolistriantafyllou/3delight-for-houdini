@@ -71,14 +71,6 @@ const shader_library &shader_library::get_instance( void )
 	return g_shader_library;
 }
 
-
-DlShaderInfo *shader_library::get_shader_info( VOP_Node *i_node ) const
-{
-	OP_Operator* op = i_node->getOperator();
-	std::string path = get_shader_path( op->getName().c_str() );
-	return get_shader_info( path.c_str() );
-}
-
 DlShaderInfo *shader_library::get_shader_info( const char *path ) const
 {
 	if( !m_shader_info_ptr )

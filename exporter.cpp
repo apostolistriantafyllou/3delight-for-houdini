@@ -245,8 +245,7 @@ void exporter::export_attributes(
 }
 
 VOP_Node *exporter::resolve_material_path(
-	OP_Node *i_relative_path_root, const char *i_path,
-	VOP_Node **o_surface )
+	OP_Node *i_relative_path_root, const char *i_path )
 {
 	if(!i_path || !i_path[0])
 	{
@@ -275,7 +274,12 @@ VOP_Node *exporter::resolve_material_path(
 		dynamic_cast<VOP_3DelightMaterialBuilder*>(vop_node);
 	if(builder)
 	{
-		vop_node = builder->get_material( o_surface );
+		vop_node = builder->get_material();
+	}
+
+	if(!vop_node)
+	{
+		return nullptr;
 	}
 
 	return vop_node;

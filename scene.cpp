@@ -5,7 +5,6 @@
 #include "exporter.h"
 #include "geometry.h"
 #include "incandescence_light.h"
-#include "placement_matrix.h"
 #include "instance.h"
 #include "light.h"
 #include "null.h"
@@ -373,14 +372,8 @@ void scene::create_materials_exporters(
 		if(i_context.m_ipr)
 		{
 			i_context.register_interest(V, &vop::changed_cb);
-			if(is_place3d_texture)
-				i_context.register_interest(V, &placement_matrix::changed_cb);
 		}
-		//Export placement_matrix for makexform VOP_Node.
-		if(is_place3d_texture)
-			io_to_export.push_back( (exporter*)new placement_matrix(i_context,V) );
-		else
-			io_to_export.push_back( new vop(i_context,V) );
+		io_to_export.push_back( new vop(i_context,V) );
 	}
 }
 /**

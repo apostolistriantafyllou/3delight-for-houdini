@@ -7,7 +7,7 @@
 #include <unordered_map>
 
 class OP_OperatorTable;
-class VOP_Node;
+
 
 /**
 	\brief This class (singleton) is reponsible for loading OSO shaders and
@@ -22,7 +22,6 @@ public:
 
 public:
 	std::string get_shader_path( const char *i_vop_name ) const;
-	DlShaderInfo *get_shader_info( VOP_Node *i_node ) const;
 	DlShaderInfo *get_shader_info( const char *i_path ) const;
 
 	void Register( OP_OperatorTable* io_table) const;

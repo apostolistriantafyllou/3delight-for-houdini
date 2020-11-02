@@ -81,8 +81,7 @@ public:
 	*/
 	static VOP_Node *resolve_material_path(
 		OP_Node* i_relative_path_root,
-		const char *i_path,
-		VOP_Node **o_surface = nullptr );
+		const char *i_path);
 
 protected:
 
@@ -113,10 +112,9 @@ protected:
 		double i_time,
 		GT_DataArrayHandle i_vertices_list = GT_DataArrayHandle()) const;
 
-	VOP_Node *resolve_material_path(
-		const char *i_path, VOP_Node **o_surface = nullptr ) const
+	VOP_Node *resolve_material_path( const char *i_path ) const
 	{
-		return resolve_material_path(m_object, i_path, o_surface );
+		return resolve_material_path(m_object, i_path);
 	}
 
 	/**
