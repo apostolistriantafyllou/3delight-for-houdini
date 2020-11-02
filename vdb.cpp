@@ -2,15 +2,18 @@
 
 #include "context.h"
 #include "VOP_ExternalOSL.h"
+
+#include <nsi_dynamic.hpp>
+#include <nsi.hpp>
 #include "VDBQuery.h" /* From 3delight */
 
+#include <openvdb/openvdb.h>
 #include <GT/GT_Handles.h>
+#include <GT/GT_PrimVDB.h>
 #include <OBJ/OBJ_Node.h>
 #include <SOP/SOP_Node.h>
 
-#include <nsi_dynamic.hpp>
 #include <assert.h>
-#include <nsi.hpp>
 #include <iostream>
 
 
@@ -287,3 +290,85 @@ std::string vdb_file::node_is_vdb_loader( OBJ_Node *i_node, double i_time )
 	return std::string( file.c_str() );
 }
 
+
+vdb_file_writer::vdb_file_writer(
+	const context& i_ctx,
+	OBJ_Node* i_obj,
+	double i_time,
+	const GT_PrimitiveHandle& i_handle,
+	unsigned i_primitive_index,
+	const std::string& i_vdb_path)
+	:	vdb_file(i_ctx, i_obj, i_time, i_handle, i_primitive_index, i_vdb_path)
+{
+	assert(dynamic_cast<GT_PrimVDB*>(i_handle.get()));
+	m_grids.push_back(i_handle);
+}
+
+bool vdb_file_writer::add_grid(const GT_PrimitiveHandle& i_handle)
+{
+	GT_PrimVDB* gt_vdb = dynamic_cast<GT_PrimVDB*>(i_handle.get());
+	assert(gt_vdb);
+
+	assert(!m_grids.empty());
+
+	// Reject grids that don't have the same transform
+	UT_Matrix4D matrix;
+	m_grids.front()->getPrimitiveTransform()->getMatrix(matrix);
+	UT_Matrix4D new_matrix;
+	i_handle->getPrimitiveTransform()->getMatrix(new_matrix);
+	if(matrix != new_matrix)
+	{
+		return false;
+	}
+	
+	/*
+		Reject grids that would introduce a name duplicate (should we merge them
+		instead?)
+	*/
+	std::string grid_name = gt_vdb->getGrid()->getName();
+	for(const GT_PrimitiveHandle& h : m_grids)
+	{
+		GT_PrimVDB* v = dynamic_cast<GT_PrimVDB*>(h.get());
+		assert(v);
+		if(v->getGrid()->getName() == grid_name)
+		{
+			return false;
+		}
+	}
+	
+	m_grids.push_back(i_handle);
+	return true;
+}
+
+void vdb_file_writer::create()const
+{
+	if(!m_grids.empty())
+	{
+		// Retrieve the OpenVDB grids
+		openvdb::GridCPtrVec grids;
+		for(const GT_PrimitiveHandle& handle : m_grids)
+		{
+			GT_PrimVDB* gt_vdb = dynamic_cast<GT_PrimVDB*>(handle.get());
+			assert(gt_vdb);
+
+			/*
+				Build a shared_ptr with an empty deleter so it doesn't try to
+				delete Houdini's grid when the grids vector goes out of scope.
+			*/
+			std::shared_ptr<const openvdb::GridBase> grid_ptr(
+					gt_vdb->getGrid(),
+					[](const openvdb::GridBase*){});
+
+			grids.push_back(grid_ptr);
+		}
+
+		// Write the VDB to file
+		openvdb::io::File file(path());
+		file.write(grids);
+
+		// Don't export that file again
+		m_grids.clear();
+	}
+	
+	vdb_file::create();
+}

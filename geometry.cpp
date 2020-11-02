@@ -22,6 +22,7 @@
 #include <VOP/VOP_Node.h>
 #include <SOP/SOP_Node.h>
 #include <SYS/SYS_Version.h>
+#include <UT/UT_TempFileManager.h>
 
 #include <iostream>
 #include <algorithm>
@@ -230,44 +231,88 @@ struct OBJ_Node_Refiner : public GT_Refine
 		}
 
 		case GT_PRIM_VOXEL_VOLUME:
+			// i_primitive is a GT_Prim_Volume
 #ifdef VERBOSE
 			fprintf(
-				stderr, "3Delight for Houdini: unsupported VDB/Volume "
+				stderr, "3Delight for Houdini: unsupported volume "
 					"workflow for %s\n", m_node->getName().c_str() );
 #endif
 			break;
 
 		case GT_PRIM_VDB_VOLUME:
 		{
-			/*
-				Houdini could call us once per grid! And this is not what we
-				want.
-			*/
-			auto it = std::find_if(
-				m_result.begin(), m_result.end(),
-				[] (const primitive *e) { return e->is_volume(); } );
-
-			if( it != m_result.end() )
-			{
-				/* volume already output */
-				return;
-			}
+			// i_primitive is a GT_PrimVDB
 
 			std::string vdb_path =
 				vdb_file::node_is_vdb_loader( m_node, m_context.m_current_time );
 
 			if( !vdb_path.empty() )
 			{
+				/*
+					Houdini calls us once per grid but we want a single exporter
+					for all of them. Try to find a previously built one.
+				*/
+				auto volume_primitive = std::find_if(
+					m_result.begin(), m_result.end(),
+					[] (const primitive *e) { return e->is_volume(); } );
+				if( volume_primitive != m_result.end() )
+				{
+					/* volume already output */
+					return;
+				}
+
 				m_result.push_back(
 					new vdb_file( m_context, m_node, m_time, i_primitive, index, vdb_path) );
 				m_return.push_back( m_result.back() );
 			}
 			else
 			{
-#ifdef VERBOSE
-				fprintf( stderr, "3Delight for Houdini: unsupported VDB/Volume "
-					"workflow for %s\n", m_node->getName().c_str() );
-#endif
+				// Try to add the grid to an existing VDB exporter
+				auto vdb_it =
+					std::find_if(
+						m_result.rbegin(),
+						m_result.rend(),
+						[] (primitive* p)
+							{ return dynamic_cast<vdb_file_writer*>(p); } );
+				if(vdb_it != m_result.rend() &&
+					dynamic_cast<vdb_file_writer*>(*vdb_it)->
+						add_grid(i_primitive))
+				{
+					return;
+				}
+
+				// Choose where the VDB should be exported
+				std::string vdb_path;
+				if(m_context.m_export_path_prefix.empty())
+				{
+					/*
+						Unless we're exporting an NSI file, we use a temporary
+						file that will be deleted at the end of the render.
+					*/
+					vdb_path =
+						UT_TempFileManager::getTempFilename().toStdString();
+					m_context.m_temp_filenames.push_back(vdb_path);
+				}
+				else
+				{
+					// Use the same prefix as the NSI scene file
+					uint32 obj_hash = m_node->getFullPath().hash();
+					vdb_path =
+						m_context.m_export_path_prefix + "." +
+						std::to_string(obj_hash) + "v" +
+						std::to_string(index) + ".vdb";
+				}
+
+				// Create a new VDB exporter for that grid
+				m_result.push_back(
+					new vdb_file_writer(
+						m_context,
+						m_node,
+						m_time,
+						i_primitive,
+						index,
+						vdb_path));
+				m_return.push_back(m_result.back());
 			}
 			break;
 		}
