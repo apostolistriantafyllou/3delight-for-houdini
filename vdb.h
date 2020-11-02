@@ -14,10 +14,10 @@ class OBJ_Node;
 
 	This is not a generic volume support for Houdini.
 */
-class vdb : public primitive
+class vdb_file : public primitive
 {
 public:
-	vdb(
+	vdb_file(
 		const context&, OBJ_Node *i_obj,
 		double i_time,
 		const GT_PrimitiveHandle &i_handle,

@@ -733,7 +733,7 @@ void scene::find_lights(
 
 			if( obj &&
 				(obj->castToOBJLight() ||
-					!vdb::node_is_vdb_loader(obj, time).empty()) )
+					!vdb_file::node_is_vdb_loader(obj, time).empty()) )
 			{
 				if(!i_light_pattern ||
 					i_light_pattern->match(obj, i_rop_path, true))

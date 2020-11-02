@@ -13,7 +13,8 @@
 #include <nsi.hpp>
 #include <iostream>
 
-vdb::vdb(
+
+vdb_file::vdb_file(
 	const context& i_ctx, OBJ_Node *i_obj,
 	double i_time,
 	const GT_PrimitiveHandle &i_gt_primitive,
@@ -25,7 +26,7 @@ vdb::vdb(
 {
 }
 
-void vdb::create( void ) const
+void vdb_file::create( void ) const
 {
 	m_nsi.Create( m_handle, "transform" );
 	std::string volume = m_handle + "|volume";
@@ -34,7 +35,7 @@ void vdb::create( void ) const
 	m_nsi.Connect( volume, "", m_handle, "objects" );
 }
 
-void vdb::set_attributes( void ) const
+void vdb_file::set_attributes( void ) const
 {
 	NSI::DynamicAPI api;
 #ifdef __APPLE__
@@ -175,7 +176,7 @@ void vdb::set_attributes( void ) const
 	primitive::set_attributes();
 }
 
-bool vdb::is_volume()const
+bool vdb_file::is_volume()const
 {
 	return true;
 }
@@ -186,7 +187,7 @@ bool vdb::is_volume()const
 	the actual volume container might be moving, so we need to set the
 	right matrix.
 */
-void vdb::set_attributes_at_time(
+void vdb_file::set_attributes_at_time(
 	double i_time,
 	const GT_PrimitiveHandle i_gt_primitive) const
 {
@@ -226,7 +227,7 @@ void vdb::set_attributes_at_time(
 	SOP. For now we just skip this until we can find a more elegant
 	way to handle both file-loaded VDBs and general Houdini volumes.
 */
-std::string vdb::node_is_vdb_loader( OBJ_Node *i_node, double i_time )
+std::string vdb_file::node_is_vdb_loader( OBJ_Node *i_node, double i_time )
 {
 	std::vector< SOP_Node *> files;
 	std::vector< OP_Node * > traversal; traversal.push_back( i_node );

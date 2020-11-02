@@ -175,7 +175,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 				static_cast<const GT_PrimInstance *>( i_primitive.get() );
 
 			std::string vdb_path =
-				vdb::node_is_vdb_loader( m_node, m_context.m_current_time );
+				vdb_file::node_is_vdb_loader( m_node, m_context.m_current_time );
 
 			std::vector<primitive *> ret;
 			if( !vdb_path.empty() )
@@ -187,7 +187,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 					render but with loaded VDBs in memory; and we don't want
 					that.
 				*/
-				m_result.push_back( new vdb(
+				m_result.push_back( new vdb_file(
 					m_context, m_node, m_time, i_primitive, index, vdb_path) );
 				ret.push_back( m_result.back () );
 				m_return.push_back( m_result.back() );
@@ -254,12 +254,12 @@ struct OBJ_Node_Refiner : public GT_Refine
 			}
 
 			std::string vdb_path =
-				vdb::node_is_vdb_loader( m_node, m_context.m_current_time );
+				vdb_file::node_is_vdb_loader( m_node, m_context.m_current_time );
 
 			if( !vdb_path.empty() )
 			{
 				m_result.push_back(
-					new vdb( m_context, m_node, m_time, i_primitive, index, vdb_path) );
+					new vdb_file( m_context, m_node, m_time, i_primitive, index, vdb_path) );
 				m_return.push_back( m_result.back() );
 			}
 			else
