@@ -1,17 +1,68 @@
-/*
-	Copyright (c) 2006 soho vfx inc.
-	Copyright (c) 2006-2018 The 3Delight Team.
-*/
-
-#ifndef __makexform_osl
-#define __makexform_osl
-
 shader makexform
 (
-	string space = "world",
-	output matrix worldInverseMatrix[1] = {matrix("world", 1)/matrix(space, 1)} )
+    point trans = point(0.0)
+        [[
+            string label = "Translate"]],
+
+	 point rot = point(0.0)
+        [[
+            string label = "Rotate"]],
+
+	 point scale = point(1.0)
+        [[
+            string label = "Scale"]],
+
+	 point shear = point(0.0)
+        [[
+            string label = "Shear"]],
+
+    output matrix xform = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
+)
 {
+	matrix scale_mat = 1;
+	matrix rotat = 1;
+	matrix rotaty = 1;
+	matrix rotatz = 1;
+
+	//Apply Scale.
+	scale_mat[0][0] = scale[0];
+	scale_mat[1][1] = scale[1];
+	scale_mat[2][2] = scale[2];
+	xform/=scale_mat;
+
+	//Apply Rotation
+
+	//Rotate around x-axis, (0,y,z) => rotation (0, y', z'), think as rotation in 2d with y,z coord (x unchanged)
+	rotat[1][1]=cos(rot[0]*M_PI/180);
+	rotat[1][2]=-sin(rot[0]*M_PI/180);
+	rotat[2][1]=sin(rot[0]*M_PI/180);
+	rotat[2][2]=cos(rot[0]*M_PI/180);
+
+	//Rotate around y-axis, (x,0,z) => rotation (x', 0, z'), think as rotation in 2d with x,z coord (y unchanged)
+	rotaty[0][0]=cos(rot[1]*M_PI/180);
+	rotaty[0][2]=sin(rot[1]*M_PI/180);
+	rotaty[2][0]=-sin(rot[1]*M_PI/180);
+	rotaty[2][2]=cos(rot[1]*M_PI/180);
+
+	//Rotate around z-axis, (x,0,z) => rotation (x', y', 0), think as rotation in 2d with x,y coord (z unchanged)
+	rotatz[0][0]=cos(rot[2]*M_PI/180);
+	rotatz[0][1]=sin(rot[2]*M_PI/180);
+	rotatz[1][0]=-sin(rot[2]*M_PI/180);
+	rotatz[1][1]=cos(rot[2]*M_PI/180);
+	xform*=rotat;
+	xform*=rotaty;
+	xform*=rotatz;
+
+	//Translation Matrix
+    xform[3][0] = trans[0];
+    xform[3][1] = trans[1];
+    xform[3][2] = trans[2];
+
+	//Apply Shear Matrix.
+	xform[0][0] += xform[0][1]*shear[0] + xform[0][2]*shear[1];
+	xform[0][1] += xform[0][2]*shear[2];
+	xform[1][0] += xform[1][1]*shear[0] + xform[1][2]*shear[1];
+	xform[1][1] += xform[1][2]*shear[2];
+	xform[2][0] += xform[2][1]*shear[0] + xform[2][2]*shear[1];
+	xform[2][1] += xform[2][2]*shear[2];
 }
-
-#endif
-

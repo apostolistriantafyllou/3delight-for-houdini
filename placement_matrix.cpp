@@ -1,9 +1,11 @@
 #include "placement_matrix.h"
 #include "context.h"
+#include "vop.h"
 #include "osl_utilities.h"
 #include "3Delight/ShaderQuery.h"
 #include "scene.h"
 #include "shader_library.h"
+#include <OP/OP_Input.h>
 
 #include <VOP/VOP_Node.h>
 
@@ -27,22 +29,39 @@ void placement_matrix::create(void) const
 	std::string oslPlacementMatrix = "makexform";
 	std::string path = library.get_shader_path(oslPlacementMatrix.c_str());
 
-	std::string transform_handle = m_handle + "|transform";
 	m_nsi.Create(m_handle, "shader");
-	m_nsi.Create(transform_handle, "transform");
 
 	m_nsi.SetAttribute(m_handle,
 		NSI::CStringPArg("shaderfilename", path.c_str()));
 
-	//Set the space of the shader to the name of the transform.
-	m_nsi.SetAttribute(m_handle,
-		NSI::CStringPArg("space", transform_handle.c_str()));
 }
 
 void placement_matrix::connect(void) const
 {
-	std::string transform_handle = m_handle + "|transform";
-	m_nsi.Connect(transform_handle, "", NSI_SCENE_ROOT, "objects");
+	for (int i = 0, n = m_vop->nInputs(); i < n; ++i)
+	{
+		OP_Input* input_ref = m_vop->getInputReferenceConst(i);
+
+		if (!input_ref)
+			return;
+
+		VOP_Node* source = CAST_VOPNODE(m_vop->getInput(i));
+
+		if (!source)
+			continue;
+
+		UT_String input_name;
+		m_vop->getInputName(input_name, i);
+		{
+			UT_String source_name;
+			int source_index = input_ref->getNodeOutputIndex();
+			source->getOutputName(source_name, source_index);
+
+			m_nsi.Connect(
+				vop::handle(*source, m_context), source_name.toStdString(),
+				m_handle, input_name.toStdString());
+		}
+	}
 }
 
 void placement_matrix::set_attributes(void) const
@@ -53,43 +72,19 @@ void placement_matrix::set_attributes(void) const
 
 void placement_matrix::set_attributes_at_time(double i_time) const
 {
-	UT_Matrix4D transform_mat(1.0); //Identity Matrix
-	UT_String translate_param = "trans";
-	UT_String scale_param = "scale";
-	UT_String rotate_param = "rot";
-	UT_String shear_param = "shear";
-	UT_String rot_order_param = "xyz";
-	UT_String transform_order_param = "trs";
+	NSI::ArgumentList list;
+	std::string dummy;
 
-	float transx = m_vop->evalFloat(translate_param, 0, i_time);
-	float transy = m_vop->evalFloat(translate_param, 1, i_time);
-	float transz = m_vop->evalFloat(translate_param, 2, i_time);
+	vop::list_shader_parameters(
+		m_context,
+		m_vop,
+		"makexform",
+		i_time, -1, list, dummy);
 
-	float scalex = m_vop->evalFloat(scale_param, 0, i_time);
-	float scaley = m_vop->evalFloat(scale_param, 1, i_time);
-	float scalez = m_vop->evalFloat(scale_param, 2, i_time);
-
-	float rotx = m_vop->evalFloat(rotate_param, 0, i_time);
-	float roty = m_vop->evalFloat(rotate_param, 1, i_time);
-	float rotz = m_vop->evalFloat(rotate_param, 2, i_time);
-
-	float shearx = m_vop->evalFloat(shear_param, 0, i_time);
-	float sheary = m_vop->evalFloat(shear_param, 1, i_time);
-	float shearz = m_vop->evalFloat(shear_param, 2, i_time);
-
-	int rotation_order = m_vop->evalInt(rot_order_param, 0, i_time);
-	int transform_order = m_vop->evalInt(transform_order_param, 0, i_time);
-
-	UT_XformOrder form;
-	form.reorder(UT_XformOrder::rstOrder(transform_order), UT_XformOrder::xyzOrder(rotation_order));
-
-	//Build transform matrix from the points calculated above.
-	transform_mat.xform(form, transx, transy, transz,rotx, roty, rotx,
-			scalex, scaley, scalez, shearx, sheary, shearz,0,0,0);
-	std::string transform_handle = m_handle + "|transform";
-
-	m_nsi.SetAttributeAtTime(transform_handle,i_time,
-		NSI::DoubleMatrixArg("transformationmatrix", transform_mat.data()));
+	if (!list.empty())
+	{
+		m_nsi.SetAttributeAtTime(m_handle, i_time, list);
+	}
 }
 
 void placement_matrix::changed_cb(
