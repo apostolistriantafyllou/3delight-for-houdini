@@ -52,6 +52,7 @@ namespace
 	}
 
 	const std::string k_screen_name = "default_screen";
+	const std::string k_stdout = "stdout";
 
 	void ComputePriorityWindow(
 		int* o_absolute_window,
@@ -76,7 +77,7 @@ namespace
 		NSI::Context& io_nsi,
 		const std::string& i_filename)
 	{
-		const char* format = i_filename == "stdout" ? "nsi" : "binarynsi";
+		const char* format = i_filename == k_stdout ? "nsi" : "binarynsi";
 
 		// Output NSI commands to the specified file or standard output
 		io_nsi.Begin(
@@ -542,7 +543,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	if(m_current_render->m_export_nsi && m_current_render->m_rop_type != rop_type::stand_in)
 	{
 		std::string first_frame = GetNSIExportFilename(0.0);
-		if(first_frame != "stdout")
+		if(first_frame != k_stdout)
 		{
 			m_static_nsi_file = first_frame + ".static";
 		}
@@ -883,7 +884,7 @@ ROP_3Delight::resolve_obsolete_render_mode(PRM_ParmList* i_old_parms)
 	{
 		UT_String export_mode;
 		i_old_parms->evalString(export_mode, settings::k_old_export_nsi, 0, 0.0);
-		if(export_mode == "stdout")
+		if(export_mode == k_stdout)
 		{
 			setString(
 				settings::k_rm_export_stdout,
@@ -1931,7 +1932,7 @@ ROP_3Delight::GetNSIExportFilename(double i_time)const
 	if(export_file.length() == 0)
 	{
 		// When no file is specified, we output to standard output by default
-		return std::string("stdout");
+		return k_stdout;
 	}
 
 	return export_file.toStdString();
