@@ -430,7 +430,8 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	// If we still have a render going on, kill it first.
 	StopRender();
 
-	bool render = m_idisplay_rendering || GetNSIExportFilename(tstart).empty();
+	std::string export_filename = GetNSIExportFilename(tstart);
+	bool render = m_idisplay_rendering || export_filename.empty();
 
 	/*
 		Get the number of frames per second. This is equivalent to
@@ -454,6 +455,12 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 			: evalInt(settings::k_ipr_start, 0, tstart);
 	}
 
+	// An actual path in the file system where the scene description is exported
+	std::string export_path =
+		!render && export_filename != k_stdout
+		?	export_filename
+		:	std::string();
+
 	m_current_render = new context(
 		this,
 		m_settings,
@@ -467,6 +474,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		batch,
 		ipr,
 		!render,
+		export_path,
 		m_rop_type);
 
 	m_end_time = tend;

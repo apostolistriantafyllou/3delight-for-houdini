@@ -18,6 +18,7 @@ context::context(
 	bool i_batch,
 	bool i_ipr,
 	bool i_export_nsi,
+	const std::string& i_export_path,
 	rop_type i_rop_type)
 :
 	m_rop(i_rop),
@@ -32,12 +33,25 @@ context::context(
 	m_batch(i_batch),
 	m_ipr(i_ipr),
 	m_export_nsi(i_export_nsi),
+	m_export_path_prefix(i_export_path),
 	m_rop_type(i_rop_type),
 	m_rop_path(i_rop->getFullPath().c_str()),
 	m_settings(i_settings)
 {
 	m_object_visibility_resolver =
 		new object_visibility_resolver(m_rop_path, i_settings, i_start_time);
+
+	// Remove ".nsi" prefix
+	std::string nsi_extension = ".nsi";
+	if(m_export_path_prefix.length() > nsi_extension.length())
+	{
+		size_t prefix_length =
+			m_export_path_prefix.length() - nsi_extension.length();
+		if(m_export_path_prefix.substr(prefix_length) == nsi_extension)
+		{
+			m_export_path_prefix.resize(prefix_length);
+		}
+	}
 }
 
 

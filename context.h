@@ -58,6 +58,7 @@ public:
 		bool i_batch,
 		bool i_ipr,
 		bool i_export_nsi,
+		const std::string& i_export_path,
 		rop_type i_rop_type );
 
 	~context()
@@ -142,6 +143,7 @@ public:
 	bool m_ipr{false};
 	bool m_time_dependent{false};
 	bool m_export_nsi{false};
+	std::string m_export_path_prefix;
 	rop_type m_rop_type{rop_type::standard};
 
 	/** files to be deleted at render end. */
