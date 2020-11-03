@@ -131,15 +131,6 @@ void vop::connect_input(int i_input_index)const
 		int source_index = input_ref->getNodeOutputIndex();
 		source->getOutputName(source_name, source_index);
 
-		/*
-			Change the input name to worldInverseMatrix[0] for makexform
-			VOP_Node and xform input name.
-		*/
-		if (vop_name(source) == "makexform" && source_name == "xform")
-		{
-			source_name = "worldInverseMatrix[0]";
-		}
-
 		m_nsi.Connect(
 			vop::handle(*source, m_context), source_name.toStdString(),
 			m_handle, input_name.toStdString() );
