@@ -1,6 +1,9 @@
 #include "context.h"
+
 #include "ROP_3Delight.h"
 #include <nsi_dynamic.hpp>
+
+#include <UT/UT_TempFileManager.h>
 
 static NSI::DynamicAPI s_api;
 static NSI::Context s_bad_context(s_api);
@@ -69,6 +72,18 @@ context::context(
 	m_object_visibility_resolver =
 		new object_visibility_resolver(m_rop_path, m_settings, i_time);
 }
+
+
+context::~context()
+{
+	for( const auto &f : m_temp_filenames )
+	{
+		UT_TempFileManager::removeTempFile( f.data() );
+	}
+
+	delete m_object_visibility_resolver;
+}
+
 
 bool context::object_displayed( const OBJ_Node& i_node ) const
 {

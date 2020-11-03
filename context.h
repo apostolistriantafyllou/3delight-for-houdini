@@ -6,7 +6,6 @@
 #include <nsi.hpp>
 
 #include <SYS/SYS_Types.h>
-#include <UT/UT_TempFileManager.h>
 
 #include <assert.h>
 #include <deque>
@@ -61,15 +60,7 @@ public:
 		const std::string& i_export_path,
 		rop_type i_rop_type );
 
-	~context()
-	{
-		for( const auto &f : m_temp_filenames )
-		{
-			UT_TempFileManager::removeTempFile( f.data() );
-		}
-
-		delete m_object_visibility_resolver;
-	}
+	~context();
 
 	/// Returns true if motion blur is required for this render
 	bool MotionBlur()const { return m_shutter > 0.0f; }
