@@ -1737,7 +1737,7 @@ void ROP_3Delight::ExportLightCategories(
 			/* Make a category for this single light */
 			std::string category = light_source->getFullPath().toStdString();
 
-			if(category != light_handle)
+			if(category != light_handle && !incand )
 			{
 				/*
 					In IPR, the light handle is not the same as its full path,
