@@ -368,7 +368,6 @@ void scene::create_materials_exporters(
 
 	for( auto &V : vops )
 	{
-		bool is_place3d_texture = V->getOperator()->getName().toStdString() == "makexform";
 		if(i_context.m_ipr)
 		{
 			i_context.register_interest(V, &vop::changed_cb);
