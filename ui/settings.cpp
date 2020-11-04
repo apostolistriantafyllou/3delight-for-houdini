@@ -219,12 +219,20 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	static PRM_Name export_sequence_file(k_export_sequence_file, " Export Sequence");
 	static PRM_Default export_sequence_file_d(false);
 
+	static PRM_ConditionalGroup export_file_group_h;
 	static PRM_Conditional export_file_h(
 		("{ " + std::string(k_output_nsi_files) + " == 0 }").c_str(), PRM_CONDTYPE_HIDE);
+	static PRM_Conditional export_file_disable(
+		("{ " + std::string(k_ipr_rendering) + " != 0 }").c_str(), PRM_CONDTYPE_DISABLE);
+	export_file_group_h.addConditional(export_file_h);
+	export_file_group_h.addConditional(export_file_disable);
 
+	static PRM_ConditionalGroup export_sequence_file_group_h;
 	static PRM_Conditional export_sequence_file_h(
 		("{ " + std::string(k_output_nsi_files) + " == 0 }"
 			"{ " + std::string(k_sequence_rendering) + " != 0 }").c_str(), PRM_CONDTYPE_HIDE);
+	export_sequence_file_group_h.addConditional(export_sequence_file_h);
+	export_sequence_file_group_h.addConditional(export_file_disable);
 
 	/*Hide Start Sequence Button when rendering a sequence of frames
 	(pressing Start Sequence button) or disable it when rendering a
@@ -267,7 +275,7 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 		PRM_Template(
 			PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &export_file, nullptr, nullptr,
 			nullptr, &ROP_3Delight::doRenderCback, nullptr, 0, nullptr,
-			&export_file_h),
+			&export_file_group_h),
 		PRM_Template(
 			PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &stop_render, nullptr, nullptr,
 			nullptr, &settings::StopRenderCB, nullptr, 0, nullptr,
@@ -286,7 +294,7 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 		PRM_Template(
 			PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &export_sequence_file, nullptr, nullptr,
 			nullptr, &settings::sequence_render, nullptr, 0, nullptr,
-			&export_sequence_file_h),
+			&export_sequence_file_group_h),
 		PRM_Template(PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &SequenceRender, 0, 0, 0,
 					&settings::sequence_render,0,0,nullptr,&start_sequence_group_h),
 	};
@@ -1356,7 +1364,12 @@ bool settings::export_to_nsi(fpreal t)const
 	if (m_parameters.m_rop_type == rop_type::stand_in)
 		return m_parameters.evalInt(settings::k_output_standin, 0, t);
 
-	return m_parameters.evalInt(settings::k_output_nsi_files, 0, t);
+	/*
+		Do not export to NSI if Start IPR button has been pressed
+		but instead render to iDisplay.
+	*/
+	return (m_parameters.evalInt(settings::k_output_nsi_files, 0, t) && 
+			!m_parameters.evalInt(settings::k_ipr_start, 0, t));
 }
 
 int settings::StopRenderCB(void* i_node, int, double, const PRM_Template*)
