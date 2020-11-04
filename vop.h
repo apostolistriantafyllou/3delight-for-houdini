@@ -113,7 +113,7 @@ private:
 	bool ignore_subnetworks( void ) const;
 
 	/**
-		\brief If vop is our material and have some bind node connected, add
+		\brief If vop is our material and have AOV Group node connected, add
 		and connect our aov group
 	*/
 	void add_and_connect_aov_group() const;

@@ -113,19 +113,8 @@ void vop::connect_input(int i_input_index)const
 	UT_String input_name;
 	m_vop->getInputName(input_name, i_input_index);
 	
-	if ( is_aov_definition(source) )
-	{
-		/*
-			Special case for 'bind' export node: if we use source_name,
-			this will be unrecognized by NSI since source_name changes
-			each time user specifies a new name for its export (custom)
-			name.
-		*/
-		m_nsi.Connect(
-			vop::handle(*source, m_context), "outColor",
-			m_handle, input_name.toStdString() );
-	}
-	else
+	//aov group connection is being handles on vop::add_and_connect_aov_group()
+	if (!is_aov_definition(source))
 	{
 		UT_String source_name;
 		int source_index = input_ref->getNodeOutputIndex();
@@ -592,16 +581,21 @@ void vop::add_and_connect_aov_group() const
 
 		for ( unsigned i = 0; i < aov_export_nodes.size(); i++ )
 		{
-			UT_String aov_name;
-			aov_export_nodes[i]->evalString( aov_name, "parmname", 0, 0.0f );
-			aov_names_storage.push_back( aov_name.toStdString() );
-			aov_names.push_back( aov_names_storage.back().c_str() );
+			//Get Values of all the AOV Colors from the dlAOVGroup
+			for (int j = 0; j < aov_export_nodes[i]->getNumVisibleInputs(); j++)
+			{
+				UT_String aov_name = aov_export_nodes[i]->inputLabel(j);
+				char* aov_name_buffer = new char[aov_name.toStdString().size() + 1];
+				std::strncpy(aov_name_buffer, aov_name.toStdString().c_str(), aov_name.toStdString().size() + 1);
+				aov_names.push_back(aov_name_buffer);
 
-			// Arbitrary values since the connection overrides it
-			aov_values.push_back( 0.0f );
-			aov_values.push_back( 0.0f );
-			aov_values.push_back( 0.0f );
+				aov_values.push_back(0.0f);
+				aov_values.push_back(0.0f);
+				aov_values.push_back(0.0f);
+			}
 		}
+
+
 
 		NSI::ArgumentList list;
 
@@ -617,11 +611,18 @@ void vop::add_and_connect_aov_group() const
 
 		for ( unsigned i = 0; i < aov_export_nodes.size(); i++ )
 		{
-			UT_String aov_value;
-			aov_value.sprintf("colorAOVValues[%u]", i);
-			m_nsi.Connect(
-				vop::handle(*aov_export_nodes[i], m_context), "outColor",
-				handle, aov_value.c_str() );
+			for (int j = 0; j < aov_export_nodes[i]->getNumVisibleInputs(); j++)
+			{
+				VOP_Node* source = CAST_VOPNODE(aov_export_nodes[i]->getInput(j));
+				if (!source)
+					continue;
+				UT_String aov_name = aov_export_nodes[i]->inputLabel(j);
+				UT_String aov_value;
+				aov_value.sprintf("colorAOVValues[%u]", j);
+				m_nsi.Connect(
+					vop::handle(*source, m_context), "outColor",
+					handle, aov_value.toStdString());
+			}
 		}
 	}
 }
@@ -722,11 +723,7 @@ void vop::list_ramp_parameters(
 }
 
 /**
-	\brief returns true if a given vop defines an AOV.
-
-	For now, wee recogznie Mantra's "bind export" node as a valid
-	AOV definition but we should really support dlAOVColor too
-	(FIXME)
+	\brief returns true if a given vop defines an AOV Group.
 */
 bool vop::is_aov_definition( VOP_Node *i_vop )
 {
@@ -735,14 +732,10 @@ bool vop::is_aov_definition( VOP_Node *i_vop )
 
 	OP_Operator* op = i_vop->getOperator();
 
-	if( op && op->getName().toStdString() == "bind" )
+	if( op && op->getName().toStdString() == "dlAOVGroup" )
 	{
-		bool use_export = i_vop->evalInt("useasparmdefiner", 0, 0.0f);
-		int export_mode = i_vop->evalInt("exportparm", 0, 0.0f);
-		// 0 means "Never" for export_mode
-		return use_export && export_mode != 0;
+		return true;
 	}
-
 	return false;
 }
 

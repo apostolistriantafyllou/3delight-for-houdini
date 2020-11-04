@@ -7,7 +7,6 @@ bool
 VOP_3DelightOperatorFilter::allowOperatorAsChild(OP_Operator* i_op)
 {
     return dynamic_cast<VOP_ExternalOSLOperator*>(i_op) != NULL ||
-			i_op->getName().toStdString() == "bind" ||
 			i_op->getName().toStdString() == "makexform";
 }
 

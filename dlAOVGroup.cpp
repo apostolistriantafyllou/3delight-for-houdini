@@ -19,19 +19,19 @@ dlAOVGroup::alloc(OP_Network* net, const char* name, OP_Operator* entry)
     return new dlAOVGroup(net, name, aov_entry);
 }
 
-static PRM_Name     vopPlugInputs("aovs", "AOVs");
-static PRM_Name     vopPlugInpName("inpplug#", "AOV Name #");
-static PRM_Default  vopPlugInpDefault(0, "aov#");
+static PRM_Name AOVInputs("aovs", "AOVs");
+static PRM_Name AOVInputName("input_aov#", "AOV Name #");
+static PRM_Default AOVInputDefault(0, "aov#");
 static PRM_Template
 vopPlugInpTemplate[] =
 {
-    PRM_Template(PRM_ALPHASTRING, 1, &vopPlugInpName, &vopPlugInpDefault),
+    PRM_Template(PRM_ALPHASTRING, 1, &AOVInputName, &AOVInputDefault),
     PRM_Template()
 };
 
 PRM_Template dlAOVGroup::myTemplateList[] =
 {
-    PRM_Template(PRM_MULTITYPE_LIST, vopPlugInpTemplate, 0, &vopPlugInputs,
+    PRM_Template(PRM_MULTITYPE_LIST, vopPlugInpTemplate, 0, &AOVInputs,
                  0, 0, &PRM_SpareData::multiStartOffsetZero),
     PRM_Template()
 };
@@ -55,13 +55,17 @@ dlAOVGroup::inputLabel(unsigned index) const
     fpreal t = CHgetEvalTime();
     int i = index;
     UT_String label;
+    std::string param = "input_aov";
+    std::string input_param = param + std::to_string(index);
 
-    // Evaluate our label from the corresponding parameter.
-    evalStringInst(vopPlugInpName.getToken(), &i, label, 0, t);
-    if (label.isstring())
-        theLabel.strcpy(label);
-    else
-        theLabel.strcpy("<unnamed>");
+    if (hasParm(input_param.c_str()))
+    {
+        evalStringInst(AOVInputName.getToken(), &i, label, 0, t);
+        if (label.isstring())
+            theLabel.strcpy(label);
+        else
+            theLabel.strcpy("<unnamed>");
+    }
     return theLabel.buffer();
 }
 const char*

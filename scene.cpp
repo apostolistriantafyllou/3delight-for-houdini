@@ -368,7 +368,6 @@ void scene::create_materials_exporters(
 
 	for( auto &V : vops )
 	{
-		bool is_place3d_texture = V->getOperator()->getName().toStdString() == "makexform";
 		if(i_context.m_ipr)
 		{
 			i_context.register_interest(V, &vop::changed_cb);
@@ -764,7 +763,7 @@ void scene::find_lights(
 }
 
 /*
-	\brief find the "bind exports" in the scene.
+	\brief find the "AVOGroup" in the scene.
 
 	This is relly heavy duty as it uses a scene export to find the vops.
 	But it is also robust as we use the same logic as scen export.
