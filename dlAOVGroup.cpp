@@ -45,6 +45,7 @@ dlAOVGroup::~dlAOVGroup()
 bool
 dlAOVGroup::updateParmsFlags()
 {
+
     return true;
 }
 
@@ -55,10 +56,9 @@ dlAOVGroup::inputLabel(unsigned index) const
     fpreal t = CHgetEvalTime();
     int i = index;
     UT_String label;
-    std::string param = "input_aov";
-    std::string input_param = param + std::to_string(index);
-
-    if (hasParm(input_param.c_str()))
+    UT_WorkBuffer input_parameter;
+    input_parameter.sprintf("input_aov%d", index);
+    if (hasParm(input_parameter.buffer()))
     {
         evalStringInst(AOVInputName.getToken(), &i, label, 0, t);
         if (label.isstring())
@@ -118,6 +118,33 @@ unsigned
 dlAOVGroup::getNumVisibleInputs() const
 {
     return evalInt("aovs", 0, CHgetEvalTime());
+}
+
+void
+dlAOVGroup::opChanged(OP_EventType reason, void* data)
+{
+    VOP_Node::opChanged(reason, data);
+    if (reason != OP_PARM_CHANGED)
+    {
+        return;
+    }
+
+    /*
+        Do not allow a parameter's value to be empty.
+    */
+    OP_Parameters* node = reinterpret_cast<OP_Parameters*>(data);
+    for (int i = 0; i < getNumVisibleInputs(); i++)
+    {
+        UT_String label;
+        evalStringInst(AOVInputName.getToken(), &i, label, 0, 0);
+        if (!label.isstring())
+        {
+            UT_WorkBuffer label_value;
+            label_value.sprintf("aov%d", i);
+            setStringInst(label_value.buffer(), CH_STRING_LITERAL, AOVInputName.getToken(), &i, 0, 0);
+        }
+    }
+
 }
 
 dlAOVGroupOperator::dlAOVGroupOperator()

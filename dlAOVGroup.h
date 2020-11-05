@@ -31,6 +31,7 @@ public:
 
     /// Returns the number input ports that should be visible
     unsigned getNumVisibleInputs() const override;
+    virtual void opChanged(OP_EventType reason, void* data) override;
 
 protected:
 
