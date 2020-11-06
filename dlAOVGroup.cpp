@@ -120,6 +120,89 @@ dlAOVGroup::getNumVisibleInputs() const
     return evalInt("aovs", 0, CHgetEvalTime());
 }
 
+/*
+    Updates label naming by not allowing an empty or duplicate label name.
+*/
+void dlAOVGroup::updateLabelNaming(void *data)
+{
+    std::vector<std::string> inputs;
+    int parm_index = reinterpret_cast<intptr_t>(data) - 1;
+    UT_String changed_label;
+
+    UT_WorkBuffer input_parameter;
+    /*
+        check if the parameter exists. This will fix error messages about
+        evaluating non existant parameters upon their creation.
+    */
+    input_parameter.sprintf("input_aov%d", parm_index);
+    if (hasParm(input_parameter.buffer()))
+    {
+        evalStringInst(AOVInputName.getToken(), &parm_index, changed_label, 0, 0);
+        /*
+            Do not allow a parameter's value to be empty.
+        */
+        if (!changed_label.isstring())
+        {
+            UT_WorkBuffer label_value;
+            label_value.sprintf("aov%d", parm_index);
+            setStringInst(label_value.buffer(), CH_STRING_LITERAL, AOVInputName.getToken(), &parm_index, 0, 0);
+        }
+
+        /*
+            Insert all the inputs label name on a vector except the one that
+            we already changed and check if the parameter we changed exist on
+            the vector or not.
+        */
+        for (int i = 0; i < getNumVisibleInputs(); i++)
+        {
+            UT_String label;
+            evalStringInst(AOVInputName.getToken(), &i, label, 0, 0);
+            if (i == parm_index)
+                inputs.push_back("");
+            else
+                inputs.push_back(label.toStdString());
+        }
+
+        /*
+            If the label already exist we check if the existing one has any number
+            in the end or no, so we only take the first part without the numbers.
+        */
+        if (std::find(inputs.begin(), inputs.end(), changed_label.toStdString()) != inputs.end())
+        {
+            int number = 0;
+            std::string str = changed_label.toStdString();
+            /*
+                Search the string for the last character that does not match any
+                of the characters specified in its arguments.
+            */
+            size_t last_index = str.find_last_not_of("0123456789");
+            std::string result = str.substr(0, last_index + 1);
+
+            /*
+                Check for possible names of our new parameter by adding a number
+                in the end of it.
+            */
+            while (true)
+            {
+                std::string new_name = result + std::to_string(number++);
+                if (std::find(inputs.begin(), inputs.end(), new_name) == inputs.end())
+                {
+                    setStringInst(new_name, CH_STRING_LITERAL, AOVInputName.getToken(), &parm_index, 0, 0);
+                    break;
+                }
+            }
+        }
+        else
+        {
+            /*
+                if the parameter is unique we place it on our vector
+                in the corresponing position.
+            */
+            inputs[parm_index] = changed_label.toStdString();
+        }
+    }
+}
+
 void
 dlAOVGroup::opChanged(OP_EventType reason, void* data)
 {
@@ -128,23 +211,7 @@ dlAOVGroup::opChanged(OP_EventType reason, void* data)
     {
         return;
     }
-
-    /*
-        Do not allow a parameter's value to be empty.
-    */
-    OP_Parameters* node = reinterpret_cast<OP_Parameters*>(data);
-    for (int i = 0; i < getNumVisibleInputs(); i++)
-    {
-        UT_String label;
-        evalStringInst(AOVInputName.getToken(), &i, label, 0, 0);
-        if (!label.isstring())
-        {
-            UT_WorkBuffer label_value;
-            label_value.sprintf("aov%d", i);
-            setStringInst(label_value.buffer(), CH_STRING_LITERAL, AOVInputName.getToken(), &i, 0, 0);
-        }
-    }
-
+    updateLabelNaming(data);
 }
 
 dlAOVGroupOperator::dlAOVGroupOperator()

@@ -33,6 +33,7 @@ public:
     unsigned getNumVisibleInputs() const override;
     virtual void opChanged(OP_EventType reason, void* data) override;
 
+    void updateLabelNaming(void* data);
 protected:
 
     ///Constructor
