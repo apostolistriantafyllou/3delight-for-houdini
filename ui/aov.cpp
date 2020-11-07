@@ -53,15 +53,17 @@ aov::updateCustomVariables(const std::vector<VOP_Node*>& i_custom_aovs)
 	removeAllCustomVariables();
 	for (unsigned i = 0; i < i_custom_aovs.size(); i++)
 	{
-		UT_String aov_name;
-		i_custom_aovs[i]->evalString(aov_name, "parmname", 0, 0.0f);
-		if (!findCustomVariable(aov_name.c_str()))
+		for (int j = 0; j < i_custom_aovs[i]->getNumVisibleInputs(); j++)
 		{
-			addCustomVariable(
-				aov_name.toStdString(),
-				aov_name.toStdString(),
-				aov_name.toStdString(),
-				"shader", "color");
+			UT_String aov_name = i_custom_aovs[i]->inputLabel(j);
+			if (!findCustomVariable(aov_name.c_str()))
+			{
+				addCustomVariable(
+					aov_name.toStdString(),
+					aov_name.toStdString(),
+					aov_name.toStdString(),
+					"shader", "color");
+			}
 		}
 	}
 }

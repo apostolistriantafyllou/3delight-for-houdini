@@ -32,15 +32,17 @@ SelectLayersDialog::parseDialog(const std::vector<VOP_Node*>& i_custom_aovs)
 	std::vector<std::string> aov_names;
 	for (unsigned i = 0; i < i_custom_aovs.size(); i++)
 	{
-		UT_String aov_name;
-		i_custom_aovs[i]->evalString(aov_name, "parmname", 0, 0.0f);
-		// Ignore duplicate
-		if (!findAovName(aov_names, aov_name.c_str()))
+		//UT_String aov_name = "Test";
+		for (int j = 0; j < i_custom_aovs[i]->getNumVisibleInputs(); j++)
 		{
-			aov_names.push_back(aov_name.toStdString());
-			m_values.push_back(new UI_Value());
-			m_labels.push_back(aov_names.back());
-			m_symbols.push_back(aov_names.back()+".val");
+			UT_String aov_name = i_custom_aovs[i]->inputLabel(j);
+			if (!findAovName(aov_names, aov_name.c_str()))
+			{
+				aov_names.push_back(aov_name.toStdString());
+				m_values.push_back(new UI_Value());
+				m_labels.push_back(aov_names.back());
+				m_symbols.push_back(aov_names.back() + ".val");
+			}
 		}
 	}
 	// These bind the named UI values with the given objects.

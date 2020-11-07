@@ -763,7 +763,7 @@ void scene::find_lights(
 }
 
 /*
-	\brief find the "bind exports" in the scene.
+	\brief find the "AVOGroup" in the scene.
 
 	This is relly heavy duty as it uses a scene export to find the vops.
 	But it is also robust as we use the same logic as scen export.

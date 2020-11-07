@@ -44,7 +44,7 @@ public:
 		std::vector<OBJ_Node*>& o_lights );
 
 	/**
-		\brief Find the bind export nodes that can produce custom AOVs
+		\brief Find the AOV Group nodes that can produce custom AOVs
 	*/
 	static void find_custom_aovs(
 		ROP_3Delight *i_rop,
