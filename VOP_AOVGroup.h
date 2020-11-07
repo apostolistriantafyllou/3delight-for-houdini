@@ -2,16 +2,16 @@
 
 #include <VOP/VOP_Node.h>
 
-struct dlAOVGroupOperator;
+struct VOP_AOVGroupOperator;
 
-class dlAOVGroup : public VOP_Node
+class VOP_AOVGroup : public VOP_Node
 {
 public:
 
-    /// Registers the dlAOVGroup
+    /// Registers the VOP_AOVGroup
     static void Register(OP_OperatorTable* table);
 
-    /// Creates an instance of dlAOVGroup to a network.
+    /// Creates an instance of VOP_AOVGroup to a network.
     static OP_Node* alloc(OP_Network* net, const char* name, OP_Operator* entry);
 
     /// Returns the templates for the shader's parameters
@@ -33,12 +33,16 @@ public:
     unsigned getNumVisibleInputs() const override;
     virtual void opChanged(OP_EventType reason, void* data) override;
 
-    void updateLabelNaming(void* data);
+    //Replaces the duplicated value with a unique value.
+    void ReplaceDuplicateLabel(std::vector<std::string> inputs, std::string updated_label, int index);
+
+    //Updates label when it is empty or duplicated.
+    void UpdateLabelNaming(void* data);
 protected:
 
     ///Constructor
-    dlAOVGroup(OP_Network* net, const char* name, dlAOVGroupOperator* entry);
-    ~dlAOVGroup() override;
+    VOP_AOVGroup(OP_Network* net, const char* name, VOP_AOVGroupOperator* entry);
+    ~VOP_AOVGroup() override;
 
     /// Returns the internal name of the current input (index value = idx).
     void getInputNameSubclass(UT_String& in, int idx) const override;
@@ -63,8 +67,8 @@ protected:
         VOP_VopTypeInfoArray& type_infos) override;
 };
 
-struct dlAOVGroupOperator : public VOP_Operator
+struct VOP_AOVGroupOperator : public VOP_Operator
 {
     /// Constructor.
-    dlAOVGroupOperator();
+    VOP_AOVGroupOperator();
 };

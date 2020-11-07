@@ -1,7 +1,7 @@
 #include "OBJ_IncandescenceLight.h"
 #include "ROP_3Delight.h"
 #include "VOP_3DelightMaterialBuilder.h"
-#include "dlAOVGroup.h"
+#include "VOP_AOVGroup.h"
 #include "creation_callbacks.h"
 #include "shader_library.h"
 #include "viewport_hook.h"
@@ -73,7 +73,7 @@ newVopOperator(OP_OperatorTable* io_table)
 {
 	check_houdini_version();
 	VOP_3DelightMaterialBuilder::Register(io_table);
-	dlAOVGroup::Register(io_table);
+	VOP_AOVGroup::Register(io_table);
 	shader_library::get_instance().Register(io_table);
 }
 
