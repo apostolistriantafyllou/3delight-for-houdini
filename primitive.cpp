@@ -359,6 +359,13 @@ void primitive::get_bind_attributes(
 					primvar, "attribute_name", 0, m_context.m_current_time );
 				o_to_export.push_back( primvar.toStdString() );
 			}
+			else if( op->getName() == "3Delight::dlUV" )
+			{
+				UT_String primvar;
+				input->evalString(
+					primvar, "uvSet", 0, m_context.m_current_time );
+				o_to_export.push_back( primvar.toStdString() );
+			}
 			else
 			{
 				traversal.push_back( input );
