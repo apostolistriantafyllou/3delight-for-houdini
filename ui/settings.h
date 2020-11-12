@@ -59,6 +59,10 @@ public:
 		void* data, int index, fpreal t,
 		const PRM_Template* tplate);
 
+	static int viewport_render(
+		void* data, int index, fpreal t,
+		const PRM_Template* tplate);
+
 	static int ipr_render(
 		void* data, int index, fpreal t,
 		const PRM_Template* tplate);
@@ -92,13 +96,15 @@ public:
 	static const char* k_sequence_start;
 	static const std::string k_rm_render;
 	static const std::string k_rm_live_render;
-	static const std::string k_rm_viewport_render;
 	static const std::string k_rm_export_file;
 	static const std::string k_rm_export_archive;
 	static const std::string k_rm_export_stdout;
 	static const char* k_stop_render;
 	static const char* k_export;
 	static const char* k_export_sequence;
+	static const char* k_viewport_render;
+	static const char* k_viewport_render_abort;
+	static const char* k_start_viewport;
 	static const char* k_old_export_nsi;
 	static const char* k_old_ipr;
 	static const char* k_shading_samples;
