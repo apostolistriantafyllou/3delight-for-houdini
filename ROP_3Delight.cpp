@@ -1769,6 +1769,17 @@ bool ROP_3Delight::HasSpeedBoost( double t )const
 	{
 		return false;
 	}
+
+	/*
+		trange parameter is responsible for sequence rendering. Whenever it's value
+		is true it means that we are rendering a sequence of frames. So we ignore
+		the overrides on sequence render.
+	*/
+	if (evalInt("trange", 0, t))
+	{
+		return false;
+	}
+
 	bool export_to_nsi = m_settings.export_to_nsi(t);
 	if(export_to_nsi)
 		return false;
