@@ -91,5 +91,5 @@ newRenderHook(DM_RenderTable* io_table)
 	io_table->registerSceneHook(
 		&viewport_hook_builder::instance(),
 		DM_HOOK_BEAUTY,
-		DM_HOOK_AFTER_NATIVE);
+		DM_HOOK_REPLACE_NATIVE);
 }
