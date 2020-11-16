@@ -26,7 +26,6 @@ namespace
 	const std::chrono::milliseconds k_refresh_interval(50);
 }
 
-
 /*
 	Image buffer shared between the viewport hook and the display driver.
 
@@ -278,8 +277,38 @@ hook_image_buffer::clear_pixels()
 	memset(m_pixels, 0, buffer_size());
 	m_timestamp++;
 }
+/*
+	dm_SetupTask is a friend class of DM_VPortAgent class and makes it
+	possible to access it's private members, which in our case it is the
+	active camera on viewport which we get. Most of the camera attributes
+	are found on GUI_ViewParameter, which we have already used, but the
+	shutter time parameter is not part of it, so we are using the OBJ_Camera
+	to get that value.
+*/
+class dm_SetupTask
+{
+public:
+	/// Constructor
+	dm_SetupTask(DM_VPortAgent& i_viewport);
+	/// Destructor
+	virtual ~dm_SetupTask();
 
+	OBJ_Camera* m_active_camera{ nullptr };
+};
+typedef dm_SetupTask VPortAgentCameraAccessor;
 
+dm_SetupTask::dm_SetupTask(DM_VPortAgent& i_viewport)
+{
+	OP_Node* cam_node = i_viewport.currentCamera();
+	if (cam_node)
+	{
+		m_active_camera = cam_node->castToOBJNode()->castToOBJCamera();
+	}
+}
+
+dm_SetupTask::~dm_SetupTask()
+{
+}
 
 /// Holds the viewport's camera's parameters in a ready-to-export format
 class viewport_camera
@@ -398,28 +427,21 @@ viewport_camera::nsi_export(
 }
 
 
-
 /**
 	\brief Per-viewport scene render hook.
 	
 	It exports Houdini's camera attributes to the NSI context, along with an
 	output driver node, then fulfills render requests received from Houdini.
-	We have named the class dm_SetupTask becuase it is a friend class of
-	DM_VPortAgent class and makes it possible to access it's private members,
-	which in our case it is the active camera on viewport which we get.
-	Most of the camera attributes are found on GUI_ViewParameter, which we
-	have already used, but the shutter time parameter is not part of it, so
-	we are using the OBJ_Camera to get that value.
 */
 
-class dm_SetupTask : public DM_SceneRenderHook
+class viewport_hook : public DM_SceneRenderHook
 {
 public:
 
 	/// Constructor
-	dm_SetupTask(DM_VPortAgent& i_viewport);
+	viewport_hook(DM_VPortAgent& i_viewport);
 	/// Destructor
-	virtual ~dm_SetupTask();
+	virtual ~viewport_hook();
 
 	/// Render method called when the rendering task is required.
 	bool render(
@@ -468,20 +490,20 @@ private:
 	mutable UT_Matrix4D m_last_camera_transform{1.0};
 };
 
-dm_SetupTask::dm_SetupTask(DM_VPortAgent& i_viewport)
+viewport_hook::viewport_hook(DM_VPortAgent& i_viewport)
 	:	DM_SceneRenderHook(i_viewport, DM_VIEWPORT_ALL)
 {
 }
 
 
-dm_SetupTask::~dm_SetupTask()
+viewport_hook::~viewport_hook()
 {
 	// Disconnect from the display driver if this hasn't been done already
 	disconnect();
 }
 
 bool
-dm_SetupTask::render(
+viewport_hook::render(
 	RE_Render* i_render,
 	const DM_SceneHookData& i_hook_data)
 {
@@ -490,12 +512,8 @@ dm_SetupTask::render(
 	DM_VPortAgent& vp = viewport();
 	GUI_ViewState& vs = vp.getViewStateRef();
 	GUI_ViewParameter& view = vs.getViewParameterRef();
-	OP_Node* cam_node = vp.currentCamera();
-	OBJ_Camera* active_camera = nullptr;
-	if (cam_node)
-	{
-		active_camera = cam_node->castToOBJNode()->castToOBJCamera();
-	}
+
+	VPortAgentCameraAccessor* cam = new VPortAgentCameraAccessor(vp);
 	/*
 		Update NSI camera at each refresh, since we don't get notified when it
 		changes. If its attributes haven't changed since the last update, it
@@ -504,7 +522,7 @@ dm_SetupTask::render(
 	m_mutex.lock();
 	if(m_nsi)
 	{
-		export_camera_attributes(view, active_camera, true);
+		export_camera_attributes(view, cam->m_active_camera, true);
 	}
 	m_mutex.unlock();
 
@@ -592,7 +610,7 @@ dm_SetupTask::render(
 }
 
 void
-dm_SetupTask::connect(NSI::Context* io_nsi)
+viewport_hook::connect(NSI::Context* io_nsi)
 {
 	m_mutex.lock();
 
@@ -614,13 +632,9 @@ dm_SetupTask::connect(NSI::Context* io_nsi)
 	DM_VPortAgent& vp = viewport();
 	GUI_ViewState& vs = vp.getViewStateRef();
 	GUI_ViewParameter& view = vs.getViewParameterRef();
-	OP_Node* cam_node = vp.currentCamera();
-	OBJ_Camera* active_camera = nullptr;
 
-	if (cam_node)
-	{
-		active_camera = cam_node->castToOBJNode()->castToOBJCamera();
-	}
+	VPortAgentCameraAccessor* cam = new VPortAgentCameraAccessor(vp);
+	
 	std::string prefix = handle_prefix();
 
 	// Export camera
@@ -632,7 +646,7 @@ dm_SetupTask::connect(NSI::Context* io_nsi)
 	m_nsi->Create(camera, "perspectivecamera");
 	m_nsi->Connect(camera, "", camera_trs, "objects");
 
-	export_camera_attributes(view, active_camera, false);
+	export_camera_attributes(view, cam->m_active_camera, false);
 
 	// Export screen
 	int resolution[2] = { vs.getViewWidth(), vs.getViewHeight() };
@@ -675,7 +689,7 @@ dm_SetupTask::connect(NSI::Context* io_nsi)
 
 
 void
-dm_SetupTask::disconnect()
+viewport_hook::disconnect()
 {
 	m_mutex.lock();
 
@@ -708,28 +722,28 @@ dm_SetupTask::disconnect()
 
 
 std::string
-dm_SetupTask::handle_prefix()const
+viewport_hook::handle_prefix()const
 {
 	return "view" + std::to_string(viewport().getUniqueId()) + "_";
 }
 
 
 std::string
-dm_SetupTask::camera_handle()const
+viewport_hook::camera_handle()const
 {
 	return handle_prefix() + "_camera";
 }
 
 
 std::string
-dm_SetupTask::camera_transform_handle()const
+viewport_hook::camera_transform_handle()const
 {
 	return handle_prefix() + "_camera_transform";
 }
 
 
 void
-dm_SetupTask::export_camera_attributes(
+viewport_hook::export_camera_attributes(
 	GUI_ViewParameter& i_view, OBJ_Camera* active_camera,
 	bool i_synchronize)const
 {
@@ -911,7 +925,7 @@ viewport_hook_builder::newSceneRender(
 	DM_SceneHookType i_type,
 	DM_SceneHookPolicy i_policy)
 {
-	dm_SetupTask* hook = new dm_SetupTask(i_viewport);
+	viewport_hook* hook = new viewport_hook(i_viewport);
 	m_hooks.push_back(hook);
 	return hook;
 }
