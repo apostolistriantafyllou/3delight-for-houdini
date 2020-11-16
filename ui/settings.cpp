@@ -336,27 +336,6 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 			&settings::export_standin_sequence, nullptr, 0, nullptr, nullptr),
 	};
 
-	static std::vector<PRM_Template> viewport_actions
-	{
-		PRM_Template(
-			PRM_TOGGLE|PRM_TYPE_JOIN_NEXT|PRM_TYPE_INVISIBLE, 1,
-			&start_viewport_render, &viewport_render_d),
-
-		PRM_Template(
-		PRM_CALLBACK | PRM_TYPE_JOIN_NEXT , 1, &viewport_render, nullptr, nullptr,
-		nullptr, &ROP_3Delight::doRenderCback, nullptr, 0, nullptr,
-			&start_viewport_render_h),
-
-		PRM_Template(
-			PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &viewport_render_abort, nullptr, nullptr,
-			nullptr, &settings::StopRenderCB, nullptr, 0, nullptr,
-			&stop_viewport_render_h),
-
-		PRM_Template(
-			PRM_TOGGLE | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1,
-			&ipr_start, &ipr_start_h),
-	};
-
 	// Quality
 	static PRM_Name shading_samples(k_shading_samples, "Shading Samples");
 	static PRM_Default shading_samples_d(64);
@@ -472,6 +451,30 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 			&matte_objects_d, nullptr, nullptr, nullptr,
 			&PRM_SpareData::objGeometryPath, 1, nullptr, nullptr)
 	};
+
+	static std::vector<PRM_Template> viewport_actions
+	{
+		PRM_Template(
+			PRM_TOGGLE | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1,
+			&start_viewport_render, &viewport_render_d),
+
+		PRM_Template(
+		PRM_CALLBACK | PRM_TYPE_JOIN_NEXT , 1, &viewport_render, nullptr, nullptr,
+		nullptr, &ROP_3Delight::doRenderCback, nullptr, 0, nullptr,
+			&start_viewport_render_h),
+
+		PRM_Template(
+			PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &viewport_render_abort, nullptr, nullptr,
+			nullptr, &settings::StopRenderCB, nullptr, 0, nullptr,
+			&stop_viewport_render_h),
+
+		PRM_Template(
+			PRM_TOGGLE | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1,
+			&ipr_start, &ipr_start_h),
+
+		PRM_Template(PRM_STRING | PRM_TYPE_INVISIBLE, PRM_TYPE_DYNAMIC_PATH, 1, &camera, &camera_d, nullptr, nullptr, nullptr, &PRM_SpareData::objCameraPath),
+	};
+
 
 	// Output
 	static PRM_Name display_rendered_images(k_display_rendered_images, "Display");

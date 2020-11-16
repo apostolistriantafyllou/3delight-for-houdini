@@ -4,8 +4,7 @@
 
 #include <nsi.hpp>
 
-class viewport_hook;
-
+class dm_SetupTask;
 /// Scene hook that allows 3Delight rendering directly into Houdini viewports
 class viewport_hook_builder : public DM_SceneHook
 {
@@ -59,7 +58,7 @@ private:
 	const viewport_hook_builder& operator=(const viewport_hook_builder&);
 
 	// List of active render hooks
-	std::vector<viewport_hook*> m_hooks;
+	std::vector<dm_SetupTask*> m_hooks;
 	// Current rendering context
 	NSI::Context* m_nsi{nullptr};
 };

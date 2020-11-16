@@ -1,4 +1,6 @@
 #include "ROP_3Delight.h"
+#include <DM/DM_VPortAgent.h>
+#include <DM/DM_SceneHook.h>
 
 #include "camera.h"
 #include "context.h"
@@ -1889,7 +1891,7 @@ ROP_3Delight::GetShutterInterval(double i_time)const
 		for shutter interval as trying to get it from camera
 		when it does not exist would produce an error.
 	*/
-	if (m_rop_type == rop_type::stand_in || m_rop_type == rop_type::viewport)
+	if (m_rop_type == rop_type::stand_in)
 	{
 		return 1.0;
 	}
