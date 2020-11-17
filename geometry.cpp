@@ -40,7 +40,6 @@ std::vector<primitive *> Refine(
 	const context& i_context,
 	double i_time,
 	std::vector<primitive*>& io_result,
-	unsigned& io_primitive_index,
 	int i_level = 0 );
 
 
@@ -71,7 +70,6 @@ struct OBJ_Node_Refiner : public GT_Refine
 	const context &m_context;
 	double m_time;
 	int m_level;
-	unsigned& m_primitive_index;
 	bool m_stop;
 
 	OBJ_Node_Refiner(
@@ -79,7 +77,6 @@ struct OBJ_Node_Refiner : public GT_Refine
 		const context &i_context,
 		double i_time,
 		std::vector<primitive*> &io_result,
-		unsigned& io_primitive_index,
 		int level)
 	:
 		m_node(i_node),
@@ -87,7 +84,6 @@ struct OBJ_Node_Refiner : public GT_Refine
 		m_context(i_context),
 		m_time(i_time),
 		m_level(level),
-		m_primitive_index(io_primitive_index),
 		m_stop(false)
 	{
 	}
@@ -201,7 +197,6 @@ struct OBJ_Node_Refiner : public GT_Refine
 					m_context,
 					m_time,
 					m_result,
-					m_primitive_index,
 					m_level+1);
 			}
 
@@ -331,7 +326,6 @@ struct OBJ_Node_Refiner : public GT_Refine
 				m_context,
 				m_time,
 				m_result,
-				m_primitive_index,
 				m_level+1);
 
 			if( ret.empty() )
@@ -362,7 +356,6 @@ std::vector<primitive *> Refine(
 	const context& i_context,
 	double i_time,
 	std::vector<primitive*>& io_result,
-	unsigned& io_primitive_index,
 	int i_level)
 {
 	OBJ_Node_Refiner refiner(
@@ -370,7 +363,6 @@ std::vector<primitive *> Refine(
 		i_context,
 		i_time,
 		io_result,
-		io_primitive_index,
 		i_level);
 
 	GT_RefineParms params;
@@ -423,14 +415,7 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 		std::vector<primitive *> result;
 
 		GT_PrimitiveHandle gt( GT_GEODetail::makeDetail(detail_handle) );
-		unsigned primitive_index = 0;
-		Refine(
-			gt,
-			*m_object,
-			m_context,
-			time,
-			result,
-			primitive_index );
+		Refine( gt, *m_object, m_context, time, result );
 
 
 		if( result.empty() )
