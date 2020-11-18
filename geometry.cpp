@@ -32,18 +32,6 @@ namespace
 {
 
 /**
-	Refines i_primitive and appends the resulting primitives to io_result
-*/
-std::vector<primitive *> Refine(
-	const GT_PrimitiveHandle& i_primitive,
-	OBJ_Node& i_object,
-	const context& i_context,
-	double i_time,
-	std::vector<primitive*>& io_result,
-	int i_level = 0 );
-
-
-/**
 	\brief A GT refiner for an OBJ_Node.
 
 	When an OBJ_Node is refined, the top node is a null to which
@@ -52,6 +40,12 @@ std::vector<primitive *> Refine(
 */
 struct OBJ_Node_Refiner : public GT_Refine
 {
+	/*
+		Parameters used for refinement. We store them here so they can be easily
+		re-used for recursive calls.
+	*/
+	GT_RefineParms m_params;
+
 	OBJ_Node *m_node;
 
 	/**
@@ -76,22 +70,40 @@ struct OBJ_Node_Refiner : public GT_Refine
 		OBJ_Node *i_node,
 		const context &i_context,
 		double i_time,
-		std::vector<primitive*> &io_result,
-		int level)
+		std::vector<primitive*> &io_result)
 	:
 		m_node(i_node),
 		m_result(io_result),
 		m_context(i_context),
 		m_time(i_time),
-		m_level(level),
+		m_level(0),
+		m_stop(false)
+	{
+		m_params.setAllowSubdivision( true );
+		m_params.setAddVertexNormals( true );
+		m_params.setCuspAngle( GEO_DEFAULT_ADJUSTED_CUSP_ANGLE );
+
+#if SYS_VERSION_FULL_INT >= 0x12000214
+		m_params.setCoalesceVolumes( true );
+		m_params.setHeightFieldConvert( true );
+#endif
+	}
+
+	// Constructor used for recursive calls
+	explicit OBJ_Node_Refiner(const OBJ_Node_Refiner* i_parent)
+	:	m_params(i_parent->m_params),
+		m_node(i_parent->m_node),
+		m_result(i_parent->m_result),
+		m_context(i_parent->m_context),
+		m_time(i_parent->m_time),
+		m_level(i_parent->m_level+1),
 		m_stop(false)
 	{
 	}
 
-
 	/**
 
-		Diable threadig at this level: no gain and all pain!
+		Diable threading at this level: no gain and all pain!
 
 		Allowing threading means that we receive geo out-of-order.  This
 		is impossible to manage in the situation where we have motion
@@ -191,13 +203,8 @@ struct OBJ_Node_Refiner : public GT_Refine
 			}
 			else
 			{
-				ret = Refine(
-					I->geometry(),
-					*m_node,
-					m_context,
-					m_time,
-					m_result,
-					m_level+1);
+				OBJ_Node_Refiner recursive(this);
+				I->geometry()->refine(recursive, &recursive.m_params);
 			}
 
 			if(	ret.empty() )
@@ -319,16 +326,9 @@ struct OBJ_Node_Refiner : public GT_Refine
 				this,
 				i_primitive->className(), m_result.size(), m_return.size(), m_level );
 #endif
-
-			std::vector<primitive *> ret = Refine(
-				i_primitive,
-				*m_node,
-				m_context,
-				m_time,
-				m_result,
-				m_level+1);
-
-			if( ret.empty() )
+			OBJ_Node_Refiner recursive(this);
+			i_primitive->refine(recursive, &recursive.m_params);
+			if( recursive.m_return.empty() )
 			{
 #ifdef VERBOSE
 				std::cerr << "3Delight for Houdini: unsupported object "
@@ -344,41 +344,14 @@ struct OBJ_Node_Refiner : public GT_Refine
 				as it is passed by reference from one context to the other and
 				it has been updated in the recursive context.
 			*/
-			m_return.insert( m_return.end(), ret.begin(), ret.end() );
+			m_return.insert(
+				m_return.end(),
+				recursive.m_return.begin(),
+				recursive.m_return.end() );
 		}
 		}
 	}
 };
-
-std::vector<primitive *> Refine(
-	const GT_PrimitiveHandle& i_primitive,
-	OBJ_Node& i_object,
-	const context& i_context,
-	double i_time,
-	std::vector<primitive*>& io_result,
-	int i_level)
-{
-	OBJ_Node_Refiner refiner(
-		&i_object,
-		i_context,
-		i_time,
-		io_result,
-		i_level);
-
-	GT_RefineParms params;
-	params.setAllowSubdivision( true );
-	params.setAddVertexNormals( true );
-	params.setCuspAngle( GEO_DEFAULT_ADJUSTED_CUSP_ANGLE );
-
-#if SYS_VERSION_FULL_INT >= 0x12000214
-	params.setCoalesceVolumes( true );
-	params.setHeightFieldConvert( true );
-#endif
-
-	i_primitive->refine( refiner, &params );
-
-	return refiner.m_return;
-}
 
 }
 
@@ -415,8 +388,9 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 		std::vector<primitive *> result;
 
 		GT_PrimitiveHandle gt( GT_GEODetail::makeDetail(detail_handle) );
-		Refine( gt, *m_object, m_context, time, result );
 
+		OBJ_Node_Refiner refiner(m_object, m_context, time, result);
+		gt->refine( refiner, &refiner.m_params );
 
 		if( result.empty() )
 			break;
