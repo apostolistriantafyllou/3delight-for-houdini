@@ -1398,8 +1398,8 @@ UT_String settings::GetAtmosphere( fpreal t) const
 
 bool settings::OverrideDisplayFlags( fpreal t)const
 {
-	return (m_parameters.m_rop_type == rop_type::viewport
-			? false : m_parameters.evalInt(settings::k_override_display_flags, 0, t) != 0);
+	return (m_parameters.m_rop_type != rop_type::viewport
+			&& m_parameters.evalInt(settings::k_override_display_flags, 0, t) != 0);
 }
 
 bool settings::EnableMultiLight( fpreal t )const

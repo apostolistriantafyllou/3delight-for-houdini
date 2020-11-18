@@ -5,6 +5,7 @@
 #include <nsi.hpp>
 
 class viewport_hook;
+
 /// Scene hook that allows 3Delight rendering directly into Houdini viewports
 class viewport_hook_builder : public DM_SceneHook
 {

@@ -1,6 +1,4 @@
 #include "ROP_3Delight.h"
-#include <DM/DM_VPortAgent.h>
-#include <DM/DM_SceneHook.h>
 
 #include "camera.h"
 #include "context.h"
