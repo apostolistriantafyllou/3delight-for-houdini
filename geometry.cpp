@@ -18,6 +18,8 @@
 #include <GT/GT_PrimVolume.h>
 #include <GT/GT_Refine.h>
 #include <GT/GT_RefineParms.h>
+#include <GU/GU_ConvertParms.h>
+#include <GU/GU_PrimVDB.h>
 #include <OBJ/OBJ_Node.h>
 #include <OP/OP_Operator.h>
 #include <VOP/VOP_Node.h>
@@ -238,11 +240,45 @@ struct OBJ_Node_Refiner : public GT_Refine
 
 		case GT_PRIM_VOXEL_VOLUME:
 		{
-#if SYS_VERSION_FULL_INT >= 0x12000214
 			const GT_PrimVolume* gt_volume =
 				static_cast<const GT_PrimVolume*>(i_primitive.get());
 			assert(gt_volume);
-			if(gt_volume->isHeightField() && !m_params.getHeightFieldConvert())
+
+#if SYS_VERSION_FULL_INT >= 0x12000214
+			if(gt_volume->isHeightField())
+			{
+				if(!m_params.getHeightFieldConvert())
+				{
+					/*
+						m_result should be completely replaced by the recursive
+						call below.
+					*/
+					m_result.clear();
+					m_return.clear();
+
+					/*
+						Restart refinement from the top-level GT primitive
+						again, but with height field conversion parameters.
+						We don't want to use those unless we know there is a
+						height field because it makes other volumes disappear.
+					*/
+					OBJ_Node_Refiner recursive(this);
+					recursive.m_params.setCoalesceVolumes(true);
+					recursive.m_params.setHeightFieldConvert(true);
+					GT_PrimitiveHandle gt =
+						GT_GEODetail::makeDetail(m_gu_detail);
+					gt->refine(recursive, &recursive.m_params);
+
+					/*
+						The recursive call above processed all the GT primitives
+						in the OBJ node. We can stop here.
+					*/
+					m_stop = true;
+					break;
+				}
+			}
+			else
+#endif
 			{
 				/*
 					m_result should be completely replaced by the recursive call
@@ -252,26 +288,36 @@ struct OBJ_Node_Refiner : public GT_Refine
 				m_return.clear();
 
 				/*
-					Restart refinement from the top-level GT primitive again,
-					but with height field conversion parameters.
-					We don't want to use those unless we know there is a height
-					field because it makes other volumes disappear.
+					Convert all Houdini volumes in this OBJ to VDB volumes.
+					We couldn't do this unconditionally before refinement, in
+					case there was a height field in the OBJ, which we want to
+					convert into a polygon mesh, not a VDB.
 				*/
+				GU_DetailHandle vdb_handle;
+				vdb_handle.allocateAndSet(new GU_Detail(true), true);
+				GU_ConvertParms conversion_params;
+				GU_PrimVDB::convertVolumesToVDBs(
+					*vdb_handle.gdpNC(),
+					*m_gu_detail.gdp(),
+					conversion_params,
+					true, // flood_sdf
+					false, // prune
+					0.0, // tolerance
+					true, // keep_original
+					true); // activate_inside
+
+				// Restart refinement from the top-level GT primitive again.
+				GT_PrimitiveHandle gt = GT_GEODetail::makeDetail(vdb_handle);
 				OBJ_Node_Refiner recursive(this);
-				recursive.m_params.setCoalesceVolumes(true);
-				recursive.m_params.setHeightFieldConvert(true);
-				GT_PrimitiveHandle gt =
-					GT_GEODetail::makeDetail(m_gu_detail);
 				gt->refine(recursive, &recursive.m_params);
 
 				/*
-					The recursive call above processed all the GT primitives in
-					the OBJ node. We can stop here.
+					The recursive call above processed all the GT primitives
+					in the OBJ node. We can stop here.
 				*/
 				m_stop = true;
 				break;
 			}
-#endif
 
 #ifdef VERBOSE
 			fprintf(
