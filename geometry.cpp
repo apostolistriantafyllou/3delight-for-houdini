@@ -15,6 +15,7 @@
 
 #include <GT/GT_GEODetail.h>
 #include <GT/GT_PrimInstance.h>
+#include <GT/GT_PrimVolume.h>
 #include <GT/GT_Refine.h>
 #include <GT/GT_RefineParms.h>
 #include <OBJ/OBJ_Node.h>
@@ -47,6 +48,12 @@ struct OBJ_Node_Refiner : public GT_Refine
 
 	OBJ_Node *m_node;
 
+	/*
+		Detail handle from which refinement was initiated. We store it wo we
+		can restart refinement from the top with different parameters.
+	*/
+	const GU_DetailHandle& m_gu_detail;
+
 	/**
 		All the refined objects
 	*/
@@ -67,11 +74,13 @@ struct OBJ_Node_Refiner : public GT_Refine
 
 	OBJ_Node_Refiner(
 		OBJ_Node *i_node,
+		const GU_DetailHandle& i_gu_detail,
 		const context &i_context,
 		double i_time,
 		std::vector<primitive*> &io_result)
 	:
 		m_node(i_node),
+		m_gu_detail(i_gu_detail),
 		m_result(io_result),
 		m_context(i_context),
 		m_time(i_time),
@@ -81,17 +90,13 @@ struct OBJ_Node_Refiner : public GT_Refine
 		m_params.setAllowSubdivision( true );
 		m_params.setAddVertexNormals( true );
 		m_params.setCuspAngle( GEO_DEFAULT_ADJUSTED_CUSP_ANGLE );
-
-#if SYS_VERSION_FULL_INT >= 0x12000214
-		m_params.setCoalesceVolumes( true );
-		m_params.setHeightFieldConvert( true );
-#endif
 	}
 
 	// Constructor used for recursive calls
 	explicit OBJ_Node_Refiner(const OBJ_Node_Refiner* i_parent)
 	:	m_params(i_parent->m_params),
 		m_node(i_parent->m_node),
+		m_gu_detail(i_parent->m_gu_detail),
 		m_result(i_parent->m_result),
 		m_context(i_parent->m_context),
 		m_time(i_parent->m_time),
@@ -232,14 +237,49 @@ struct OBJ_Node_Refiner : public GT_Refine
 		}
 
 		case GT_PRIM_VOXEL_VOLUME:
-			// i_primitive is a GT_Prim_Volume
+		{
+#if SYS_VERSION_FULL_INT >= 0x12000214
+			const GT_PrimVolume* gt_volume =
+				static_cast<const GT_PrimVolume*>(i_primitive.get());
+			assert(gt_volume);
+			if(gt_volume->isHeightField() && !m_params.getHeightFieldConvert())
+			{
+				/*
+					m_result should be completely replaced by the recursive call
+					below.
+				*/
+				m_result.clear();
+				m_return.clear();
+
+				/*
+					Restart refinement from the top-level GT primitive again,
+					but with height field conversion parameters.
+					We don't want to use those unless we know there is a height
+					field because it makes other volumes disappear.
+				*/
+				OBJ_Node_Refiner recursive(this);
+				recursive.m_params.setCoalesceVolumes(true);
+				recursive.m_params.setHeightFieldConvert(true);
+				GT_PrimitiveHandle gt =
+					GT_GEODetail::makeDetail(m_gu_detail);
+				gt->refine(recursive, &recursive.m_params);
+
+				/*
+					The recursive call above processed all the GT primitives in
+					the OBJ node. We can stop here.
+				*/
+				m_stop = true;
+				break;
+			}
+#endif
+
 #ifdef VERBOSE
 			fprintf(
 				stderr, "3Delight for Houdini: unsupported volume "
 					"workflow for %s\n", m_node->getName().c_str() );
 #endif
 			break;
-
+		}
 		case GT_PRIM_VDB_VOLUME:
 		{
 			// i_primitive is a GT_PrimVDB
@@ -388,7 +428,8 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 
 		GT_PrimitiveHandle gt( GT_GEODetail::makeDetail(detail_handle) );
 
-		OBJ_Node_Refiner refiner(m_object, m_context, time, result);
+		OBJ_Node_Refiner refiner(
+			m_object, detail_handle, m_context, time, result);
 		gt->refine( refiner, &refiner.m_params );
 
 		if( result.empty() )
