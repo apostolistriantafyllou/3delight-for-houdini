@@ -1,0 +1,12 @@
+/*
+	The purpose of this is to provide connection between an object
+	and a texture shader directly attached to this. Since this will
+	be for scene debug purposes we only support it's color.
+*/
+surface passthrough
+(
+	color i_color = 0.0
+)
+{
+	Ci = diffuse(N)*color(i_color);
+}

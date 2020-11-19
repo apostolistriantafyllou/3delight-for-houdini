@@ -12,6 +12,7 @@
 #include "time_sampler.h"
 #include "vdb.h"
 #include "vop.h"
+#include "shader_library.h"
 
 #include <GT/GT_GEODetail.h>
 #include <GT/GT_PrimInstance.h>
@@ -515,11 +516,51 @@ void geometry::connect()const
 		attributes_handle(), "",
 		hub_handle(), "geometryattributes" );
 
-	m_nsi.Connect(
-		vop::handle(*mat, m_context), "",
-		attributes_handle(), volume ? "volumeshader" : "surfaceshader",
-		NSI::IntegerArg("strength", 1) );
+	//Get absolute path of the attached material.
+	std::string mat_path = vop::shader_path(mat);
+	const shader_library& library = shader_library::get_instance();
 
+	DlShaderInfo* shader_info = library.get_shader_info(mat_path.c_str());
+	std::vector< std::string > shader_tags;
+	osl_utilities::get_shader_tags(*shader_info, shader_tags);
+
+	bool is_texture_shader = false;
+	//Check if the attached material is a texture shader or not.
+	for (const auto& tag : shader_tags)
+	{
+		if (tag == "texture/2d" || tag == "texture/3d")
+		{
+			is_texture_shader = true;
+			break;
+		}
+	}
+
+	/*
+		Connect a passthrough shader if the attached material on the geometry is
+		not a surface shader. This would make it possible to render a connected
+		texture to iDisplay. This is needed when you want to debug the scene.
+	*/
+	if (is_texture_shader)
+	{
+		const std::string passthrough_shader("dlPassthrough");
+		std::string path = library.get_shader_path("passthrough");
+
+		m_nsi.Create(passthrough_shader, "shader");
+		m_nsi.SetAttribute(passthrough_shader, NSI::StringArg("shaderfilename", path));
+		m_nsi.Connect(vop::handle(*mat, m_context), "outColor", passthrough_shader, "i_color");
+		m_nsi.Connect(
+			passthrough_shader, "",
+			attributes_handle(), "surfaceshader",
+			NSI::IntegerArg("strength", 1));
+	}
+
+	else
+	{
+		m_nsi.Connect(
+			vop::handle(*mat, m_context), "",
+			attributes_handle(), volume ? "volumeshader" : "surfaceshader",
+			NSI::IntegerArg("strength", 1));
+	}
 	export_override_attributes();
 }
 
