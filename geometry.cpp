@@ -35,8 +35,7 @@ namespace
 	\brief A GT refiner for an OBJ_Node.
 
 	When an OBJ_Node is refined, the top node is a null to which
-	we will connect all newly created primitives. The GT prmitives
-	are not registered as
+	we will connect all newly created primitives.
 */
 struct OBJ_Node_Refiner : public GT_Refine
 {
