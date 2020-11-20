@@ -62,6 +62,7 @@ public:
 
 	/// Deletes the NSI nodes associated to Houdini node i_node.
 	static void Delete(OBJ_Node& i_node, const context& i_context);
+	static bool is_texture(VOP_Node* shader);
 
 private:
 
