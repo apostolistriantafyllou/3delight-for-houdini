@@ -370,6 +370,7 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 
 	static PRM_Name motion_blur(k_motion_blur, "Motion Blur");
 	static PRM_Default motion_blur_d(true);
+	static PRM_Default viewport_motion_blur_d(false);
 
 	static PRM_Name motion_blur_note1(
 		"motion_blur_note1",
@@ -418,6 +419,22 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 		PRM_Template(PRM_FLT|PRM_TYPE_PLAIN, 1, &max_distance, &max_distance_d, nullptr, &max_distance_r)
 	};
 
+	static std::vector<PRM_Template> viewport_quality_templates =
+	{
+		PRM_Template(PRM_INT, 1, &shading_samples, &shading_samples_d, nullptr, &shading_samples_r),
+		PRM_Template(PRM_INT, 1, &pixel_samples, &pixel_samples_d, nullptr, &pixel_samples_r),
+		PRM_Template(PRM_INT, 1, &volume_samples, &volume_samples_d, nullptr, &volume_samples_r),
+		PRM_Template(PRM_SEPARATOR, 0, &separator1),
+		PRM_Template(PRM_TOGGLE, 1, &motion_blur, &viewport_motion_blur_d),
+		PRM_Template(PRM_LABEL, 0, &motion_blur_note1),
+		PRM_Template(PRM_LABEL, 0, &motion_blur_note2),
+		PRM_Template(PRM_SEPARATOR, 0, &separator3),
+		PRM_Template(PRM_INT, 1, &max_diffuse_depth, &max_diffuse_depth_d, nullptr, &max_diffuse_depth_r),
+		PRM_Template(PRM_INT, 1, &max_reflection_depth, &max_reflection_depth_d, nullptr, &max_reflection_depth_r),
+		PRM_Template(PRM_INT, 1, &max_refraction_depth, &max_refraction_depth_d, nullptr, &max_refraction_depth_r),
+		PRM_Template(PRM_INT, 1, &max_hair_depth, &max_hair_depth_d, nullptr, &max_hair_depth_r),
+		PRM_Template(PRM_FLT | PRM_TYPE_PLAIN, 1, &max_distance, &max_distance_d, nullptr, &max_distance_r)
+	};
 	// Scene elements
 
 	static PRM_Name camera(k_camera, "Camera");
@@ -823,7 +840,7 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	static PRM_Name viewport_main_tabs_name("viewport_main_tabs");
 	static std::vector<PRM_Default> viewport_main_tabs=
 	{
-		PRM_Default(quality_templates.size(), "Quality"),
+		PRM_Default(viewport_quality_templates.size(), "Quality"),
 		PRM_Default(overrides_templates.size(), "Overrides"),
 	};
 
@@ -932,8 +949,8 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 
 			templates.insert(
 				templates.end(),
-				quality_templates.begin(),
-				quality_templates.end());
+				viewport_quality_templates.begin(),
+				viewport_quality_templates.end());
 
 			templates.insert(
 				templates.end(),
