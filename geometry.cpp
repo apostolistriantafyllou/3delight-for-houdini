@@ -460,6 +460,26 @@ void geometry::set_attributes()const
 	}
 }
 
+bool geometry::is_texture(VOP_Node* shader)
+{
+	std::string mat_path = vop::shader_path(shader);
+	const shader_library& library = shader_library::get_instance();
+
+	DlShaderInfo* shader_info = library.get_shader_info(mat_path.c_str());
+	std::vector< std::string > shader_tags;
+	osl_utilities::get_shader_tags(*shader_info, shader_tags);
+
+	//Check if the attached material is a texture shader or not.
+	for (const auto& tag : shader_tags)
+	{
+		if (tag == "texture/2d" || tag == "texture/3d")
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 void geometry::connect()const
 {
 	// Connect the geometry's hub transform to the null's transform
@@ -516,32 +536,14 @@ void geometry::connect()const
 		attributes_handle(), "",
 		hub_handle(), "geometryattributes" );
 
-	//Get absolute path of the attached material.
-	std::string mat_path = vop::shader_path(mat);
-	const shader_library& library = shader_library::get_instance();
-
-	DlShaderInfo* shader_info = library.get_shader_info(mat_path.c_str());
-	std::vector< std::string > shader_tags;
-	osl_utilities::get_shader_tags(*shader_info, shader_tags);
-
-	bool is_texture_shader = false;
-	//Check if the attached material is a texture shader or not.
-	for (const auto& tag : shader_tags)
-	{
-		if (tag == "texture/2d" || tag == "texture/3d")
-		{
-			is_texture_shader = true;
-			break;
-		}
-	}
-
 	/*
 		Connect a passthrough shader if the attached material on the geometry is
 		not a surface shader. This would make it possible to render a connected
 		texture to iDisplay. This is needed when you want to debug the scene.
 	*/
-	if (is_texture_shader)
+	if (geometry::is_texture(mat))
 	{
+		const shader_library& library = shader_library::get_instance();
 		const std::string passthrough_shader("dlPassthrough");
 		std::string path = library.get_shader_path("passthrough");
 
