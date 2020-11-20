@@ -31,13 +31,15 @@ const char* settings::k_sequence_rendering = "sequence_rendering";
 const char* settings::k_sequence_start = "sequence_start";
 const std::string settings::k_rm_render = "render";
 const std::string settings::k_rm_live_render = "live_render";
-const std::string settings::k_rm_viewport_render = "viewport_render";
 const std::string settings::k_rm_export_file = "export_file";
 const std::string settings::k_rm_export_archive = "export_archive";
 const std::string settings::k_rm_export_stdout = "export_stdout";
 const char* settings::k_stop_render = "stop_render";
 const char* settings::k_export = "export";
 const char* settings::k_export_sequence = "export_sequence";
+const char* settings::k_viewport_render = "viewport_render";
+const char* settings::k_viewport_render_abort = "viewport_abort";
+const char* settings::k_start_viewport = "start_viewport";
 const char* settings::k_old_export_nsi = "export_nsi";
 const char* settings::k_old_ipr = "ipr";
 const char* settings::k_shading_samples = "shading_samples";
@@ -138,6 +140,12 @@ void settings::Rendering(bool i_render,bool ipr)
 	if (m_parameters.m_rop_type == rop_type::stand_in)
 		return;
 
+	if (m_parameters.m_rop_type == rop_type::viewport)
+	{
+		m_parameters.setInt(k_start_viewport, 0, 0.0, ipr);
+		return;
+	}
+
 	m_parameters.setInt(k_ipr_rendering, 0, 0.0, ipr);
 	if (!ipr)
 	{
@@ -189,6 +197,14 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 
 	static PRM_Name export_n(k_export, "Export");
 	static PRM_Name export_sequence_n(k_export_sequence, "Export Sequence");
+
+	static PRM_Name viewport_render(k_viewport_render, "Render");
+	static PRM_Default viewport_render_d(false);
+	static PRM_Name viewport_render_abort(k_viewport_render_abort, "Abort Render");
+	static PRM_Default viewport_render_abort_d(false);
+	static PRM_Conditional stop_viewport_render_h(("{ " + std::string(k_start_viewport) + " == 0 }").c_str(), PRM_CONDTYPE_HIDE);
+	static PRM_Conditional start_viewport_render_h(("{ " + std::string(k_start_viewport) + " != 0 }").c_str(), PRM_CONDTYPE_HIDE);
+	static PRM_Name start_viewport_render(k_start_viewport, "Start Viewport");
 
 	static PRM_Name ipr_rendering(k_ipr_rendering, "Ipr Rendering");
 	static PRM_Default ipr_rendering_d(false);
@@ -354,6 +370,7 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 
 	static PRM_Name motion_blur(k_motion_blur, "Motion Blur");
 	static PRM_Default motion_blur_d(true);
+	static PRM_Default viewport_motion_blur_d(false);
 
 	static PRM_Name motion_blur_note1(
 		"motion_blur_note1",
@@ -402,6 +419,22 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 		PRM_Template(PRM_FLT|PRM_TYPE_PLAIN, 1, &max_distance, &max_distance_d, nullptr, &max_distance_r)
 	};
 
+	static std::vector<PRM_Template> viewport_quality_templates =
+	{
+		PRM_Template(PRM_INT, 1, &shading_samples, &shading_samples_d, nullptr, &shading_samples_r),
+		PRM_Template(PRM_INT, 1, &pixel_samples, &pixel_samples_d, nullptr, &pixel_samples_r),
+		PRM_Template(PRM_INT, 1, &volume_samples, &volume_samples_d, nullptr, &volume_samples_r),
+		PRM_Template(PRM_SEPARATOR, 0, &separator1),
+		PRM_Template(PRM_TOGGLE, 1, &motion_blur, &viewport_motion_blur_d),
+		PRM_Template(PRM_LABEL, 0, &motion_blur_note1),
+		PRM_Template(PRM_LABEL, 0, &motion_blur_note2),
+		PRM_Template(PRM_SEPARATOR, 0, &separator3),
+		PRM_Template(PRM_INT, 1, &max_diffuse_depth, &max_diffuse_depth_d, nullptr, &max_diffuse_depth_r),
+		PRM_Template(PRM_INT, 1, &max_reflection_depth, &max_reflection_depth_d, nullptr, &max_reflection_depth_r),
+		PRM_Template(PRM_INT, 1, &max_refraction_depth, &max_refraction_depth_d, nullptr, &max_refraction_depth_r),
+		PRM_Template(PRM_INT, 1, &max_hair_depth, &max_hair_depth_d, nullptr, &max_hair_depth_r),
+		PRM_Template(PRM_FLT | PRM_TYPE_PLAIN, 1, &max_distance, &max_distance_d, nullptr, &max_distance_r)
+	};
 	// Scene elements
 
 	static PRM_Name camera(k_camera, "Camera");
@@ -435,6 +468,28 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 			&matte_objects_d, nullptr, nullptr, nullptr,
 			&PRM_SpareData::objGeometryPath, 1, nullptr, nullptr)
 	};
+
+	static std::vector<PRM_Template> viewport_actions
+	{
+		PRM_Template(
+			PRM_TOGGLE | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1,
+			&start_viewport_render, &viewport_render_d),
+
+		PRM_Template(
+		PRM_CALLBACK | PRM_TYPE_JOIN_NEXT , 1, &viewport_render, nullptr, nullptr,
+		nullptr, &ROP_3Delight::doRenderCback, nullptr, 0, nullptr,
+			&start_viewport_render_h),
+
+		PRM_Template(
+			PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &viewport_render_abort, nullptr, nullptr,
+			nullptr, &settings::StopRenderCB, nullptr, 0, nullptr,
+			&stop_viewport_render_h),
+
+		PRM_Template(
+			PRM_TOGGLE | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1,
+			&ipr_start, &ipr_start_h),
+	};
+
 
 	// Output
 	static PRM_Name display_rendered_images(k_display_rendered_images, "Display");
@@ -782,7 +837,14 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 		PRM_Default(scripts_templates.size(), "Scripts"),
 	};
 
-	static std::vector<PRM_Template> rop_templates[3];
+	static PRM_Name viewport_main_tabs_name("viewport_main_tabs");
+	static std::vector<PRM_Default> viewport_main_tabs=
+	{
+		PRM_Default(viewport_quality_templates.size(), "Quality"),
+		PRM_Default(overrides_templates.size(), "Overrides"),
+	};
+
+	static std::vector<PRM_Template> rop_templates[4];
 	std::vector<PRM_Template>& templates = rop_templates[i_rop_type];
 	if(templates.size() == 0)
 	{
@@ -803,7 +865,11 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 					PRM_Template(PRM_FILE, 1, &default_export_nsi_filename, &default_export_nsi_filename_d));
 			}
 
-
+			//Don't insert Frame Range for viewport ROP.
+			if (i_rop_type == rop_type::viewport && base->getNamePtr()->getToken() == std::string("f"))
+			{
+				continue;
+			}
 			/*
 				Since we are now using buttons to determine whether we are rendering
 				the current frame or a sequence of frames we do not need the valid
@@ -820,7 +886,15 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 						standin_actions.end());
 					templates.push_back(*base);
 				}
+				else if (i_rop_type == rop_type::viewport)
+				{
+					templates.insert(
+						templates.end(),
+						viewport_actions.begin(),
+						viewport_actions.end());
 
+					templates.push_back(*base);
+				}
 				else
 				{
 					// Insert IPR
@@ -856,6 +930,32 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 				templates.end(),
 				standin_elements_templates.begin(),
 				standin_elements_templates.end());
+
+			// Scripts
+			templates.insert(
+				templates.end(),
+				scripts_templates.begin(),
+				scripts_templates.end());
+		}
+
+		else if (i_rop_type == rop_type::viewport)
+		{
+			templates.push_back(
+				PRM_Template(
+					PRM_SWITCHER,
+					viewport_main_tabs.size(),
+					&viewport_main_tabs_name,
+					&viewport_main_tabs[0]));
+
+			templates.insert(
+				templates.end(),
+				viewport_quality_templates.begin(),
+				viewport_quality_templates.end());
+
+			templates.insert(
+				templates.end(),
+				overrides_templates.begin(),
+				overrides_templates.end());
 		}
 		else
 		{
@@ -895,20 +995,19 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 				templates.end(),
 				overrides_templates.begin(),
 				overrides_templates.end());
-		}
-			// Scripts (Common on both ROP)
+
+			// Scripts
 			templates.insert(
 				templates.end(),
 				scripts_templates.begin(),
 				scripts_templates.end());
 
 			// Debug
-			if (i_rop_type != rop_type::stand_in)
 			templates.insert(
 				templates.end(),
 				debug_templates.begin(),
 				debug_templates.end());
-
+		}
 		templates.push_back(PRM_Template());
 	}
 
@@ -917,7 +1016,7 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 
 OP_TemplatePair* settings::GetTemplatePair(rop_type i_rop_type)
 {
-	static OP_TemplatePair* ropPair[3] = { nullptr, nullptr,nullptr };
+	static OP_TemplatePair* ropPair[4] = { nullptr, nullptr,nullptr, nullptr };
 	if(!ropPair[i_rop_type])
 	{
 		ropPair[i_rop_type] = new OP_TemplatePair(GetTemplates(i_rop_type));
@@ -1235,6 +1334,18 @@ int settings::ipr_render(
 	return 1;
 }
 
+
+int settings::viewport_render(
+	void* data, int index, fpreal t,
+	const PRM_Template* tplate)
+{
+	ROP_3Delight* node = reinterpret_cast<ROP_3Delight*>(data);
+	node->get_settings().m_parameters.setInt(k_start_viewport, 0, 0.0, true);
+	node->doRenderCback(data, index, t, tplate);
+	node->get_settings().m_parameters.setInt(k_start_viewport, 0, 0.0, false);
+	return 1;
+}
+
 int settings::sequence_render(
 	void* data, int index, fpreal t,
 	const PRM_Template* tplate)
@@ -1302,7 +1413,8 @@ UT_String settings::GetAtmosphere( fpreal t) const
 
 bool settings::OverrideDisplayFlags( fpreal t)const
 {
-	return m_parameters.evalInt(settings::k_override_display_flags, 0, t) != 0;
+	return (m_parameters.m_rop_type != rop_type::viewport
+			&& m_parameters.evalInt(settings::k_override_display_flags, 0, t) != 0);
 }
 
 bool settings::EnableMultiLight( fpreal t )const
@@ -1361,6 +1473,9 @@ UT_String settings::get_render_mode( fpreal t )const
 
 bool settings::export_to_nsi(fpreal t)const
 {
+	if (m_parameters.m_rop_type == rop_type::viewport)
+		return false;
+
 	if (m_parameters.m_rop_type == rop_type::stand_in)
 		return m_parameters.evalInt(settings::k_output_standin, 0, t);
 

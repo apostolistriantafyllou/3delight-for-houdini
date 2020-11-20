@@ -20,7 +20,8 @@ enum rop_type
 {
 	standard,
 	cloud,
-	stand_in
+	stand_in,
+	viewport
 };
 
 /**

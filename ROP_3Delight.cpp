@@ -104,13 +104,16 @@ namespace
 ROP_3DelightOperator::ROP_3DelightOperator(rop_type i_rop_type)
 	:OP_Operator(
 		i_rop_type == rop_type::cloud ? "3DelightCloud":
-		i_rop_type == rop_type::stand_in ? "3DelightStandin":"3Delight",
+		i_rop_type == rop_type::stand_in ? "3DelightStandin":
+		i_rop_type == rop_type::standard ? "3Delight":"3DelightViewport",
 
 		i_rop_type == rop_type::cloud ? "3Delight Cloud":
-		i_rop_type == rop_type::stand_in ? "3Delight Standin":"3Delight",
+		i_rop_type == rop_type::stand_in ? "3Delight Standin":
+		i_rop_type == rop_type::standard ? "3Delight":"3Delight Viewport",
 
 		i_rop_type == rop_type::cloud ? ROP_3Delight::cloud_alloc :
-		i_rop_type == rop_type::stand_in ? ROP_3Delight::standin_alloc: ROP_3Delight::alloc,
+		i_rop_type == rop_type::stand_in ? ROP_3Delight::standin_alloc:
+		i_rop_type == rop_type::standard ? ROP_3Delight::alloc : ROP_3Delight::viewport_alloc,
 		settings::GetTemplatePair(i_rop_type),
 		0,
 		0,
@@ -137,6 +140,11 @@ ROP_3Delight::Register(OP_OperatorTable* io_table)
 		new ROP_3DelightOperator(rop_type::stand_in);
 	standin_rop->setObsoleteTemplates(settings::GetObsoleteParameters());
 	io_table->addOperator(standin_rop);
+
+	ROP_3DelightOperator* viewport_rop =
+		new ROP_3DelightOperator(rop_type::viewport);
+	viewport_rop->setObsoleteTemplates(settings::GetObsoleteParameters());
+	io_table->addOperator(viewport_rop);
 }
 
 OP_Node*
@@ -155,6 +163,12 @@ OP_Node*
 ROP_3Delight::standin_alloc(OP_Network* net, const char* name, OP_Operator* op)
 {
 	return new ROP_3Delight(net, name, op, rop_type::stand_in);
+}
+
+OP_Node*
+ROP_3Delight::viewport_alloc(OP_Network* net, const char* name, OP_Operator* op)
+{
+	return new ROP_3Delight(net, name, op, rop_type::viewport);
 }
 
 ROP_3Delight::ROP_3Delight(
@@ -452,7 +466,8 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		ipr =
 			m_idisplay_rendering
 			? m_idisplay_ipr
-			: evalInt(settings::k_ipr_start, 0, tstart);
+			: evalInt(settings::k_ipr_start, 0, tstart)
+			|| m_rop_type == rop_type::viewport;
 	}
 
 	// An actual path in the file system where the scene description is exported
@@ -633,10 +648,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	if(m_current_render->m_rop_type != rop_type::stand_in)
 	{
 		ExportDefaultMaterial(*m_current_render);
-		ExportAtmosphere(*m_current_render);
-
-		if(m_settings.get_render_mode(time).toStdString() ==
-			settings::k_rm_viewport_render)
+		if(m_current_render->m_rop_type == rop_type::viewport)
 		{
 			viewport_hook_builder::instance().connect(&m_nsi);
 			m_nsi.SetAttribute(
@@ -645,6 +657,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 		}
 		else
 		{
+			ExportAtmosphere(*m_current_render);
 			ExportOutputs(*m_current_render);
 		}
 		ExportGlobals(*m_current_render);
@@ -702,9 +715,8 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 					creation_callbacks::unregister_ROP(rop);
 
 					double time = rop->m_current_render->m_current_time;
-					std::string mode =
-						rop->m_settings.get_render_mode(time).toStdString();
-					if(mode == settings::k_rm_viewport_render)
+					
+					if(rop->m_current_render->m_rop_type == rop_type::viewport)
 					{
 						viewport_hook_builder::instance().disconnect();
 					}
@@ -847,7 +859,7 @@ ROP_3Delight::updateParmsFlags()
 {
 	bool changed = OP_Network::updateParmsFlags();
 	setVisibleState("trange", false);
-	if (m_rop_type == rop_type::stand_in)
+	if (m_rop_type == rop_type::stand_in || m_rop_type == rop_type::viewport)
 	{
 		setVisibleState("take", false);
 		return changed;
@@ -1900,6 +1912,11 @@ ROP_3Delight::GetShutterInterval(double i_time)const
 	if (m_rop_type == rop_type::stand_in)
 	{
 		return 1.0;
+	}
+
+	if (m_rop_type == rop_type::viewport)
+	{
+		return viewport_hook_builder::instance().active_vport_camera_shutter();
 	}
 
 	OBJ_Camera* cam = ROP_3Delight::GetCamera(i_time);

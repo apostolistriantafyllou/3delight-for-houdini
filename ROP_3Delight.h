@@ -36,6 +36,7 @@ public:
 	static OP_Node* alloc(OP_Network* net, const char* name, OP_Operator* op);
 	static OP_Node* cloud_alloc(OP_Network* net, const char* name, OP_Operator* op);
 	static OP_Node* standin_alloc(OP_Network* net, const char* name, OP_Operator* op);
+	static OP_Node* viewport_alloc(OP_Network* net, const char* name, OP_Operator* op);
 
 	/** \brief Returns true if motion blur is enabled. */
 	bool HasMotionBlur( double i_time )const;

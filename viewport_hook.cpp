@@ -4,6 +4,7 @@
 #include <HOM/HOM_Module.h>
 #include <OP/OP_Director.h>
 #include <SYS/SYS_Version.h>
+#include <Obj/OBJ_Camera.h>
 
 #include <ndspy.h>
 #include <nsi_dynamic.hpp>
@@ -279,6 +280,38 @@ hook_image_buffer::clear_pixels()
 }
 
 
+/*
+	dm_SetupTask is a friend class of DM_VPortAgent class and makes it
+	possible to access it's private members, which in our case it is the
+	active camera on viewport which we get. Most of the camera attributes
+	are found on GUI_ViewParameter, which we have already used, but the
+	shutter time parameter is not part of it, so we are using the OBJ_Camera
+	to get that value.
+*/
+class dm_SetupTask
+{
+public:
+	/// Constructor
+	dm_SetupTask(DM_VPortAgent& i_viewport);
+	/// Destructor
+	virtual ~dm_SetupTask();
+
+	OBJ_Camera* m_active_camera{ nullptr };
+};
+typedef dm_SetupTask VPortAgentCameraAccessor;
+
+dm_SetupTask::dm_SetupTask(DM_VPortAgent& i_viewport)
+{
+	OP_Node* cam_node = i_viewport.currentCamera();
+	if (cam_node)
+	{
+		m_active_camera = cam_node->castToOBJNode()->castToOBJCamera();
+	}
+}
+
+dm_SetupTask::~dm_SetupTask()
+{
+}
 
 /// Holds the viewport's camera's parameters in a ready-to-export format
 class viewport_camera
@@ -294,7 +327,10 @@ public:
 	*/
 	viewport_camera();
 	/// Constructor from view parameters
-	viewport_camera(double i_time, GUI_ViewParameter& i_view);
+	viewport_camera(
+		double i_time,
+		GUI_ViewParameter& i_view,
+		OBJ_Camera* active_camera);
 
 	/// Inequality operator
 	bool operator!=(const viewport_camera& i_vc)const;
@@ -310,6 +346,7 @@ private:
 	double m_focus_distance{0.0};
 	double m_fstop{0.0};
 	float m_fov{-1.0f};
+	double m_shutter{0.0};
 };
 
 
@@ -318,7 +355,10 @@ viewport_camera::viewport_camera()
 }
 
 
-viewport_camera::viewport_camera(double i_time, GUI_ViewParameter& i_view)
+viewport_camera::viewport_camera(
+	double i_time,
+	GUI_ViewParameter& i_view,
+	OBJ_Camera* active_camera)
 {
 	m_time = i_time;
 	i_view.getLimits(m_clip+0, m_clip+1);
@@ -337,6 +377,11 @@ viewport_camera::viewport_camera(double i_time, GUI_ViewParameter& i_view)
 			m_focal_length);
 	m_fov = float(fov_rad * 180.0 / M_PI);
 
+	if (active_camera)
+	{
+		double frame_duration = OPgetDirector()->getChannelManager()->getSecsPerSample();
+		m_shutter = active_camera->SHUTTER(i_time) * frame_duration;
+	}
 	// Focal length seems to be in thousandths of scene units
 	m_focal_length /= 1000.0;
 }
@@ -361,7 +406,7 @@ viewport_camera::nsi_export(
 	const std::string& i_handle)const
 {
 	assert(m_fov >= 0.0f);
-	double nsi_shutter[2] = { m_time, m_time };
+	double nsi_shutter[2] = { m_time - m_shutter / 2.0, m_time + m_shutter / 2.0 };
 	int enable_dof = m_focus_distance > 0.0;
 	i_nsi.SetAttribute(
 		i_handle,
@@ -416,6 +461,7 @@ public:
 	void connect(NSI::Context* io_nsi);
 	/// Disconnects from the NSI context and from the image buffer.
 	void disconnect();
+	OBJ_Camera* get_camera();
 
 private:
 
@@ -428,7 +474,7 @@ private:
 
 	/**
 		\bref Exports the NSI camera and its transform.
-		
+
 		\param i_view
 			The viewing parameters that describe the camera.
 		\param i_synchronize
@@ -437,6 +483,7 @@ private:
 	*/
 	void export_camera_attributes(
 		GUI_ViewParameter& i_view,
+		OBJ_Camera* active_camera,
 		bool i_synchronize)const;
 
 	// Used to synchronize open(), close(), connect() and disconnect().
@@ -487,7 +534,8 @@ viewport_hook::render(
 	m_mutex.lock();
 	if(m_nsi)
 	{
-		export_camera_attributes(view, true);
+		VPortAgentCameraAccessor* cam = new VPortAgentCameraAccessor(vp);
+		export_camera_attributes(view, cam->m_active_camera, true);
 	}
 	m_mutex.unlock();
 
@@ -574,6 +622,35 @@ viewport_hook::render(
 	return true;
 }
 
+OBJ_Camera*
+viewport_hook::get_camera()
+{
+	DM_VPortAgent& vp = viewport();
+	VPortAgentCameraAccessor* cam = new VPortAgentCameraAccessor(vp);
+	return cam->m_active_camera;
+}
+
+double
+viewport_hook_builder::active_vport_camera_shutter()
+{
+	OBJ_Camera* cam = nullptr;
+	float max_shutter_duration = 0;
+
+	/*
+		Get the the largest shutter duration value of active cameras.
+	*/
+	for (auto hook : m_hooks)
+	{
+		cam = hook->get_camera();
+		if (cam != nullptr)
+		{
+			max_shutter_duration =
+				std::fmax(max_shutter_duration, cam->SHUTTER(0));
+		}
+	}
+	return max_shutter_duration;
+}
+
 
 void
 viewport_hook::connect(NSI::Context* io_nsi)
@@ -598,7 +675,7 @@ viewport_hook::connect(NSI::Context* io_nsi)
 	DM_VPortAgent& vp = viewport();
 	GUI_ViewState& vs = vp.getViewStateRef();
 	GUI_ViewParameter& view = vs.getViewParameterRef();
-
+	
 	std::string prefix = handle_prefix();
 
 	// Export camera
@@ -610,7 +687,8 @@ viewport_hook::connect(NSI::Context* io_nsi)
 	m_nsi->Create(camera, "perspectivecamera");
 	m_nsi->Connect(camera, "", camera_trs, "objects");
 
-	export_camera_attributes(view, false);
+	VPortAgentCameraAccessor* cam = new VPortAgentCameraAccessor(vp);
+	export_camera_attributes(view, cam->m_active_camera, false);
 
 	// Export screen
 	int resolution[2] = { vs.getViewWidth(), vs.getViewHeight() };
@@ -709,6 +787,7 @@ viewport_hook::camera_transform_handle()const
 void
 viewport_hook::export_camera_attributes(
 	GUI_ViewParameter& i_view,
+	OBJ_Camera* active_camera,
 	bool i_synchronize)const
 {
 	assert(m_nsi);
@@ -735,7 +814,7 @@ viewport_hook::export_camera_attributes(
 
 	double time =
 		OPgetDirector()->getChannelManager()->getEvaluateTime(SYSgetSTID());
-	viewport_camera cam(time, i_view);
+	viewport_camera cam(time, i_view, active_camera);
 	if(cam != m_last_camera)
 	{
 		cam.nsi_export(*m_nsi, camera_handle());
