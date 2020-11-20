@@ -240,11 +240,10 @@ struct OBJ_Node_Refiner : public GT_Refine
 
 		case GT_PRIM_VOXEL_VOLUME:
 		{
+#if SYS_VERSION_FULL_INT >= 0x12000214
 			const GT_PrimVolume* gt_volume =
 				static_cast<const GT_PrimVolume*>(i_primitive.get());
 			assert(gt_volume);
-
-#if SYS_VERSION_FULL_INT >= 0x12000214
 			if(gt_volume->isHeightField())
 			{
 				if(!m_params.getHeightFieldConvert())
