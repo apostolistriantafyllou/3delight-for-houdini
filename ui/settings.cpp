@@ -471,8 +471,6 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 		PRM_Template(
 			PRM_TOGGLE | PRM_TYPE_JOIN_NEXT | PRM_TYPE_INVISIBLE, 1,
 			&ipr_start, &ipr_start_h),
-
-		PRM_Template(PRM_STRING | PRM_TYPE_INVISIBLE, PRM_TYPE_DYNAMIC_PATH, 1, &camera, &camera_d, nullptr, nullptr, nullptr, &PRM_SpareData::objCameraPath),
 	};
 
 

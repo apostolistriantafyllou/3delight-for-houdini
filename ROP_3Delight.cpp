@@ -1894,6 +1894,11 @@ ROP_3Delight::GetShutterInterval(double i_time)const
 		return 1.0;
 	}
 
+	if (m_rop_type == rop_type::viewport)
+	{
+		return viewport_hook_builder::instance().active_vport_camera_shutter();
+	}
+
 	OBJ_Camera* cam = ROP_3Delight::GetCamera(i_time);
 	return cam ? camera::get_shutter_duration(*cam, i_time) : 1.0;
 }

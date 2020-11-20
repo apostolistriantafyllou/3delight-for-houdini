@@ -461,6 +461,7 @@ public:
 	void connect(NSI::Context* io_nsi);
 	/// Disconnects from the NSI context and from the image buffer.
 	void disconnect();
+	OBJ_Camera* get_camera();
 
 private:
 
@@ -619,6 +620,35 @@ viewport_hook::render(
 	i_render->popDepthState();
 
 	return true;
+}
+
+OBJ_Camera*
+viewport_hook::get_camera()
+{
+	DM_VPortAgent& vp = viewport();
+	VPortAgentCameraAccessor* cam = new VPortAgentCameraAccessor(vp);
+	return cam->m_active_camera;
+}
+
+double
+viewport_hook_builder::active_vport_camera_shutter()
+{
+	OBJ_Camera* cam = nullptr;
+	float max_shutter_duration = 0;
+
+	/*
+		Get the the largest shutter duration value of active cameras.
+	*/
+	for (auto hook : m_hooks)
+	{
+		cam = hook->get_camera();
+		if (cam != nullptr)
+		{
+			max_shutter_duration =
+				std::fmax(max_shutter_duration, cam->SHUTTER(0));
+		}
+	}
+	return max_shutter_duration;
 }
 
 

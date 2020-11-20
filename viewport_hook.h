@@ -49,6 +49,11 @@ public:
 	*/
 	void disconnect();
 
+	/*
+		Get the largest shutter duration on Houdini's viewport active cameras.
+		This is needed when rendering multiple viewports.
+	*/
+	double active_vport_camera_shutter();
 private:
 
 	/// Constructor
