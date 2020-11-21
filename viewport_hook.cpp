@@ -4,7 +4,7 @@
 #include <HOM/HOM_Module.h>
 #include <OP/OP_Director.h>
 #include <SYS/SYS_Version.h>
-#include <Obj/OBJ_Camera.h>
+#include <OBJ/OBJ_Camera.h>
 
 #include <ndspy.h>
 #include <nsi_dynamic.hpp>
