@@ -714,8 +714,6 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 					delete rop->m_time_notifier; rop->m_time_notifier = nullptr;
 					creation_callbacks::unregister_ROP(rop);
 
-					double time = rop->m_current_render->m_current_time;
-					
 					if(rop->m_current_render->m_rop_type == rop_type::viewport)
 					{
 						viewport_hook_builder::instance().disconnect();
