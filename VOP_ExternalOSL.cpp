@@ -390,60 +390,88 @@ NewPRMChoiceList(
 	const DlShaderInfo::TypeDesc& i_osl_type,
 	const osl_utilities::ParameterMetaData& i_meta)
 {
-	if(i_osl_type.elementtype != NSITypeInteger || !i_meta.m_options)
+	if(!i_meta.m_options)
 	{
 		return nullptr;
 	}
 
 	char* options = LEAKED(strdup(i_meta.m_options));
 	std::vector<PRM_Item>* items = LEAKED(new std::vector<PRM_Item>);
-	while(*options)
+
+	if(i_osl_type.IsOneInteger())
 	{
-		// The label is terminated by a colon
-		char* colon = strchr(options, ':');
-		if(!colon)
+		while(*options)
 		{
-			assert(false);
-			return nullptr;
-		}
+			// The label is terminated by a colon
+			char* colon = strchr(options, ':');
+			if(!colon)
+			{
+				assert(false);
+				return nullptr;
+			}
 
-		// Then comes the value
-		int value = 0;
-		int offset = 0;
-		int read = sscanf(colon+1, "%d%n", &value, &offset);
-		if(read == 0 || value < 0)
+			// Then comes the value
+			int value = 0;
+			int offset = 0;
+			int read = sscanf(colon+1, "%d%n", &value, &offset);
+			if(read == 0 || value < 0)
+			{
+				assert(false);
+				return nullptr;
+			}
+
+			char* end = colon+1+offset;
+
+			// Items are separated with vertical bar
+			if(*end && *end != '|')
+			{
+				assert(false);
+				return nullptr;
+			}
+
+			char* next = end;
+			if(*next)
+			{
+				next++;
+			}
+
+			// Fill gaps with blank items
+			while(items->size() <= value)
+			{
+				items->push_back(PRM_Item("", ""));
+			}
+
+			// Use our "options" copy as the strings passed to the item
+			*colon = '\0';
+			*end = '\0';
+			(*items)[value] = PRM_Item(colon+1, options);
+
+			options = next;
+		}
+	}
+	else if(i_osl_type.IsOneString())
+	{
+		while(options && *options)
 		{
-			assert(false);
-			return nullptr;
+			// Items are separated by vertical bars.
+			char *next = strchr(options, '|');
+			if(next)
+			{
+				/* Cut the string. */
+				*next = '\0';
+				++next;
+			}
+
+			/* Give the cut string directly to the item. */
+			items->push_back(PRM_Item(options, options));
+
+			options = next;
 		}
-
-		char* end = colon+1+offset;
-
-		// Items are separated with vertical bar
-		if(*end && *end != '|')
-		{
-			assert(false);
-			return nullptr;
-		}
-
-		char* next = end;
-		if(*next)
-		{
-			next++;
-		}
-
-		// Fill gaps with blank items
-		while(items->size() <= value)
-		{
-			items->push_back(PRM_Item("", ""));
-		}
-
-		// Use our "options" copy as the strings passed to the item
-		*colon = '\0';
-		*end = '\0';
-		(*items)[value] = PRM_Item(colon+1, options);
-
-		options = next;
+	}
+	else
+	{
+		/* Whatever this is is not handled yet. */
+		return nullptr;
 	}
 
 	items->push_back(PRM_Item());
