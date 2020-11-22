@@ -122,11 +122,6 @@ private:
 	bool set_single_attribute(int i_parm_index)const;
 
 	/**
-		\returns true if i_param_name indicates used of a texture path.
-	*/
-	static bool is_texture_path( const char* i_param_name );
-
-	/**
 		\brief Fills a list of NSI arguments from a shader for a ramp-type
 		parameter.
 	*/

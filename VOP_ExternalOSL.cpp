@@ -116,61 +116,6 @@ static const std::vector<const DlShaderInfo::Parameter*> GetVolumeParams()
 	return out;
 }
 
-
-
-/*
-	Checking for texture parameters which support colorspace
-	meta data and when finding it we add a new parameter below
-	it for Color Space which later will be replaced by a dropdown
-*/
-static void addColorSpace (std::vector<const DlShaderInfo::Parameter*>& page)
-{
-	typedef DlShaderInfo::Parameter Parameter;
-	typedef DlShaderInfo::conststring conststring;
-	static char color_space[] = "shader_color_space";
-	static const conststring nm = conststring(color_space, color_space + sizeof(color_space));
-	Parameter meta;
-	Parameter *param = new Parameter(meta);
-	param->name = nm;
-	param->type.elementtype = NSITypeString;
-	page.push_back(param);
-}
-
-/*
-	Function below is used to add a DropDown Menu with color space
-	options for parameters which support colorSpaces. The attribute
-	name of these new "variables" will be the attribute name of
-	textureFile variables concatenated with meta.colorspace, which is
-	exactly the same as the colorspace attribute name supported by NSI.
-*/
-static void addColorSpaceDropDown (std::vector<PRM_Template>& templates, const char color_space_str[])
-{
-	std::string meta_colorspace = ".meta.colorspace";
-	char* color_space = LEAKED(strdup((color_space_str + meta_colorspace).c_str()));
-	static PRM_Default color_space_items_val(0, "auto");
-	static PRM_Item color_space_items[] =
-	{
-		PRM_Item("Linear", "Linear"),
-		PRM_Item("sRGB", "sRGB"),
-		PRM_Item("Rec. 709", "Rec. 709"),
-		PRM_Item("auto", "Auto"),
-		PRM_Item()
-	};
-
-	static PRM_ChoiceList color_space_items_c(PRM_CHOICELIST_SINGLE, color_space_items);
-	std::vector<PRM_Template> color_templates =
-	{
-		PRM_Template(PRM_STRING, 1, new PRM_Name(color_space, "Color Space"), &color_space_items_val, &color_space_items_c)
-	};
-
-	templates.insert(
-		templates.end(),
-		color_templates.begin(),
-		color_templates.end());
-}
-
-
-
 /// Returns the number of scalar channels in the specified type
 static unsigned GetNumChannels(const DlShaderInfo::TypeDesc& i_osl_type)
 {
@@ -802,20 +747,6 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 		page_components& page = inserted.first->second;
 		page.push_back(&param);
 
-		/*
-			Here we check the attributes with contain defaultColorSpace
-			meta data and then we add the ColorSpace menu below the
-			attributes which have it.
-		*/
-		const char* color_space_meta = "";
-		osl_utilities::FindMetaData(color_space_meta, param.metadata, "defaultColorSpace");
-
-		if( color_space_meta[0] )
-		{
-			std::string str = param.name.c_str();
-			addColorSpace(page);
-		}
-
 		// If it's a new page, also add it to page_list
 		if(inserted.second)
 		{
@@ -914,10 +845,6 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 	bool needs_switcher = tabs->size() > 0;
 	for(const page_list_t::value_type& pa : page_list)
 	{
-		/*
-			This variable will be used as a holder for the value of the previous attribute
-		*/
-		static std::string param_name = "";
 		for(const DlShaderInfo::Parameter* param : *pa.second)
 		{
 			if(param->type.elementtype == NSITypeInvalid)
@@ -937,17 +864,7 @@ VOP_ExternalOSL::GetTemplates(const StructuredShaderInfo& i_shader_info)
 			}
 			else
 			{
-				/*
-					Here we add the dropdown menu for Color Space on
-					the reserved param "shader_color_space"
-				*/
-				if (param->name == "shader_color_space")
-				{
-					addColorSpaceDropDown(*templates, param_name.c_str());
-				}
-				else
-					AddParameterTemplate(*templates, *param, meta);
-				param_name = param->name.c_str();
+				AddParameterTemplate(*templates, *param, meta);
 			}
 		}
 

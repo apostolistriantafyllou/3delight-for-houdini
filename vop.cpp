@@ -184,10 +184,7 @@ void vop::changed_cb(
 
 	The only gotcha here is regarding texture parameters: we detect
 	them by checking for the srccolorspace or texcolorspace attribute.
-	Which means	it's a "Texture" node. If these attributes are not found,
-	we check if "texture" or "file" is in the operator's name. Also we
-	check if "texture" or "map" appears in parameter's name. I think we
-	need something better here but for now this will do.
+	Which means it's a "Texture" node.
 */
 void vop::list_shader_parameters(
 	const context &i_context,
@@ -232,32 +229,6 @@ void vop::list_shader_parameters(
 		if( colorspace_index >= 0 )
 		{
 			i_parameters->evalString( color_space, k_texcolorspace, 0, i_time );
-		}
-		else
-		{
-			color_space = "auto";
-		}
-	}
-
-	bool isTextureNode = colorspace_index >= 0;
-	if (!isTextureNode)
-	{
-		// Check if the operator's name contains "texture"
-		OP_Operator* op = i_parameters->getOperator();
-		assert(op);
-		const UT_StringHolder& sh = op->getName();
-
-		UT_String name = sh.c_str();
-		name.toLower();
-
-		std::string::size_type pos = name.toStdString().find("texture");
-		isTextureNode = pos != std::string::npos;
-
-		// Check if the operator's name contains "file"
-		if (!isTextureNode)
-		{
-			pos = name.toStdString().find("file");
-			isTextureNode = pos != std::string::npos;
 		}
 	}
 
@@ -418,29 +389,16 @@ void vop::list_shader_parameters(
 
 			o_list.Add( new NSI::StringArg(parameter->name.c_str(), stdstr) );
 
-			if( isTextureNode || is_texture_path( parameter->name.c_str() ) )
+			if( color_space.length() != 0 )
 			{
+				/*
+					This is a workaround for houdini's texture node which does
+					not have the "right" color space parameter like ours.
+				*/
 				std::string param( parameter->name.c_str() );
 				param += ".meta.colorspace";
-				/*
-					If the value of the current texture parameter is not detected 
-					by checking for srccolorspace or texcolorspace attribute we do 
-					an additional check by checking its parameter name concantenated 
-					with .meta.colorspace. This is because when we add the color 
-					space attribute on Houdini for texture nodes we set the colorspace
-					parameter name to texture_param_name+".meta.colorspace"
-				*/
-				colorspace_index = i_parameters->getParmIndex(param.c_str());
-				if (colorspace_index >= 0)
-				{
-					/*
-						Here we update the value of color_space if the colorspace 
-						attribute named after the texture node parameter exists.
-					*/
-					i_parameters->evalString(color_space, param.c_str(), 0, i_time);
-				}
-
-				o_list.Add( new NSI::StringArg(param, color_space.buffer()) );			}
+				o_list.Add( new NSI::StringArg(param, color_space.buffer()) );
+			}
 
 			break;
 		}
@@ -479,17 +437,6 @@ bool vop::ignore_subnetworks( void ) const
 	}
 
 	return false;
-}
-
-bool vop::is_texture_path( const char* i_param_name )
-{
-	UT_String name = i_param_name;
-	name.toLower();
-
-	std::string str = name.toStdString();
-	return
-		str.find("texture") != std::string::npos ||
-		str.find("map") != std::string::npos;
 }
 
 void vop::add_and_connect_aov_group() const
