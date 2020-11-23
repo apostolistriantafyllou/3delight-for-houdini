@@ -94,7 +94,7 @@ target_compile_definitions( ${library_name} PRIVATE HBOOST_USE_WINDOWS_H )
 # compile definitions. Special handling needed for tbb on macOS.
 target_link_libraries( ${library_name} Houdini )
 IF(APPLE)
-	target_link_libraries( ${library_name} tbb hboost_thread )
+	target_link_libraries( ${library_name} tbb hboost_thread openvdb_sesi )
 ENDIF()
 
 option(INSTALL_PACKAGE_DEF "Install a package definition for the current user which will cause the built plugin to be loaded." ON)
