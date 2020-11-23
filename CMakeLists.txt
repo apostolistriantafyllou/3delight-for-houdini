@@ -30,6 +30,11 @@ IF(APPLE)
 	MESSAGE(STATUS "Dynamically linking to Houdini's TBB")
 ENDIF()
 
+# Find OpenVDB in HFS
+if(WIN32)
+	link_directories("$ENV{HFS}/custom/houdini/dsolib")
+endif()
+
 # Set the 3Delight path
 if(NOT DEFINED DELIGHT)
 	set(DELIGHT $ENV{DELIGHT})
@@ -96,6 +101,10 @@ target_link_libraries( ${library_name} Houdini )
 IF(APPLE)
 	target_link_libraries( ${library_name} tbb hboost_thread openvdb_sesi )
 ENDIF()
+
+if(MSVC)
+	target_link_libraries( ${library_name} openvdb_sesi )
+endif()
 
 option(INSTALL_PACKAGE_DEF "Install a package definition for the current user which will cause the built plugin to be loaded." ON)
 if(INSTALL_PACKAGE_DEF)
