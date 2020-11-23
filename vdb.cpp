@@ -344,6 +344,7 @@ void vdb_file_writer::create()const
 {
 	if(!m_grids.empty())
 	{
+#ifndef _WIN32
 		// Retrieve the OpenVDB grids
 		openvdb::GridCPtrVec grids;
 		for(const GT_PrimitiveHandle& handle : m_grids)
@@ -365,6 +366,7 @@ void vdb_file_writer::create()const
 		// Write the VDB to file
 		openvdb::io::File file(path());
 		file.write(grids);
+#endif
 
 		// Don't export that file again
 		m_grids.clear();
