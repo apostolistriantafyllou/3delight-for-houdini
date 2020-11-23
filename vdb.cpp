@@ -321,6 +321,7 @@ bool vdb_file_writer::add_grid(const GT_PrimitiveHandle& i_handle)
 		return false;
 	}
 	
+#ifndef _WIN32
 	/*
 		Reject grids that would introduce a name duplicate (should we merge them
 		instead?)
@@ -335,6 +336,7 @@ bool vdb_file_writer::add_grid(const GT_PrimitiveHandle& i_handle)
 			return false;
 		}
 	}
+#endif
 	
 	m_grids.push_back(i_handle);
 	return true;
