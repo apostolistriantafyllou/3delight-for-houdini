@@ -203,7 +203,7 @@ VOP_AOVGroup::opChanged(OP_EventType reason, void* data)
 VOP_AOVGroupOperator::VOP_AOVGroupOperator()
     :   VOP_Operator(
             "dlAOVGroup",
-            "Aov Group",
+            "AOV Group",
             VOP_AOVGroup::alloc,
             VOP_AOVGroup::myTemplateList,
             VOP_AOVGroup::theChildTableName,
