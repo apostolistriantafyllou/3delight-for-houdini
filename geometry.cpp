@@ -212,6 +212,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 			{
 				OBJ_Node_Refiner recursive(this);
 				I->geometry()->refine(recursive, &recursive.m_params);
+				ret = recursive.m_return;
 			}
 
 			if(	ret.empty() )
