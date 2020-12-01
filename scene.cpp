@@ -145,7 +145,7 @@ void scene::process_obj_node(
 	bool needs_delete = i_context.m_time_dependent && time_dependent_obj;
 	bool needs_export = !i_context.m_time_dependent || time_dependent_obj;
 
-	if( obj->castToOBJLight() || is_incand )
+	if( obj->castToOBJLight() || (is_incand && obj->getDisplay()))
 	{
 		if( is_incand && !i_re_export_instanced)
 		{
@@ -744,6 +744,7 @@ void scene::find_lights(
 
 			if( obj &&
 				i_want_incandescence_lights &&
+				obj->getDisplay() &&
 				obj->getOperator()->getName() ==
 					"3Delight::IncandescenceLight" )
 			{
