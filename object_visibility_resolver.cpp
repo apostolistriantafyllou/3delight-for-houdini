@@ -1,5 +1,8 @@
 #include <OP/OP_BundlePattern.h>
 #include <OBJ/OBJ_Node.h>
+#include <OP/OP_BundleList.h>
+#include <OP/OP_Bundle.h>
+#include <OP/OP_Director.h>
 
 #include "object_visibility_resolver.h"
 #include "ui/settings.h"
@@ -46,6 +49,23 @@ bool object_visibility_resolver::object_displayed(const OBJ_Node& i_node)const
 
 	if(pattern)
 	{
+		/*
+			Patterns can also contains bundles, so we check for bundles,
+			and if any bundle is used as a pattern, we check the node
+			included on bundle patterns if they match with nodes on the
+			scene. OP_BundleList::getBundle() function needs bundle name
+			as an argument but without the first character @.
+		*/
+		OP_BundleList* blist = OPgetDirector()->getBundles();
+		assert(blist);
+		const char* pattern_str = pattern->argv(0)+1;
+		OP_Bundle* bundle = blist->getBundle(pattern_str);
+
+		if (bundle && bundle->contains(i_node.castToOPNode(), false))
+		{
+			pattern = OP_BundlePattern::allocPattern(i_node.getFullPath());
+			return pattern->match(&i_node, m_rop_path.c_str(), true);
+		}
 		return pattern->match(&i_node, m_rop_path.c_str(), true);
 	}
 
