@@ -56,15 +56,18 @@ bool object_visibility_resolver::object_displayed(const OBJ_Node& i_node)const
 			scene. OP_BundleList::getBundle() function needs bundle name
 			as an argument but without the first character @.
 		*/
-		OP_BundleList* blist = OPgetDirector()->getBundles();
-		assert(blist);
-		const char* pattern_str = pattern->argv(0)+1;
-		OP_Bundle* bundle = blist->getBundle(pattern_str);
-
-		if (bundle && bundle->contains(i_node.castToOPNode(), false))
+		if (!pattern->isNullPattern() && pattern->argv(0)[0] == '@')
 		{
-			pattern = OP_BundlePattern::allocPattern(i_node.getFullPath());
-			return pattern->match(&i_node, m_rop_path.c_str(), true);
+			OP_BundleList* blist = OPgetDirector()->getBundles();
+			assert(blist);
+			const char* pattern_str = pattern->argv(0) + 1;
+			OP_Bundle* bundle = blist->getBundle(pattern_str);
+
+			if (bundle && bundle->contains(i_node.castToOPNode(), false))
+			{
+				pattern = OP_BundlePattern::allocPattern(i_node.getFullPath());
+				return pattern->match(&i_node, m_rop_path.c_str(), true);
+			}
 		}
 		return pattern->match(&i_node, m_rop_path.c_str(), true);
 	}
