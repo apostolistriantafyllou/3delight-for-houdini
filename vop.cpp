@@ -5,6 +5,7 @@
 #include "3Delight/ShaderQuery.h"
 #include "scene.h"
 #include "shader_library.h"
+#include "geometry.h"
 
 #include <VOP/VOP_Node.h>
 #include <OP/OP_Input.h>
@@ -173,6 +174,24 @@ void vop::changed_cb(
 
 			// Connect the source node to the input parameter
 			v.connect_input(input_index);
+		}
+
+		ctx->m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
+	}
+	else if (i_type == OP_FLAG_CHANGED)
+	{
+		VOP_Node* debug_material = i_caller->castToVOPNode();
+		if (!debug_material)
+			return;
+
+		//Re-export only the geometries to where this material is connected.
+		for (std::string obj_path : ctx->material_to_objects[debug_material])
+		{
+			OBJ_Node* node = OPgetDirector()->getOBJNode(obj_path.c_str());
+			if (node)
+			{
+				geometry::re_export(*ctx, *node);
+			}
 		}
 
 		ctx->m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
