@@ -570,6 +570,59 @@ bool geometry::is_texture(VOP_Node* shader)
 	return false;
 }
 
+
+
+void geometry::update_materials_mapping(
+	VOP_Node*& i_shader,
+	const context& i_context,
+	OBJ_Node* i_object)
+{
+	if (i_context.m_ipr)
+	{
+		std::unordered_set<std::string> materials;
+		std::vector<VOP_Node*> vops;
+		materials.insert(i_shader->getFullPath().toStdString());
+		scene::get_material_vops(materials, vops);
+
+		/*
+			Traverse through materials during IPR and for each material or texture
+			we add the objects that they are connected to. This will later be used
+			on vop.cpp where we will re-export only the objects which have the
+			materials that we change the debug mode, connected to them.
+		*/
+		for (auto& V : vops)
+		{
+			i_context.material_to_objects[V].insert(i_object->getFullPath().c_str());
+			if (V->getDebug())
+			{
+				i_shader = V;
+			}
+		}
+	}
+}
+
+void geometry::connect_texture(
+	VOP_Node* i_shader,
+	OBJ_Node* i_node,
+	const context& i_context,
+	std::string attr_handle)
+{
+	const shader_library& library = shader_library::get_instance();
+	std::string obj_handle = geometry(i_context, i_node).m_handle;
+	std::string mat_handle = vop::handle(*i_shader, i_context);
+
+	const std::string passthrough_shader(obj_handle + "_passthrough");
+	std::string path = library.get_shader_path("passthrough");
+
+	i_context.m_nsi.Create(passthrough_shader, "shader");
+	i_context.m_nsi.SetAttribute(passthrough_shader, NSI::StringArg("shaderfilename", path));
+	i_context.m_nsi.Connect(mat_handle, "outColor", passthrough_shader, "i_color",
+		NSI::IntegerArg("strength", 1));
+	i_context.m_nsi.Connect(
+		passthrough_shader, "",
+		attr_handle, "surfaceshader");
+}
+
 void geometry::connect()const
 {
 	// Connect the geometry's hub transform to the null's transform
@@ -626,24 +679,15 @@ void geometry::connect()const
 		attributes_handle(), "",
 		hub_handle(), "geometryattributes" );
 
+	update_materials_mapping(mat, m_context, m_object);
 	/*
 		Connect a passthrough shader if the attached material on the geometry is
 		not a surface shader. This would make it possible to render a connected
 		texture to iDisplay. This is needed when you want to debug the scene.
 	*/
-	if (geometry::is_texture(mat))
+	if (is_texture(mat))
 	{
-		const shader_library& library = shader_library::get_instance();
-		const std::string passthrough_shader("dlPassthrough");
-		std::string path = library.get_shader_path("passthrough");
-
-		m_nsi.Create(passthrough_shader, "shader");
-		m_nsi.SetAttribute(passthrough_shader, NSI::StringArg("shaderfilename", path));
-		m_nsi.Connect(vop::handle(*mat, m_context), "outColor", passthrough_shader, "i_color");
-		m_nsi.Connect(
-			passthrough_shader, "",
-			attributes_handle(), "surfaceshader",
-			NSI::IntegerArg("strength", 1));
+		connect_texture(mat, m_object, m_context, attributes_handle());
 	}
 
 	else
@@ -860,6 +904,12 @@ void geometry::export_override_attributes() const
 			VOP_Node* vop_node = get_assigned_material( material );
 			if(vop_node)
 			{
+				geometry::update_materials_mapping(vop_node, m_context, m_object);
+
+				if (is_texture(vop_node))
+				{
+					connect_texture(vop_node, m_object, m_context, override_nsi_handle);
+				}
 				m_nsi.Connect(
 					vop::handle(*vop_node, m_context), "",
 					override_nsi_handle, "surfaceshader",
@@ -870,6 +920,7 @@ void geometry::export_override_attributes() const
 			}
 		}
 	}
+
 	else if(m_context.m_ipr)
 	{
 		m_nsi.Disconnect( hub_handle(), "",

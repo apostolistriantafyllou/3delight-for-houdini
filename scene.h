@@ -43,6 +43,10 @@ public:
 		bool i_want_incandescence_lights,
 		std::vector<OBJ_Node*>& o_lights );
 
+	static void get_material_vops(
+		const std::unordered_set<std::string>& i_materials,
+		std::vector<VOP_Node*>& o_vops);
+
 	/**
 		\brief Find the AOV Group nodes that can produce custom AOVs
 	*/
@@ -59,10 +63,6 @@ private:
 	static void vop_scan(
 		const context &i_context,
 		std::vector< exporter * > &o_to_export );
-
-	static void get_material_vops(
-		const std::unordered_set<std::string>& i_materials,
-		std::vector<VOP_Node*> &o_vops );
 
 	static void create_exporters(
 		const context &i_context,

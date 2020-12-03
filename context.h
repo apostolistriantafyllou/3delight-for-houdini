@@ -11,10 +11,14 @@
 #include <deque>
 #include <string>
 #include <vector>
+#include <map>
+#include <unordered_set>
 
 class OBJ_Node;
 class ROP_Node;
+class VOP_Node;
 class ROP_3Delight;
+typedef std::map<VOP_Node*, std::unordered_set<std::string>> ObjectsMapping;
 
 enum rop_type
 {
@@ -120,6 +124,9 @@ public:
 	void set_current_time(fpreal i_time);
 
 	const ROP_3Delight *rop( void ) const { return m_rop; }
+
+	/** For each material store the objects to where they are connected. */
+	mutable ObjectsMapping material_to_objects;
 
 public:
 	NSI::Context &m_nsi;

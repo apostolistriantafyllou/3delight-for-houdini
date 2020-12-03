@@ -12,6 +12,7 @@
 #include <GT/GT_PrimPolygonMesh.h>
 
 #include <nsi.hpp>
+#include "scene.h"
 
 namespace
 {
@@ -432,13 +433,24 @@ void primitive::assign_sop_materials( void ) const
 			std::string attribute_handle = m_handle + "|" + vop_handle;
 
 			m_nsi.Create( attribute_handle, "attributes" );
-			m_nsi.Connect(
-				vop_handle, "",
-				attribute_handle, "surfaceshader",
-				(
-					NSI::IntegerArg("priority", 1),
-					NSI::IntegerArg("strength", 1)
-				) );
+
+			geometry::update_materials_mapping(vop, m_context, m_object);
+			if (geometry::is_texture(vop))
+			{
+				geometry::connect_texture(vop , m_object, m_context, attribute_handle);
+			}
+
+			else
+			{
+				m_nsi.Connect(
+					vop_handle, "",
+					attribute_handle, "surfaceshader",
+					(
+						NSI::IntegerArg("priority", 1),
+						NSI::IntegerArg("strength", 1)
+						));
+			}
+
 			m_nsi.Connect(attribute_handle, "", m_handle, "geometryattributes" );
 		}
 
@@ -475,10 +487,21 @@ void primitive::assign_sop_materials( void ) const
 
 		m_nsi.Create( attribute_handle, "attributes" );
 		m_nsi.Create( set_handle, "faceset" );
-		m_nsi.Connect(
-			vop_handle, "",
-			attribute_handle, "surfaceshader",
-			NSI::IntegerArg("strength", 1) );
+
+		geometry::update_materials_mapping(V, m_context, m_object);
+		if (geometry::is_texture(V))
+		{
+			geometry::connect_texture(V, m_object, m_context, attribute_handle);
+		}
+
+		else
+		{
+			m_nsi.Connect(
+				vop_handle, "",
+				attribute_handle, "surfaceshader",
+				NSI::IntegerArg("strength", 1));
+		}
+
 		m_nsi.Connect( attribute_handle, "", set_handle, "geometryattributes" );
 		m_nsi.Connect( set_handle, "", m_handle, "facesets" );
 

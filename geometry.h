@@ -60,9 +60,36 @@ public:
 		return exporter::handle(i_node, i_ctx) + "|hub";
 	}
 
+	/**
+		\brief Re-exports the node to an NSI scene (during an IPR render).
+
+		\param i_ctx
+			The IPR rendering context.
+		\param i_node
+			The node to export.
+		\param i_new_material
+			Indicates whether material assignment has changed, which requires
+			re-exporting their NSI shader networks to ensure they exist.
+	*/
+	static void re_export(
+		const context& i_ctx,
+		OBJ_Node& i_node,
+		bool i_new_material = false);
+
 	/// Deletes the NSI nodes associated to Houdini node i_node.
 	static void Delete(OBJ_Node& i_node, const context& i_context);
 	static bool is_texture(VOP_Node* shader);
+
+	static void update_materials_mapping(
+		VOP_Node*& i_shader,
+		const context& i_context,
+		OBJ_Node* i_object);
+
+	static void connect_texture(
+		VOP_Node* i_shader,
+		OBJ_Node* i_node,
+		const context& i_context,
+		std::string attr_handle);
 
 private:
 
@@ -83,22 +110,6 @@ private:
 		\brief When this geometry is used as an NSI space override.
 	*/
 	void export_override_attributes( void ) const;
-
-	/**
-		\brief Re-exports the node to an NSI scene (during an IPR render).
-		
-		\param i_ctx
-			The IPR rendering context.
-		\param i_node
-			The node to export.
-		\param i_new_material
-			Indicates whether material assignment has changed, which requires
-			re-exporting their NSI shader networks to ensure they exist.
-	*/
-	static void re_export(
-		const context& i_ctx,
-		OBJ_Node& i_node,
-		bool i_new_material = false);
 	
 	/// Returns the handle of the object's main NSI transform node
 	std::string hub_handle()const
