@@ -197,8 +197,6 @@ ROP_3Delight::~ROP_3Delight()
 {
 	UT_Exit::removeExitCallback(&ExitCB, this);
 
-	idisplay_port::CleanUp();
-
 	StopRender();
 }
 
