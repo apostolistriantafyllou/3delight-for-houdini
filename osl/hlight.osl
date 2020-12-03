@@ -12,13 +12,13 @@ surface hlight(
 	float _3dl_specular_contribution = 1,
 	float _3dl_hair_contribution = 1,
 	float _3dl_volume_contribution = 1,
-	string light_texture = "",
+	string light_texture = "" [[ int texturefile = 1 ]],
 
 	/* spot light */
 	int coneenable = 0,
 	float coneangle = 45,
 	float conedelta = 10,
-	string projmap = ""
+	string projmap = "" [[ int texturefile = 1 ]]
 )
 {
 	Ci = 0;
