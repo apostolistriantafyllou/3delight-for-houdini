@@ -1129,7 +1129,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		Otherwise, define it so it fits the camera's "ortho width" parameter.
 	*/
 	double sw[4];
-	camera::get_screen_window(sw, *cam, current_time);
+	camera::get_screen_window(sw, *cam, current_time,false);
 
 	i_ctx.m_nsi.SetAttribute(
 		k_screen_name,
