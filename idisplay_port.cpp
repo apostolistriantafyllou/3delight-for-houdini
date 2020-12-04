@@ -133,6 +133,7 @@ idisplay_port::idisplay_port()
 idisplay_port::~idisplay_port()
 {
 	stop();
+	CleanUp();
 }
 
 /**
@@ -206,16 +207,19 @@ void idisplay_port::onSocketEvent(int event_types)
 
 	m_clients.push_back(client);	
 	m_threads.push_back(std::thread(clientConnection, client, this));
-	// To avoid "terminate called without an active exception"
-	m_threads.back().detach();
 }
 
 
 void idisplay_port::CleanUp()
 {
 	idisplay_port *idp = idisplay_port::get_instance();
-	// Terminate all client threads
-	while (!idp->m_threads.empty()) idp->m_threads.pop_back();
+
+	// Wait for client threads to terminate
+	while (!idp->m_threads.empty())
+	{
+		idp->m_threads.back().join();
+		idp->m_threads.pop_back();
+	}
 	// Delete all client sockets
 	while (!idp->m_clients.empty())
 	{
