@@ -149,4 +149,15 @@ VOP_3DelightMaterialBuilderOperator::VOP_3DelightMaterialBuilderOperator()
 {
 	setIconName("ROP_3Delight");
 	setOpTabSubMenuPath("3Delight");
+
+	VOP_OperatorInfo* vop_info =
+		static_cast<VOP_OperatorInfo*>(getOpSpecificData());
+
+	/*
+		The RenderMask is what ends up being the MaterialNetworkSelector in
+		Hydra. If we don't set it, the default translator will not provide
+		networks at all. And if it does not match the Hydra plugin, we won't
+		see the networks there.
+	*/
+	vop_info->setRenderMask("nsi");
 }

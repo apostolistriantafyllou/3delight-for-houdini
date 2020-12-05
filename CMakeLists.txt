@@ -198,4 +198,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/HydraNSI/CMakeLists.txt"
 			Solaris/HdNSIRendererPlugin_Geometry.ds
 			Solaris/HdNSIRendererPlugin_Viewport.ds
 		DESTINATION soho/parameters)
+	install(
+		DIRECTORY Solaris/husdshadertranslators
+		DESTINATION python2.7libs)
 endif()
