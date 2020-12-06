@@ -291,7 +291,7 @@ void light::create_geometry( void ) const
 		if(obj_node)
 		{
 			/*
-		-		When "intothisobject" is enabled, we use the object's transform.
+				When "intothisobject" is enabled, we use the object's transform.
 				Otherwise, we skip the transform and connect directly to its
 				geometry, which is connected to an identity "hub" transform.
 			*/
