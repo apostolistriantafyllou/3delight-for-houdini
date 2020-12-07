@@ -110,7 +110,8 @@ void incandescence_light::connect() const
 			continue;
 
 		// Check if incandescence_multiplier exists in this shader
-		if( ParameterExist(shader_info, k_incandescence_multiplier) )
+		if( ParameterExist(shader_info, k_incandescence_multiplier)
+			&& m_context.object_displayed(*obj_node))
 		{
 			m_nsi.SetAttribute(
 				vop::handle(*vop_node, m_context),

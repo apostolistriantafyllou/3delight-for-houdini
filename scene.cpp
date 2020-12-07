@@ -135,7 +135,7 @@ void scene::process_obj_node(
 	bool visible = !check_visibility || i_context.object_displayed(*obj);
 
 	bool is_incand = obj->getOperator()->getName().toStdString() ==
-		"3Delight::IncandescenceLight";
+		"3Delight::IncandescenceLight" && i_context.object_displayed(*obj);
 
 	bool time_dependent_obj =
 		time_sampler::is_time_dependent(
@@ -145,7 +145,7 @@ void scene::process_obj_node(
 	bool needs_delete = i_context.m_time_dependent && time_dependent_obj;
 	bool needs_export = !i_context.m_time_dependent || time_dependent_obj;
 
-	if( obj->castToOBJLight() || (is_incand && obj->getDisplay()))
+	if( obj->castToOBJLight() || is_incand)
 	{
 		if( is_incand && !i_re_export_instanced)
 		{
@@ -712,10 +712,15 @@ void scene::find_lights(
 	/* FIXME: not a nice way to access current time. */
 	double time = 0;
 	OP_Node *rop = director->findNode( i_rop_path );
+	context* ctx;
 	if( rop )
 	{
 		ROP_3Delight *r3 = (ROP_3Delight *) CAST_ROPNODE( rop );
 		time = r3 ? r3->current_time() : 0.0;
+		if (r3)
+		{
+			ctx = new context(r3, time);
+		}
 	}
 
 	while( traversal.size() )
@@ -744,7 +749,7 @@ void scene::find_lights(
 
 			if( obj &&
 				i_want_incandescence_lights &&
-				obj->getDisplay() &&
+				ctx && ctx->object_displayed(*obj) &&
 				obj->getOperator()->getName() ==
 					"3Delight::IncandescenceLight" )
 			{
