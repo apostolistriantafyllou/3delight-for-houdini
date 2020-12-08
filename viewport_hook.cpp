@@ -693,7 +693,7 @@ viewport_hook::connect(NSI::Context* io_nsi)
 		{
 			camera_type = "orthographiccamera";
 		}
-		camera::get_screen_window(screen_w, *active_camera, true, time);
+		camera::get_screen_window(screen_w, *active_camera, time, true);
 	}
 
 	// Export camera

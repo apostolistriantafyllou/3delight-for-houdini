@@ -549,18 +549,18 @@ camera::get_shutter_duration(OBJ_Camera& i_camera, double i_time)
 void camera::get_screen_window(
 	double* o_screen_window,
 	OBJ_Camera& i_camera,
-	bool render_to_viewport,
-	double i_time)
+	double i_time,
+	bool i_use_houdini_projection)
 {
 	std::string type;
 	std::string mapping;
 	get_projection(i_camera, i_time, type, mapping);
 
-	if (render_to_viewport)
+	if (i_use_houdini_projection)
 	{
 		/*
 			Evaluate projection type from Houdini's native parameter.
-			for orthographic camera it's parameter name is "ortho".
+			For orthographic camera it's parameter name is "ortho".
 		*/
 		UT_String projection;
 		i_camera.evalString(projection, "projection", 0, i_time);

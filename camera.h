@@ -55,8 +55,8 @@ public:
 	static void get_screen_window(
 		double* o_screen_window,
 		OBJ_Camera& i_camera,
-		bool render_to_viewport,
-		double i_time);
+		double i_time,
+		bool i_use_houdini_projection = false);
 
 private:
 	/// Exports time-dependent attributes to NSI
