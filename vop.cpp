@@ -175,6 +175,20 @@ void vop::changed_cb(
 			// Connect the source node to the input parameter
 			v.connect_input(input_index);
 		}
+		else
+		{
+			/*
+				We must connect to uvs when disconnecting from uvCoord input
+				since we are disconnecting all nodes from this input once
+				we delete the connection to it.
+			*/
+			if (input_name == "uvCoord")
+			{
+				ctx->m_nsi.Connect(
+					"__uv_coordinates_reader", "uvs",
+					v.m_handle, input_name.toStdString());
+			}
+		}
 
 		ctx->m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
 	}
@@ -289,20 +303,29 @@ void vop::list_shader_parameters(
 			We are looking for something like float uv[2] that
 			is not connected to anything.
 		*/
-		if( parameter->type.arraylen == 2 &&
-			i_parameters->getInput(index) == nullptr  )
+		if( parameter->type.arraylen == 2)
 		{
-			/* Check for default uv coordintes */
-			const char *default_connection = nullptr;
-			osl_utilities::FindMetaData(
-				default_connection,
-				parameter->metadata,
-				"default_connection" );
-
-			if( default_connection &&
-				::strcmp("uvCoord", default_connection) == 0 )
+			/*
+				We don't define uvCoord as a parameter, so instead we
+				check input connection with this name.
+			*/
+			int input_index =
+				i_parameters->getInputFromName(parameter->name.c_str());
+			if (i_parameters->castToVOPNode()
+				->findSimpleInput(input_index) == nullptr)
 			{
-				o_uv_connection = parameter->name.c_str();
+				/* Check for default uv coordintes */
+				const char* default_connection = nullptr;
+				osl_utilities::FindMetaData(
+					default_connection,
+					parameter->metadata,
+					"default_connection");
+
+				if (default_connection &&
+					::strcmp("uvCoord", default_connection) == 0)
+				{
+					o_uv_connection = parameter->name.c_str();
+				}
 			}
 		}
 
