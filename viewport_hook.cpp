@@ -1,4 +1,5 @@
 #include "viewport_hook.h"
+#include "camera.h"
 
 #include <DM/DM_VPortAgent.h>
 #include <HOM/HOM_Module.h>
@@ -677,6 +678,23 @@ viewport_hook::connect(NSI::Context* io_nsi)
 	GUI_ViewParameter& view = vs.getViewParameterRef();
 	
 	std::string prefix = handle_prefix();
+	std::string camera_type = "perspectivecamera";
+
+	double time =
+		OPgetDirector()->getChannelManager()->getEvaluateTime(SYSgetSTID());
+	double screen_w[4];
+
+	OBJ_Camera* active_camera = get_camera();
+	if (active_camera)
+	{
+		UT_String projection;
+		active_camera->evalString(projection, "projection", 0, time);
+		if (projection.toStdString() == "ortho")
+		{
+			camera_type = "orthographiccamera";
+		}
+		camera::get_screen_window(screen_w, *active_camera, time, true);
+	}
 
 	// Export camera
 	std::string camera_trs = camera_transform_handle();
@@ -684,7 +702,7 @@ viewport_hook::connect(NSI::Context* io_nsi)
 	m_nsi->Connect(camera_trs, "", NSI_SCENE_ROOT, "objects");
 
 	std::string camera = camera_handle();
-	m_nsi->Create(camera, "perspectivecamera");
+	m_nsi->Create(camera, camera_type);
 	m_nsi->Connect(camera, "", camera_trs, "objects");
 
 	VPortAgentCameraAccessor* cam = new VPortAgentCameraAccessor(vp);
@@ -702,6 +720,17 @@ viewport_hook::connect(NSI::Context* io_nsi)
 				SetValuePointer(resolution),
 			NSI::IntegerArg("oversampling", 16)
 		) );
+
+	if (active_camera)
+	{
+		m_nsi->SetAttribute(
+			screen,
+			*NSI::Argument("screenwindow").
+			SetArrayType(NSITypeDouble, 2)
+			->SetCount(2)
+			->SetValuePointer(screen_w));
+	}
+
 	m_nsi->Connect(screen, "", camera, "screens");
 
 	// Export 8-bit Ci layer
