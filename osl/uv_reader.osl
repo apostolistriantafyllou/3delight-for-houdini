@@ -5,10 +5,16 @@ shader uv_reader(
 	output float uvs[2] = {0, 0} )
 {
 	float st[3] = {u, v, 0};
+	float curve_t = 0;
+
 	if( getattribute( "st", st ) )
 	{
 		uvs[0] = st[0];
 		uvs[1] = st[1];
+	}
+	else if( getattribute( "curve:t", curve_t) )
+	{
+		uvs[1] = curve_t;
 	}
 	else
 	{
