@@ -1449,7 +1449,8 @@ ROP_3Delight::ExportOneOutputLayer(
 	unsigned& io_sort_key) const
 {
 	// Output only RGBA layer if Disable extra Image Layer has been selected.
-	if (evalInt(settings::k_disable_extra_image_layers, 0, i_ctx.m_current_time)
+	if (HasSpeedBoost(i_ctx.m_current_time)
+		&& evalInt(settings::k_disable_extra_image_layers, 0, i_ctx.m_current_time)
 		&& i_desc.m_variable_name!="Ci")
 	{
 		return;
