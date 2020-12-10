@@ -40,6 +40,12 @@ light::light( const context& i_ctx, OBJ_Node *i_object )
 	m_handle = handle(*m_object, i_ctx);
 
 	m_is_env_light = m_object->getParmPtr("env_map") != nullptr;
+	m_is_sky_map = m_object->getParmIndex("skymap_enable") != -1 &&
+		m_object->evalInt("skymap_enable", 0, i_ctx.m_current_time) != 0;
+
+	if( m_is_sky_map )
+		m_is_env_light = true;
+
 }
 
 void light::create( void ) const
@@ -526,4 +532,12 @@ void light::Delete(OBJ_Node& i_node, const context& i_context)
 	i_context.m_nsi.Delete(
 		handle(i_node, i_context),
 		NSI::IntegerArg("recursive", 1));
+}
+
+const char* light::shader_name()const
+{
+	if( m_is_sky_map )
+		return "hlight_sky";
+
+	return m_is_env_light ? "environmentlight" : "hlight";
 }

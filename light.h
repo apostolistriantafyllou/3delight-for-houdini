@@ -93,11 +93,9 @@ private:
 	}
 
 	/// Returns the name of the shader to use for this light
-	const char* shader_name()const
-	{
-		return m_is_env_light ? "environmentlight" : "hlight";
-	}
+	const char* shader_name()const;
 
 	/** = true if this is an environment light */
 	bool m_is_env_light{false};
+	bool m_is_sky_map{false};
 };

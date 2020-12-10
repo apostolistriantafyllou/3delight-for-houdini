@@ -176,7 +176,7 @@ void tokenize_path( const char *osl_path, std::vector<std::string> &o_paths )
 
 void shader_library::find_all_shaders( const char *i_root)
 {
-	/* 
+	/*
 		Start by sorting out all the shaders in the installation into
 		categgorries.
 	*/
@@ -236,10 +236,14 @@ void shader_library::find_all_shaders( const char *i_root)
 			{
 				lib["3Delight/Utilities"].push_back( O );
 			}
+			else if( T == "houdini" )
+			{
+				lib[""].push_back( O );
+			}
 		}
 	}
 
-	/* 
+	/*
 		All shaders are now sorted into their respective menus in the "lib"
 		data structure. We can now build our m_shaaders structure.
  	*/

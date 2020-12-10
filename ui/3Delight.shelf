@@ -19,6 +19,7 @@
     <memberTool name="_3dl_object_geolight"/>
     <memberTool name="_3dl_object_distantlight"/>
     <memberTool name="_3dl_object_envlight"/>
+    <memberTool name="_3dl_object_skylight"/>
     <memberTool name="_3dl_object_incandescencelight"/>
     <memberTool name="_3dl_object_vdb"/>
   </toolshelf>
@@ -323,6 +324,81 @@ group.hideFolder(("Light", "Render Options"), True)
 group.hideFolder(("Light", "Sky Environment Map"), True)
 newnode.setParmTemplateGroup(group)]]></script>
   </tool>
+
+  <tool name="_3dl_object_skylight" label="Sky Light" icon="OBJ_light_sky">
+    <helpURL>tool:skylight</helpURL>
+	<toolMenuContext name="viewer">
+      <contextNetType>OBJ</contextNetType>
+    </toolMenuContext>
+    <toolMenuContext name="network">
+      <contextOpType>Object/envlight</contextOpType>
+    </toolMenuContext>
+    <script scriptType="python"><![CDATA[
+import objecttoolutils
+from objecttoolutils import OrientInfo
+
+## Resources/houdini/python2.7libs/objecttoolutils.py
+## Creates a linked sky light and sunlight pair.
+
+##### WE DON'T CREATE THE SUN/DIRECTIONAL LIGHT. It is not necessary in our case.
+
+# Create light obj, set it to sun (distant) type, and set color
+# corresponding to 5778K sRGB(255,241,234)
+#sun_node = objecttoolutils.genericTool(kwargs, 'hlight::2.0', 'sunlight1', False)
+#sun_node.parm("light_type").set('sun')
+#sun_node.parm("light_colorr").set( 1.0 )
+#sun_node.parm("light_colorg").set( 0.9451 )
+#sun_node.parm("light_colorb").set( 0.9176 )
+
+# override the place where to position the sky node (relative to sun node)
+#kwargs["nodepositionx"] = str( sun_node.position()[0] + 2.25 )
+#kwargs["nodepositiony"] = str( sun_node.position()[1] - 0.50)
+sky_node = objecttoolutils.genericTool(kwargs, 'envlight', 'skylight1', False)
+sky_node.parm("skymap_enable").set(True)
+sky_node.parm("folder11").set(1)
+sky_node.parm("skymap_sun_dir_spec").set('Azimuth and Elevation')
+
+#sun_node.parm( 'vm_envangle' ).set( sky_node.parm( 'skymap_sun_angular_size' ))
+#sun_node.parm( 'rx' ).set( sky_node.parm( 'skymap_sun_calc_rotatex' ))
+#sun_node.parm( 'ry' ).set( sky_node.parm( 'skymap_sun_calc_rotatey' ))
+#sun_node.parm( 'rz' ).set( sky_node.parm( 'skymap_sun_calc_rotatez' ))
+
+# Offset sun_node along the 'calculated vector' from sky_node
+#sun_node_offset = (-10)
+#sun_node_offset *= hou.scaleFromMKS('m1')
+
+#sun_node.parm('tx').setExpression('ch("' + sun_node.relativePathTo(sky_node) + '/skymap_sun_calc_vectorx") * ' + str(sun_node_offset), hou.exprLanguage.Hscript)
+#sun_node.parm('ty').setExpression('ch("' + sun_node.relativePathTo(sky_node) + '/skymap_sun_calc_vectory") * ' + str(sun_node_offset), hou.exprLanguage.Hscript)
+#sun_node.parm('tz').setExpression('ch("' + sun_node.relativePathTo(sky_node) + '/skymap_sun_calc_vectorz") * ' + str(sun_node_offset), hou.exprLanguage.Hscript)
+
+group = sky_node.parmTemplateGroup()
+group.hide("light_contrib", True)
+group.hide("vm_lpetag", True)
+
+group.hide("skymap_enable", True)
+group.hide("skymap_resolution", True)
+group.hide("skymap_sun_dir_vector", True)
+group.hide("skymap_sun_dir_rotate", True)
+#group.hide("skymap_sun_azimuth", True)
+#group.hide("skymap_sun_elevation", True)
+group.hide("skymap_geo_latitude", True)
+group.hide("skymap_geo_longitude", True)
+group.hide("skymap_geo_month", True)
+group.hide("skymap_geo_day", True)
+group.hide("skymap_geo_time", True)
+group.hide("skymap_geo_hr_spec", True)
+group.hide("skymap_geo_time_zone", True)
+group.hide("skymap_geo_daylight", True)
+group.hide("skymap_geo_doy", True)
+group.hide("skymap_sun_calc_spec", True)
+group.hide("skymap_sun_calc_vector", True)
+group.hide("skymap_sun_calc_rotate", True)
+
+group.hideFolder("Shadow", True)
+group.hideFolder(("Light", "Render Options"), True)
+sky_node.setParmTemplateGroup(group)]]></script>
+  </tool>
+
 
   <tool name="_3dl_object_incandescencelight" label="Incandescent Light" icon="OBJ_3Delight-dlIncandescenceLight">
     <helpText><![CDATA[Creates an incandescence light to .]]></helpText>
