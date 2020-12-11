@@ -294,8 +294,6 @@ class dm_SetupTask
 public:
 	/// Constructor
 	dm_SetupTask(DM_VPortAgent& i_viewport);
-	/// Destructor
-	virtual ~dm_SetupTask();
 
 	OBJ_Camera* m_active_camera{ nullptr };
 };
@@ -308,10 +306,6 @@ dm_SetupTask::dm_SetupTask(DM_VPortAgent& i_viewport)
 	{
 		m_active_camera = cam_node->castToOBJNode()->castToOBJCamera();
 	}
-}
-
-dm_SetupTask::~dm_SetupTask()
-{
 }
 
 /// Holds the viewport's camera's parameters in a ready-to-export format
