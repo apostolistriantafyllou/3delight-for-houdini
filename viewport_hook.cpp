@@ -47,7 +47,7 @@ namespace
 
 	It also creates a thread which has the responsibilities of requesting
 	refreshes of the render hook's viewport when the image has been updated, and
-	of deleting the image buffer once it stops being references from both the
+	of deleting the image buffer once it stops being referenced from both the
 	display driver and the scene render hook.
 */
 struct hook_image_buffer
@@ -66,12 +66,12 @@ struct hook_image_buffer
 	void disconnect();
 
 	/// Returns the address of the pixels array
-	UT_RGBA* pixels()const { return (UT_RGBA*)(void*)m_pixels; }
+	UT_RGBA* pixels()const { return m_pixels; }
 	/**
 		Returns the number of bytes separating the beginning of two consecutive
 		lines of pixels.
 	*/
-	size_t line_offset()const { return m_width*4; }
+	size_t line_offset()const { return m_width*sizeof(UT_RGBA); }
 
 	// Display driver interface
 
@@ -109,9 +109,6 @@ private:
 	/// Destructor. Called by disconnect_once only.
 	~hook_image_buffer();
 
-	/// Returns the number of bytes allocated for pixels
-	size_t buffer_size()const { return m_width*m_height*4; }
-
 	/**
 		\brief Makes all pixels transparent.
 
@@ -132,7 +129,7 @@ private:
 	std::mutex m_mutex;
 
 	// Memory holding pixels data
-	std::atomic<void*> m_pixels{nullptr};
+	std::atomic<UT_RGBA*> m_pixels{nullptr};
 
 	// Update count, incremented each time data() is called
 	std::atomic<unsigned> m_timestamp{0};
@@ -186,7 +183,7 @@ hook_image_buffer::open(int i_width, int i_height)
 	m_width = i_width;
 	m_height = i_height;
 
-	m_pixels = operator new (buffer_size());
+	m_pixels = new UT_RGBA[m_width*m_height];
 	clear_pixels();
 
 	/*
@@ -235,15 +232,14 @@ hook_image_buffer::data(int i_x, int i_y, int i_w, int i_h, const void* i_data)
 {
 	assert(m_pixels);
 
-	size_t source_line_length = i_w*4;
-	size_t target_line_length = line_offset();
+	size_t pixel_size = 4;
+	assert(sizeof(UT_RGBA) == pixel_size);
+	size_t source_line_length = i_w*pixel_size;
 	for(unsigned y = 0; y < i_h; y++)
 	{
 		const void* source = (const char*)i_data + y*source_line_length;
-		void* target =
-			(char*)(void*)m_pixels +
-			(m_height-(i_y+y)-1)*target_line_length + i_x*4;
-		memcpy(target, source, i_w*4);
+		void* target = m_pixels + (m_height-(i_y+y)-1)*m_width + i_x;
+		memcpy(target, source, source_line_length);
 	}
 	
 	m_timestamp++;
@@ -276,7 +272,7 @@ void
 hook_image_buffer::clear_pixels()
 {
 	assert(m_pixels);
-	memset(m_pixels, 0, buffer_size());
+	memset(m_pixels, 0, m_width*m_height*sizeof(UT_RGBA));
 	m_timestamp++;
 }
 
