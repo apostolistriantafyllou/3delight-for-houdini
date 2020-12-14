@@ -348,6 +348,8 @@ private:
 	double m_fstop{0.0};
 	float m_fov{-1.0f};
 	double m_shutter{0.0};
+	OBJ_Camera* m_active_camera_obj{nullptr};
+	bool m_enable_dof{false};
 };
 
 
@@ -382,6 +384,8 @@ viewport_camera::viewport_camera(
 	{
 		double frame_duration = OPgetDirector()->getChannelManager()->getSecsPerSample();
 		m_shutter = active_camera->SHUTTER(i_time) * frame_duration;
+		m_active_camera_obj = active_camera;
+		m_enable_dof = active_camera->evalInt("_3dl_enable_dof", 0, m_time);
 	}
 	// Focal length seems to be in thousandths of scene units
 	m_focal_length /= 1000.0;
@@ -397,7 +401,10 @@ viewport_camera::operator!=(const viewport_camera& i_vc)const
 		m_focal_length != i_vc.m_focal_length ||
 		m_focus_distance != i_vc.m_focus_distance ||
 		m_fstop != i_vc.m_fstop ||
-		m_fov != i_vc.m_fov;
+		m_fov != i_vc.m_fov ||
+		m_shutter != i_vc.m_shutter ||
+		m_active_camera_obj != i_vc.m_active_camera_obj ||
+		m_enable_dof != i_vc.m_enable_dof;
 }
 
 
@@ -408,7 +415,11 @@ viewport_camera::nsi_export(
 {
 	assert(m_fov >= 0.0f);
 	double nsi_shutter[2] = { m_time - m_shutter / 2.0, m_time + m_shutter / 2.0 };
-	int enable_dof = m_focus_distance > 0.0;
+	int enable_dof = false;
+	if (m_active_camera_obj)
+	{
+		enable_dof = m_focus_distance > 0.0 && m_enable_dof;
+	}
 	i_nsi.SetAttribute(
 		i_handle,
 		(
