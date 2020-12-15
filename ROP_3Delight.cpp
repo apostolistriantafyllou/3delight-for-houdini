@@ -1311,6 +1311,17 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 							NSI::StringArg("imagefilename", image_display_name),
 							NSI::CStringPArg("ropname", getFullPath().c_str())
 						) );
+
+					if(i_ctx.m_ipr)
+					{
+						/*
+							Prevent reopening of display drivers from creating a
+							new image.
+						*/
+						i_ctx.m_nsi.SetAttribute(
+							idisplay_driver_name,
+							NSI::IntegerArg("replaceable", 1));
+					}
 				}
 
 				ExportOneOutputLayer(
