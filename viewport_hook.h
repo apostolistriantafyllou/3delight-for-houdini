@@ -4,7 +4,10 @@
 
 #include <nsi.hpp>
 
+#include <mutex>
+
 class viewport_hook;
+class hook_image_buffer;
 
 /// Scene hook that allows 3Delight rendering directly into Houdini viewports
 class viewport_hook_builder : public DM_SceneHook
@@ -54,6 +57,14 @@ public:
 		This is needed when rendering multiple viewports.
 	*/
 	double active_vport_camera_shutter();
+
+	/**
+		\brief Returns the image buffer held by a viewport.
+		
+		To be used by the display driver.
+	*/
+	hook_image_buffer* open(int i_viewport_id);
+
 private:
 
 	/// Constructor
@@ -65,6 +76,7 @@ private:
 
 	// List of active render hooks
 	std::vector<viewport_hook*> m_hooks;
+	std::mutex m_hooks_mutex;
 	// Current rendering context
 	NSI::Context* m_nsi{nullptr};
 };

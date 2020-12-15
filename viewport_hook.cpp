@@ -12,8 +12,6 @@
 
 #include <atomic>
 #include <chrono>
-#include <mutex>
-#include <shared_mutex>
 #include <thread>
 
 
@@ -21,8 +19,8 @@ namespace
 {
 	// 3Delight display driver name
 	const char* k_driver_name = "3dfh_viewport";
-	// Parameter name containing the image buffer's address
-	const char* k_hook_image_buffer_param_name = "hook_image_buffer";
+	// Parameter name containing the viewport hook's id
+	const char* k_viewport_hook_name = "viewport_hook_id";
 	// 20 FPS
 	const std::chrono::milliseconds k_refresh_interval(50);
 }
@@ -465,6 +463,12 @@ public:
 	void disconnect();
 	OBJ_Camera* get_camera();
 
+	/// Returns a numerical ID for the viewport hook
+	int id()const { return viewport().getUniqueId(); }
+
+	/// Returns the image buffer displayed by the viewport hook
+	hook_image_buffer* buffer() { return m_image_buffer; }
+
 private:
 
 	/// Returns a viewport-specific prefix for NSI handles
@@ -754,7 +758,7 @@ viewport_hook::connect(NSI::Context* io_nsi)
 		driver,
 		(
 			NSI::CStringPArg("drivername", k_driver_name),
-			NSI::PointerArg(k_hook_image_buffer_param_name, m_image_buffer)
+			NSI::IntegerArg(k_viewport_hook_name, id())
 		) );
 	m_nsi->Connect(driver, "", layer, "outputdrivers");
 }
@@ -879,9 +883,10 @@ namespace
 		hook_image_buffer* buf = nullptr;
 		for(unsigned p = 0; p < i_nb_parameters; p++)
 		{
-			if(strcmp(i_parameters[p].name, k_hook_image_buffer_param_name) == 0)
+			if(strcmp(i_parameters[p].name, k_viewport_hook_name) == 0)
 			{
-				buf = *(hook_image_buffer**)i_parameters[p].value;
+				int id = *(int*)i_parameters[p].value;
+				buf = viewport_hook_builder::instance().open(id);
 				break;
 			}
 		}
@@ -998,8 +1003,11 @@ viewport_hook_builder::newSceneRender(
 	DM_SceneHookType i_type,
 	DM_SceneHookPolicy i_policy)
 {
+	m_hooks_mutex.lock();
 	viewport_hook* hook = new viewport_hook(i_viewport);
 	m_hooks.push_back(hook);
+	m_hooks_mutex.unlock();
+
 	return hook;
 }
 
@@ -1009,9 +1017,12 @@ viewport_hook_builder::retireSceneRender(
 	DM_VPortAgent& i_viewport,
 	DM_SceneRenderHook* io_hook)
 {
+	m_hooks_mutex.lock();
 	auto hook = std::find(m_hooks.begin(), m_hooks.end(), io_hook);
 	assert(hook != m_hooks.end());
 	m_hooks.erase(hook);
+	m_hooks_mutex.unlock();
+
 	delete io_hook;
 }
 
@@ -1034,10 +1045,12 @@ viewport_hook_builder::connect(NSI::Context* io_nsi)
 	m_nsi = io_nsi;
 
 	// Export camera, screen and driver for each viewport hook
+	m_hooks_mutex.lock();
 	for(auto hook : m_hooks)
 	{
 		hook->connect(m_nsi);
 	}
+	m_hooks_mutex.unlock();
 }
 
 
@@ -1050,12 +1063,37 @@ viewport_hook_builder::disconnect()
 		return;
 	}
 	
+	m_hooks_mutex.lock();
 	for(auto hook : m_hooks)
 	{
 		hook->disconnect();
 	}
+	m_hooks_mutex.unlock();
 
 	m_nsi = nullptr;
+}
+
+
+hook_image_buffer*
+viewport_hook_builder::open(int i_viewport_id)
+{
+	m_hooks_mutex.lock();
+
+	auto hook =
+		std::find_if(
+			m_hooks.begin(),
+			m_hooks.end(),
+			[i_viewport_id](viewport_hook* h){ return h && (h->id() == i_viewport_id); } );
+
+	hook_image_buffer* buffer = nullptr;
+	if(hook != m_hooks.end())
+	{
+		buffer = (*hook)->buffer();
+	}
+	
+	m_hooks_mutex.unlock();
+
+	return buffer;
 }
 
 
