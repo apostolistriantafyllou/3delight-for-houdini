@@ -861,14 +861,14 @@ viewport_hook::handle_prefix()const
 std::string
 viewport_hook::camera_handle()const
 {
-	return handle_prefix() + "_camera";
+	return handle_prefix() + "camera";
 }
 
 
 std::string
 viewport_hook::camera_transform_handle()const
 {
-	return handle_prefix() + "_camera_transform";
+	return handle_prefix() + "camera_transform";
 }
 
 
