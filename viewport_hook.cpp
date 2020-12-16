@@ -52,8 +52,14 @@ struct hook_image_buffer
 {
 	// Scene Render Hook interface
 
-	/// Constructor : connects the render hook to the image buffer.
-	hook_image_buffer(DM_SceneRenderHook* i_hook);
+	/**
+		\brief Returns a shared_ptr to a newly allocated image buffer.
+
+		Also connects the render hook to the image buffer and ensures its
+		refreshed regularly.
+	*/
+	static std::shared_ptr<hook_image_buffer> connect(
+		DM_SceneRenderHook* i_hook);
 
 	/**
 		\brief Disconnects image buffer from the Scene Render Hook.
@@ -90,9 +96,6 @@ struct hook_image_buffer
 
 		It also clears the pixels so no image is displayed, but the render hook
 		can continue to access them without synchronization.
-
-		By calling this function, the display driver promises to stop writing
-		data to the buffer. It must be called only once.
 	*/
 	void close();
 
@@ -104,7 +107,10 @@ struct hook_image_buffer
 
 private:
 
-	/// Destructor. Called by disconnect_once only.
+	/// Constructor : connects the render hook to the image buffer.
+	hook_image_buffer(DM_SceneRenderHook* i_hook);
+
+	/// Destructor.
 	~hook_image_buffer();
 
 	/**
@@ -120,10 +126,15 @@ private:
 	/**
 		\brief Updates the viewport at regular intervals.
 		
-		This function returns when the reference count becomes 0, so it's meant
-		to be called from a separate thread.
+		This function returns when it becomes the last one with a reference to
+		the buffer, so it's meant to be called from a separate thread.
+		
+		It's a static function because having a "this" pointer would be
+		redundant with i_buffer. The latter is required so we can access its
+		use_count and have it delete the buffer.
 	*/
-	void update_viewport_loop();
+	static void update_viewport_loop(
+		std::shared_ptr<hook_image_buffer> i_buffer);
 	
 	/*
 		Pointer to the Scene Render Hook that needs to be refreshed when the
@@ -139,11 +150,6 @@ private:
 
 	// Update count, incremented each time data() is called
 	std::atomic<unsigned> m_timestamp{0};
-	/*
-		Reference count, used to determine when to stop the update thread and
-		delete the object.
-	*/
-	std::atomic<unsigned> m_reference_count{1};
 };
 
 
@@ -153,44 +159,12 @@ hook_image_buffer::hook_image_buffer(DM_SceneRenderHook* i_hook)
 }
 
 
-void
-hook_image_buffer::disconnect()
+std::shared_ptr<hook_image_buffer>
+hook_image_buffer::connect(DM_SceneRenderHook* i_hook)
 {
-	m_mutex.lock();
-	m_hook = nullptr;
-	m_mutex.unlock();
-
-	/*
-		Decrementing the reference count should be the last action in the
-		function since it could trigger the deletion of the object.
-	*/
-	assert(m_reference_count > 0);
-	m_reference_count--;
-}
-
-
-bool
-hook_image_buffer::open(int i_width, int i_height)
-{
-	if(m_reference_count == 0)
-	{
-		/*
-			The render hook has already been disconnected and the display driver
-			won't bother us anymore after we return false.
-		*/
-		delete this;
-		return false;
-	}
-
-	assert(!m_pixels);
-
-	m_reference_count++;
-
-	m_width = i_width;
-	m_height = i_height;
-
-	m_pixels = new UT_RGBA[m_width*m_height];
-	clear_pixels();
+	std::shared_ptr<hook_image_buffer> buffer(
+		new hook_image_buffer(i_hook),
+		[](hook_image_buffer* buffer) { delete buffer; } );
 
 	/*
 		Start a thread that updates the view at regular intervals.
@@ -199,13 +173,57 @@ hook_image_buffer::open(int i_width, int i_height)
 
 		It also has the responsibility of deleting the image buffer once neither
 		the render hook nor the display driver have a reference to it.
+		
+		Technical note : we use std::bind to pass the "buffer" parameter to the
+		lambda function instead of simply capturing the local variable because
+		doing so resulted in a const "buffer" variable inside the lambda
+		function (which was strange since it's supposed to be a copy).
 	*/
 	std::thread(
-		[this]()
-		{
-			update_viewport_loop();
-			delete this;
-		} ).detach();
+		std::bind(
+			[](std::shared_ptr<hook_image_buffer> i_buffer)
+			{
+				assert(i_buffer.use_count() >= 1);
+				update_viewport_loop(i_buffer);
+				assert(i_buffer.use_count() == 1);
+
+				// Will delete the buffer
+				i_buffer.reset();
+			},
+			buffer) ).detach();
+
+	return buffer;
+}
+
+
+void
+hook_image_buffer::disconnect()
+{
+	m_mutex.lock();
+	m_hook = nullptr;
+	m_mutex.unlock();
+}
+
+
+bool
+hook_image_buffer::open(int i_width, int i_height)
+{
+	m_mutex.lock();
+	if(!m_hook)
+	{
+		m_mutex.unlock();
+		return false;
+	}
+
+	assert(!m_pixels);
+
+	m_width = i_width;
+	m_height = i_height;
+
+	m_pixels = new UT_RGBA[m_width*m_height];
+	clear_pixels();
+
+	m_mutex.unlock();
 
 	return true;
 }
@@ -234,19 +252,11 @@ void
 hook_image_buffer::close()
 {
 	clear_pixels();
-
-	/*
-		Decrementing the reference count should be the last action in the
-		function since it could trigger the deletion of the object.
-	*/
-	assert(m_reference_count > 0);
-	m_reference_count--;
 }
 
 
 hook_image_buffer::~hook_image_buffer()
 {
-	assert(m_reference_count == 0);
 	assert(!m_hook);
 	operator delete (m_pixels);
 }
@@ -260,13 +270,15 @@ hook_image_buffer::clear_pixels()
 	m_timestamp++;
 }
 
+
 void
-hook_image_buffer::update_viewport_loop()
+hook_image_buffer::update_viewport_loop(
+	std::shared_ptr<hook_image_buffer> i_buffer)
 {
-	unsigned timestamp = m_timestamp;
-	while(m_reference_count > 0)
+	unsigned timestamp = i_buffer->m_timestamp;
+	while(i_buffer.use_count() > 1)
 	{
-		if(timestamp < m_timestamp)
+		if(timestamp < i_buffer->m_timestamp)
 		{
 			/*
 				FIXME : We should find a way to call requestDraw without
@@ -274,13 +286,13 @@ hook_image_buffer::update_viewport_loop()
 			*/
 			HOM_AutoLock hom_lock;
 
-			m_mutex.lock();
-			if(m_hook)
+			i_buffer->m_mutex.lock();
+			if(i_buffer->m_hook)
 			{
-				m_hook->viewport().requestDraw();
-				timestamp = m_timestamp;
+				i_buffer->m_hook->viewport().requestDraw();
+				timestamp = i_buffer->m_timestamp;
 			}
-			m_mutex.unlock();
+			i_buffer->m_mutex.unlock();
 		}
 
 		std::this_thread::sleep_for(k_refresh_interval);
@@ -480,7 +492,7 @@ public:
 	int id()const { return viewport().getUniqueId(); }
 
 	/// Returns the image buffer displayed by the viewport hook
-	hook_image_buffer* buffer();
+	std::shared_ptr<hook_image_buffer> buffer();
 
 private:
 
@@ -511,7 +523,7 @@ private:
 	// NSI context of the associated render
 	NSI::Context* m_nsi{nullptr};
 	// Image buffer shared with a display driver
-	hook_image_buffer* m_image_buffer{nullptr};
+	std::shared_ptr<hook_image_buffer> m_image_buffer;
 
 	bool m_render_called_once{false};
 
@@ -551,14 +563,23 @@ viewport_hook::render(
 		will be ignored by 3Delight and the render won't be restarted.
 	*/
 	m_mutex.lock();
+
 	if(m_nsi)
 	{
 		VPortAgentCameraAccessor* cam = new VPortAgentCameraAccessor(vp);
 		export_camera_attributes(view, cam->m_active_camera, true);
 	}
+
+	/*
+		Take a local copy of the shared_ptr before unlocking. This will allow
+		another thread (such as the display driver) to safely access the
+		original.
+	*/
+	std::shared_ptr<hook_image_buffer> buffer = m_image_buffer;
+
 	m_mutex.unlock();
 
-	if(!m_image_buffer || !m_image_buffer->pixels())
+	if(!buffer || !buffer->pixels())
 	{
 		return false;
 	}
@@ -596,8 +617,8 @@ viewport_hook::render(
 		and is as big as possible while still fitting entirely in the
 		viewport. This leaves a pair of margins.
 	*/
-	float iw = m_image_buffer->m_width;
-	float ih = m_image_buffer->m_height;
+	float iw = buffer->m_width;
+	float ih = buffer->m_height;
 	float vw = i_hook_data.view_width;
 	float vh = i_hook_data.view_height;
 	
@@ -624,9 +645,9 @@ viewport_hook::render(
 	// Render the image
 	i_render->displayRasterTexture(
 		x, y, z,
-		m_image_buffer->m_width, m_image_buffer->m_height,
-		m_image_buffer->pixels(),
-		m_image_buffer->line_offset(),
+		buffer->m_width, buffer->m_height,
+		buffer->pixels(),
+		buffer->line_offset(),
 		zoom, zoom);
 
 	// Restore OpenGL state
@@ -651,17 +672,24 @@ viewport_hook::get_camera()
 }
 
 
-hook_image_buffer*
+std::shared_ptr<hook_image_buffer>
 viewport_hook::buffer()
 {
 	m_mutex.lock();
 	if(!m_image_buffer)
 	{
-		m_image_buffer = new hook_image_buffer(this);
+		m_image_buffer = hook_image_buffer::connect(this);
 	}
+
+	/*
+		Take a local copy of the shared_ptr before unlocking. This will allow
+		another thread (such as the Houdini UI thread) to safely access the
+		original.
+	*/
+	std::shared_ptr<hook_image_buffer> local_ptr = m_image_buffer;
 	m_mutex.unlock();
 
-	return m_image_buffer;
+	return local_ptr;
 }
 
 
@@ -809,7 +837,7 @@ viewport_hook::disconnect()
 		more buckets from the display driver.
 	*/
 	m_image_buffer->disconnect();
-	m_image_buffer = nullptr;
+	m_image_buffer.reset();
 
 	m_nsi = nullptr;
 
@@ -906,7 +934,7 @@ namespace
 		PtFlagStuff*)
 	{
 		// Find the image buffer address
-		hook_image_buffer* buf = nullptr;
+		std::shared_ptr<hook_image_buffer> buf;
 		for(unsigned p = 0; p < i_nb_parameters; p++)
 		{
 			if(strcmp(i_parameters[p].name, k_viewport_hook_name) == 0)
@@ -917,13 +945,7 @@ namespace
 			}
 		}
 
-		if(!buf)
-		{
-			// No image buffer
-			return PkDspyErrorBadParams;
-		}
-
-		if(!buf->open(i_width, i_height))
+		if(!buf || !buf->open(i_width, i_height))
 		{
 			/*
 				Image buffer is not ready to receive data (the render hook might
@@ -932,7 +954,7 @@ namespace
 			return PkDspyErrorStop;
 		}
 
-		*o_image = buf;
+		*o_image = new std::shared_ptr<hook_image_buffer>(buf);
 		return PkDspyErrorNone;
 	}
 
@@ -945,17 +967,25 @@ namespace
 		int,
 		const unsigned char* i_data)
 	{
-		hook_image_buffer* buf = (hook_image_buffer*)i_image;
-		assert(buf);
-		buf->data(xmin, ymin, xmax-xmin, ymax-ymin, i_data);
+		std::shared_ptr<hook_image_buffer>* buf =
+			(std::shared_ptr<hook_image_buffer>*)i_image;
+		assert(buf && buf->get());
+		buf->get()->data(xmin, ymin, xmax-xmin, ymax-ymin, i_data);
 		return PkDspyErrorNone;
 	}
 	
 	PtDspyError dpy_close(PtDspyImageHandle i_image)
 	{
-		hook_image_buffer* buf = (hook_image_buffer*)i_image;
-		assert(buf);
-		buf->close();
+		std::shared_ptr<hook_image_buffer>* buf =
+			(std::shared_ptr<hook_image_buffer>*)i_image;
+		assert(buf && buf->get());
+		buf->get()->close();
+
+		/*
+			Delete the shared_ptr, which will decrease the use_count of the
+			buffer and possibly delete it, too.
+		*/
+		delete buf;
 
 		return PkDspyErrorNone;
 	}
@@ -991,8 +1021,10 @@ namespace
 			}
 			case PkStopQuery:
 			{
-				hook_image_buffer* buf = (hook_image_buffer*)i_image;
-				if(!buf || !buf->connected())
+				std::shared_ptr<hook_image_buffer>* buf =
+					(std::shared_ptr<hook_image_buffer>*)i_image;
+				assert(buf && buf->get());
+				if(!buf->get()->connected())
 				{
 					return PkDspyErrorStop;
 				}
@@ -1100,7 +1132,7 @@ viewport_hook_builder::disconnect()
 }
 
 
-hook_image_buffer*
+std::shared_ptr<hook_image_buffer>
 viewport_hook_builder::open(int i_viewport_id)
 {
 	m_hooks_mutex.lock();
@@ -1111,7 +1143,7 @@ viewport_hook_builder::open(int i_viewport_id)
 			m_hooks.end(),
 			[i_viewport_id](viewport_hook* h){ return h && (h->id() == i_viewport_id); } );
 
-	hook_image_buffer* buffer = nullptr;
+	std::shared_ptr<hook_image_buffer> buffer;
 	if(hook != m_hooks.end())
 	{
 		buffer = (*hook)->buffer();

@@ -63,7 +63,7 @@ public:
 		
 		To be used by the display driver.
 	*/
-	hook_image_buffer* open(int i_viewport_id);
+	std::shared_ptr<hook_image_buffer> open(int i_viewport_id);
 
 private:
 
