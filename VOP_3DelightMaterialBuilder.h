@@ -40,7 +40,7 @@ public:
 	//Called when a new dlMaterialBuilder node is created.
 	virtual bool runCreateScript() override;
 
-	VOP_Node* get_material( VOP_Node **o_surface = nullptr );
+	void get_materials( VOP_Node *o_materials[3] );
 
 protected:
 

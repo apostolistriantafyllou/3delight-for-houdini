@@ -21,6 +21,17 @@ namespace NSI { class ArgumentList; }
 */
 class vop : public exporter
 {
+public:
+	enum class osl_type
+	{
+		e_surface = 0,
+		e_displacement = 1,
+		e_volume = 2,
+		e_other = 3, // pattern/utility/etc.
+		e_unknown = 4,
+	};
+
+private:
 	/**
 		The light source acts as a virtual VOP for the purpose of
 		light shader export.
@@ -52,7 +63,7 @@ public:
 	*/
 	static bool is_renderable( VOP_Node *i_vop );
 
-        static std::string shader_path( const VOP_Node *i_vop );
+    static std::string shader_path( const VOP_Node *i_vop );
 
 	static void changed_cb(
 		OP_Node* i_caller,
@@ -60,7 +71,19 @@ public:
 		OP_EventType i_type,
 		void* i_data);
 
+	/**
+		\returns true is this node is a pattern/texture node. This is taken
+		from the meta-data inside the OSL.
+	*/
+	static osl_type shader_type( VOP_Node* shader );
+
+	/**
+		\returns true if shaer is a pattern/texture.
+	*/
+	static bool is_texture( VOP_Node *shader );
+
 protected:
+
 	/**
 		Set all parameters of 'i_shader' by finding their values pairs
 		in 'i_parameters'.
@@ -98,11 +121,12 @@ protected:
 		NSI::ArgumentList &o_list,
 		std::string &o_uv_connection );
 
+
 private:
-	
+
 	/// Exports the NSI connection of input number i_input_index
 	void connect_input(int i_input_index)const;
-	
+
 	/// Exports time-dependent attributes to NSI
 	void set_attributes_at_time( double i_time ) const;
 

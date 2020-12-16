@@ -755,3 +755,41 @@ std::string vop::shader_path( const VOP_Node *i_vop )
 
 	return path;
 }
+
+bool vop::is_texture( VOP_Node *vop )
+{
+	/* texture/pattern is marked as other */
+	return shader_type( vop ) == osl_type::e_other;
+}
+
+vop::osl_type vop::shader_type( VOP_Node *shader )
+{
+	std::string mat_path = vop::shader_path(shader);
+	const shader_library& library = shader_library::get_instance();
+
+	DlShaderInfo* shader_info = library.get_shader_info(mat_path.c_str());
+	std::vector< std::string > shader_tags;
+	osl_utilities::get_shader_tags(*shader_info, shader_tags);
+
+	//Check if the attached material is a texture shader or not.
+	for (const auto& tag : shader_tags)
+	{
+		if (tag == "texture/2d" || tag == "texture/3d" || tag == "utility" )
+		{
+			return osl_type::e_other;
+		}
+
+		if( tag == "surface" )
+			return osl_type::e_surface;
+
+		if( tag == "displacement" )
+			return osl_type::e_displacement;
+
+		if( tag == "volume" )
+			return osl_type::e_volume;
+	}
+
+	return osl_type::e_unknown;
+}
+
+

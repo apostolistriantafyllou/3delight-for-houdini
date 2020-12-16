@@ -106,10 +106,13 @@ void vdb_file::set_attributes( void ) const
 		return a child of "op" instead of "op" itself, if it's a Material
 		Builder.
 	*/
-	VOP_Node *material = op ?
-		resolve_material_path( op->getFullPath().c_str() ) :
-		nullptr;
+	VOP_Node *mats[3] = { nullptr };
+	if( op )
+	{
+		resolve_material_path( op->getFullPath().c_str(), mats );
+	}
 
+	VOP_Node *material = mats[2]; // volume
 	if(material)
 	{
 		using namespace VolumeGridParameters;

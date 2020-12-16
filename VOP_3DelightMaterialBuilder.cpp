@@ -1,6 +1,8 @@
 #include "VOP_3DelightMaterialBuilder.h"
 #include "VOP_ExternalOSL.h"
 
+#include "vop.h"
+
 const char* VOP_3DelightMaterialBuilder::theChildTableName = VOP_TABLE_NAME;
 
 bool
@@ -91,50 +93,72 @@ VOP_3DelightMaterialBuilder::runCreateScript()
 	If none found, loop through all the nodes in the material builder and just
 	take the first material we get.
 */
-VOP_Node* VOP_3DelightMaterialBuilder::get_material( VOP_Node **o_surface )
+void VOP_3DelightMaterialBuilder::get_materials( VOP_Node *o_materials[3] )
 {
+	assert( o_materials );
+
 	int nkids = getNchildren();
 
 	for( int i=0; i<nkids; i++ )
 	{
 		VOP_Node *mat = CAST_VOPNODE(getChild(i) );
 
-		if( mat &&
-			mat->getOperator()->getName().toStdString() ==
-				"3Delight::dlTerminal" )
+		if( !mat || !(mat->getOperator()->getName() == "3Delight::dlTerminal") )
 		{
-			if( o_surface )
-			{
-				for( int i=0; i< mat->nInputs(); i++ )
-				{
-					UT_String input_name;
-					mat->getInputName(input_name, i);
-					if( input_name != "Surface" )
-						continue;
-
-					VOP_Node *source = CAST_VOPNODE( mat->getInput(i) );
-					if( source )
-					{
-						*o_surface = source;
-						break;
-					}
-				}
-			}
-			return mat;
+			continue;
 		}
+
+		assert( mat->getMaterialFlag() );
+
+		for( int i=0; i< mat->nInputs(); i++ )
+		{
+			VOP_Node *source = CAST_VOPNODE( mat->getInput(i) );
+
+			if( !source )
+				continue;
+
+			UT_String input_name;
+			mat->getInputName(input_name, i);
+
+			if( input_name == "Surface" )
+			{
+				o_materials[0] = source;
+			}
+			else if( input_name == "Displacement" )
+			{
+				o_materials[1] = source;
+			}
+			else if( input_name == "Volume" )
+			{
+				o_materials[2] = source;
+			}
+		}
+
+		/*
+			If there is a terminal node, we rely on it for the assignment so
+			don't scan further.
+		*/
+		return;
 	}
 
 	for( int i=0; i<nkids; i++ )
 	{
-		VOP_Node *mat = CAST_VOPNODE(getChild(i) );
+		VOP_Node *mat = CAST_VOPNODE( getChild(i) );
 
 		if( !mat || !mat->getMaterialFlag() )
 			continue;
 
-		return mat;
-	}
+		vop::osl_type type = vop::shader_type( mat );
 
-	return nullptr;
+		if( type == vop::osl_type::e_surface || type == vop::osl_type::e_other )
+			o_materials[0]= mat;
+
+		if( type == vop::osl_type::e_displacement )
+			o_materials[1] = mat;
+
+		if( type == vop::osl_type::e_volume )
+			o_materials[2] = mat;
+	}
 }
 
 VOP_3DelightMaterialBuilderOperator::VOP_3DelightMaterialBuilderOperator()

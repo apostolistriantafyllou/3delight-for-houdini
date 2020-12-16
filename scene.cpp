@@ -404,9 +404,10 @@ void scene::create_atmosphere_shader_exporter(
 
 	if( atmosphere_path.length() > 0 )
 	{
-		VOP_Node *atmosphere_shader =
-			exporter::resolve_material_path( r3, atmosphere_path.c_str() );
+		VOP_Node *mats[3] = { nullptr };
+		exporter::resolve_material_path( r3, atmosphere_path.c_str(), mats );
 
+		VOP_Node *atmosphere_shader = mats[2]; // volume
 		if( atmosphere_shader )
 		{
 			std::unordered_set<std::string> mat;

@@ -92,20 +92,14 @@ void incandescence_light::connect() const
 		UT_String mat_path;
 		obj_node->evalString(mat_path, "shop_materialpath", 0, time);
 
-		VOP_Node *surface = nullptr;
-		VOP_Node* vop_node = resolve_material_path(
-			obj_node, mat_path, &surface);
-		if( !vop_node )
+		VOP_Node *mats[3] = { nullptr };
+		resolve_material_path( obj_node, mat_path, mats );
+
+		VOP_Node *surface = mats[0];
+		if( !surface )
 			continue;
 
-		/*
-			In the case of a material builder, vop_node might contain dlTerminal
-			which doesn't have any capabilities. So we need the attached
-			surface shader (e.g. Pincipled) to connect to.
-		*/
-		DlShaderInfo* shader_info = library.get_shader_info(
-			surface ? surface : vop_node );
-
+		DlShaderInfo* shader_info = library.get_shader_info( surface );
 		if( !shader_info )
 			continue;
 
@@ -114,11 +108,11 @@ void incandescence_light::connect() const
 			&& m_context.object_displayed(*obj_node))
 		{
 			m_nsi.SetAttribute(
-				vop::handle(*vop_node, m_context),
+				vop::handle(*surface, m_context),
 				NSI::ColorArg(k_incandescence_multiplier,
 					incandescenceColor));
 
-			m_current_multipliers.push_back( vop::handle(*vop_node, m_context) );
+			m_current_multipliers.push_back( vop::handle(*surface, m_context) );
 
 			m_nsi.Connect(
 				geometry::handle(*obj_node, m_context), "",

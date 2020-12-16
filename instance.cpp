@@ -149,15 +149,23 @@ void instance::connect( void ) const
 		m_nsi.Connect( merge_h, "", m_handle, "sourcemodels",
 			NSI::IntegerArg( "index", modelindex ) );
 
-		const VOP_Node* material = merge.second;
-		if( material )
+		auto materials = merge.second;
+		const char *names[3] = { "surface", "displacement", "volume" };
+
+		for( int i=0; i<3; i++ )
 		{
+			VOP_Node *material = materials[i];
+			if( !material )
+				continue;
+
+			// FIXME: use vop::is_texture
+
 			std::string attribute_handle = merge_h + "|attribute";
 			m_nsi.Create( attribute_handle, "attributes" );
 			m_nsi.Connect( attribute_handle, "", merge_h, "geometryattributes");
 			m_nsi.Connect(
 				vop::handle(*material, m_context), "",
-				attribute_handle, "surfaceshader",
+				attribute_handle, names[i],
 				(
 					NSI::IntegerArg("priority", 2),
 					NSI::IntegerArg("strength", 1)
@@ -382,11 +390,19 @@ void instance::set_attributes_at_time(
 
 std::string instance::merge_handle(const merge_point& i_merge_point) const
 {
-	VOP_Node* node = i_merge_point.second;
+	auto mats = i_merge_point.second;
+
+	std::string mats_handle;
+	for( int i=0; i<3; i++ )
+	{
+		if( mats[i] )
+			mats_handle += vop::handle( *mats[i], m_context );
+	}
+
 	return
 		m_handle +
 		"|" + i_merge_point.first +
-		"|" + (node ? vop::handle(*node, m_context) : std::string()) +
+		"|" + mats_handle +
 		"|merge";
 }
 
@@ -442,9 +458,9 @@ void instance::get_merge_points(
 			I = k_procedural_prefix + I;
 		}
 
-		VOP_Node* vop = resolve_material_path(m_object, M.c_str());
-
-		merge_point m(I, vop);
+		merge_point m;
+		m.first = I;
+		resolve_material_path( m_object, M.c_str(), m.second );
 
 		if( o_uniqued.find(m) == o_uniqued.end() )
 			o_uniqued[m] = 0;

@@ -18,6 +18,9 @@ namespace
 {
 	const std::string k_position_attribute = "P";
 	const std::string k_velocity_attribute = "v";
+	const char *k_shader_slot_names[3] =
+		{ "surfaceshader", "displacementshader", "volumeshader" };
+
 }
 
 primitive::primitive(
@@ -262,7 +265,7 @@ bool primitive::has_velocity_blur( void ) const
 	both SOP-level and OBJ-level shaders as both could be used
 	at the same time.
 */
-void primitive::export_bind_attributes( OP_Node *i_obj_level_material ) const
+void primitive::export_bind_attributes( VOP_Node *i_obj_level_material[3] ) const
 {
 	GT_DataArrayHandle i_vertices_list;
 	GT_Primitive *primitive = default_gt_primitive().get();
@@ -288,8 +291,13 @@ void primitive::export_bind_attributes( OP_Node *i_obj_level_material ) const
 		for (int i = 0; i < mats.entries(); i++)
 		{
 			std::string m( mats[i] );
-			VOP_Node *vop = resolve_material_path( m.c_str() );
-			to_scan.push_back( vop );
+			VOP_Node *mats[3] = { nullptr };
+			resolve_material_path( m.c_str(), mats );
+			for( int i=0; i<3; i++ )
+			{
+				if( mats[i] )
+					to_scan.push_back( mats[i] );
+			}
 		}
 	}
 
@@ -298,7 +306,14 @@ void primitive::export_bind_attributes( OP_Node *i_obj_level_material ) const
 		assignments.
 	*/
 	if( i_obj_level_material )
-		to_scan.push_back(i_obj_level_material);
+	{
+		if( i_obj_level_material[0] )
+			to_scan.push_back( i_obj_level_material[0] ); // Surface
+		if( i_obj_level_material[1] )
+			to_scan.push_back( i_obj_level_material[1] ); // Displaement
+		if( i_obj_level_material[2] )
+			to_scan.push_back( i_obj_level_material[2] ); // Volume
+	}
 
 	std::vector< std::string > binds;
 	get_bind_attributes( to_scan, binds );
@@ -390,10 +405,14 @@ void primitive::get_all_material_paths(
 
 	for( int i=0; i<mats.entries() ; i++ )
 	{
-		VOP_Node* vop = resolve_material_path( mats[i].c_str() );
+		VOP_Node* vops[3] = { nullptr };
+		resolve_material_path( mats[i].c_str(), vops );
 
-		if( vop )
-			o_materials.insert( vop->getFullPath().toStdString() );
+		for( int i=0; i<3; i++ )
+		{
+			if( vops[i] )
+				o_materials.insert( vops[i]->getFullPath().toStdString() );
+		}
 	}
 }
 
@@ -426,29 +445,32 @@ void primitive::assign_sop_materials( void ) const
 		*/
 		std::string shop( materials->getS(0) );
 
-		VOP_Node* vop = resolve_material_path(m_object, shop.c_str());
-		if(vop)
+		VOP_Node* mats[3] = {nullptr};
+		resolve_material_path(m_object, shop.c_str(), mats );
+		for( int i=0; i<3; i++ )
 		{
+			VOP_Node *vop = mats[i];
+			if( !vop )
+				continue;
+
 			std::string vop_handle = vop::handle(*vop, m_context);
 			std::string attribute_handle = m_handle + "|" + vop_handle;
-
 			m_nsi.Create( attribute_handle, "attributes" );
 
 			geometry::update_materials_mapping(vop, m_context, m_object);
-			if (geometry::is_texture(vop))
+			if( vop::is_texture(vop) )
 			{
 				geometry::connect_texture(vop , m_object, m_context, attribute_handle);
 			}
-
 			else
 			{
 				m_nsi.Connect(
 					vop_handle, "",
-					attribute_handle, "surfaceshader",
+					attribute_handle, k_shader_slot_names[i],
 					(
 						NSI::IntegerArg("priority", 1),
 						NSI::IntegerArg("strength", 1)
-						));
+					) );
 			}
 
 			m_nsi.Connect(attribute_handle, "", m_handle, "geometryattributes" );
@@ -474,45 +496,51 @@ void primitive::assign_sop_materials( void ) const
 	for( auto material : all_materials )
 	{
 		const std::string &m = material.first;
-		VOP_Node* V = resolve_material_path(m_object, m.c_str());
-		if( !V )
+		VOP_Node* mats[3];
+		resolve_material_path( m_object, m.c_str(), mats );
+
+		for( int i=0; i<3; i++ )
 		{
-			/* Will be dealt with by OBJ-level assignments */
-			continue;
-		}
+			VOP_Node *V = mats[i];
 
-		std::string vop_handle = vop::handle(*V, m_context);
-		std::string attribute_handle = m_handle + "|" + vop_handle;
-		std::string set_handle = attribute_handle + "|set";
+			if( !V )
+			{
+				/* Will be dealt with by OBJ-level assignments */
+				continue;
+			}
 
-		m_nsi.Create( attribute_handle, "attributes" );
-		m_nsi.Create( set_handle, "faceset" );
+			std::string vop_handle = vop::handle(*V, m_context);
+			std::string attribute_handle = m_handle + "|" + vop_handle;
+			std::string set_handle = attribute_handle + "|set";
 
-		geometry::update_materials_mapping(V, m_context, m_object);
-		if (geometry::is_texture(V))
-		{
-			geometry::connect_texture(V, m_object, m_context, attribute_handle);
-		}
+			m_nsi.Create( attribute_handle, "attributes" );
+			m_nsi.Create( set_handle, "faceset" );
 
-		else
-		{
-			m_nsi.Connect(
-				vop_handle, "",
-				attribute_handle, "surfaceshader",
-				NSI::IntegerArg("strength", 1));
-		}
+			geometry::update_materials_mapping(V, m_context, m_object);
+			if( vop::is_texture(V) )
+			{
+				geometry::connect_texture(V, m_object, m_context, attribute_handle);
+			}
+			else
+			{
+				m_nsi.Connect(
+						vop_handle, "",
+						attribute_handle, "surfaceshader",
+						NSI::IntegerArg("strength", 1));
+			}
 
-		m_nsi.Connect( attribute_handle, "", set_handle, "geometryattributes" );
-		m_nsi.Connect( set_handle, "", m_handle, "facesets" );
+			m_nsi.Connect( attribute_handle, "", set_handle, "geometryattributes" );
+			m_nsi.Connect( set_handle, "", m_handle, "facesets" );
 
-		// This attribute may already have been exported in a previous frame
-		if(static_nsi.Handle() != NSI_BAD_CONTEXT)
-		{
-			static_nsi.SetAttribute( set_handle,
-				*NSI::Argument( "faces" )
-					.SetType( NSITypeInteger )
-					->SetCount( material.second.size() )
-					->SetValuePointer( &material.second[0] ) );
+			// This attribute may already have been exported in a previous frame
+			if(static_nsi.Handle() != NSI_BAD_CONTEXT)
+			{
+				static_nsi.SetAttribute( set_handle,
+						*NSI::Argument( "faces" )
+						.SetType( NSITypeInteger )
+						->SetCount( material.second.size() )
+						->SetValuePointer( &material.second[0] ) );
+			}
 		}
 	}
 }

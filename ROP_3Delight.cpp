@@ -1013,13 +1013,15 @@ void ROP_3Delight::ExportTransparentSurface(const context& i_ctx) const
 void
 ROP_3Delight::ExportAtmosphere(const context& i_ctx, bool ipr_update)
 {
-	VOP_Node* atmo_vop =
-		exporter::resolve_material_path(
-			this,
-			m_settings.GetAtmosphere(i_ctx.m_current_time).c_str());
+	VOP_Node *mats[3] = { nullptr };
+	exporter::resolve_material_path(
+		this,
+		m_settings.GetAtmosphere(i_ctx.m_current_time).c_str(),
+		mats );
 
 	std::string env_handle = "atmosphere|environment";
 
+	VOP_Node *atmo_vop = mats[2]; // volume
 	if(!atmo_vop)
 	{
 		if(ipr_update)

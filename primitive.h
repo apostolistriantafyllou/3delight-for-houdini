@@ -117,7 +117,7 @@ protected:
 		We use the word bind here quiet liberaely as we don't really support
 		bind. We use dlAttributeRead.
 	*/
-	void export_bind_attributes( OP_Node *i_obj_level_material ) const;
+	void export_bind_attributes( VOP_Node *i_obj_level_materials[3] ) const;
 
 	/**
 		Return all the materials needed by this geometry.

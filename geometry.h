@@ -78,7 +78,6 @@ public:
 
 	/// Deletes the NSI nodes associated to Houdini node i_node.
 	static void Delete(OBJ_Node& i_node, const context& i_context);
-	static bool is_texture(VOP_Node* shader);
 
 	static void update_materials_mapping(
 		VOP_Node*& i_shader,
@@ -94,17 +93,10 @@ public:
 private:
 
 	/**
-		\brief Returns the material assigned to this geometry, either as an OBJ
-		property or as a detail attribute.
-
-		\param o_path
-			Will contain the path of the assigned shader on successful
-			run
-
-		If successful, returns the pointer to the VOP node. Note that primitive
-		level assignments are done in each sepcific exporter.
+		\brief Returns materials (surface, displacement, volume) assigned to
+		this geometr as an OBJ property.
 	*/
-	VOP_Node *get_assigned_material( std::string &o_path ) const;
+	void get_assigned_materials( VOP_Node *o_materials[3] ) const;
 
 	/**
 		\brief When this geometry is used as an NSI space override.

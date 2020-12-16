@@ -79,10 +79,10 @@ public:
 	/**
 		\brief Resolves the [relative] material path to a VOP node.
 	*/
-	static VOP_Node *resolve_material_path(
+	static void resolve_material_path(
 		OP_Node* i_relative_path_root,
 		const char *i_path,
-		VOP_Node **o_surface = nullptr );
+		VOP_Node *o_materials[3] = nullptr );
 
 protected:
 
@@ -113,10 +113,10 @@ protected:
 		double i_time,
 		GT_DataArrayHandle i_vertices_list = GT_DataArrayHandle()) const;
 
-	VOP_Node *resolve_material_path(
-		const char *i_path, VOP_Node **o_surface = nullptr ) const
+	void resolve_material_path(
+		const char *i_path, VOP_Node **o_materials ) const
 	{
-		return resolve_material_path(m_object, i_path, o_surface );
+		resolve_material_path(m_object, i_path, o_materials );
 	}
 
 	/**

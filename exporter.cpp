@@ -244,14 +244,19 @@ void exporter::export_attributes(
 	return; // so that we don't fall into the void.
 }
 
-VOP_Node *exporter::resolve_material_path(
+void exporter::resolve_material_path(
 	OP_Node *i_relative_path_root, const char *i_path,
-	VOP_Node **o_surface )
+	VOP_Node *o_materials[3] )
 {
-	if(!i_path || !i_path[0])
+	assert( i_path );
+	assert( o_materials );
+
+	if(!i_path || !i_path[0] || !o_materials)
 	{
-		return nullptr;
+		return;
 	}
+
+	o_materials[0] = o_materials[1] = o_materials[2] = nullptr;
 
 	OP_Node* op_node = OPgetDirector()->findNode( i_path );
 	VOP_Node *vop_node = nullptr;
@@ -268,17 +273,35 @@ VOP_Node *exporter::resolve_material_path(
 	}
 
 	/*
-		If the material is actually a 3Delight MaterialBuilder, use its "main
-		material" instead so the builders is kept out of the export logic.
+		If the material is actually a 3Delight MaterialBuilder, use its
+		materials instead so the builders is kept out of the export logic.
 	*/
 	VOP_3DelightMaterialBuilder* builder =
 		dynamic_cast<VOP_3DelightMaterialBuilder*>(vop_node);
-	if(builder)
-	{
-		vop_node = builder->get_material( o_surface );
-	}
 
-	return vop_node;
+	if( builder )
+	{
+		/*
+			The Material builder will use the intput type to determine
+			which kind of meterial this is.
+		*/
+		builder->get_materials( o_materials );
+	}
+	else
+	{
+		/*
+			Use shader's tag to determine if this is a surface, displcement
+			or volume. Patterns/textures are assigned to the surface slot as
+			this allow the material debugging feature.
+		*/
+		vop::osl_type stype = vop::shader_type( vop_node );
+		if( stype == vop::osl_type::e_surface || stype == vop::osl_type::e_other )
+			o_materials[0] = vop_node;
+		else if( stype == vop::osl_type::e_displacement )
+			o_materials[1] = vop_node;
+		if( stype == vop::osl_type::e_volume )
+			o_materials[2] = vop_node;
+	}
 }
 
 /**

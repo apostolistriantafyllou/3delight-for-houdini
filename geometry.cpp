@@ -540,37 +540,15 @@ void geometry::create()const
 
 void geometry::set_attributes()const
 {
-	std::string dummy;
-	OP_Node *vop = get_assigned_material( dummy );
+	VOP_Node *vops[3] = { nullptr, nullptr, nullptr };
+	get_assigned_materials( vops );
 
 	for(primitive* p : m_primitives)
 	{
 		p->set_attributes();
-		p->export_bind_attributes( vop );
+		p->export_bind_attributes( vops );
 	}
 }
-
-bool geometry::is_texture(VOP_Node* shader)
-{
-	std::string mat_path = vop::shader_path(shader);
-	const shader_library& library = shader_library::get_instance();
-
-	DlShaderInfo* shader_info = library.get_shader_info(mat_path.c_str());
-	std::vector< std::string > shader_tags;
-	osl_utilities::get_shader_tags(*shader_info, shader_tags);
-
-	//Check if the attached material is a texture shader or not.
-	for (const auto& tag : shader_tags)
-	{
-		if (tag == "texture/2d" || tag == "texture/3d")
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-
 
 void geometry::update_materials_mapping(
 	VOP_Node*& i_shader,
@@ -669,33 +647,45 @@ void geometry::connect()const
 
 		\see polygonmesh for primitive attribute assignment on polygonal faces
 	*/
-	std::string material_path;
-	VOP_Node* mat = get_assigned_material(material_path);
-	if( !mat )
-		return;
+	VOP_Node* mats[3] = { nullptr, nullptr, nullptr };
+	get_assigned_materials( mats );
 
 	m_nsi.Create( attributes_handle(), "attributes" );
 	m_nsi.Connect(
 		attributes_handle(), "",
 		hub_handle(), "geometryattributes" );
 
-	update_materials_mapping(mat, m_context, m_object);
-	/*
-		Connect a passthrough shader if the attached material on the geometry is
-		not a surface shader. This would make it possible to render a connected
-		texture to iDisplay. This is needed when you want to debug the scene.
-	*/
-	if (is_texture(mat))
+	const char *slots[3] =
 	{
-		connect_texture(mat, m_object, m_context, attributes_handle());
-	}
+		"surfaceshader",
+		"displacementshader",
+		"volumeshader"
+	};
 
-	else
+	for( int i=0; i<3; i++ )
 	{
-		m_nsi.Connect(
-			vop::handle(*mat, m_context), "",
-			attributes_handle(), volume ? "volumeshader" : "surfaceshader",
-			NSI::IntegerArg("strength", 1));
+		if( !mats[i] )
+			continue;
+
+		update_materials_mapping( mats[i], m_context, m_object );
+
+		/*
+			Connect a passthrough shader if the attached material on the
+			geometry is not a surface shader. This would make it possible to
+			render a connected texture to iDisplay. This is needed when you
+			want to debug the scene.
+		*/
+		if( i==0 && vop::is_texture(mats[i]) )
+		{
+			connect_texture(mats[i], m_object, m_context, attributes_handle());
+		}
+		else
+		{
+			m_nsi.Connect(
+				vop::handle(*mats[i], m_context), "",
+				attributes_handle(), slots[i],
+				NSI::IntegerArg("strength", 1));
+		}
 	}
 	export_override_attributes();
 }
@@ -900,13 +890,14 @@ void geometry::export_override_attributes() const
 
 		if( override_surface_shader )
 		{
-			std::string material;
-			VOP_Node* vop_node = get_assigned_material( material );
+			VOP_Node* mats[3];
+			get_assigned_materials( mats );
+			VOP_Node *vop_node = mats[0];
 			if(vop_node)
 			{
 				geometry::update_materials_mapping(vop_node, m_context, m_object);
 
-				if (is_texture(vop_node))
+				if (vop::is_texture(vop_node))
 				{
 					connect_texture(vop_node, m_object, m_context, override_nsi_handle);
 				}
@@ -943,11 +934,12 @@ void geometry::get_instances( std::vector<const instance *> &o_instances ) const
 	}
 }
 
-VOP_Node *geometry::get_assigned_material( std::string &o_path ) const
+void geometry::get_assigned_materials(
+	VOP_Node *o_materials[3] ) const
 {
 	int index = m_object->getParmIndex( "shop_materialpath" );
 	if( index < 0 )
-		return nullptr;
+		return;
 
 	UT_String material_path;
 	m_object->evalString(
@@ -955,16 +947,10 @@ VOP_Node *geometry::get_assigned_material( std::string &o_path ) const
 
 	if( material_path.length()==0 )
 	{
-		return nullptr;
+		return;
 	}
 
-	VOP_Node* vop = resolve_material_path( material_path.c_str() );
-	if(vop)
-	{
-		o_path = vop->getFullPath();
-	}
-
-	return vop;
+	resolve_material_path( material_path.c_str(), o_materials );
 }
 
 /**
@@ -978,10 +964,13 @@ void geometry::get_all_material_paths(
 		P->get_all_material_paths( o_materials );
 	}
 
-	std::string obj_mat;
-	get_assigned_material( obj_mat );
+	VOP_Node *mats[3];
+	get_assigned_materials( mats );
 
-	o_materials.insert( obj_mat );
+	for( int i=0; i<3; i++ )
+	{
+		o_materials.insert( mats[i]->getFullPath().toStdString() );
+	}
 }
 
 /**
