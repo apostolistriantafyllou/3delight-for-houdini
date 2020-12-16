@@ -480,7 +480,7 @@ public:
 	int id()const { return viewport().getUniqueId(); }
 
 	/// Returns the image buffer displayed by the viewport hook
-	hook_image_buffer* buffer() { return m_image_buffer; }
+	hook_image_buffer* buffer();
 
 private:
 
@@ -641,6 +641,7 @@ viewport_hook::render(
 	return true;
 }
 
+
 OBJ_Camera*
 viewport_hook::get_camera()
 {
@@ -648,6 +649,21 @@ viewport_hook::get_camera()
 	VPortAgentCameraAccessor* cam = new VPortAgentCameraAccessor(vp);
 	return cam->m_active_camera;
 }
+
+
+hook_image_buffer*
+viewport_hook::buffer()
+{
+	m_mutex.lock();
+	if(!m_image_buffer)
+	{
+		m_image_buffer = new hook_image_buffer(this);
+	}
+	m_mutex.unlock();
+
+	return m_image_buffer;
+}
+
 
 double
 viewport_hook_builder::active_vport_camera_shutter()
@@ -686,9 +702,6 @@ viewport_hook::connect(NSI::Context* io_nsi)
 	assert(!m_nsi);
 	m_nsi = io_nsi;
 	
-	assert(!m_image_buffer);
-	m_image_buffer = new hook_image_buffer(this);
-
 	m_mutex.unlock();
 
 	DM_VPortAgent& vp = viewport();
