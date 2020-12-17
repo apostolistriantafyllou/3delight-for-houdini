@@ -969,7 +969,8 @@ void geometry::get_all_material_paths(
 
 	for( int i=0; i<3; i++ )
 	{
-		o_materials.insert( mats[i]->getFullPath().toStdString() );
+		if( mats[i] )
+			o_materials.insert( mats[i]->getFullPath().toStdString() );
 	}
 }
 
