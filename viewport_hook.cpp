@@ -117,6 +117,14 @@ private:
 	*/
 	void clear_pixels();
 
+	/**
+		\brief Updates the viewport at regular intervals.
+		
+		This function returns when the reference count becomes 0, so it's meant
+		to be called from a separate thread.
+	*/
+	void update_viewport_loop();
+	
 	/*
 		Pointer to the Scene Render Hook that needs to be refreshed when the
 		image is updated.
@@ -185,7 +193,7 @@ hook_image_buffer::open(int i_width, int i_height)
 	clear_pixels();
 
 	/*
-		Start a thread that updates the view at most 20 times per second.
+		Start a thread that updates the view at regular intervals.
 		This avoids refreshing on each bucket, which might be costly, especially
 		since requesting a refresh appears to be requiring a big lock.
 
@@ -195,29 +203,7 @@ hook_image_buffer::open(int i_width, int i_height)
 	std::thread(
 		[this]()
 		{
-			unsigned timestamp = m_timestamp;
-			while(m_reference_count > 0)
-			{
-				if(timestamp < m_timestamp)
-				{
-					/*
-						FIXME : We should find a way to call requestDraw without
-						using a global lock.
-					*/
-					HOM_AutoLock hom_lock;
-
-					m_mutex.lock();
-					if(m_hook)
-					{
-						m_hook->viewport().requestDraw();
-						timestamp = m_timestamp;
-					}
-					m_mutex.unlock();
-				}
-
-				std::this_thread::sleep_for(k_refresh_interval);
-			}
-
+			update_viewport_loop();
 			delete this;
 		} ).detach();
 
@@ -272,6 +258,33 @@ hook_image_buffer::clear_pixels()
 	assert(m_pixels);
 	memset(m_pixels, 0, m_width*m_height*sizeof(UT_RGBA));
 	m_timestamp++;
+}
+
+void
+hook_image_buffer::update_viewport_loop()
+{
+	unsigned timestamp = m_timestamp;
+	while(m_reference_count > 0)
+	{
+		if(timestamp < m_timestamp)
+		{
+			/*
+				FIXME : We should find a way to call requestDraw without
+				using a global lock.
+			*/
+			HOM_AutoLock hom_lock;
+
+			m_mutex.lock();
+			if(m_hook)
+			{
+				m_hook->viewport().requestDraw();
+				timestamp = m_timestamp;
+			}
+			m_mutex.unlock();
+		}
+
+		std::this_thread::sleep_for(k_refresh_interval);
+	}
 }
 
 
