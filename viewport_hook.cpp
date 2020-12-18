@@ -77,6 +77,14 @@ struct hook_image_buffer
 	*/
 	size_t line_offset()const { return m_width*sizeof(UT_RGBA); }
 
+	/**
+		\brief Makes all pixels transparent.
+
+		This makes the image disappear from the viewport without having to free
+		the pixels memory.
+	*/
+	void clear_pixels();
+
 	// Display driver interface
 
 	/**
@@ -112,16 +120,6 @@ private:
 
 	/// Destructor.
 	~hook_image_buffer();
-
-	/**
-		\brief Makes all pixels transparent.
-
-		This makes the image disappear from the viewport without having to free
-		the pixels memory when they're not needed anymore : since it could still
-		be in use by the render hook, it would require synchronization at each
-		access.
-	*/
-	void clear_pixels();
 
 	/**
 		\brief Updates the viewport at regular intervals.
@@ -215,13 +213,15 @@ hook_image_buffer::open(int i_width, int i_height)
 		return false;
 	}
 
-	assert(!m_pixels);
+	assert(!m_pixels || (m_width == i_width && m_height == i_height));
+	if(!m_pixels)
+	{
+		m_width = i_width;
+		m_height = i_height;
 
-	m_width = i_width;
-	m_height = i_height;
-
-	m_pixels = new UT_RGBA[m_width*m_height];
-	clear_pixels();
+		m_pixels = new UT_RGBA[m_width*m_height];
+		clear_pixels();
+	}
 
 	m_mutex.unlock();
 
@@ -502,9 +502,11 @@ private:
 	std::string camera_handle()const;
 	/// Returns the NSI handle for the camera transform node
 	std::string camera_transform_handle()const;
+	/// Returns the NSI handle for the screen node
+	std::string screen_handle()const;
 
 	/**
-		\bref Exports the NSI camera and its transform.
+		\brief Exports the NSI camera and its transform.
 
 		\param i_view
 			The viewing parameters that describe the camera.
@@ -516,6 +518,21 @@ private:
 		GUI_ViewParameter& i_view,
 		OBJ_Camera* active_camera,
 		bool i_synchronize)const;
+	/**
+		\brief Exports the NSI screen.
+
+		\param i_view
+			The viewing parameters that describe the geometry of the view.
+		\param i_active_camera
+			The camera node associated to the viewport, if any.
+		\param i_synchronize
+			True if the function is called once rendering has started, and any
+			edit requires sending a "synchronize" action to NSIRenderControl.
+	*/
+	void export_screen_attributes(
+		GUI_ViewState& i_view,
+		OBJ_Camera* i_active_camera,
+		bool i_synchronize);
 
 	// Used to synchronize open(), close(), connect() and disconnect().
 	std::mutex m_mutex;
@@ -530,6 +547,8 @@ private:
 	// Cache for previously sent camera attributes. Avoids redundant updates.
 	mutable viewport_camera m_last_camera;
 	mutable UT_Matrix4D m_last_camera_transform{1.0};
+	mutable int m_last_resolution[2]{0, 0};
+	mutable double m_last_screen_window[4]{0.0, 0.0, 0.0, 0.0};
 };
 
 
@@ -568,6 +587,8 @@ viewport_hook::render(
 	{
 		VPortAgentCameraAccessor cam(vp);
 		export_camera_attributes(view, cam.m_active_camera, true);
+
+		export_screen_attributes(vs, cam.m_active_camera, true);
 	}
 
 	/*
@@ -738,20 +759,17 @@ viewport_hook::connect(NSI::Context* io_nsi)
 	std::string prefix = handle_prefix();
 	std::string camera_type = "perspectivecamera";
 
-	double time =
-		OPgetDirector()->getChannelManager()->getEvaluateTime(SYSgetSTID());
-	double screen_w[4];
-
 	OBJ_Camera* active_camera = get_camera();
 	if (active_camera)
 	{
+		double time =
+			OPgetDirector()->getChannelManager()->getEvaluateTime(SYSgetSTID());
 		UT_String projection;
 		active_camera->evalString(projection, "projection", 0, time);
 		if (projection.toStdString() == "ortho")
 		{
 			camera_type = "orthographiccamera";
 		}
-		camera::get_screen_window(screen_w, *active_camera, time, true);
 	}
 
 	// Export camera
@@ -766,28 +784,9 @@ viewport_hook::connect(NSI::Context* io_nsi)
 	export_camera_attributes(view, active_camera, false);
 
 	// Export screen
-	int resolution[2] = { vs.getViewWidth(), vs.getViewHeight() };
-	std::string screen = prefix + "screen";
+	std::string screen = screen_handle();
 	m_nsi->Create(screen, "screen");
-	m_nsi->SetAttribute(
-		screen,
-		(
-			*NSI::Argument("resolution").
-				SetArrayType(NSITypeInteger, 2)->
-				SetValuePointer(resolution),
-			NSI::IntegerArg("oversampling", 16)
-		) );
-
-	if (active_camera)
-	{
-		m_nsi->SetAttribute(
-			screen,
-			*NSI::Argument("screenwindow").
-			SetArrayType(NSITypeDouble, 2)
-			->SetCount(2)
-			->SetValuePointer(screen_w));
-	}
-
+	export_screen_attributes(vs, active_camera, false);
 	m_nsi->Connect(screen, "", camera, "screens");
 
 	// Export 8-bit Ci layer
@@ -841,7 +840,9 @@ viewport_hook::disconnect()
 
 	m_last_camera = viewport_camera();
 	m_last_camera_transform = UT_Matrix4D(1.0);
-	
+	memset(m_last_resolution, 0, sizeof(m_last_resolution));
+	memset(m_last_screen_window, 0, sizeof(m_last_screen_window));
+
 	m_mutex.unlock();
 	
 	// Restore the viewport to its regular appearance
@@ -867,6 +868,13 @@ std::string
 viewport_hook::camera_transform_handle()const
 {
 	return handle_prefix() + "camera_transform";
+}
+
+
+std::string
+viewport_hook::screen_handle()const
+{
+	return handle_prefix() + "screen";
 }
 
 
@@ -914,6 +922,71 @@ viewport_hook::export_camera_attributes(
 	}
 }
 
+
+void
+viewport_hook::export_screen_attributes(
+	GUI_ViewState& i_view,
+	OBJ_Camera* i_active_camera,
+	bool i_synchronize)
+{
+	assert(m_nsi);
+
+	bool updated = false;
+
+	int resolution[2] = { i_view.getViewWidth(), i_view.getViewHeight() };
+	if(m_last_resolution[0] != resolution[0] ||
+		m_last_resolution[1] != resolution[1])
+	{
+		m_nsi->SetAttribute(
+			screen_handle(),
+			(
+				*NSI::Argument("resolution").
+					SetArrayType(NSITypeInteger, 2)->
+					SetValuePointer(resolution),
+				NSI::IntegerArg("oversampling", 16)
+			) );
+		m_last_resolution[0] = resolution[0];
+		m_last_resolution[1] = resolution[1];
+
+		// We will need a new image with the proper resolution
+		m_image_buffer.reset();
+
+		updated = true;
+	}
+
+	double screen_w[4] = { 0.0, 0.0, 0.0, 0.0 };
+	if(i_active_camera)
+	{
+		double time =
+			OPgetDirector()->getChannelManager()->getEvaluateTime(SYSgetSTID());
+		camera::get_screen_window(screen_w, *i_active_camera, time, true);
+	}
+	if(memcmp(m_last_screen_window, screen_w, sizeof(screen_w)) != 0)
+	{
+		if(i_active_camera)
+		{
+			m_nsi->SetAttribute(
+				screen_handle(),
+				*NSI::Argument("screenwindow").
+				SetArrayType(NSITypeDouble, 2)
+				->SetCount(2)
+				->SetValuePointer(screen_w));
+		}
+		else
+		{
+			m_nsi->DeleteAttribute(screen_handle(), "screenwindow");
+		}
+
+		memcpy(m_last_screen_window, screen_w, sizeof(screen_w));
+	
+		updated = true;
+	}
+	
+	if(updated && i_synchronize)
+	{
+		m_nsi->RenderControl(NSI::CStringPArg("action", "synchronize"));
+	}
+}
 
 
 // 3Delight display driver implementation.
