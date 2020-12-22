@@ -937,6 +937,8 @@ void geometry::get_instances( std::vector<const instance *> &o_instances ) const
 void geometry::get_assigned_materials(
 	VOP_Node *o_materials[3] ) const
 {
+	o_materials[2] = o_materials[1] = o_materials[0] = nullptr;
+	
 	int index = m_object->getParmIndex( "shop_materialpath" );
 	if( index < 0 )
 		return;
