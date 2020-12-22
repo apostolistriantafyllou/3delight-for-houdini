@@ -132,7 +132,7 @@ private:
 		use_count and have it delete the buffer.
 	*/
 	static void update_viewport_loop(
-		std::shared_ptr<hook_image_buffer> i_buffer);
+		std::shared_ptr<hook_image_buffer>& i_buffer);
 	
 	/*
 		Pointer to the Scene Render Hook that needs to be refreshed when the
@@ -172,23 +172,28 @@ hook_image_buffer::connect(DM_SceneRenderHook* i_hook)
 		It also has the responsibility of deleting the image buffer once neither
 		the render hook nor the display driver have a reference to it.
 		
-		Technical note : we use std::bind to pass the "buffer" parameter to the
-		lambda function instead of simply capturing the local variable because
-		doing so resulted in a const "buffer" variable inside the lambda
-		function (which was strange since it's supposed to be a copy).
+		Technical note : we pass a newly allocated copy of the "buffer"
+		shared_ptr to the lambda function so it could be destroyed at any time
+		by the thread and no temporary copy lingers on. That's the same reason
+		why update_viewport_loop receives its parameter by reference. We also
+		can't pass a reference to the local "buffer" variable to the thread
+		since the connect function might return before the thread has a chance
+		to copy it.
 	*/
+	std::shared_ptr<hook_image_buffer>* new_buffer =
+		new std::shared_ptr<hook_image_buffer>(buffer);
 	std::thread(
-		std::bind(
-			[](std::shared_ptr<hook_image_buffer> i_buffer)
-			{
-				assert(i_buffer.use_count() >= 1);
-				update_viewport_loop(i_buffer);
-				assert(i_buffer.use_count() == 1);
+		[new_buffer]()
+		{
+			std::shared_ptr<hook_image_buffer> i_buffer = *new_buffer;
+			delete new_buffer;
+			assert(i_buffer.use_count() >= 1);
+			update_viewport_loop(i_buffer);
+			assert(i_buffer.use_count() == 1);
 
-				// Will delete the buffer
-				i_buffer.reset();
-			},
-			buffer) ).detach();
+			// Will delete the buffer
+			i_buffer.reset();
+		} ).detach();
 
 	return buffer;
 }
@@ -273,7 +278,7 @@ hook_image_buffer::clear_pixels()
 
 void
 hook_image_buffer::update_viewport_loop(
-	std::shared_ptr<hook_image_buffer> i_buffer)
+	std::shared_ptr<hook_image_buffer>& i_buffer)
 {
 	unsigned timestamp = i_buffer->m_timestamp;
 	while(i_buffer.use_count() > 1)
@@ -949,7 +954,11 @@ viewport_hook::export_screen_attributes(
 		m_last_resolution[1] = resolution[1];
 
 		// We will need a new image with the proper resolution
-		m_image_buffer.reset();
+		if(m_image_buffer)
+		{
+			m_image_buffer->disconnect();
+			m_image_buffer.reset();
+		}
 
 		updated = true;
 	}
