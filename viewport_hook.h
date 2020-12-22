@@ -7,7 +7,7 @@
 #include <mutex>
 
 class viewport_hook;
-class hook_image_buffer;
+struct hook_image_buffer;
 
 /// Scene hook that allows 3Delight rendering directly into Houdini viewports
 class viewport_hook_builder : public DM_SceneHook
