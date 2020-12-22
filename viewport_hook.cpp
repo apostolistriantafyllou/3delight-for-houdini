@@ -566,8 +566,8 @@ viewport_hook::render(
 
 	if(m_nsi)
 	{
-		VPortAgentCameraAccessor* cam = new VPortAgentCameraAccessor(vp);
-		export_camera_attributes(view, cam->m_active_camera, true);
+		VPortAgentCameraAccessor cam(vp);
+		export_camera_attributes(view, cam.m_active_camera, true);
 	}
 
 	/*
@@ -667,8 +667,7 @@ OBJ_Camera*
 viewport_hook::get_camera()
 {
 	DM_VPortAgent& vp = viewport();
-	VPortAgentCameraAccessor* cam = new VPortAgentCameraAccessor(vp);
-	return cam->m_active_camera;
+	return VPortAgentCameraAccessor(vp).m_active_camera;
 }
 
 
@@ -764,8 +763,7 @@ viewport_hook::connect(NSI::Context* io_nsi)
 	m_nsi->Create(camera, camera_type);
 	m_nsi->Connect(camera, "", camera_trs, "objects");
 
-	VPortAgentCameraAccessor* cam = new VPortAgentCameraAccessor(vp);
-	export_camera_attributes(view, cam->m_active_camera, false);
+	export_camera_attributes(view, active_camera, false);
 
 	// Export screen
 	int resolution[2] = { vs.getViewWidth(), vs.getViewHeight() };
