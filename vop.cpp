@@ -768,6 +768,10 @@ vop::osl_type vop::shader_type( VOP_Node *shader )
 	const shader_library& library = shader_library::get_instance();
 
 	DlShaderInfo* shader_info = library.get_shader_info(mat_path.c_str());
+
+	if( !shader_info )
+		return osl_type::e_unknown;
+
 	std::vector< std::string > shader_tags;
 	osl_utilities::get_shader_tags(*shader_info, shader_tags);
 
