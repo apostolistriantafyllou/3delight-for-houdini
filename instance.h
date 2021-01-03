@@ -66,7 +66,7 @@ private:
 		than an OBJ node handle, since we actually instantiate previously
 		exported GT primitives.
 	*/
-	typedef std::pair<std::string, VOP_Node*[3]> merge_point;
+	typedef std::pair<std::string, VOP_Node*> merge_point;
 
 	void get_merge_points(
 		std::map<merge_point, int> &o_modelindices,

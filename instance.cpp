@@ -149,8 +149,19 @@ void instance::connect( void ) const
 		m_nsi.Connect( merge_h, "", m_handle, "sourcemodels",
 			NSI::IntegerArg( "index", modelindex ) );
 
-		auto materials = merge.second;
-		const char *names[3] = { "surface", "displacement", "volume" };
+		std::string attribute_handle = merge_h + "|attribute";
+		m_nsi.Create( attribute_handle, "attributes" );
+		m_nsi.Connect( attribute_handle, "", merge_h, "geometryattributes");
+
+		const char *names[3] =
+			{ "surfaceshader", "displacementshader", "volumeshader" };
+
+		VOP_Node *materials[3] = {nullptr};
+		if( merge.second )
+		{
+			resolve_material_path(
+				m_object, merge.second->getFullPath().c_str(), materials );
+		}
 
 		for( int i=0; i<3; i++ )
 		{
@@ -159,10 +170,6 @@ void instance::connect( void ) const
 				continue;
 
 			// FIXME: use vop::is_texture
-
-			std::string attribute_handle = merge_h + "|attribute";
-			m_nsi.Create( attribute_handle, "attributes" );
-			m_nsi.Connect( attribute_handle, "", merge_h, "geometryattributes");
 			m_nsi.Connect(
 				vop::handle(*material, m_context), "",
 				attribute_handle, names[i],
@@ -390,19 +397,11 @@ void instance::set_attributes_at_time(
 
 std::string instance::merge_handle(const merge_point& i_merge_point) const
 {
-	auto mats = i_merge_point.second;
-
-	std::string mats_handle;
-	for( int i=0; i<3; i++ )
-	{
-		if( mats[i] )
-			mats_handle += vop::handle( *mats[i], m_context );
-	}
-
+	VOP_Node* node = i_merge_point.second;
 	return
 		m_handle +
 		"|" + i_merge_point.first +
-		"|" + mats_handle +
+		"|" + (node ? vop::handle(*node, m_context) : std::string()) +
 		"|merge";
 }
 
@@ -458,9 +457,21 @@ void instance::get_merge_points(
 			I = k_procedural_prefix + I;
 		}
 
-		merge_point m;
-		m.first = I;
-		resolve_material_path( m_object, M.c_str(), m.second );
+		/*
+			Note that this one will be resolved at NSI attribute
+			creation time. Fow now, we just need the head node.
+		*/
+		OP_Node* op = OPgetDirector()->findNode( M.c_str() );
+		if( !op )
+		{
+			/*
+				Not sure one can have relative paths in SOPs ... but WHO knows
+				in Houdini right ?
+			*/
+			op = m_object->findNode( M.c_str() );
+		}
+
+		merge_point m(I, (VOP_Node *)op);
 
 		if( o_uniqued.find(m) == o_uniqued.end() )
 			o_uniqued[m] = 0;
