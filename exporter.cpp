@@ -250,10 +250,11 @@ void exporter::resolve_material_path(
 {
 	assert( i_path );
 	assert( o_materials );
+	assert( i_relative_path_root );
 
 	o_materials[0] = o_materials[1] = o_materials[2] = nullptr;
 
-	if(!i_path || !i_path[0] || !o_materials)
+	if( !i_path || !i_path[0] || !o_materials)
 	{
 		return;
 	}
@@ -267,7 +268,7 @@ void exporter::resolve_material_path(
 		vop_node = op_node->castToVOPNode();
 	}
 
-	if( !vop_node )
+	if( !vop_node && i_relative_path_root )
 	{
 		/* Try a relative search */
 		vop_node = i_relative_path_root->findVOPNode( i_path );
