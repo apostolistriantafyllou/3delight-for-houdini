@@ -287,7 +287,7 @@ void exporter::resolve_material_path(
 		*/
 		builder->get_materials( o_materials );
 	}
-	else
+	else if( vop_node )
 	{
 		/*
 			Use shader's tag to determine if this is a surface, displcement
