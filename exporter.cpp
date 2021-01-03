@@ -251,12 +251,13 @@ void exporter::resolve_material_path(
 	assert( i_path );
 	assert( o_materials );
 
+	o_materials[0] = o_materials[1] = o_materials[2] = nullptr;
+
 	if(!i_path || !i_path[0] || !o_materials)
 	{
 		return;
 	}
 
-	o_materials[0] = o_materials[1] = o_materials[2] = nullptr;
 
 	OP_Node* op_node = OPgetDirector()->findNode( i_path );
 	VOP_Node *vop_node = nullptr;
