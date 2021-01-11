@@ -137,7 +137,7 @@ void exporter::export_attributes(
 
 		GT_Owner owner;
 		GT_DataArrayHandle data = i_primitive.findAttribute( name, owner, 0 );
-		if( !data )
+		if( !data || !data->entries() )
 			continue;
 
 		int nsi_flags = owner == GT_OWNER_VERTEX ? NSIParamPerVertex : 0;
