@@ -1087,29 +1087,12 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 	if(m_idisplay_rendering)
 	{
-		if(m_current_render->m_ipr)
-		{
-			int priority[4];
-			ComputePriorityWindow(
-				priority,
-				default_resolution,
-				m_idisplay_rendering_window);
-			i_ctx.m_nsi.SetAttribute(
-				k_screen_name,
-				*NSI::Argument::New("prioritywindow")
-					->SetArrayType(NSITypeInteger, 2)
-					->SetCount(2)
-					->SetValuePointer(priority));
-		}
-		else
-		{
-			i_ctx.m_nsi.SetAttribute(
-				k_screen_name,
-				*NSI::Argument::New("crop")
-					->SetArrayType(NSITypeFloat, 2)
-					->SetCount(2)
-					->SetValuePointer(m_idisplay_rendering_window));
-		}
+		i_ctx.m_nsi.SetAttribute(
+			k_screen_name,
+			*NSI::Argument::New("crop")
+				->SetArrayType(NSITypeFloat, 2)
+				->SetCount(2)
+				->SetValuePointer(m_idisplay_rendering_window));
 	}
 	else
 	{
