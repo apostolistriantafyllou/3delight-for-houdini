@@ -255,10 +255,11 @@ void
 hook_image_buffer::update_viewport_loop(
 	std::shared_ptr<hook_image_buffer>& i_buffer)
 {
-	unsigned timestamp = i_buffer->m_timestamp;
+	unsigned refresh_timestamp = i_buffer->m_timestamp;
 	while(i_buffer.use_count() > 1)
 	{
-		if(timestamp < i_buffer->m_timestamp)
+		unsigned edit_timestamp = i_buffer->m_timestamp;
+		if(refresh_timestamp < edit_timestamp)
 		{
 			/*
 				FIXME : We should find a way to call requestDraw without
@@ -270,7 +271,7 @@ hook_image_buffer::update_viewport_loop(
 			if(i_buffer->m_hook)
 			{
 				i_buffer->m_hook->viewport().requestDraw();
-				timestamp = i_buffer->m_timestamp;
+				refresh_timestamp = edit_timestamp;
 			}
 			i_buffer->m_mutex.unlock();
 		}
