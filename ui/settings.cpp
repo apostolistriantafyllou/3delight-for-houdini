@@ -792,28 +792,37 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 
 	static PRM_Name hdk_version("hdk_version", "Built with HDK " SYS_VERSION_MAJOR "." SYS_VERSION_MINOR "." SYS_VERSION_BUILD "." SYS_VERSION_PATCH);
 	static std::string dl_version_str;
+	static std::string dl_root_str;
 	if(dl_version_str.empty())
 	{
 		NSI::DynamicAPI api;
 		const char* (*get_dl_version)();
+		const char* (*get_dl_root)();
+
 		api.LoadFunction(get_dl_version, "DlGetLibNameAndVersionString");
-		if( get_dl_version )
+		api.LoadFunction(get_dl_root, "DlGetInstallRoot");
+
+		if( get_dl_version && get_dl_root )
 		{
 			dl_version_str = std::string("Rendering with ") + get_dl_version();
+			dl_root_str = std::string("Installation root is ") + get_dl_root();
 		}
 		else
 		{
 			dl_version_str =
 				"** Installation error: unable to load 3Delight NSI library **";
+			dl_root_str = "unknown";
 		}
 	}
 
 	static PRM_Name dl_version("dl_version", dl_version_str.c_str());
+	static PRM_Name dl_root("dl_root", dl_root_str.c_str());
 
 	static std::vector<PRM_Template> debug_templates =
 	{
 		PRM_Template(PRM_LABEL, 0, &hdk_version),
-		PRM_Template(PRM_LABEL, 0, &dl_version)
+		PRM_Template(PRM_LABEL, 0, &dl_version),
+		PRM_Template(PRM_LABEL, 0, &dl_root)
 	};
 
 	// Put everything together
