@@ -1,8 +1,10 @@
 # Default script run when a geometry object is created
 # $arg1 is the name of the object to create
+# $DELIGHT_AUTOSPAREPARAMS environment variable is used to load/unload 3Delight spare parameters
+# $arg2 !="" tells us that the script will be called from the shelf button.
 
 \set noalias = 1
-if ( "$arg1" != "" ) then
+if ( "$arg1" != "" && ("$DELIGHT_AUTOSPAREPARAMS" !=0 || "$arg2"!="")) then
 # Add properties into tab 3Delight
    opproperty -f $arg1 3Delight _3dl_render_poly_as_subd
    opproperty -f $arg1 3Delight _3dl_smooth_curves
