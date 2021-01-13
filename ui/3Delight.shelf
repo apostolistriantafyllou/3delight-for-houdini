@@ -439,7 +439,7 @@ if file:
   </tool>
 
   <tool name="_3dl_display_spare_param" label="Add 3Delight Properties" icon="add_params">
-    <helpText><![CDATA[Dislay 3Delight group properties for the selected node.]]></helpText>
+    <helpText><![CDATA[Dislay 3Delight properties for the selected nodes.]]></helpText>
     <script scriptType="python"><![CDATA[
 DELIGHT_FOLDER = "3Delight"
 for node in hou.selectedNodes():
@@ -456,7 +456,7 @@ for node in hou.selectedNodes():
   </tool>
 
   <tool name="_3dl_delete_spare_param" label="Delete 3Delight Properties" icon="remove_params">
-    <helpText><![CDATA[Dislay 3Delight group properties for the selected node.]]></helpText>
+    <helpText><![CDATA[Delete 3Delight properties for the selected nodes.]]></helpText>
     <script scriptType="python"><![CDATA[
 DELIGHT_FOLDER = "3Delight"
 for node in hou.selectedNodes():
