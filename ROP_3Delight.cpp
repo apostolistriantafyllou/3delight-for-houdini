@@ -116,11 +116,11 @@ ROP_3DelightOperator::ROP_3DelightOperator(rop_type i_rop_type)
 		i_rop_type == rop_type::standard ? ROP_3Delight::alloc : ROP_3Delight::viewport_alloc,
 		settings::GetTemplatePair(i_rop_type),
 		0,
-		0,
+		OP_MULTI_INPUT_MAX,
 		settings::GetVariablePair(),
 		0u,
 		nullptr,
-		0,
+		1,
 		"Render"){}
 
 void
@@ -419,12 +419,7 @@ void ROP_3Delight::StopRender()
 
 unsigned ROP_3Delight::maxInputs() const
 {
-	return OP_MAX_INDIRECT_INPUTS;
-}
-
-unsigned ROP_3Delight::getNumVisibleInputs() const
-{
-	return OP_MAX_INDIRECT_INPUTS;
+	return OP_MULTI_INPUT_MAX;
 }
 
 unsigned ROP_3Delight::maxOutputs() const
