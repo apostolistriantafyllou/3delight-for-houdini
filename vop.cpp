@@ -114,6 +114,27 @@ void vop::connect_input(int i_input_index)const
 	UT_String input_name;
 	m_vop->getInputName(input_name, i_input_index);
 	
+	//There can be more than one node connected to each other that are bypassed.
+	while(source->getBypass())
+	{
+		UT_String bypass_node_output;
+		int source_index = input_ref->getNodeOutputIndex();
+		source->getOutputName(bypass_node_output, source_index);
+
+		VOP_OutputInfoManager* vop_info = source->getOutputInfoManager();
+		int idx = vop_info->findCorrespondingInputIndex(bypass_node_output,false,true);
+		input_ref = source->getInputReferenceConst(i_input_index);
+
+		/*
+			Skip the node that is bypassed by replacing it with the node connected to the
+			it's input, which should also have pipethrough method on it's connected input.
+		*/
+		if (idx != -1)
+			source = CAST_VOPNODE(source->getInput(idx));
+		if(idx == -1 || !source)
+			return;
+	}
+
 	//aov group connection is being handles on vop::add_and_connect_aov_group()
 	if (!is_aov_definition(source))
 	{
