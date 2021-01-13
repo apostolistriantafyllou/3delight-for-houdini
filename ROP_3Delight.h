@@ -64,7 +64,6 @@ public:
 	void StopRender();
 
 	virtual unsigned maxInputs() const;
-	virtual unsigned getNumVisibleInputs() const;
 
 	virtual unsigned maxOutputs() const;
 	virtual unsigned getNumVisibleOutputs() const;
