@@ -623,10 +623,20 @@ void vop::add_and_connect_aov_group() const
 		{
 			for (int j = 0; j < aov_export_nodes[i]->getNumVisibleInputs(); j++)
 			{
-				VOP_Node* source = CAST_VOPNODE(aov_export_nodes[i]->getInput(j));
+				VOP_Node* current_vop = aov_export_nodes[i];
+
+				OP_Input* input_ref = current_vop->getInputReferenceConst(j);
+				if (!input_ref)
+					return;
+
+				VOP_Node* source = CAST_VOPNODE(current_vop->getInput(j));
 				if (!source)
-					continue;
-				UT_String source_output_name = source->outputLabel(j);
+					return;
+
+				UT_String source_output_name;
+				int source_index = input_ref->getNodeOutputIndex();
+				source->getOutputName(source_output_name, source_index);
+
 				UT_String aov_value;
 				aov_value.sprintf("colorAOVValues[%u]", j);
 				m_nsi.Connect(
