@@ -627,11 +627,11 @@ void vop::add_and_connect_aov_group() const
 
 				OP_Input* input_ref = current_vop->getInputReferenceConst(j);
 				if (!input_ref)
-					return;
+					continue;
 
 				VOP_Node* source = CAST_VOPNODE(current_vop->getInput(j));
 				if (!source)
-					return;
+					continue;
 
 				UT_String source_output_name;
 				int source_index = input_ref->getNodeOutputIndex();
