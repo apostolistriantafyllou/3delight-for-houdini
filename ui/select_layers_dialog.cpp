@@ -63,7 +63,7 @@ SelectLayersDialog::parseDialog(const std::vector<VOP_Node*>& i_custom_aovs)
 		return false;
 	}
 
-	const std::string separator = 
+	const std::string separator =
 #ifdef _WIN32
 		"\\";
 #else
