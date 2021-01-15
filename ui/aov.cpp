@@ -6,8 +6,12 @@ namespace
 {
 
 /*
+	******* WARNING *******
+
 	This list of predefined AOVs should match the one defined in file
 	select_layers_ui.ui
+
+	******* WARNING *******
 */
 std::vector<aov::description> descriptions =
 {
@@ -30,7 +34,7 @@ std::vector<aov::description> descriptions =
 	{ aov::e_auxiliary, "Z (depth)", "zdepth", "z", "builtin", "scalar", false, false },
 	{ aov::e_auxiliary, "Camera space position", "position", "P.camera", "builtin", "vector", false, false },
 	{ aov::e_auxiliary, "Camera space normal", "normal", "N.camera", "builtin", "vector", false, false },
-	{ aov::e_auxiliary, "UV", "uv", "uv", "builtin", "color", false, false },
+	{ aov::e_auxiliary, "UV", "st", "st", "attribute", "color", false, false },
 	{ aov::e_auxiliary, "Geometry Cryptomatte", "geoid", "id.geometry", "builtin", "scalar", false, false },
 	{ aov::e_auxiliary, "Scene Path Cryptomatte", "scenepathid", "id.scenepath", "builtin", "scalar", false, false },
 	{ aov::e_auxiliary, "Surface Shader Cryptomatte", "surfaceid", "id.surfaceshader", "builtin", "scalar", false, false },
