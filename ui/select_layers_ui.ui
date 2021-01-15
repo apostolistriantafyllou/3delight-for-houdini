@@ -38,6 +38,7 @@ dlg.gad = DIALOG "AOV Selector"
         }
         COL
         {
+            TOGGLE_BUTTON "Albedo":LABEL_WIDTH VALUE(albedo.val);
             TOGGLE_BUTTON "Z (depth)":LABEL_WIDTH VALUE(z.val);
             TOGGLE_BUTTON "Camera space position":LABEL_WIDTH VALUE(P.camera.val);
             TOGGLE_BUTTON "Camera space normal":LABEL_WIDTH VALUE(N.camera.val);
