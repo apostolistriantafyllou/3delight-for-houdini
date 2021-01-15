@@ -58,7 +58,13 @@ public:
 		double i_time,
 		bool i_use_houdini_projection = false);
 
+	/*
+	*/
+	static std::string screen_handle( OBJ_Node *i_cam, const context & );
+
 private:
+	std::string screen_handle( void ) const;
+
 	/// Exports time-dependent attributes to NSI
 	void set_attributes_at_time( double i_time ) const;
 

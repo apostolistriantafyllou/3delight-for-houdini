@@ -36,6 +36,8 @@ enum rop_type
 */
 class context
 {
+	friend class camera;
+
 public:
 
 	/**
@@ -150,7 +152,7 @@ public:
 
 private:
 
-	object_visibility_resolver* m_object_visibility_resolver;
+	object_visibility_resolver* m_object_visibility_resolver{nullptr};
 
 	const settings& m_settings;
 
@@ -168,5 +170,6 @@ private:
 	*/
 	mutable std::deque<safe_interest> m_interests;
 
+protected:
 	ROP_3Delight *m_rop{ nullptr };
 };

@@ -28,6 +28,7 @@ class time_notifier;
 class ROP_3Delight : public ROP_Node
 {
 	friend class settings; // UI related.
+	friend class camera;
 
 public:
 
@@ -57,8 +58,11 @@ public:
 		bool i_ipr,
 		const float* i_window);
 
-	/// Updates the IPR's priority window from i-display
-	void UpdateIDisplayPriorityWindow(const float* i_window);
+	/**
+		Updates the IPR's crop window from i-display. This happens when
+		3Delight Display calls us with a crop window update.
+	*/
+	void UpdateCrop(const float* i_window);
 
 	/// Stops any current rendering session from this ROP
 	void StopRender();
@@ -108,6 +112,13 @@ protected:
 	virtual void loadFinished();
 
     virtual void resolveObsoleteParms(PRM_ParmList*);
+
+protected:
+	/** Returns the resolution multiplier from Speed Boost */
+	float GetResolutionFactor()const;
+
+	/** Returns the pixel samples (AA oversampling) in this ROP */
+	int GetPixelSamples()const;
 
 private:
 
@@ -189,14 +200,8 @@ private:
 	/// Retrieves the image resolution, scaled by the Speed Boost res factor
 	bool GetScaledResolution(int& o_x, int& o_y)const;
 
-	/** Returns the resolution multiplier from Speed Boost */
-	float GetResolutionFactor()const;
-
 	/** Returns the sampling multiplier from Speed Boost */
 	float GetSamplingFactor()const;
-
-	/** Returns the pixel samples (AA oversampling) in this ROP */
-	int GetPixelSamples()const;
 
 	/** Returns camera used to Render. */
 	OBJ_Camera* GetCamera( double i_time )const;

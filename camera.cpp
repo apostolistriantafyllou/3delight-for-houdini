@@ -5,6 +5,12 @@
 #include "shader_library.h"
 #include "time_sampler.h"
 
+/*
+	Bad include here. But we need it to acces camera realated paramaeters
+	that are inside the ROP (oversampling, etc)
+*/
+#include "ROP_3Delight.h"
+
 #include <OBJ/OBJ_Node.h>
 #include <OBJ/OBJ_Camera.h>
 
@@ -319,6 +325,13 @@ camera::camera(
 
 void camera::create( void ) const
 {
+	OBJ_Camera* cam = m_object->castToOBJCamera();
+	if( !cam )
+	{
+		assert( false );
+		return;
+	}
+
 	m_nsi.Create(m_handle, m_type);
 
 	m_nsi.Create(distortion_shader_handle(), "shader");
@@ -332,6 +345,9 @@ void camera::create( void ) const
 			NSI::FloatArg("k1", 0.0f),
 			NSI::FloatArg("k3", 0.0f)
 		) );
+
+	m_nsi.Create( screen_handle(), "screen");
+
 }
 
 void camera::set_attributes( void ) const
@@ -373,6 +389,66 @@ void camera::set_attributes( void ) const
 			->SetCount(2)
 			->CopyValue(clipping_range, sizeof(clipping_range)));
 
+	fpreal t = m_context.m_current_time;
+	float scale = m_context.m_rop->GetResolutionFactor();
+	int default_resolution[2] =
+	{
+		int(::roundf(cam->RESX(t)*scale)),
+		int(::roundf(cam->RESY(t)*scale))
+	};
+
+	m_nsi.SetAttribute(
+		screen_handle(),
+		(
+			*NSI::Argument::New("resolution")
+			->SetArrayType(NSITypeInteger, 2)
+			->SetCount(1)
+			->CopyValue(default_resolution, sizeof(default_resolution)),
+			NSI::IntegerArg("oversampling", m_context.m_rop->GetPixelSamples()),
+			NSI::FloatArg( "pixelaspectratio", cam->ASPECT(t))
+		) );
+
+#if 0
+	if( m_idisplay_rendering )
+	{
+		m_nsi.SetAttribute(
+			screen_handle(),
+			*NSI::Argument::New("crop")
+				->SetArrayType(NSITypeFloat, 2)
+				->SetCount(2)
+				->SetValuePointer(m_idisplay_rendering_window));
+	}
+	else
+#endif
+	{
+		float cam_crop[4] =
+		{
+			float(cam->CROPL(0)), 1.0f - float(cam->CROPT(0)),
+			float(cam->CROPR(0)), 1.0f - float(cam->CROPB(0))
+		};
+
+		m_nsi.SetAttribute(
+			screen_handle(),
+			*NSI::Argument::New("crop")
+				->SetArrayType(NSITypeFloat, 2)
+				->SetCount(2)
+				->SetValuePointer(cam_crop));
+	}
+
+	/*
+		If the camera is not orthographic, use the default screen window.
+		Otherwise, define it so it fits the camera's "ortho width" parameter.
+	*/
+	double sw[4];
+	get_screen_window(sw, *cam, m_context.m_current_time);
+
+	m_nsi.SetAttribute(
+		screen_handle(),
+		*NSI::Argument::New("screenwindow")
+		->SetArrayType(NSITypeDouble, 2)
+		->SetCount(2)
+		->SetValuePointer(sw));
+
 	if(m_type == "fisheyecamera")
 	{
 		m_nsi.SetAttribute(m_handle, NSI::StringArg("mapping", m_mapping));
@@ -393,11 +469,21 @@ void camera::set_attributes( void ) const
 	}
 }
 
+/**
+	Connect camera to transform and the screen to the camera.
+*/
 void camera::connect( void ) const
 {
+	OBJ_Camera* cam = m_object->castToOBJCamera();
+	assert(cam);
+
 	m_nsi.Connect(
 		m_handle, "",
 		null::handle(*m_object, m_context), "objects" );
+
+	m_nsi.Connect(
+		screen_handle(), "",
+		camera::handle(*cam, m_context), "screens");
 }
 
 void camera::changed_cb(
@@ -593,4 +679,14 @@ void camera::get_screen_window(
 		o_screen_window[2] = A * screen_window_size_x + 2 * screen_window_x*A;
 		o_screen_window[3] = 1.f * screen_window_size_y + 2 * screen_window_y;
 	}
+}
+
+std::string camera::screen_handle( void ) const
+{
+	return screen_handle( m_object, m_context );
+}
+
+std::string camera::screen_handle( OBJ_Node *i_cam, const context &i_context )
+{
+	return handle(*i_cam, i_context ) + "|screen";
 }

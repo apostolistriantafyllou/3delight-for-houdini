@@ -51,7 +51,6 @@ namespace
 		return api;
 	}
 
-	const std::string k_screen_name = "default_screen";
 	const std::string k_stdout = "stdout";
 
 	void ComputePriorityWindow(
@@ -236,13 +235,21 @@ void ROP_3Delight::StartRenderFromIDisplay(
 	m_idisplay_rendering = false;
 }
 
-void ROP_3Delight::UpdateIDisplayPriorityWindow(const float* i_window)
+void ROP_3Delight::UpdateCrop(const float* i_window)
 {
 	assert(i_window);
+
 
 	m_render_end_mutex.lock();
 	if(m_rendering && m_current_render && m_current_render->m_ipr)
 	{
+		OBJ_Camera *cam = GetCamera(m_current_render->m_current_time);
+		assert( cam );
+		if( !cam )
+			return;
+
+		std::string screen_name(camera::screen_handle(cam, *m_current_render));
+
 		memcpy(
 			m_idisplay_rendering_window,
 			i_window,
@@ -255,7 +262,7 @@ void ROP_3Delight::UpdateIDisplayPriorityWindow(const float* i_window)
 			ComputePriorityWindow(priority, resolution, i_window);
 
 			m_nsi.SetAttribute(
-				k_screen_name,
+				screen_name,
 				*NSI::Argument::New("prioritywindow")
 					->SetArrayType(NSITypeInteger, 2)
 					->SetCount(2)
@@ -1055,72 +1062,14 @@ void
 ROP_3Delight::ExportOutputs(const context& i_ctx)const
 {
 	OBJ_Camera* cam = GetCamera( i_ctx.m_current_time );
+	double current_time = i_ctx.m_current_time;
 
 	if( !cam )
 	{
 		return;
 	}
 
-	fpreal current_time = i_ctx.m_current_time;
-
-	int default_resolution[2];
-	GetScaledResolution(default_resolution[0], default_resolution[1]);
-
-	i_ctx.m_nsi.Create(k_screen_name, "screen");
-	i_ctx.m_nsi.SetAttribute(
-		k_screen_name,
-		(
-			*NSI::Argument::New("resolution")
-			->SetArrayType(NSITypeInteger, 2)
-			->SetCount(1)
-			->CopyValue(default_resolution, sizeof(default_resolution)),
-			NSI::IntegerArg("oversampling", GetPixelSamples()),
-			NSI::FloatArg( "pixelaspectratio", cam->ASPECT(current_time))
-		) );
-
-	// Set the crop window or priority window
-
-	if(m_idisplay_rendering)
-	{
-		i_ctx.m_nsi.SetAttribute(
-			k_screen_name,
-			*NSI::Argument::New("crop")
-				->SetArrayType(NSITypeFloat, 2)
-				->SetCount(2)
-				->SetValuePointer(m_idisplay_rendering_window));
-	}
-	else
-	{
-		float cam_crop[4] =
-		{
-			float(cam->CROPL(0)), 1.0f - float(cam->CROPT(0)),
-			float(cam->CROPR(0)), 1.0f - float(cam->CROPB(0))
-		};
-		i_ctx.m_nsi.SetAttribute(
-			k_screen_name,
-			*NSI::Argument::New("crop")
-				->SetArrayType(NSITypeFloat, 2)
-				->SetCount(2)
-				->SetValuePointer(cam_crop));
-	}
-
-	/*
-		If the camera is not orthographic, use the default screen window.
-		Otherwise, define it so it fits the camera's "ortho width" parameter.
-	*/
-	double sw[4];
-	camera::get_screen_window(sw, *cam, current_time);
-
-	i_ctx.m_nsi.SetAttribute(
-		k_screen_name,
-		*NSI::Argument::New("screenwindow")
-		->SetArrayType(NSITypeDouble, 2)
-		->SetCount(2)
-		->SetValuePointer(sw));
-
-	i_ctx.m_nsi.Connect(
-		k_screen_name, "",
-		camera::handle(*cam, i_ctx), "screens");
+	std::string screen_name( camera::screen_handle(cam, i_ctx) );
 
 	UT_String idisplay_driver = "idisplay";
 	UT_String file_driver;
@@ -1305,7 +1254,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 				ExportOneOutputLayer(
 					i_ctx, layer_name, desc, scalar_format,
 					filter, filter_width,
-					k_screen_name, category.first,
+					screen_name, category.first,
 					idisplay_driver_name, idisplay_driver.toStdString(),
 					sort_key );
 
@@ -1335,7 +1284,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 				ExportOneOutputLayer(
 					i_ctx, file_layer_name, desc, scalar_format,
 					filter, filter_width,
-					k_screen_name, category.first,
+					screen_name, category.first,
 					file_driver_name, file_driver.toStdString(),
 					sort_key);
 			}
@@ -1365,7 +1314,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 				ExportOneOutputLayer(
 					i_ctx, png_layer_name, desc, "uint8",
 					filter, filter_width,
-					k_screen_name, category.first,
+					screen_name, category.first,
 					png_driver_name, png_driver,
 					sort_key);
 			}
@@ -1395,7 +1344,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 				ExportOneOutputLayer(
 					i_ctx, jpeg_layer_name, desc, "uint8",
 					filter, filter_width,
-					k_screen_name, category.first,
+					screen_name, category.first,
 					jpeg_driver_name, jpeg_driver,
 					sort_key);
 			}

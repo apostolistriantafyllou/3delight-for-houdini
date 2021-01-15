@@ -347,7 +347,7 @@ void idisplay_port::ExecuteJSonCommand(const UT_JSONValue& i_object)
 		float crop[4];
 		if(RetrieveCrop(crop, *object_map))
 		{
-			rop_3dl->UpdateIDisplayPriorityWindow(crop);
+			rop_3dl->UpdateCrop(crop);
 		}
 	}
 	else if (op == "select layer")
