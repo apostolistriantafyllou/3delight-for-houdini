@@ -605,6 +605,9 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 		/*
 			Output NSI commands to a temporary file that will be rendered by a
 			separate renderdl process.
+
+			We don't need to delete that file as renderdl will delete it by
+			itself but we still keep this as a safety (renderdl crash etc)
 		*/
 		frame_nsi_file = UT_TempFileManager::getTempFilename();
 		m_current_render->m_temp_filenames.push_back( frame_nsi_file );

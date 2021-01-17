@@ -10,6 +10,9 @@
 #include <UT/UT_String.h>
 #include <UT/UT_WorkArgs.h>
 #include <VOP/VOP_Node.h>
+#include <GA/GA_AIFSharedStringArray.h>
+#include <GA/GA_Attribute.h>
+#include <GU/GU_Detail.h>
 
 #include <assert.h>
 #include <nsi.hpp>
@@ -89,34 +92,75 @@ void incandescence_light::connect() const
 		if (!obj_node)
 			continue;
 
-		UT_String mat_path;
-		obj_node->evalString(mat_path, "shop_materialpath", 0, time);
+		std::vector< std::string > material_paths;
 
-		VOP_Node *mats[3] = { nullptr };
-		resolve_material_path( obj_node, mat_path, mats );
+		OP_Context op_ctx( time );
+		GU_DetailHandle gdh = obj_node->getRenderGeometryHandle(op_ctx);
+		GU_DetailHandleAutoReadLock rlock(gdh);
+		const GU_Detail *gdp = rlock.getGdp();
 
-		VOP_Node *surface = mats[0];
-		if( !surface )
-			continue;
-
-		DlShaderInfo* shader_info = library.get_shader_info( surface );
-		if( !shader_info )
-			continue;
-
-		// Check if incandescence_multiplier exists in this shader
-		if( ParameterExist(shader_info, k_incandescence_multiplier)
-			&& m_context.object_displayed(*obj_node))
+		if( gdp )
 		{
-			m_nsi.SetAttribute(
-				vop::handle(*surface, m_context),
-				NSI::ColorArg(k_incandescence_multiplier,
-					incandescenceColor));
+			const GA_Attribute *sop[2] =
+			{
+				gdp->findAttribute(GA_ATTRIB_PRIMITIVE, "shop_materialpath"),
+				gdp->findAttribute(GA_ATTRIB_DETAIL, "shop_materialpath")
+			};
 
-			m_current_multipliers.push_back( vop::handle(*surface, m_context) );
+			int counts[2] = { (int)gdp->getNumPrimitives(), 1 };
 
-			m_nsi.Connect(
-				geometry::handle(*obj_node, m_context), "",
-				category, "members" );
+			for (int i = 0; i < sizeof(sop) / sizeof(sop[0]); i++)
+			{
+				if( !sop[i] )
+					continue;
+
+				const GA_AIFStringTuple *strings = sop[i]->getAIFStringTuple();
+
+				if (!strings)
+					continue;
+
+				for (int j = 0; j < counts[i]; j++)
+				{
+					const char *mat = strings->getString(sop[i], j);
+					if (!mat)
+						continue;
+
+					material_paths.push_back(mat);
+				}
+			}
+		}
+
+		UT_String obj_mat_path;
+		obj_node->evalString(obj_mat_path, "shop_materialpath", 0, time);
+		material_paths.push_back( obj_mat_path.toStdString() );
+
+		for( auto &mat_path : material_paths )
+		{
+			VOP_Node *mats[3] = {nullptr};
+			resolve_material_path(obj_node, mat_path.c_str(), mats);
+
+			VOP_Node *surface = mats[0];
+			if (!surface)
+				continue;
+
+			DlShaderInfo *shader_info = library.get_shader_info(surface);
+			if (!shader_info)
+				continue;
+
+			// Check if incandescence_multiplier exists in this shader
+			if (ParameterExist(shader_info, k_incandescence_multiplier) && m_context.object_displayed(*obj_node))
+			{
+				m_nsi.SetAttribute(
+					vop::handle(*surface, m_context),
+					NSI::ColorArg(k_incandescence_multiplier,
+								  incandescenceColor));
+
+				m_current_multipliers.push_back(vop::handle(*surface, m_context));
+
+				m_nsi.Connect(
+					geometry::handle(*obj_node, m_context), "",
+					category, "members");
+			}
 		}
 	}
 }
