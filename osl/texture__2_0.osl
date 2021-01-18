@@ -9,7 +9,7 @@
 	total nonsense and come from the dinosaurs era.
 */
 shader texture__2_0 [[ string tags[1] = {"ignoresubnetworks"} ]] (
-	string map = "",
+	string map = "" [[ int texturefile = 1 ]],
 	//string wrap = "" ,
 	float width = 1,
 	float blur = 0,

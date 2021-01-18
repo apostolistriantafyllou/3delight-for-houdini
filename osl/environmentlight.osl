@@ -1,6 +1,6 @@
 shader
 environmentlight(
-    string env_map = "",
+    string env_map = "" [[ int texturefile = 1 ]],
     color light_color = color(1),
     float light_intensity = 1,
     float light_exposure = 1,
