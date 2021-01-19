@@ -1926,8 +1926,10 @@ void ROP_3Delight::time_change_cb(double i_time)
 	m_current_render->set_current_time(i_time);
 
 	scene::convert_to_nsi(*m_current_render);
-	ExportAtmosphere(*m_current_render, true);
-
+	if (m_current_render->m_rop_type != rop_type::viewport)
+	{
+		ExportAtmosphere(*m_current_render, true);
+	}
 	m_current_render->m_nsi.RenderControl(
 		NSI::CStringPArg("action", "synchronize"));
 }
