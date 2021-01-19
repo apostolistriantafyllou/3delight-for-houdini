@@ -215,12 +215,34 @@ void vop::changed_cb(
 	}
 	else if (i_type == OP_FLAG_CHANGED)
 	{
-		VOP_Node* debug_material = i_caller->castToVOPNode();
-		if (!debug_material)
+		VOP_Node* flag_changed_material = i_caller->castToVOPNode();
+		if (!flag_changed_material)
 			return;
 
+		vop v(*ctx, i_caller->castToVOPNode());
+		if (!flag_changed_material->getDebug())
+		{
+			//Disconnect the node whose flag is being changed.
+			ctx->m_nsi.Disconnect(
+				v.m_handle, NSI_ALL_ATTRIBUTES,
+				NSI_ALL_NODES, NSI_ALL_NODES);
+
+			UT_Array<OP_Node*> outputs;
+			flag_changed_material->getOutputNodes(outputs);
+
+			/*
+				connect the changed node as a source vop so we can
+				check if it's bypassed or no in the connect() function.
+			*/
+			for (int i = 0; i < outputs.size(); i++)
+			{
+				vop k(*ctx, outputs[i]->castToVOPNode());
+				k.connect();
+			}
+		}
+
 		//Re-export only the geometries to where this material is connected.
-		for (std::string obj_path : ctx->material_to_objects[debug_material])
+		for (std::string obj_path : ctx->material_to_objects[flag_changed_material])
 		{
 			OBJ_Node* node = OPgetDirector()->getOBJNode(obj_path.c_str());
 			if (node)
