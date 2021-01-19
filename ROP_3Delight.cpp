@@ -1929,6 +1929,17 @@ void ROP_3Delight::time_change_cb(double i_time)
 	if (m_current_render->m_rop_type != rop_type::viewport)
 	{
 		ExportAtmosphere(*m_current_render, true);
+
+		/*
+			Camera attributes are are set on viewport_hook for viewport rendering
+			so we don't need to set them for viewport rendering again.
+		*/
+		OBJ_Camera* cam = GetCamera(m_current_render->m_current_time);
+		if (cam)
+		{
+			camera* cam_obj = new camera(*m_current_render, cam);
+			cam_obj->set_attributes();
+		}
 	}
 	m_current_render->m_nsi.RenderControl(
 		NSI::CStringPArg("action", "synchronize"));
