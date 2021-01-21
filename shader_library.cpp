@@ -15,8 +15,6 @@
 
 #include <assert.h>
 
-/* Our only instance */
-static shader_library g_shader_library;
 
 using namespace dl_system;
 
@@ -68,7 +66,9 @@ shader_library::shader_library()
 
 const shader_library &shader_library::get_instance( void )
 {
-	return g_shader_library;
+	/* Our only instance */
+	static shader_library s_shader_library;
+	return s_shader_library;
 }
 
 
