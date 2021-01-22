@@ -10,6 +10,7 @@
   -->
   <toolshelf name="3delight" label="3Delight">
     <memberTool name="_3dl_rop_render_3Delight"/>
+    <memberTool name="_3dl_rop_renderviewport_3Delight"/>
     <memberTool name="_3dl_rop_3Delight"/>
     <memberTool name="_3dl_rop_3DelightCloud"/>
     <memberTool name="_3dl_rop_select_3Delight"/>
@@ -73,6 +74,36 @@ else:
 	]]></script>
   </tool>
 
+  <tool name="_3dl_rop_renderviewport_3Delight" label="Viewport Render" icon="shelf_ROP_render_3Delight">
+    <helpText><![CDATA[Launchs a render of the selected Viewport ROP 3Delight (or the first one found if no Viewport ROP is selected).]]></helpText>
+    <script scriptType="python"><![CDATA[
+import roptoolutils
+
+out = hou.node("/out")
+nodeFound = None
+# try to find a selected ROP
+for node in out.children():
+    nodetype = node.type()
+    if node.isCurrent() and (nodetype.name() == "3DelightViewport"):
+        nodeFound = node
+        break
+if nodeFound == None:
+    # take the first ROP found
+    for node in out.children():
+        nodetype = node.type()
+        if nodetype.name() == "3DelightViewport":
+            nodeFound = node
+            break
+if nodeFound != None:
+    hou.node(nodeFound.path()).render()
+else:
+    newnode = hou.node('/out').createNode("3DelightViewport")
+    hou.node(newnode.path()).render()
+
+	]]></script>
+  </tool>
+
+
   <tool name="_3dl_rop_select_3Delight" label="Select" icon="shelf_ROP_select_3Delight">
     <helpText><![CDATA[Select one ROP 3Delight.]]></helpText>
     <script scriptType="python"><![CDATA[
@@ -81,7 +112,7 @@ import nodesearch
 
 def custom_cb(node):
     nodetype = node.type()
-    return nodetype.name() == "3Delight" or nodetype.name() == "3DelightCloud"
+    return nodetype.name() == "3Delight" or nodetype.name() == "3DelightCloud" or nodetype.name() == "3DelightViewport"
 
 matcher = nodesearch.NodeType("3Delight", hou.ropNodeTypeCategory())
 nodes = matcher.nodes(hou.root(), recursive=True)
