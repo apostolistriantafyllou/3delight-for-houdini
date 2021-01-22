@@ -1,8 +1,10 @@
 # Default script run when a camera is created
 # $arg1 is the name of the camera
+# $DELIGHT_AUTOSPAREPARAMS environment variable is used to load/unload 3Delight spare parameters
+# $arg2 !="" tells us that the script will be called from the shelf button.
 
 \set noalias = 1
-if ( "$arg1" != "" ) then
+if ( "$arg1" != "" && ("$DELIGHT_AUTOSPAREPARAMS" !=0 || "$arg2" !="")) then
 
 	# Remember whether some parameters were already defined before parameter
 	# collections are added.

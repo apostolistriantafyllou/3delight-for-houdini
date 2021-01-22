@@ -1,7 +1,7 @@
 # Script run when an envlight node has been created
 
 \set noalias = 1
-if ( "$arg1" != "" ) then
+if ( "$arg1" != "" && ("$DELIGHT_AUTOSPAREPARAMS" !=0 || "$arg2"!="")) then
 
 	# The 3Delight tab is erroneously added inside an existing tab instead of at
 	# the root.  Let's fix this by removing the 3Delight folder from the node

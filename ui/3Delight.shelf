@@ -22,6 +22,8 @@
     <memberTool name="_3dl_object_skylight"/>
     <memberTool name="_3dl_object_incandescencelight"/>
     <memberTool name="_3dl_object_vdb"/>
+    <memberTool name="_3dl_display_spare_param"/>
+    <memberTool name="_3dl_delete_spare_param"/>
   </toolshelf>
 
   <tool name="_3dl_rop_3Delight" label="ROP" icon="shelf_ROP_3Delight">
@@ -433,6 +435,36 @@ if file:
 	newmatnode = mat.createNode("3Delight::vdbVolume", "vdbVolume")
 	newmatnode.moveToGoodPosition()
 	newnode.setParms({"shop_materialpath": newmatnode.path()})
+]]></script>
+  </tool>
+
+  <tool name="_3dl_display_spare_param" label="Add 3Delight Properties" icon="add_params">
+    <helpText><![CDATA[Dislay 3Delight properties for the selected nodes.]]></helpText>
+    <script scriptType="python"><![CDATA[
+DELIGHT_FOLDER = "3Delight"
+for node in hou.selectedNodes():
+	prm_group = node.parmTemplateGroup()
+	delightFolder = hou.FolderParmTemplate("3Delight", DELIGHT_FOLDER)
+	node_type = node.type().name()
+	#Replace ':' with '-' to get the right naming for light nodes.
+	node_type = node_type.replace(":","-")
+	if not prm_group.findFolder(DELIGHT_FOLDER):
+		hou.hscript(
+               "private/"+node_type+"_OnCreated.cmd "+node.path() +" added_from_shelf"
+                )
+]]></script>
+  </tool>
+
+  <tool name="_3dl_delete_spare_param" label="Delete 3Delight Properties" icon="remove_params">
+    <helpText><![CDATA[Delete 3Delight properties for the selected nodes.]]></helpText>
+    <script scriptType="python"><![CDATA[
+DELIGHT_FOLDER = "3Delight"
+for node in hou.selectedNodes():
+	prm_group = node.parmTemplateGroup()
+	delightFolder = hou.FolderParmTemplate("3Delight", DELIGHT_FOLDER)
+	if prm_group.findFolder(DELIGHT_FOLDER):
+		prm_group.remove(prm_group.findFolder(DELIGHT_FOLDER))
+		node.setParmTemplateGroup(prm_group)
 ]]></script>
   </tool>
 </shelfDocument>
