@@ -247,7 +247,7 @@ std::string vdb_file::node_is_vdb_loader( OBJ_Node *i_node, double i_time )
 		{
 			OP_Node *node = network->getChild(i);
 			SOP_Node *sop = node->castToSOPNode();
-			if( sop )
+			if( sop && sop->getRender() )
 			{
 				const UT_StringRef &SOP_name = node->getOperator()->getName();
 				if( SOP_name == "file" )
