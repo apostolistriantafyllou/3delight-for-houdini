@@ -308,6 +308,16 @@ namespace
 		return enable;
 	}
 
+	/*
+		Since light sources are also cameras in houdini, we distinguish this
+		by comparing at least on of the camera attributes which we know for
+		sure is not part of the light source parameters.
+	*/
+	bool is_light(OBJ_Camera& i_camera)
+	{
+		return !i_camera.hasParm("win");
+	}
+
 }
 
 camera::camera(
@@ -638,6 +648,8 @@ void camera::get_screen_window(
 	double i_time,
 	bool i_use_houdini_projection)
 {
+	if (is_light(i_camera))
+		return;
 	std::string type;
 	std::string mapping;
 	get_projection(i_camera, i_time, type, mapping);
