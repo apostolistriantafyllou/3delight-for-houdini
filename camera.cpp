@@ -418,18 +418,17 @@ void camera::set_attributes( void ) const
 			NSI::FloatArg( "pixelaspectratio", cam->ASPECT(t))
 		) );
 
-#if 0
-	if( m_idisplay_rendering )
+	if( m_context.m_rop->idisplay_rendering() )
 	{
 		m_nsi.SetAttribute(
 			screen_handle(),
 			*NSI::Argument::New("crop")
 				->SetArrayType(NSITypeFloat, 2)
 				->SetCount(2)
-				->SetValuePointer(m_idisplay_rendering_window));
+				->SetValuePointer(
+					m_context.m_rop->idisplay_crop_window()) );
 	}
 	else
-#endif
 	{
 		float cam_crop[4] =
 		{

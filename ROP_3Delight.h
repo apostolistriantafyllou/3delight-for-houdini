@@ -64,6 +64,12 @@ public:
 	*/
 	void UpdateCrop(const float* i_window);
 
+	bool idisplay_rendering( void ) const { return m_idisplay_rendering; }
+	const float *idisplay_crop_window( void ) const
+	{
+		return &m_idisplay_rendering_window[0];
+	}
+
 	/// Stops any current rendering session from this ROP
 	void StopRender();
 
