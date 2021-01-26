@@ -255,21 +255,14 @@ void ROP_3Delight::UpdateCrop(const float* i_window)
 			i_window,
 			sizeof(m_idisplay_rendering_window));
 
-		int resolution[2];
-		if(GetScaledResolution(resolution[0], resolution[1]))
-		{
-			int priority[4];
-			ComputePriorityWindow(priority, resolution, i_window);
+		m_nsi.SetAttribute(
+			screen_name,
+			*NSI::Argument::New("crop")
+				->SetArrayType(NSITypeFloat, 2)
+				->SetCount(2)
+				->SetValuePointer(i_window));
 
-			m_nsi.SetAttribute(
-				screen_name,
-				*NSI::Argument::New("prioritywindow")
-					->SetArrayType(NSITypeInteger, 2)
-					->SetCount(2)
-					->SetValuePointer(priority));
-
-			m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
-		}
+		m_nsi.RenderControl(NSI::CStringPArg("action", "synchronize"));
 	}
 	m_render_end_mutex.unlock();
 }
