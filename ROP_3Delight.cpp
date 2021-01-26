@@ -53,18 +53,6 @@ namespace
 
 	const std::string k_stdout = "stdout";
 
-	void ComputePriorityWindow(
-		int* o_absolute_window,
-		const int* i_res,
-		const float* i_relative_window)
-	{
-		for(unsigned p = 0; p < 4; p++)
-		{
-			int res = i_res[p%2];
-			o_absolute_window[p] = roundf(i_relative_window[p] * float(res));
-		}
-	}
-
 	void ExitCB(void* i_data)
 	{
 		ROP_3Delight* rop = (ROP_3Delight*)i_data;
