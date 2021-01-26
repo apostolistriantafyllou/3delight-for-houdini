@@ -32,6 +32,15 @@ polygonmesh::polygonmesh(
 		m_is_subdiv =
 			m_object->hasParm(k_subdiv) &&
 			m_object->evalInt(k_subdiv, 0, m_context.m_current_time) != 0;
+
+		/* Also check for SOP-level detail special symbol for subdivs. */
+		GT_Owner type;
+		auto flag = i_gt_primitive->findAttribute(
+			"_3dl_render_poly_as_subd", type, 0 );
+		if( flag )
+		{
+			m_is_subdiv = flag->getI32( 0 );
+		}
 	}
 }
 
