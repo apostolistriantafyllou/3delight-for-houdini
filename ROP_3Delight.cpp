@@ -1170,8 +1170,12 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		if (desc.m_variable_name != "Ci")
 			jpeg_output = false;
 
-		// Always render to iDisplay if "Start IPR" button is clicked
-		if (evalInt(settings::k_ipr_start, 0, current_time))
+		/**
+			Always render to iDisplay if "Start IPR" button is clicked OR
+			we called from inside 3Delight Display to re-render an IPR
+			session.
+		*/
+		if (evalInt(settings::k_ipr_start, 0, current_time) || m_idisplay_ipr)
 		{
 			idisplay_output = true;
 			file_output = false;
