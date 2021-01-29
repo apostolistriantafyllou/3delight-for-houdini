@@ -109,6 +109,36 @@ namespace
 		assert(obj_node);
 		return obj_node;
 	}
+	
+	/*
+		Ensures that io_wb contains at least i_min_length bytes.
+
+		Returns false if reading from io_client fails.
+	*/
+	bool
+	PrepareBuffer(
+		UT_WorkBuffer& io_wb,
+		size_t i_min_length,
+		UT_NetSocket& io_client)
+	{
+		while(io_wb.length() < i_min_length)
+		{
+			/*
+				Read into a local work buffer to avoid replacing the contents
+				of possibly non-empty io_wb.
+			*/
+			UT_WorkBuffer wb;
+			if(io_client.read(wb) != UT_NetSocket::UT_CONNECT_SUCCESS ||
+				wb.isEmpty())
+			{
+				return false;
+			}
+
+			io_wb.append(wb);
+		}
+
+		return true;
+	}
 }
 
 
@@ -141,24 +171,37 @@ idisplay_port::~idisplay_port()
 */
 void clientConnection(UT_NetSocket* client, idisplay_port* dp)
 {
-	while (1)
+	UT_WorkBuffer wb;
+	for(;;)
 	{
-		UT_WorkBuffer wb;
-		int res2 = client->read(wb);
-
-		if (res2 != 0 || wb.isEmpty())
+		// Read enough bytes in the buffer for the message length
+		if(!PrepareBuffer(wb, 4, *client))
+		{
 			break;
+		}
 
-		// Skip the number of bytes at the beginning
-		wb.eraseHead(sizeof(unsigned));
+		// Retrieve big-endian message length
+		unsigned char* len = (unsigned char*)wb.buffer();
+		unsigned message_length =
+			unsigned(len[0]) << 24 | unsigned(len[1]) << 16 |
+			unsigned(len[2]) << 8 | unsigned(len[3]);
+		wb.eraseHead(4);
 
-		if (wb.isEmpty())
+		if(message_length == 0)
+		{
+			dp->Log("invalid message format");
 			break;
+		}
 
+		// Read enough bytes in the buffer for the complete message
+		if(!PrepareBuffer(wb, message_length, *client))
+		{
+			break;
+		}
+
+		// Retrieve JSON-format message
 		assert(wb.buffer()[0] == '{');
-		assert(wb.isNullTerminated());
-
-		UT_IStream in(wb);
+		UT_IStream in(wb.buffer(), message_length, UT_ISTREAM_ASCII);
 		UT_JSONParser parser;
 		UT_JSONValue js;
 
@@ -171,6 +214,8 @@ void clientConnection(UT_NetSocket* client, idisplay_port* dp)
 		{
 			dp->Log( "invalid read operation from socket" );
 		}
+
+		wb.eraseHead(message_length);
 	}
 }
 
