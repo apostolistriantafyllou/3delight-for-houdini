@@ -83,4 +83,9 @@ if ( "$arg1" != "" ) then
 		opparm $arg1 ogl_spec_model ggx
 	endif
 
+	# This parameter will tell us that 3Delight tab has already been created,
+	# and we don't need to execute the script again, which would cause us
+	# errors when the scene gets loaded using hscript.
+	opproperty -f $arg1 3Delight _3dl_tab_exists
+
 endif
