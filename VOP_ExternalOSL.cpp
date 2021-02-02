@@ -1003,6 +1003,11 @@ VOP_ExternalOSL::updateParmsFlags()
 		{
 			changed |= enableParm(param->name.c_str(), false);
 		}
+		else
+		{
+			//Disable shader's parameter input when connected.
+			changed |= enableParm(param->name.c_str(), !getInput(p));
+		}
 	}
 	return changed;
 }
