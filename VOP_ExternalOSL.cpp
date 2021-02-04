@@ -431,13 +431,10 @@ VOP_Type VOP_ExternalOSL::GetVOPType(const DlShaderInfo::Parameter& i_osl_param)
 		/*
 			Get the right VOPType for volume parameters.
 		*/
-		if (m_shader_info.IsTerminal())
-		{
-			const char* tag = nullptr;
-			osl_utilities::FindMetaData(tag, i_osl_param.metadata, "input_shader_type");
-			if (tag != nullptr && strcmp(tag, "volume") == 0)
-				return VOP_ATMOSPHERE_SHADER;
-		}
+		const char* tag = nullptr;
+		osl_utilities::FindMetaData(tag, i_osl_param.metadata, "input_shader_type");
+		if (tag != nullptr && strcmp(tag, "volume") == 0)
+			return VOP_ATMOSPHERE_SHADER;
 
 		/*
 			Use the type of the shader node. This is what makes the network
