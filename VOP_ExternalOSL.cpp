@@ -426,6 +426,19 @@ NewPRMChoiceList(
 
 VOP_Type VOP_ExternalOSL::GetVOPType(const DlShaderInfo::Parameter& i_osl_param)
 {
+	/*
+		Because Volume parameter of osl shader if defined as color data type, we
+		distinguish it by using volume_tag meta data which is present only on
+		the Volume parameter.
+	*/
+	if (m_shader_info.IsTerminal())
+	{
+		const char* tag = nullptr;
+		osl_utilities::FindMetaData(tag, i_osl_param.metadata, "volume_tag");
+		if (tag != nullptr)
+			return VOP_ATMOSPHERE_SHADER;
+	}
+
 	if( i_osl_param.isclosure )
 	{
 		/*
