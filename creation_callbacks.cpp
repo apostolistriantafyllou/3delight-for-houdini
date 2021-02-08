@@ -274,9 +274,7 @@ void creation_callbacks::add_attributes_to_node(OBJ_Node& io_node)
 	std::string init_cmd =
 		"private/" + node_type + "_OnCreated.cmd " +
 		io_node.getFullPath().toStdString();
-
-	if (!io_node.hasParm("_3dl_tab_exists"))
-		OPgetDirector()->getCommandManager()->execute(init_cmd.c_str());
+	OPgetDirector()->getCommandManager()->execute(init_cmd.c_str());
 }
 
 void creation_callbacks::register_ROP(ROP_3Delight* i_rop)
