@@ -60,7 +60,7 @@ public:
 		refreshed regularly.
 	*/
 	static std::shared_ptr<hook_image_buffer> connect(
-		DM_SceneRenderHook* i_hook);
+		DM_SceneRenderHook* i_hook, int i_width, int i_height);
 
 	/**
 		\brief Disconnects image buffer from the Scene Render Hook.
@@ -88,16 +88,6 @@ public:
 
 	// Display driver interface
 
-	/**
-		\brief Allocates image data.
-		
-		This should be called by the display driver when it's reasy to start
-		writing data to the buffer.
-
-		\returns true if the buffer is ready to receive data, false otherwise
-		(in which case it should not be referenced again).
-	*/
-	bool open(int i_width, int i_height);
 	/// Adds a bucket to the image and requests a refresh of the viewport.
 	void data(int i_x, int i_y, int i_w, int i_h, const void* i_data);
 	/**
@@ -111,13 +101,13 @@ public:
 	/// Returns true if the image buffer is still connected to a render hook.
 	bool connected()const { return m_hook != nullptr; }
 
-	unsigned m_width{0};
-	unsigned m_height{0};
+	const unsigned m_width{0};
+	const unsigned m_height{0};
 
 private:
 
 	/// Constructor : connects the render hook to the image buffer.
-	hook_image_buffer(DM_SceneRenderHook* i_hook);
+	hook_image_buffer(DM_SceneRenderHook* i_hook, int i_width, int i_height);
 
 	/// Destructor.
 	~hook_image_buffer();
@@ -152,17 +142,27 @@ private:
 };
 
 
-hook_image_buffer::hook_image_buffer(DM_SceneRenderHook* i_hook)
-	:	m_hook(i_hook)
+hook_image_buffer::hook_image_buffer(
+	DM_SceneRenderHook* i_hook,
+	int i_width,
+	int i_height)
+	:	m_hook(i_hook),
+		m_width(i_width),
+		m_height(i_height)
 {
+	m_pixels = new UT_RGBA[m_width*m_height];
+	clear_pixels();
 }
 
 
 std::shared_ptr<hook_image_buffer>
-hook_image_buffer::connect(DM_SceneRenderHook* i_hook)
+hook_image_buffer::connect(
+	DM_SceneRenderHook* i_hook,
+	int i_width,
+	int i_height)
 {
 	std::shared_ptr<hook_image_buffer> buffer(
-		new hook_image_buffer(i_hook),
+		new hook_image_buffer(i_hook, i_width, i_height),
 		[](hook_image_buffer* buffer) { delete buffer; } );
 
 	/*
@@ -206,32 +206,6 @@ hook_image_buffer::disconnect()
 	m_mutex.lock();
 	m_hook = nullptr;
 	m_mutex.unlock();
-}
-
-
-bool
-hook_image_buffer::open(int i_width, int i_height)
-{
-	m_mutex.lock();
-	if(!m_hook)
-	{
-		m_mutex.unlock();
-		return false;
-	}
-
-	assert(!m_pixels || (m_width == i_width && m_height == i_height));
-	if(!m_pixels)
-	{
-		m_width = i_width;
-		m_height = i_height;
-
-		m_pixels = new UT_RGBA[m_width*m_height];
-		clear_pixels();
-	}
-
-	m_mutex.unlock();
-
-	return true;
 }
 
 
@@ -498,7 +472,7 @@ public:
 	int id()const { return viewport().getUniqueId(); }
 
 	/// Returns the image buffer displayed by the viewport hook
-	std::shared_ptr<hook_image_buffer> buffer();
+	std::shared_ptr<hook_image_buffer> buffer(int i_width, int i_weight);
 
 private:
 
@@ -606,10 +580,12 @@ viewport_hook::render(
 
 	m_mutex.unlock();
 
-	if(!buffer || !buffer->pixels())
+	if(!buffer)
 	{
 		return false;
 	}
+
+	assert(buffer->pixels());
 
 	// Save some OpenGL state
 
@@ -699,12 +675,21 @@ viewport_hook::get_camera()
 
 
 std::shared_ptr<hook_image_buffer>
-viewport_hook::buffer()
+viewport_hook::buffer(int i_width, int i_height)
 {
 	m_mutex.lock();
+	
+	if(m_image_buffer &&
+		(m_image_buffer->m_width != i_width ||
+		m_image_buffer->m_height != i_height))
+	{
+		m_image_buffer->disconnect();
+		m_image_buffer.reset();
+	}
+	
 	if(!m_image_buffer)
 	{
-		m_image_buffer = hook_image_buffer::connect(this);
+		m_image_buffer = hook_image_buffer::connect(this, i_width, i_height);
 	}
 
 	/*
@@ -955,13 +940,6 @@ viewport_hook::export_screen_attributes(
 		m_last_resolution[0] = resolution[0];
 		m_last_resolution[1] = resolution[1];
 
-		// We will need a new image with the proper resolution
-		if(m_image_buffer)
-		{
-			m_image_buffer->disconnect();
-			m_image_buffer.reset();
-		}
-
 		updated = true;
 	}
 
@@ -1022,12 +1000,12 @@ namespace
 			if(strcmp(i_parameters[p].name, k_viewport_hook_name) == 0)
 			{
 				int id = *(int*)i_parameters[p].value;
-				buf = viewport_hook_builder::instance().open(id);
+				buf = viewport_hook_builder::instance().open(id, i_width, i_height);
 				break;
 			}
 		}
 
-		if(!buf || !buf->open(i_width, i_height))
+		if(!buf)
 		{
 			/*
 				Image buffer is not ready to receive data (the render hook might
@@ -1060,8 +1038,8 @@ namespace
 	{
 		std::shared_ptr<hook_image_buffer>* buf =
 			(std::shared_ptr<hook_image_buffer>*)i_image;
-		assert(buf && buf->get());
-		buf->get()->close();
+		assert(buf && *buf);
+		(*buf)->close();
 
 		/*
 			Delete the shared_ptr, which will decrease the use_count of the
@@ -1215,7 +1193,7 @@ viewport_hook_builder::disconnect()
 
 
 std::shared_ptr<hook_image_buffer>
-viewport_hook_builder::open(int i_viewport_id)
+viewport_hook_builder::open(int i_viewport_id, int i_width, int i_height)
 {
 	m_hooks_mutex.lock();
 
@@ -1228,7 +1206,7 @@ viewport_hook_builder::open(int i_viewport_id)
 	std::shared_ptr<hook_image_buffer> buffer;
 	if(hook != m_hooks.end())
 	{
-		buffer = (*hook)->buffer();
+		buffer = (*hook)->buffer(i_width, i_height);
 	}
 	
 	m_hooks_mutex.unlock();
