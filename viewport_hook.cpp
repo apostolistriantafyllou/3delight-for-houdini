@@ -48,8 +48,9 @@ namespace
 	of deleting the image buffer once it stops being referenced from both the
 	display driver and the scene render hook.
 */
-struct hook_image_buffer
+class hook_image_buffer
 {
+public:
 	// Scene Render Hook interface
 
 	/**
