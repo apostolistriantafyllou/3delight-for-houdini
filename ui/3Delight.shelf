@@ -80,25 +80,36 @@ else:
 import roptoolutils
 
 out = hou.node("/out")
-nodeFound = None
-# try to find a selected ROP
+
+is_viewport_active = 0
+# Check if there is already any viewport rendering active to stop it.
 for node in out.children():
-    nodetype = node.type()
-    if node.isCurrent() and (nodetype.name() == "3DelightViewport"):
-        nodeFound = node
-        break
-if nodeFound == None:
-    # take the first ROP found
-    for node in out.children():
-        nodetype = node.type()
-        if nodetype.name() == "3DelightViewport":
-            nodeFound = node
-            break
-if nodeFound != None:
-    hou.node(nodeFound.path()).render()
-else:
-    newnode = hou.node('/out').createNode("3DelightViewport")
-    hou.node(newnode.path()).render()
+	nodetype = node.type()
+	if nodetype.name() == "3DelightViewport" and (node.parm("start_viewport").eval()):
+		active_viewport = node.name()
+		hou.parm('/out/' + active_viewport + '/viewport_abort').pressButton()
+		is_viewport_active = 1
+
+if is_viewport_active == 0:
+	nodeFound = None
+	# try to find a selected ROP
+	for node in out.children():
+		nodetype = node.type()
+		if node.isCurrent() and (nodetype.name() == "3DelightViewport"):
+			nodeFound = node
+			break
+	if nodeFound == None:
+		# take the first ROP found
+		for node in out.children():
+			nodetype = node.type()
+			if nodetype.name() == "3DelightViewport":
+				nodeFound = node
+				break
+	if nodeFound != None:
+		hou.node(nodeFound.path()).render()
+	else:
+		newnode = hou.node('/out').createNode("3DelightViewport")
+		hou.node(newnode.path()).render()
 
 	]]></script>
   </tool>
