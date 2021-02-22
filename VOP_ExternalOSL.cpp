@@ -429,6 +429,14 @@ VOP_Type VOP_ExternalOSL::GetVOPType(const DlShaderInfo::Parameter& i_osl_param)
 	if( i_osl_param.isclosure )
 	{
 		/*
+			Get the right VOPType for volume parameters.
+		*/
+		const char* tag = nullptr;
+		osl_utilities::FindMetaData(tag, i_osl_param.metadata, "input_shader_type");
+		if (tag != nullptr && strcmp(tag, "volume") == 0)
+			return VOP_ATMOSPHERE_SHADER;
+
+		/*
 			Use the type of the shader node. This is what makes the network
 			connect to the correct terminal type on the USD side of the
 			universe. See getMaterialPrimOutputName() and isShaderVopTypeName()
