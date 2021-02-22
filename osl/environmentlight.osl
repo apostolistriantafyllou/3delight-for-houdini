@@ -31,4 +31,6 @@ environmentlight(
 		Ci *= _3dl_specular_contribution;
 	else if( raytype("volume") )
 		Ci *= _3dl_volume_contribution;
+
+	Ci += transparent();
 }

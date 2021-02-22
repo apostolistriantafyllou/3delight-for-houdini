@@ -1,6 +1,15 @@
 #include "utils.h"
 
+#define DISTANT 7
+#define SUN 8
+
+/*
+	This deals with spot, area, geo, distant and sun.
+	environment is deal with in environmentLight.
+*/
 surface hlight(
+	int light_type = 0,
+
 	color light_color = color(1),
 	float light_intensity = 1,
 	float light_exposure = 1,
@@ -23,8 +32,15 @@ surface hlight(
 {
 	Ci = 0;
 
-	/* So that area light doesn't cast any shadows. */
-	if( !raytype("camera") )
+	/*
+		1- Area Light doesn't cast any shadows.
+		2- Make sure that directional/sun lights are transparent. This
+		needed for the 3Delight light sampler as both these NSI lights
+		are plced at infinity (should be done in 3Delight)
+	*/
+	if( !raytype("camera") ||
+		light_type == DISTANT ||
+		light_type == SUN )
 	{
 		Ci += transparent();
 	}
