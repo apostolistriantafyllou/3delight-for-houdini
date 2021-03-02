@@ -268,6 +268,10 @@ bool ROP_3Delight::HasMotionBlur( double t) const
 */
 void ROP_3Delight::ExportDefaultMaterial( const context &i_context ) const
 {
+	// Exporting this will assign a surface shader to environmetns as well
+	// which is not good. FIXME: should we do something "smarter"
+	return;
+
 	const std::string k_shader( "__default__shader__" );
 	const std::string k_attributes( "__default__attributes__" );
 
