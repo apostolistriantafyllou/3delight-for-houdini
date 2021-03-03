@@ -579,6 +579,9 @@ void geometry::update_materials_mapping(
 	}
 }
 
+/**
+	\brief Used with the "Debug" flag on the vop nodes.
+*/
 void geometry::connect_texture(
 	VOP_Node* i_shader,
 	OBJ_Node* i_node,
