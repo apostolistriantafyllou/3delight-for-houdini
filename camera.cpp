@@ -362,6 +362,9 @@ void camera::create( void ) const
 
 void camera::set_attributes( void ) const
 {
+	//Don't set camera attributes o
+	if (m_context.m_rop_type == rop_type::stand_in)
+		return;
 	double nsi_shutter[2] = { m_context.ShutterOpen(), m_context.ShutterClose() };
 	m_nsi.SetAttribute(
 		m_handle,
