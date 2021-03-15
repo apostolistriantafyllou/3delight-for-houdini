@@ -1429,11 +1429,9 @@ ROP_3Delight::ExportOneOutputLayer(
 				The value here can really be very high and things will still
 				work fine. Note that this also eliminates some fireflies.
 			*/
-#if 0
 			i_ctx.m_nsi.SetAttribute(
 				i_layer_handle,
 				NSI::DoubleArg("maximumvalue", 50));
-#endif
 		}
 	}
 
