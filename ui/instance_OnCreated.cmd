@@ -38,6 +38,7 @@ if ( "$arg1" != "" && ("$DELIGHT_AUTOSPAREPARAMS" !=0 || "$arg2"!="")) then
 
 	opproperty -f $arg1 3Delight _3dl_render_poly_as_subd
     opproperty -f $arg1 3Delight _3dl_smooth_curves
+    opproperty -f $arg1 3Delight _3dl_use_alembic_procedural
     opproperty -f $arg1 3Delight _3dl_obj_geo_label1_group
     opproperty -f $arg1 3Delight _3dl_visibility_camera
     opproperty -f $arg1 3Delight _3dl_visibility_diffuse
