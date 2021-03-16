@@ -869,6 +869,23 @@ ROP_3Delight::updateParmsFlags()
 }
 
 void
+ROP_3Delight::opChanged(OP_EventType reason, void* data)
+{
+	OP_Node::opChanged(reason, data);
+	if (reason != OP_NAME_CHANGED)
+	{
+		return;
+	}
+
+	// Update AOVs list so we're ready to render
+	double time =
+		OPgetDirector()->getChannelManager()->getEvaluateTime(SYSgetSTID());
+	std::vector<VOP_Node*> custom_aovs;
+	scene::find_custom_aovs(this, time, custom_aovs);
+	aov::updateCustomVariables(custom_aovs);
+}
+
+void
 ROP_3Delight::loadFinished()
 {
 	ROP_Node::loadFinished();
@@ -1383,9 +1400,10 @@ ROP_3Delight::ExportOneOutputLayer(
 	unsigned& io_sort_key) const
 {
 	// Output only RGBA layer if Disable extra Image Layer has been selected.
-	if (HasSpeedBoost(i_ctx.m_current_time)
+	if ((HasSpeedBoost(i_ctx.m_current_time)
 		&& evalInt(settings::k_disable_extra_image_layers, 0, i_ctx.m_current_time)
 		&& i_desc.m_variable_name!="Ci")
+		|| i_desc.m_variable_name=="")
 	{
 		return;
 	}

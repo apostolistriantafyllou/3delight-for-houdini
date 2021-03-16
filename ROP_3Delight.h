@@ -119,6 +119,8 @@ protected:
 
     virtual void resolveObsoleteParms(PRM_ParmList*);
 
+	virtual void opChanged(OP_EventType reason, void* data) override;
+
 protected:
 	/** Returns the resolution multiplier from Speed Boost */
 	float GetResolutionFactor()const;
