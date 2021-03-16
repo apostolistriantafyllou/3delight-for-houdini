@@ -130,7 +130,6 @@ public:
 	/** For each material store the objects to where they are connected. */
 	mutable ObjectsMapping material_to_objects;
 
-	void update_export_path_value();
 public:
 	NSI::Context &m_nsi;
 	NSI::Context &m_static_nsi;
