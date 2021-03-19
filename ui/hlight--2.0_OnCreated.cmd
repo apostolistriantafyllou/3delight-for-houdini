@@ -38,6 +38,7 @@ if ( "$arg1" != "" && ("$DELIGHT_AUTOSPAREPARAMS" !=0 || "$arg2"!="")) then
 
 	opproperty -f $arg1 3Delight _3dl_spread
 	opproperty -f $arg1 3Delight _3dl_spotlight_size
+	opproperty -f $arg1 3Delight _3dl_decay
 	opproperty -f $arg1 3Delight _3dl_obj_light_contrib_title
 	opproperty -f $arg1 3Delight _3dl_contributions_group
 	opproperty -f $arg1 3Delight _3dl_compositing_group_title

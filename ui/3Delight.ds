@@ -356,6 +356,19 @@
 		hidewhen "{coneenable == "off"}"
 	}
 
+	parm
+	{
+		SOHO_PARM(_3dl_decay, "Decay Rate", "3Delight", int, 1, 2)
+		menu
+		{
+			0 "No Decay"
+			1 "Linear"
+			2 "Quadratic"
+			3 "Cubic"
+		}
+		disablewhen "{ light_type == "distant" } { light_type == "sun" }"
+	}
+
 
 	DELIGHT_FULL_TITLE(_3dl_obj_light_contrib, "Contributions")
 
