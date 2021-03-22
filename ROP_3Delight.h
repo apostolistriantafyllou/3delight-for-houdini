@@ -119,7 +119,7 @@ protected:
 
     virtual void resolveObsoleteParms(PRM_ParmList*);
 
-	virtual void opChanged(OP_EventType reason, void* data) override;
+	virtual void opChanged(OP_EventType reason, void* data);
 
 protected:
 	/** Returns the resolution multiplier from Speed Boost */
