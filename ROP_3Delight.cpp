@@ -550,7 +550,8 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	m_static_nsi_file.clear();
 	if(m_current_render->m_export_nsi && m_current_render->m_rop_type != rop_type::stand_in)
 	{
-		std::string first_frame = GetNSIExportFilename(0.0);
+		std::string first_frame =
+			GetNSIExportFilename( m_current_render->m_start_time );
 		if(first_frame != k_stdout)
 		{
 			m_static_nsi_file = first_frame + ".static";
