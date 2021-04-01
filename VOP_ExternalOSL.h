@@ -19,7 +19,8 @@ namespace VolumeGridParameters
 	const char density_name[] = "densitygrid";
 	const char color_name[] = "colorgrid";
 	const char temperature_name[] = "temperaturegrid";
-	const char emission_name[] = "emissionintensitygrid";
+	const char emission_intensity_name[] = "emissionintensitygrid";
+	const char emission_name[] = "emissiongrid";
 	const char velocity_name[] = "velocitygrid";
 	/// Name of the velocity scale  hardcoded parameter
 	const char velocity_scale_name[] = "velocityscale";
@@ -28,7 +29,8 @@ namespace VolumeGridParameters
 	const char density_default[] = "density";
 	const char color_default[] = "color";
 	const char temperature_default[] = "temperature";
-	const char emission_default[] = "heat";
+	const char emission_intensity_default[] = "heat";
+	const char emission_default[] = "Ce";
 	const char velocity_default[] = "vel";
 	const float velocity_scale_default = 1.0f;
 }

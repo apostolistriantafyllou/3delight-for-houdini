@@ -28,8 +28,8 @@ static const std::vector<const DlShaderInfo::Parameter*> GetVolumeParams()
 	typedef DlShaderInfo::conststring conststring;
 	typedef DlShaderInfo::Parameter Parameter;
 
-	static const unsigned nparams = 6;
-	static const unsigned nstrings = 5;
+	static const unsigned nparams = 7;
+	static const unsigned nstrings = 6;
 	static const char label[] = "label";
 
 	using namespace VolumeGridParameters;
@@ -43,6 +43,9 @@ static const std::vector<const DlShaderInfo::Parameter*> GetVolumeParams()
 		conststring(
 			temperature_name, temperature_name+sizeof(temperature_name)),
 		conststring(
+			emission_intensity_name,
+			emission_intensity_name+sizeof(emission_intensity_name)),
+		conststring(
 			emission_name, emission_name+sizeof(emission_name)),
 		conststring(
 			velocity_name, velocity_name+sizeof(velocity_name)),
@@ -53,7 +56,8 @@ static const std::vector<const DlShaderInfo::Parameter*> GetVolumeParams()
 	static const char density_label[] = "Smoke";
 	static const char color_label[] = "Smoke Color";
 	static const char temperature_label[] = "Temperature";
-	static const char emission_label[] = "Emission Intensity";
+	static const char emission_intensity_label[] = "Emission Intensity";
+	static const char emission_label[] = "Emission";
 	static const char velocity_label[] = "Velocity";
 	static const char velocity_scale_label[] = "Velocity Scale";
 
@@ -65,6 +69,9 @@ static const std::vector<const DlShaderInfo::Parameter*> GetVolumeParams()
 			color_label, color_label+sizeof(color_label)),
 		conststring(
 			temperature_label, temperature_label+sizeof(temperature_label)),
+		conststring(
+			emission_intensity_label,
+			emission_intensity_label+sizeof(emission_intensity_label)),
 		conststring(
 			emission_label, emission_label+sizeof(emission_label)),
 		conststring(
@@ -1208,6 +1215,8 @@ void VOP_ExternalOSL::SetVDBVolumeDefaults()
 	setString(density_default, CH_STRING_LITERAL, density_name, 0, 0.f);
 	setString(color_default, CH_STRING_LITERAL, color_name, 0, 0.f);
 	setString(temperature_default, CH_STRING_LITERAL, temperature_name, 0, 0.f);
+	setString(emission_intensity_default, CH_STRING_LITERAL,
+		emission_intensity_name, 0, 0.f);
 	setString(emission_default, CH_STRING_LITERAL, emission_name, 0, 0.f);
 	setString(velocity_default, CH_STRING_LITERAL, velocity_name, 0, 0.f);
 }

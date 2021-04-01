@@ -95,6 +95,7 @@ void vdb_file::set_attributes( void ) const
 	UT_String color_grid;
 	UT_String temperature_grid;
 	UT_String emissionintensity_grid;
+	UT_String emission_grid;
 	UT_String velocity_grid;
 	double velocity_scale = 1.0;
 
@@ -129,9 +130,14 @@ void vdb_file::set_attributes( void ) const
 		{
 			material->evalString(temperature_grid, temperature_name, 0, time);
 		}
+		if(material->hasParm(emission_intensity_name))
+		{
+			material->evalString(
+				emissionintensity_grid, emission_intensity_name, 0, time);
+		}
 		if(material->hasParm(emission_name))
 		{
-			material->evalString(emissionintensity_grid, emission_name, 0, time);
+			material->evalString(emission_grid, emission_name, 0, time);
 		}
 		if(material->hasParm(velocity_name))
 		{
@@ -167,6 +173,11 @@ void vdb_file::set_attributes( void ) const
 		if( grid == emissionintensity_grid.toStdString() )
 		{
 			arguments.Add( new NSI::StringArg( "emissionintensitygrid", grid) );
+		}
+
+		if( grid == emission_grid.toStdString() )
+		{
+			arguments.Add( new NSI::StringArg( "emissiongrid", grid) );
 		}
 
 		if( grid == velocity_grid.toStdString() )
