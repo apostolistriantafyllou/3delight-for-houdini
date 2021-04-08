@@ -17,6 +17,8 @@
 #include <assert.h>
 #include <nsi.hpp>
 
+#include <algorithm>
+
 const char* k_incandescence_multiplier = "incandescence_multiplier";
 namespace
 {
@@ -133,6 +135,8 @@ void incandescence_light::connect() const
 		UT_String obj_mat_path;
 		obj_node->evalString(obj_mat_path, "shop_materialpath", 0, time);
 		material_paths.push_back( obj_mat_path.toStdString() );
+
+		std::unique( material_paths.begin(), material_paths.end() );
 
 		for( auto &mat_path : material_paths )
 		{
