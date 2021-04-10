@@ -136,10 +136,12 @@ void incandescence_light::connect() const
 		obj_node->evalString(obj_mat_path, "shop_materialpath", 0, time);
 		material_paths.push_back( obj_mat_path.toStdString() );
 
-		std::unique( material_paths.begin(), material_paths.end() );
+		auto end = std::unique( material_paths.begin(), material_paths.end() );
+		auto current = material_paths.begin();
 
-		for( auto &mat_path : material_paths )
+		for( ; current != end; current ++ )
 		{
+			auto mat_path = *current;
 			VOP_Node *mats[3] = {nullptr};
 			resolve_material_path(obj_node, mat_path.c_str(), mats);
 
