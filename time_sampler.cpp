@@ -33,12 +33,18 @@ bool time_sampler::is_time_dependent(
 	{
 		if(sop)
 		{
-			sop->getCookedGeoHandle(op_ctx);
+			if(!sop->isTimeDependent(op_ctx))
+			{
+				sop->getCookedGeoHandle(op_ctx);
+			}
 		}
 		else
 		{
-			UT_DMatrix4 local;
-			i_node.getLocalTransform(op_ctx, local);
+			if(!i_node.isTimeDependent(op_ctx))
+			{
+				UT_DMatrix4 local;
+				i_node.getLocalTransform(op_ctx, local);
+			}
 		}
 	}
 
