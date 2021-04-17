@@ -313,9 +313,6 @@ exporter::attributes_context(
 	time_sampler::blur_source i_type)const
 {
 	bool animated =
-		time_sampler::is_time_dependent(
-			*m_object,
-			m_context.m_current_time,
-			i_type);
+		time_sampler::is_time_dependent(*m_object, m_context, i_type);
 	return animated ? m_context.m_nsi : m_context.m_static_nsi;
 }

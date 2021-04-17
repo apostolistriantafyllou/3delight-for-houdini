@@ -100,12 +100,13 @@ void scene::process_obj_node(
 		null exported as it is already present since the first scene
 		scan.
 	*/
+
 	if( !i_re_export_instanced )
 	{
 		bool time_dependent_obj =
 			time_sampler::is_time_dependent(
 				*obj,
-				i_context.current_time(),
+				i_context,
 				time_sampler::e_transformation);
 
 		/*
@@ -140,7 +141,7 @@ void scene::process_obj_node(
 	bool time_dependent_obj =
 		time_sampler::is_time_dependent(
 			*obj,
-			i_context.current_time(),
+			i_context,
 			time_sampler::e_deformation);
 	bool needs_delete = i_context.m_time_dependent && time_dependent_obj;
 	bool needs_export = !i_context.m_time_dependent || time_dependent_obj;
