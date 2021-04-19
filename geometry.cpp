@@ -595,9 +595,45 @@ void geometry::connect_texture(
 	const std::string passthrough_shader(obj_handle + "_passthrough");
 	std::string path = library.get_shader_path("passthrough");
 
+	UT_String source_output_name = "outColor";
+	int output_size = i_shader->getNumVisibleOutputs();
+	bool output_exists = false;
+	for (int i = 0; i < output_size; i++)
+	{
+		if (i_shader->hasAnyOutputNodes(true, i))
+		{
+			//Give more priority to the connected outputs. Meaning that even if
+			//there is any color output on the shader, we will use that one
+			//instead of color output when debugging the node.
+			i_shader->getOutputName(source_output_name, i);
+			output_exists = true;
+			break;
+		}
+
+		//Get first found color type output (most probably there is only one)
+		//This will be useful if our node is not connected to any parent node.
+		if (i_shader->getOutputType(i) == VOP_TYPE_COLOR
+			&& !output_exists)
+		{
+			i_shader->getOutputName(source_output_name, i);
+			output_exists = true;
+		}
+	}
+
+	//Get first output name if no color type output exists, and if no output
+	//is connected at all (not likely to happen).
+	if (!output_exists && output_size > 0)
+	{
+		i_shader->getOutputName(source_output_name, 0);
+	}
+
 	i_context.m_nsi.Create(passthrough_shader, "shader");
-	i_context.m_nsi.SetAttribute(passthrough_shader, NSI::StringArg("shaderfilename", path));
-	i_context.m_nsi.Connect(mat_handle, "outColor", passthrough_shader, "i_color",
+	i_context.m_nsi.SetAttribute(
+		passthrough_shader,
+		NSI::StringArg("shaderfilename", path));
+	i_context.m_nsi.Connect(
+		mat_handle, source_output_name.toStdString(),
+		passthrough_shader, "i_color",
 		NSI::IntegerArg("strength", 1));
 	i_context.m_nsi.Connect(
 		passthrough_shader, "",
