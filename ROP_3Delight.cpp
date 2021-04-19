@@ -1354,12 +1354,15 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		If we have at least one frame buffer output, we go for the circular
 		pattern. When only file output is request, we will use the more
 		efficient (at least, memory wise) scanline pattern.
+
+		Also, when rendering a sequence, it makes little sense to have a
+		framebuffer as we need maximum efficiency in that case as well.
 	*/
 	i_ctx.m_nsi.SetAttribute(
 		NSI_SCENE_GLOBAL,
 		NSI::CStringPArg(
 			"bucketorder",
-			has_frame_buffer ? "circle" : "horizontal"));
+			has_frame_buffer && i_ctx.SingleFrame() ? "circle" : "horizontal"));
 
 	/* Don't take too much CPU if the Houdini UI is present */
 	if( UTisUIAvailable() )
