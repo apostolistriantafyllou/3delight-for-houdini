@@ -18,31 +18,10 @@ bool time_sampler::is_time_dependent(
 	time_sampler::blur_source i_type)
 {
 	OP_Context op_ctx(i_time);
-	SOP_Node* sop =
-		i_type == time_sampler::e_deformation
-		?	i_node.getRenderSopPtr()
-		:	nullptr;
-	
-	/*
-		When the Display flag is turned off (which means we're rendering this
-		object because it's part of the "objects to render" or "lights to
-		render" set), Houdini needs to be shaken up a little bit in order to be
-		able to answer the "isTimeDependent" request.
-	*/
-	if(!i_node.getObjectDisplay(i_time))
-	{
-		if(sop)
-		{
-			sop->getCookedGeoHandle(op_ctx);
-		}
-		else
-		{
-			UT_DMatrix4 local;
-			i_node.getLocalTransform(op_ctx, local);
-		}
-	}
-
-	return sop ? sop->isTimeDependent(op_ctx) : i_node.isTimeDependent(op_ctx);
+	return
+		i_type == time_sampler::e_deformation && i_node.getRenderSopPtr()
+		? i_node.getRenderSopPtr()->isTimeDependent(op_ctx)
+		: i_node.isTimeDependent(op_ctx);
 }
 
 time_sampler::time_sampler(
