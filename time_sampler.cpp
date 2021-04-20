@@ -24,13 +24,15 @@ bool time_sampler::is_time_dependent(
 		:	nullptr;
 	
 	/*
-		When the Display flag is turned off and we still want to render it
-		(which means it's part of the "objects to render" or "lights to render"
-		set), Houdini needs to be shaken up a little bit in order to be able to
-		answer the "isTimeDependent" request.
+		When the node hasn't been displayed by Houdini yet, but we need to
+		render it, Houdini needs to be shaken up a little bit in order to be
+		able to answer the "isTimeDependent" request.
+		This happens when the node's Display flag is turned off and we still
+		want to render it because it's part of the "objects to render" or
+		"lights to render", or when rendering in batch mode, which means no
+		node will ever be displayed.
 	*/
-	if(!i_node.getObjectDisplay(i_context.m_current_time) &&
-		i_context.object_displayed(i_node))
+	if(i_context.object_displayed(i_node))
 	{
 		if(sop)
 		{
