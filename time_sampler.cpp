@@ -32,7 +32,7 @@ bool time_sampler::is_time_dependent(
 		"lights to render", or when rendering in batch mode, which means no
 		node will ever be displayed.
 	*/
-	if(i_context.object_displayed(i_node))
+	if(i_context.object_displayed(i_node) || i_node.castToOBJCamera())
 	{
 		if(sop)
 		{
