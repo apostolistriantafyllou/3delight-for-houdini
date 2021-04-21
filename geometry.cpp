@@ -681,6 +681,14 @@ void geometry::connect()const
 		m_nsi.Connect(matte_handle, "", hub_handle(), "geometryattributes");
 	}
 
+	if (m_context.object_is_phantom(*m_object))
+	{
+		const char* phantom_handle =
+			object_attributes::geo_attribute_node_handle(
+				object_attributes::e_visCamera);
+		m_nsi.Connect(phantom_handle, "", hub_handle(), "geometryattributes");
+	}
+
 	/*
 		OBJ-level material assignment.
 
