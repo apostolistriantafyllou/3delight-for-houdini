@@ -78,7 +78,7 @@ public:
 	static osl_type shader_type( VOP_Node* shader );
 
 	/**
-		\returns true if shaer is a pattern/texture.
+		\returns true if shader is a pattern/texture.
 	*/
 	static bool is_texture( VOP_Node *shader );
 
