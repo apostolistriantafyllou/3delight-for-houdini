@@ -379,7 +379,10 @@ viewport_camera::viewport_camera(
 		double frame_duration = OPgetDirector()->getChannelManager()->getSecsPerSample();
 		m_shutter = active_camera->SHUTTER(i_time) * frame_duration;
 		m_active_camera_obj = active_camera;
-		m_enable_dof = active_camera->evalInt("_3dl_enable_dof", 0, m_time);
+		if (active_camera->hasParm("_3dl_enable_dof"))
+		{
+			m_enable_dof = active_camera->evalInt("_3dl_enable_dof", 0, m_time);
+		}
 	}
 	// Focal length seems to be in thousandths of scene units
 	m_focal_length /= 1000.0;
