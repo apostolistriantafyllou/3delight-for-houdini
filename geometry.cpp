@@ -142,6 +142,10 @@ struct OBJ_Node_Refiner : public GT_Refine
 	*/
 	void addPrimitive( const GT_PrimitiveHandle &i_primitive ) override
 	{
+#ifdef VERBOSE
+		printf( "Adding primitive type:%d class:%s\n", i_primitive->getPrimitiveType(),
+			i_primitive->className() );
+#endif
 		if(m_stop)
 		{
 			return;
@@ -462,6 +466,10 @@ struct OBJ_Node_Refiner : public GT_Refine
 geometry::geometry(const context& i_context, OBJ_Node* i_object)
 	:	exporter(i_context, i_object)
 {
+#ifdef VERBOSE
+	fprintf( stderr, "* Refining %s\n", i_object->getFullPath().c_str() );
+#endif
+
 	SOP_Node *sop = m_object->getRenderSopPtr();
 
 	assert( sop );
@@ -470,15 +478,19 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 		time_sampler t(m_context, *m_object, time_sampler::e_deformation); t ; t++)
 	{
 		double time = *t;
+
+#ifdef VERBOSE
+		std::cerr << "Refining " << m_object->getFullPath() << " at time " << time << std::endl;
+#endif
+
 		OP_Context context(time);
 		GU_DetailHandle detail_handle( sop->getCookedGeoHandle(context) );
 
 		if( !detail_handle.isValid() )
 		{
 #ifdef VERBOSE
-			std::cerr
-				<< "3Delight for Houdini: " << m_object->getFullPath()
-				<< " has no valid detail" << std::endl;
+			std::cerr << m_object->getFullPath()
+				<< " has no valid detail at time " << time << std::endl;
 #endif
 			continue;
 		}
