@@ -98,6 +98,7 @@ public:
 	}
 
 private:
+	static bool is_alembic( OBJ_Node &i_node, double t );
 
 	double m_first;
 	double m_last;

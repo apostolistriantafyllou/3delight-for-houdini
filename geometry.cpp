@@ -1,3 +1,4 @@
+#include "alembic.h"
 #include "geometry.h"
 
 #include "context.h"
@@ -19,6 +20,8 @@
 #include <GT/GT_PrimVolume.h>
 #include <GT/GT_Refine.h>
 #include <GT/GT_RefineParms.h>
+#include <GT/GT_PackedAlembic.h>
+
 #include <GU/GU_ConvertParms.h>
 #include <GU/GU_PrimVDB.h>
 #include <OBJ/OBJ_Node.h>
@@ -93,6 +96,14 @@ struct OBJ_Node_Refiner : public GT_Refine
 		m_params.setAllowSubdivision( true );
 		m_params.setAddVertexNormals( true );
 		m_params.setCuspAngle( GEO_DEFAULT_ADJUSTED_CUSP_ANGLE );
+
+		if( i_node->hasParm("_3dl_use_alembic_procedural") &&
+			i_node->evalInt("_3dl_use_alembic_procedural", 0,
+				i_context.m_current_time) != 0 )
+		{
+			m_params.setAlembicInstancing( true );
+			m_params.setPackedViewportLOD( true );
+		}
 	}
 
 	// Constructor used for recursive calls
@@ -131,6 +142,10 @@ struct OBJ_Node_Refiner : public GT_Refine
 	*/
 	void addPrimitive( const GT_PrimitiveHandle &i_primitive ) override
 	{
+#ifdef VERBOSE
+		printf( "Adding primitive type:%d class:%s\n", i_primitive->getPrimitiveType(),
+			i_primitive->className() );
+#endif
 		if(m_stop)
 		{
 			return;
@@ -142,6 +157,13 @@ struct OBJ_Node_Refiner : public GT_Refine
 
 		switch( i_primitive->getPrimitiveType() )
 		{
+		case GT_PRIM_ALEMBIC_ARCHIVE:
+			/* we will get here only if _3dl_use_alembic_procedural = true */
+			m_result.push_back(
+				new alembic(m_context, m_node, m_time, i_primitive, index) );
+			m_return.push_back( m_result.back() );
+			break;
+
 		case GT_PRIM_POLYGON_MESH:
 		{
 			m_result.push_back(
@@ -444,6 +466,10 @@ struct OBJ_Node_Refiner : public GT_Refine
 geometry::geometry(const context& i_context, OBJ_Node* i_object)
 	:	exporter(i_context, i_object)
 {
+#ifdef VERBOSE
+	fprintf( stderr, "* Refining %s\n", i_object->getFullPath().c_str() );
+#endif
+
 	SOP_Node *sop = m_object->getRenderSopPtr();
 
 	assert( sop );
@@ -452,17 +478,21 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 		time_sampler t(m_context, *m_object, time_sampler::e_deformation); t ; t++)
 	{
 		double time = *t;
+
+#ifdef VERBOSE
+		std::cerr << "Refining " << m_object->getFullPath() << " at time " << time << std::endl;
+#endif
+
 		OP_Context context(time);
 		GU_DetailHandle detail_handle( sop->getCookedGeoHandle(context) );
 
 		if( !detail_handle.isValid() )
 		{
 #ifdef VERBOSE
-			std::cerr
-				<< "3Delight for Houdini: " << m_object->getFullPath()
-				<< " has no valid detail" << std::endl;
+			std::cerr << m_object->getFullPath()
+				<< " has no valid detail at time " << time << std::endl;
 #endif
-			return;
+			continue;
 		}
 
 		/*
@@ -479,11 +509,15 @@ geometry::geometry(const context& i_context, OBJ_Node* i_object)
 			m_object, detail_handle, m_context, time, result);
 		gt->refine( refiner, &refiner.m_params );
 
+#ifdef VERBOSE
+		std::cerr << m_object->getFullPath() << " gave us " << result.size() << " primitives" << std::endl;
+#endif
 		if( result.empty() )
 			break;
 
 		if( m_primitives.empty() )
 		{
+			/* Frist time step */
 			m_primitives = result;
 		}
 		else if( result.size() == m_primitives.size() )

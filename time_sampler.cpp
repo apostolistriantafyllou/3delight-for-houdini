@@ -10,6 +10,18 @@ namespace
 	const char* k_nb_transformation_samples = "_3dl_transformation_extra_samples";
 	const char* k_add_deformation_samples = "_3dl_deformation";
 	const char* k_nb_deformation_samples = "_3dl_add_samples";
+	const char* k_use_alembic_procedural = "_3dl_use_alembic_procedural";
+}
+
+/** We rely on the 3Delight alembic procedural parameter */
+bool time_sampler::is_alembic( OBJ_Node &i_node, double t )
+{
+	/*
+		Alembic archives do their own motion blur. We rely on the
+		alembic archive flag for now.
+	*/
+	return i_node.hasParm(k_use_alembic_procedural) &&
+		i_node.evalInt(k_use_alembic_procedural, 0, t);
 }
 
 bool time_sampler::is_time_dependent(
@@ -18,6 +30,13 @@ bool time_sampler::is_time_dependent(
 	time_sampler::blur_source i_type)
 {
 	OP_Context op_ctx(i_context.m_current_time);
+	if( is_alembic(i_node, i_context.m_current_time) )
+	{
+		/* Alembic archives do their own motion blur. */
+		printf( "is_time_dependent: ALEMBIC!\n" );
+		return false;
+	}
+
 	SOP_Node* sop =
 		i_type == time_sampler::e_deformation
 		?	i_node.getRenderSopPtr()
@@ -67,6 +86,13 @@ time_sampler::time_sampler(
 			: 0),
 		m_current_sample(0)
 {
+	/* Alembic archives do their own motion blur. */
+	if( is_alembic(i_node, i_context.m_current_time) )
+	{
+		m_nb_intervals = 0;
+		return;
+	}
+
 	const char* add_samples_attr =
 		i_type == e_deformation
 		? k_add_deformation_samples

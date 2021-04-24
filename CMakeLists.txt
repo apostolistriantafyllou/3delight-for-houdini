@@ -43,6 +43,7 @@ ENDIF()
 # Add a library
 set( library_name 3Delight_for_Houdini )
 add_library( ${library_name} SHARED
+	alembic.cpp
 	OBJ_IncandescenceLight.cpp
 	ROP_3Delight.cpp
 	VOP_3DelightMaterialBuilder.cpp

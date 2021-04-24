@@ -72,6 +72,11 @@
 		SOHO_TOGGLE(_3dl_smooth_curves, "Smooth Curves", "3Delight", 1)
 	}
 
+	parm
+	{
+		SOHO_TOGGLE(_3dl_use_alembic_procedural, "Use Alembic Procedural", "3Delight", 0)
+	}
+
 	collection
 	{
 		name	_3dl_obj_geo_label1_group
