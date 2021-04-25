@@ -18,10 +18,12 @@ struct object_visibility_resolver
 
 	bool object_displayed( const OBJ_Node& ) const;
 	bool object_is_matte( const OBJ_Node& ) const;
+	bool object_is_phantom(const OBJ_Node&) const;
 
 	OP_BundlePattern* m_objects_to_render_pattern{nullptr};
 	OP_BundlePattern* m_lights_to_render_pattern{nullptr};
 	OP_BundlePattern* m_mattes_pattern{nullptr};
+	OP_BundlePattern* m_phantom_pattern{ nullptr };
 
 	std::string m_rop_path;
 

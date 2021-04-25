@@ -28,6 +28,9 @@ object_visibility_resolver::object_visibility_resolver(
 
 	m_mattes_pattern =
 		OP_BundlePattern::allocPattern( i_settings.get_matte_objects(i_time) );
+
+	m_phantom_pattern =
+		OP_BundlePattern::allocPattern(i_settings.get_phantom_objects(i_time));
 }
 
 object_visibility_resolver::~object_visibility_resolver()
@@ -37,6 +40,7 @@ object_visibility_resolver::~object_visibility_resolver()
 		OP_BundlePattern::freePattern(m_lights_to_render_pattern);
 		OP_BundlePattern::freePattern( m_objects_to_render_pattern );
 	}
+	OP_BundlePattern::freePattern( m_phantom_pattern );
 	OP_BundlePattern::freePattern( m_mattes_pattern );
 }
 
@@ -102,4 +106,26 @@ bool object_visibility_resolver::object_is_matte(const OBJ_Node& i_node)const
 		}
 	}
 	return m_mattes_pattern->match(&i_node, m_rop_path.c_str(), true);
+}
+
+bool object_visibility_resolver::object_is_phantom(const OBJ_Node& i_node)const
+{
+	if (!m_phantom_pattern || m_phantom_pattern->isNullPattern())
+		return false;
+
+	//phantom list can also be a bundle.
+	if (m_phantom_pattern->argv(0)[0] == '@')
+	{
+		OP_BundleList* blist = OPgetDirector()->getBundles();
+		assert(blist);
+		const char* pattern_str = m_phantom_pattern->argv(0) + 1;
+		OP_Bundle* bundle = blist->getBundle(pattern_str);
+		if (bundle && bundle->contains(i_node.castToOPNode(), false))
+		{
+			OP_BundlePattern* pattern;
+			pattern = OP_BundlePattern::allocPattern(i_node.getFullPath());
+			return pattern->match(&i_node, m_rop_path.c_str(), true);
+		}
+	}
+	return m_phantom_pattern->match(&i_node, m_rop_path.c_str(), true);
 }

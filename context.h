@@ -97,6 +97,8 @@ public:
 	bool object_displayed(const OBJ_Node& i_node)const;
 	/// Returns true if an object is in the mattes bundle.
 	bool object_is_matte(const OBJ_Node& i_node)const;
+	/// Returns true if an object is in the phantom bundle.
+	bool object_is_phantom(const OBJ_Node& i_node)const;
 
 	/// Returns the bundle pattern built from the "lights to render" setting
 	const OP_BundlePattern* lights_to_render()const;

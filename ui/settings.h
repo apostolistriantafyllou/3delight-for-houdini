@@ -82,6 +82,7 @@ public:
 	UT_String GetObjectsToRender( fpreal ) const;
 	UT_String GetLightsToRender( fpreal ) const;
 	UT_String get_matte_objects( fpreal ) const;
+	UT_String get_phantom_objects(fpreal) const;
 	bool OverrideDisplayFlags( fpreal )const;
 
 public:
@@ -123,6 +124,7 @@ public:
 	static const char* k_override_display_flags;
 	static const char* k_objects_to_render;
 	static const char* k_lights_to_render;
+	static const char* k_phantom_objects;
 	static const char* k_matte_objects;
 	static const char* k_default_image_filename;
 	static const char* k_default_image_format;
