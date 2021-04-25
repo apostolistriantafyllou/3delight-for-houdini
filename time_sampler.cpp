@@ -33,8 +33,7 @@ bool time_sampler::is_time_dependent(
 	if( is_alembic(i_node, i_context.m_current_time) )
 	{
 		/* Alembic archives do their own motion blur. */
-		printf( "is_time_dependent: ALEMBIC!\n" );
-		return false;
+		return true;
 	}
 
 	SOP_Node* sop =
