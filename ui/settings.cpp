@@ -58,6 +58,7 @@ const char* settings::k_atmosphere = "atmosphere";
 const char* settings::k_override_display_flags = "override_display_flags";
 const char* settings::k_objects_to_render = "objects_to_render";
 const char* settings::k_lights_to_render = "lights_to_render";
+const char* settings::k_phantom_objects = "phantom_objects";
 const char* settings::k_matte_objects = "matte_objects";
 const char* settings::k_default_image_filename = "default_image_filename";
 const char* settings::k_default_image_format = "default_image_format";
@@ -446,6 +447,9 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	static PRM_Name lights_to_render(k_lights_to_render, "Lights to Render");
 	static PRM_Default lights_to_render_d(0.0f, "*");
 
+	static PRM_Name phantom_objects(k_phantom_objects, "Phantom Objects");
+	static PRM_Default phantom_objects_d(0.0f, "");
+
 	static PRM_Name matte_objects(k_matte_objects, "Matte Objects");
 	static PRM_Default matte_objects_d(0.0f, ""); /* none */
 
@@ -456,6 +460,10 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 		PRM_Template(PRM_TOGGLE, 1, &override_display_flags, &override_display_flags_d),
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &objects_to_render, &objects_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objGeometryPath, 1, nullptr, &override_display_flags_g),
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &lights_to_render, &lights_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objLightPath, 1, nullptr, &override_display_flags_g),
+		PRM_Template(
+			PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &phantom_objects,
+			&phantom_objects_d, nullptr, nullptr, nullptr,
+			&PRM_SpareData::objGeometryPath, 1, nullptr, nullptr),
 		PRM_Template(
 			PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &matte_objects,
 			&matte_objects_d, nullptr, nullptr, nullptr,
@@ -1456,6 +1464,17 @@ UT_String settings::get_matte_objects( fpreal t ) const
 			matte_pattern, settings::k_matte_objects, 0, t );
 	}
 	return matte_pattern;
+}
+
+UT_String settings::get_phantom_objects(fpreal t) const
+{
+	UT_String phantom_pattern;
+	if (m_parameters.getParmIndex(settings::k_phantom_objects) != -1)
+	{
+		m_parameters.evalString(
+			phantom_pattern, settings::k_phantom_objects, 0, t);
+	}
+	return phantom_pattern;
 }
 
 UT_String settings::get_render_mode( fpreal t )const
