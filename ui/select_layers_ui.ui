@@ -42,6 +42,8 @@ dlg.gad = DIALOG "AOV Selector"
             TOGGLE_BUTTON "Z (depth)":LABEL_WIDTH VALUE(z.val);
             TOGGLE_BUTTON "Camera space position":LABEL_WIDTH VALUE(P.camera.val);
             TOGGLE_BUTTON "Camera space normal":LABEL_WIDTH VALUE(N.camera.val);
+            TOGGLE_BUTTON "World space position":LABEL_WIDTH VALUE(P.world.val);
+            TOGGLE_BUTTON "World space normal":LABEL_WIDTH VALUE(N.world.val);
             TOGGLE_BUTTON "UV":LABEL_WIDTH VALUE(st.val);
             TOGGLE_BUTTON "Geometry Cryptomatte":LABEL_WIDTH VALUE(id.geometry.val);
             TOGGLE_BUTTON "Scene Path Cryptomatte":LABEL_WIDTH VALUE(id.scenepath.val);

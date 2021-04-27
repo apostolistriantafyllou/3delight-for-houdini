@@ -35,6 +35,8 @@ std::vector<aov::description> descriptions =
 	{ aov::e_auxiliary, "Z (depth)", "zdepth", "z", "builtin", "scalar", false, false },
 	{ aov::e_auxiliary, "Camera space position", "position", "P.camera", "builtin", "vector", false, false },
 	{ aov::e_auxiliary, "Camera space normal", "normal", "N.camera", "builtin", "vector", false, false },
+	{ aov::e_auxiliary, "World space position", "position", "P.world", "builtin", "vector", false, false },
+	{ aov::e_auxiliary, "World space normal", "normal", "N.world", "builtin", "vector", false, false },
 	{ aov::e_auxiliary, "UV", "st", "st", "attribute", "color", false, false },
 	{ aov::e_auxiliary, "Geometry Cryptomatte", "geoid", "id.geometry", "builtin", "scalar", false, false },
 	{ aov::e_auxiliary, "Scene Path Cryptomatte", "scenepathid", "id.scenepath", "builtin", "scalar", false, false },
