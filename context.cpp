@@ -39,7 +39,8 @@ context::context(
 	m_export_path_prefix(i_export_path),
 	m_rop_type(i_rop_type),
 	m_rop_path(i_rop->getFullPath().c_str()),
-	m_settings(i_settings)
+	m_settings(i_settings),
+	m_fps(i_fps)
 {
 	m_object_visibility_resolver =
 		new object_visibility_resolver(m_rop_path, i_settings, i_start_time);

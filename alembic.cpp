@@ -65,7 +65,8 @@ void alembic::set_attributes( void ) const
 		NSI::StringArg( "abc_file", file_name ),
 		NSI::IntegerArg( "poly_as_subd", poly_as_subd ),
 		NSI::IntegerArg( "do_mblur", m_context.MotionBlur() ),
-		NSI::DoubleArg( "frame", m_context.m_current_time)) );
+		NSI::DoubleArg( "fps", m_context.m_fps),
+		NSI::DoubleArg( "frame", m_context.m_current_time*m_context.m_fps)) );
 
 	::free( (void *) to_free );
 }

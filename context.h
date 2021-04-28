@@ -140,6 +140,7 @@ public:
 	const fpreal m_current_time{.0f};
 	fpreal m_frame_duration{.0f};
 	fpreal m_shutter{.0f};
+	fpreal m_fps{24.0f};
 	// True if depth-of-field is enabled
 	bool m_dof{false};
 	bool m_batch{false};
