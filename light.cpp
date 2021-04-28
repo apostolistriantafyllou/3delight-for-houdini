@@ -185,8 +185,8 @@ void light::create_geometry( void ) const
 				0, 0, 1, 0,
 				0, 0, 0, 1
 			};
-			m_nsi.SetAttributeAtTime(
-				m_handle, time,
+			m_nsi.SetAttribute(
+				m_handle,
 				NSI::DoubleMatrixArg( "transformationmatrix", m) );
 		}
 		else if( type == e_sphere )
@@ -198,8 +198,8 @@ void light::create_geometry( void ) const
 				0, 0, x_size, 0,
 				0, 0, 0, 1.0
 			};
-			m_nsi.SetAttributeAtTime(
-				m_handle, time,
+			m_nsi.SetAttribute(
+				m_handle,
 				NSI::DoubleMatrixArg( "transformationmatrix",m) );
 		}
 
