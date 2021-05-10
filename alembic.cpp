@@ -5,6 +5,9 @@
 #include <GT/GT_PackedAlembic.h>
 #include <OBJ/OBJ_Node.h>
 #include <nsi.hpp>
+#include <UT/UT_Array.h>
+#include <GT/GT_RefineParms.h>
+#include <GU/GU_PrimPacked.h>
 
 #include <type_traits>
 #include <iostream>
@@ -39,8 +42,42 @@ void alembic::set_attributes( void ) const
 {
     //const GT_TransformHandle &trs = alembic->getPrimitiveTransform();
 
-	const GT_PackedAlembicArchive *alembic =
-		static_cast<const GT_PackedAlembicArchive *>(default_gt_primitive().get());
+	// Retrieve a context that might redirect the attributes to a shared file
+	NSI::Context& nsi = attributes_context();
+	if(nsi.Handle() == NSI_BAD_CONTEXT)
+	{
+		return;
+	}
+
+	GT_PackedAlembicArchive *alembic =
+		static_cast<GT_PackedAlembicArchive *>(default_gt_primitive().get());
+	GT_RefineParms params;
+
+	/**
+		NOTE: this is weird/secret call in the GT context. The refine() should
+		have dealt with all this properly. This has been communicated to SideFx.
+
+		FIXME: what to do with the first parameter ?
+	*/
+	alembic->bucketPrims( nullptr, &params, true );
+
+	const UT_StringArray &names = alembic->getAlembicObjects();
+    const GA_OffsetArray &offsets = alembic->getAlembicOffsets();
+
+	const char *shapes[ names.size() ];
+	double  transforms[ 16*names.size() ];
+    GU_DetailHandleAutoReadLock gdplock( alembic->parentDetail() );
+
+	for( int i=0; i<names.size(); i++ )
+	{
+		shapes[i] = names[i].c_str();
+
+		const GU_PrimPacked *prim = static_cast<const GU_PrimPacked *>
+			(gdplock->getPrimitive(offsets[i]));
+
+		UT_Matrix4D trs; prim->getFullTransform4( trs );
+		memcpy( &transforms[i*16], trs.data(), sizeof(double)*16 ) ;
+	}
 
 	NSI::ArgumentList args;
 	char *file_name = ::strdup( alembic->archiveName().c_str() );
@@ -57,8 +94,16 @@ void alembic::set_attributes( void ) const
 		m_object->hasParm(k_subdiv) &&
 		m_object->evalInt(k_subdiv, 0, m_context.m_current_time) != 0;
 
-	m_nsi.Evaluate(
+	nsi.Evaluate(
 		(
+		*NSI::Argument::New("transforms")
+			->SetType(NSITypeDoubleMatrix)
+			->SetCount(names.size())
+			->SetValuePointer( &transforms[0]),
+		*NSI::Argument::New("shapes")
+			->SetType(NSITypeString)
+			->SetCount(names.size())
+			->SetValuePointer(shapes),
 		NSI::StringArg( "type", "dynamiclibrary"),
 		NSI::StringArg( "filename", "alembic" ),
 		NSI::StringArg(	"parent_node", m_handle ),
