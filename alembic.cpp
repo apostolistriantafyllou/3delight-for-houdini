@@ -64,9 +64,13 @@ void alembic::set_attributes( void ) const
 	const UT_StringArray &names = alembic->getAlembicObjects();
     const GA_OffsetArray &offsets = alembic->getAlembicOffsets();
 
-	const char *shapes[ names.size() ];
-	double  transforms[ 16*names.size() ];
-    GU_DetailHandleAutoReadLock gdplock( alembic->parentDetail() );
+	std::vector< const char* > shapes;
+	shapes.reserve(names.size());
+
+	std::vector< double > transforms;
+	transforms.reserve(16 * names.size());
+
+	GU_DetailHandleAutoReadLock gdplock( alembic->parentDetail() );
 
 	for( int i=0; i<names.size(); i++ )
 	{
@@ -103,7 +107,7 @@ void alembic::set_attributes( void ) const
 		*NSI::Argument::New("shapes")
 			->SetType(NSITypeString)
 			->SetCount(names.size())
-			->SetValuePointer(shapes),
+			->SetValuePointer(&shapes[0]),
 		NSI::StringArg( "type", "dynamiclibrary"),
 		NSI::StringArg( "filename", "alembic" ),
 		NSI::StringArg(	"parent_node", m_handle ),
