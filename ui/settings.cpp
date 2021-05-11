@@ -18,6 +18,7 @@
 #include <ROP/ROP_Templates.h>
 #include <SYS/SYS_Version.h>
 #include <UT/UT_String.h>
+#include <UT/UT_UndoManager.h>
 
 static const float k_one_line = 0.267;
 
@@ -131,6 +132,8 @@ settings::~settings()
 
 void settings::Rendering(bool i_render,bool ipr)
 {
+	UT_UndoManager* undo_manager = UTgetUndoManager();
+	undo_manager->disallowUndos();
 	if (m_parameters.m_rop_type == rop_type::stand_in)
 		return;
 
@@ -168,6 +171,7 @@ void settings::Rendering(bool i_render,bool ipr)
 			m_parameters.setInt(k_sequence_rendering, 0, 0.0, false);
 		}
 	}
+	undo_manager->allowUndos();
 }
 
 PRM_Template* settings::GetTemplates(rop_type i_rop_type)
