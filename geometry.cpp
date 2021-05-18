@@ -1129,9 +1129,22 @@ void geometry::changed_cb(
 				return;
 			}
 
-			bool new_material =
-				parm.getToken() == std::string("shop_materialpath");
-			re_export(*ctx, *obj, new_material);
+			//Creating a new geo will re_export the node, so we are using
+			//an else statement in order to not export the same node twice
+			//when updating lightcategories attribute.
+			if (parm.getToken() == std::string("lightcategories"))
+			{
+				geometry geo(*ctx, obj);
+				std::set<std::string> exported_lights_categories;
+				std::vector<OBJ_Node*> lights_to_render;
+				scene::export_light_categories(*ctx, &geo, exported_lights_categories, lights_to_render, true);
+			}
+			else
+			{
+				bool new_material =
+					parm.getToken() == std::string("shop_materialpath");
+				re_export(*ctx, *obj, new_material);
+			}
 			break;
 		}
 

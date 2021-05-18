@@ -55,6 +55,27 @@ public:
 		double i_time,
 		std::vector<VOP_Node *> &o_custom_aovs);
 
+	/**
+		\brief Exports connections to the proper sets to implement light linking.
+
+		The required NSI sets are created along the way.
+
+		\param i_context
+			Current rendering context.
+		\param io_exported_lights_categories
+			A cache for already exporter categories. Could be expended after
+			this call if a new category has been found.
+		\param i_lights_to_render
+			The set of lights to render, to be lazily updated by the function
+			when it's needed and still empty.
+	*/
+	static void export_light_categories(
+		const context &i_context,
+		exporter *,
+		std::set<std::string> &io_exported_lights_categories,
+		std::vector<OBJ_Node*> &io_lights_to_render,
+		bool i_ipr = false);
+
 private:
 	static void obj_scan(
 		const context &i_context,
@@ -90,25 +111,4 @@ private:
 		OBJ_Node *,
 		bool i_re_export_instanced,
 		std::vector<exporter *> &o_to_export );
-
-	/**
-		\brief Exports connections to the proper sets to implement light linking.
-
-		The required NSI sets are created along the way.
-
-		\param i_context
-			Current rendering context.
-		\param io_exported_lights_categories
-			A cache for already exporter categories. Could be expended after
-			this call if a new category has been found.
-		\param i_lights_to_render
-			The set of lights to render, to be lazily updated by the function
-			when it's needed and still empty.
-	*/
-	static void export_light_categories(
-		const context &i_context,
-		exporter *,
-		std::set<std::string> &io_exported_lights_categories,
-		std::vector<OBJ_Node*> &io_lights_to_render );
-
 };
