@@ -81,7 +81,7 @@ bool object_visibility_resolver::object_displayed(const OBJ_Node& i_node)const
 		for light sources and ignore the display flag.
 	*/
 	if (const_cast<OBJ_Node&>(i_node).castToOBJLight())
-		return !i_node.isDisplayDisabled( m_current_time );
+		return i_node.evalInt("light_enable", 0, m_current_time);
 
 	return i_node.getObjectDisplay( m_current_time );
 }

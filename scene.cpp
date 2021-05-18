@@ -165,7 +165,9 @@ void scene::process_obj_node(
 				?	(exporter*)new deleter<incandescence_light>(i_context, obj)
 				:	(exporter*)new deleter<light>(i_context, obj));
 		}
-		if(needs_export && visible && i_context.m_rop_type != rop_type::stand_in)
+		//Export all lights no matter it's status (enabled/disabled). Connection will do
+		//the rest to show or not the light. This makes it easier to handle visibility in IPR.
+		if(needs_export && (visible || !is_incand) && i_context.m_rop_type != rop_type::stand_in)
 		{
 			o_to_export.push_back(
 				is_incand

@@ -356,7 +356,7 @@ void light::connect( void ) const
 		The light is always created, but connected only if visible, so its easy
 		to deal with visibility changes in IPR.
 	*/
-	if( m_object->evalInt("light_enable", 0, m_context.m_current_time))
+	if( m_context.object_displayed(*m_object))
 	{
 		std::string parent_handle = null::handle(*m_object, m_context);
 		m_nsi.Connect(m_handle, "", parent_handle, "objects");
