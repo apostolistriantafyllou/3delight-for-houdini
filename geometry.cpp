@@ -1137,7 +1137,8 @@ void geometry::changed_cb(
 				geometry geo(*ctx, obj);
 				std::set<std::string> exported_lights_categories;
 				std::vector<OBJ_Node*> lights_to_render;
-				scene::export_light_categories(*ctx, &geo, exported_lights_categories, lights_to_render, true);
+				scene::export_light_categories(
+					*ctx, &geo, exported_lights_categories, lights_to_render, true);
 			}
 			else
 			{
