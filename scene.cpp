@@ -812,7 +812,8 @@ void scene::export_light_categories(
 	const context &i_context,
 	exporter *i_exporter,
 	std::set<std::string> &io_exported_lights_categories,
-	std::vector<OBJ_Node*> &io_lights_to_render )
+	std::vector<OBJ_Node*> &io_lights_to_render,
+	bool ipr)
 {
 	assert( i_exporter );
 
@@ -845,7 +846,7 @@ void scene::export_light_categories(
 		tag_manager.createExpression(categories, errors);
 
 	// Trivial and (hopefully) most common case
-	if(categories_expr->isTautology())
+	if(categories_expr->isTautology() && !ipr)
 	{
 		/*
 			The object sees all lights, which is the default, so no connections
@@ -879,6 +880,7 @@ void scene::export_light_categories(
 		nsi.Create(cat_handle, "set");
 		nsi.Create(cat_attr_handle, "attributes");
 		nsi.Connect(cat_attr_handle, "", cat_handle, "geometryattributes");
+		nsi.Disconnect(NSI_ALL_NODES, "", cat_handle, "members");
 
 		for(OBJ_Node* light_source : io_lights_to_render)
 		{
@@ -906,6 +908,17 @@ void scene::export_light_categories(
 	nsi.Create( attributes_handle, "attributes");
 	nsi.Connect(
 		attributes_handle, "", i_exporter->handle(), "geometryattributes" );
+
+	/*
+		This might be a little unsafe as, in theory, we might be disconnecting
+		more than what we need. But since there is no other place where we
+		connect to a "visibility" attribute in 3DFH, it should work fine.
+	*/
+	if (ipr)
+	{
+		nsi.Disconnect(attributes_handle, "",
+			NSI_ALL_ATTRIBUTES, "visibility");
+	}
 
 	// Turn off lights in the set for this object
 	nsi.Connect(
