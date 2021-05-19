@@ -193,7 +193,7 @@ void incandescence_light::changed_cb(
 	PRM_Parm& parm = node.m_object->getParm(parm_index);
 	std::string name = parm.getToken();
 
-	if(name == "color" || name == "intensity" ||
+	if(name == "light_color" || name == "light_intensity" ||
 		name == "exposure" || name == "object_selection")
 	{
 		node.disconnect();
