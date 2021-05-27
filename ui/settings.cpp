@@ -132,14 +132,16 @@ settings::~settings()
 
 void settings::Rendering(bool i_render,bool ipr)
 {
-	UT_UndoManager* undo_manager = UTgetUndoManager();
-	undo_manager->disallowUndos();
 	if (m_parameters.m_rop_type == rop_type::stand_in)
 		return;
+
+	UT_UndoManager* undo_manager = UTgetUndoManager();
+	undo_manager->disallowUndos();
 
 	if (m_parameters.m_rop_type == rop_type::viewport)
 	{
 		m_parameters.setInt(k_start_viewport, 0, 0.0, ipr);
+		undo_manager->allowUndos();
 		return;
 	}
 
