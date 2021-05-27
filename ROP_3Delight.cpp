@@ -514,6 +514,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		if(!m_renderdl->open(renderdl_command.c_str()))
 		{
 			delete m_renderdl;
+			m_renderdl = nullptr;
 			return 0;
 		}
 
