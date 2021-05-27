@@ -1,5 +1,6 @@
 #include "viewport_hook.h"
 #include "camera.h"
+#include "shader_library.h"
 
 #include <DM/DM_VPortAgent.h>
 #include <HOM/HOM_Module.h>
@@ -344,6 +345,8 @@ private:
 	double m_shutter{0.0};
 	OBJ_Camera* m_active_camera_obj{nullptr};
 	bool m_enable_dof{false};
+	float m_distortion_intensity{ 0.0 };
+	UT_String m_distortion_type{ "None" };
 };
 
 
@@ -383,6 +386,23 @@ viewport_camera::viewport_camera(
 		{
 			m_enable_dof = active_camera->evalInt("_3dl_enable_dof", 0, m_time);
 		}
+
+		if (active_camera->hasParm("_3dl_distortion_type"))
+		{
+			m_distortion_intensity =
+				active_camera->evalFloat("_3dl_distortion_intensity", 0, i_time) *0.2f;
+
+			UT_String type;
+			active_camera->evalString(type, "_3dl_distortion_type", 0, i_time);
+			if (type == "pincushion")
+			{
+				m_distortion_intensity *= -1.0f;
+			}
+			else if (type != "barrel")
+			{
+				m_distortion_intensity = 0.0f;
+			}
+		}
 	}
 	// Focal length seems to be in thousandths of scene units
 	m_focal_length /= 1000.0;
@@ -401,7 +421,9 @@ viewport_camera::operator!=(const viewport_camera& i_vc)const
 		m_fov != i_vc.m_fov ||
 		m_shutter != i_vc.m_shutter ||
 		m_active_camera_obj != i_vc.m_active_camera_obj ||
-		m_enable_dof != i_vc.m_enable_dof;
+		m_enable_dof != i_vc.m_enable_dof ||
+		m_distortion_intensity != i_vc.m_distortion_intensity ||
+		m_distortion_type != i_vc.m_distortion_type;
 }
 
 
@@ -431,6 +453,10 @@ viewport_camera::nsi_export(
 			NSI::FloatArg("fov", m_fov),
 			NSI::IntegerArg("depthoffield.enable", enable_dof)
 		) );
+	i_nsi.SetAttribute(i_handle + "_distortion",
+		(
+			NSI::FloatArg("k2", m_distortion_intensity)
+		));
 
 	if(enable_dof)
 	{
@@ -484,6 +510,8 @@ private:
 	std::string handle_prefix()const;
 	/// Returns the NSI handle for the camera node
 	std::string camera_handle()const;
+	/// Returs the NSI handle for the camera distortion node
+	std::string camera_distortion_handle()const;
 	/// Returns the NSI handle for the camera transform node
 	std::string camera_transform_handle()const;
 	/// Returns the NSI handle for the screen node
@@ -775,8 +803,22 @@ viewport_hook::connect(NSI::Context* io_nsi)
 	std::string camera = camera_handle();
 	m_nsi->Create(camera, camera_type);
 	m_nsi->Connect(camera, "", camera_trs, "objects");
+	m_nsi->Create(camera_distortion_handle(), "shader");
+
+	//Export distortion
+	const shader_library& shaders = shader_library::get_instance();
+	std::string distortion_shader = shaders.get_shader_path("dlLensDistortion");
+	m_nsi->SetAttribute(
+		camera_distortion_handle(),
+		(
+			NSI::StringArg("shaderfilename", distortion_shader),
+			NSI::FloatArg("k1", 0.0f),
+			NSI::FloatArg("k3", 0.0f)
+		));
 
 	export_camera_attributes(view, active_camera, false);
+
+	m_nsi->Connect(camera_distortion_handle(), "", camera_handle(), "lensshader");
 
 	// Export screen
 	std::string screen = screen_handle();
@@ -859,6 +901,12 @@ viewport_hook::camera_handle()const
 	return handle_prefix() + "camera";
 }
 
+
+std::string
+viewport_hook::camera_distortion_handle()const
+{
+	return handle_prefix() + "camera_distortion";
+}
 
 std::string
 viewport_hook::camera_transform_handle()const
