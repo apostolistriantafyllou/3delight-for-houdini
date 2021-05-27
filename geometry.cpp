@@ -1129,10 +1129,15 @@ void geometry::changed_cb(
 				return;
 			}
 
-			//Creating a new geo will re_export the node, so we are using
-			//an else statement in order to not export the same node twice
-			//when updating lightcategories attribute.
-			if (parm.getToken() == std::string("lightcategories") && obj->getRenderSopPtr())
+			SOP_Node* sop = obj->getRenderSopPtr();
+			/*
+				Creating a new geo will re_export the node, so we are using
+				an else statement in order to not export the same node twice
+				when updating lightcategories attribute.
+				Also, if there isn't a render SOP, we don't create a new geo node
+				as it will result in crash (assert in geo's ctor).
+			*/
+			if (parm.getToken() == std::string("lightcategories") && sop)
 			{
 				geometry geo(*ctx, obj);
 				std::set<std::string> exported_lights_categories;
