@@ -1132,7 +1132,7 @@ void geometry::changed_cb(
 			//Creating a new geo will re_export the node, so we are using
 			//an else statement in order to not export the same node twice
 			//when updating lightcategories attribute.
-			if (parm.getToken() == std::string("lightcategories"))
+			if (parm.getToken() == std::string("lightcategories") && obj->getRenderSopPtr())
 			{
 				geometry geo(*ctx, obj);
 				std::set<std::string> exported_lights_categories;
