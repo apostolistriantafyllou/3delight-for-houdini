@@ -286,6 +286,10 @@ private:
 
 	/* The UI part of the ROP */
 	settings m_settings;
+
+	// Indicates that the crop has been made from i-display
+	bool m_is_cropped_on_iDisplay = false;
+
 };
 
 struct ROP_3DelightOperator : public OP_Operator
