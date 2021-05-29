@@ -227,6 +227,7 @@ void ROP_3Delight::UpdateCrop(const float* i_window)
 {
 	assert(i_window);
 
+	m_is_cropped_on_iDisplay = true;
 
 	m_render_end_mutex.lock();
 	if(m_rendering && m_current_render && m_current_render->m_ipr)

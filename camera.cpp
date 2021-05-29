@@ -431,7 +431,9 @@ void camera::set_attributes( void ) const
 				->SetValuePointer(
 					m_context.m_rop->idisplay_crop_window()) );
 	}
-	else
+
+	//Don't crop the window using camera crop values if it's already cropped from i-display.
+	else if(!m_context.m_rop->m_is_cropped_on_iDisplay)
 	{
 		float cam_crop[4] =
 		{
@@ -535,6 +537,16 @@ void camera::changed_cb(
 	}
 
 	camera node(*ctx, obj);
+
+	PRM_Parm& parm = node.m_object->getParm(parm_index);
+	std::string name = parm.getToken();
+
+	if (name == "cropl" || name == "cropr" ||
+		name == "cropt" || name == "cropb")
+	{
+		//If changing one of the camera crop values during IPR, ignore the i-display crop.
+		ctx->m_rop->m_is_cropped_on_iDisplay = false;
+	}
 
 	// Simply re-export all attributes.  It's not that expensive.
 	node.set_attributes();

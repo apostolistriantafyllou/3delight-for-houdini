@@ -132,6 +132,8 @@ settings::~settings()
 
 void settings::Rendering(bool i_render,bool ipr)
 {
+	m_parameters.m_is_cropped_on_iDisplay = false;
+
 	if (m_parameters.m_rop_type == rop_type::stand_in)
 		return;
 
