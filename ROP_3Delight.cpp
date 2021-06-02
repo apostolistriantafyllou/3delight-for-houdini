@@ -1446,9 +1446,9 @@ ROP_3Delight::ExportOneOutputLayer(
 		}
 	}
 
-	if( i_desc.m_variable_name == "Ci" )
+	if( i_desc.m_variable_name == "Ci" || i_desc.m_variable_name == "outlines" )
 	{
-		/* We only draw outlines on "Ci" */
+		/* We draw outlines on "Ci" and the "outlines" AOV. */
 		i_ctx.m_nsi.SetAttribute( i_layer_handle,
 			NSI::IntegerArg( "drawoutlines", 1 ) );
 	}
