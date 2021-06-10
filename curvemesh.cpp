@@ -134,12 +134,16 @@ void curvemesh::export_basic_attributes(
 		to_export.push_back("P");
 		to_export.push_back("N");
 	}
+	/*
+		We ask for both, but only one of them should be set by users.
+	*/
 	to_export.push_back("width");
+	to_export.push_back("pscale");
 
 	export_attributes(to_export, *curve, i_time);
 
-	if( std::find(to_export.begin(), to_export.end(), "width") !=
-		to_export.end() )
+	if( std::find(to_export.begin(),to_export.end(),"width")!=to_export.end() &&
+		std::find(to_export.begin(),to_export.end(),"pscale")!=to_export.end() )
 	{
 		/*
 			"width" not in attribute list. default to something.
