@@ -42,9 +42,7 @@ void vdb_file::set_attributes( void ) const
 {
 	int num_grids = 0;
 	const char *const *grid_names = nullptr;
-	if( !get_grid_names( m_vdb_file.c_str(), &num_grids, &grid_names) ||
-		num_grids==0 ||
-		!grid_names )
+	if( !get_grid_names( m_vdb_file.c_str(), &num_grids, &grid_names))
 	{
 		return;
 	}
