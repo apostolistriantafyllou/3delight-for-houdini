@@ -40,45 +40,10 @@ void vdb_file::create( void ) const
 
 void vdb_file::set_attributes( void ) const
 {
-	NSI::DynamicAPI api;
-#ifdef __APPLE__
-	/*
-		Houdini will nuke [DY]LD_LIBRARY_PATH on macOS. This is a bit insane
-		but reality is more insane so that's fine. We will try to get the
-		library path manually, something we usually try to avoid for robustness
-		reasons.
-	*/
-	const char *macos_delight = ::getenv("DELIGHT" );
-	if( macos_delight )
-	{
-		std::string path_to_lib(macos_delight);
-		path_to_lib += "/lib/lib3delight.dylib";
-		api = NSI::DynamicAPI( path_to_lib.c_str() );
-	}
-#endif
-
-	/*
-	*/
-	decltype( &DlVDBGetGridNames) vdb_grids = nullptr;
-	api.LoadFunction(vdb_grids, "DlVDBGetGridNames");
-
-	if( vdb_grids == nullptr )
-	{
-		::fprintf( stderr,
-			"3Delight for Houdini: unable to load VDB utility "
-			"function from 3Delight dynamic library" );
-		return;
-	}
-
 	int num_grids = 0;
 	const char *const *grid_names = nullptr;
-	if( !vdb_grids( m_vdb_file.c_str(), &num_grids, &grid_names) ||
-		num_grids==0 ||
-		!grid_names )
+	if( !get_grid_names( m_vdb_file.c_str(), &num_grids, &grid_names))
 	{
-		::fprintf( stderr,
-			"3Delight for Houdini: no usable grid in VDB %s",
-			m_vdb_file.c_str() );
 		return;
 	}
 
@@ -304,6 +269,103 @@ std::string vdb_file::node_is_vdb_loader( OBJ_Node *i_node, double i_time )
 	return std::string( file.c_str() );
 }
 
+
+bool vdb_file::get_grid_names(const char* i_vdb_path,
+	int* i_num_grids,
+	const char* const** i_grid_names)
+{
+	NSI::DynamicAPI api;
+#ifdef __APPLE__
+	/*
+		Houdini will nuke [DY]LD_LIBRARY_PATH on macOS. This is a bit insane
+		but reality is more insane so that's fine. We will try to get the
+		library path manually, something we usually try to avoid for robustness
+		reasons.
+	*/
+	const char* macos_delight = ::getenv("DELIGHT");
+	if (macos_delight)
+	{
+		std::string path_to_lib(macos_delight);
+		path_to_lib += "/lib/lib3delight.dylib";
+		api = NSI::DynamicAPI(path_to_lib.c_str());
+	}
+#endif
+
+	/*
+	*/
+	decltype(&DlVDBGetGridNames) vdb_grids = nullptr;
+	api.LoadFunction(vdb_grids, "DlVDBGetGridNames");
+
+	if (vdb_grids == nullptr)
+	{
+		::fprintf(stderr,
+			"3Delight for Houdini: unable to load VDB utility "
+			"function from 3Delight dynamic library");
+		return false;
+	}
+
+	if (!vdb_grids(i_vdb_path, i_num_grids, i_grid_names) ||
+		i_num_grids == 0 ||
+		!i_grid_names)
+	{
+		::fprintf(stderr,
+			"3Delight for Houdini: no usable grid in VDB %s",
+			i_vdb_path);
+		return false;
+	}
+	return true;
+}
+
+bool vdb_file::has_vdb_emission(OBJ_Node* i_node, double i_time)
+{
+	std::string vdb_path =
+		node_is_vdb_loader(i_node, i_time);
+	if (vdb_path.empty())
+	{
+		return false;
+	}
+
+	int num_grids = 0;
+	const char* const* grid_names = 0x0;
+	if (!get_grid_names(vdb_path.c_str(), &num_grids, &grid_names))
+	{
+		return false;
+	}
+
+	OP_Node* op = i_node->getMaterialNode(i_time);
+
+	VOP_Node* mats[3] = { nullptr };
+	if (op)
+	{
+		resolve_material_path(i_node, op->getFullPath().c_str(), mats);
+	}
+
+	VOP_Node* material = mats[2]; // volume
+	UT_String emission_grid;
+
+	if (material)
+	{
+		using namespace VolumeGridParameters;
+
+		if (material->hasParm(emission_name))
+		{
+			material->evalString(emission_grid, emission_name, 0, i_time);
+		}
+	}
+
+	// Check if the emission grid used is one of the existing grids in order
+	// to include it as a light AOV.
+	for (int i = 0; i < num_grids; i++)
+	{
+		std::string grid(grid_names[i] ? grid_names[i] : "");
+
+		if (grid == emission_grid.toStdString())
+		{
+			return true;
+		}
+	}
+	return false;
+}
 
 vdb_file_writer::vdb_file_writer(
 	const context& i_ctx,

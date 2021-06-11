@@ -740,9 +740,14 @@ void scene::find_lights(
 			OP_Node *node = network->getChild(i);
 			OBJ_Node *obj = node->castToOBJNode();
 
+			/*
+				has_emission() function already checks if node is a vdb loader.
+				Also don't render a phantom vdb as a separate layer.
+			*/
 			if( obj &&
 				(obj->castToOBJLight() ||
-					!vdb_file::node_is_vdb_loader(obj, time).empty()) )
+					(vdb_file::has_vdb_emission(obj,time)) &&
+					!ctx->object_is_phantom(*obj)) )
 			{
 				if(!i_light_pattern ||
 					i_light_pattern->match(obj, i_rop_path, true))
