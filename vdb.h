@@ -36,9 +36,6 @@ public:
 
 	static std::string node_is_vdb_loader( OBJ_Node *i_node, double i_time );
 
-	/// Checks if the corresponing vdb has an emission grid. Used for AOVs.
-	static bool has_vdb_emission( OBJ_Node* i_node, double i_time );
-
 	/// Get existing grid names for a specific vdb.
 	static bool get_grid_names(const char* i_vdb_path,
 		int* num_grids,
