@@ -316,57 +316,6 @@ bool vdb_file::get_grid_names(const char* i_vdb_path,
 	return true;
 }
 
-bool vdb_file::has_vdb_emission(OBJ_Node* i_node, double i_time)
-{
-	std::string vdb_path =
-		node_is_vdb_loader(i_node, i_time);
-	if (vdb_path.empty())
-	{
-		return false;
-	}
-
-	int num_grids = 0;
-	const char* const* grid_names = 0x0;
-	if (!get_grid_names(vdb_path.c_str(), &num_grids, &grid_names))
-	{
-		return false;
-	}
-
-	OP_Node* op = i_node->getMaterialNode(i_time);
-
-	VOP_Node* mats[3] = { nullptr };
-	if (op)
-	{
-		resolve_material_path(i_node, op->getFullPath().c_str(), mats);
-	}
-
-	VOP_Node* material = mats[2]; // volume
-	UT_String emission_grid;
-
-	if (material)
-	{
-		using namespace VolumeGridParameters;
-
-		if (material->hasParm(emission_name))
-		{
-			material->evalString(emission_grid, emission_name, 0, i_time);
-		}
-	}
-
-	// Check if the emission grid used is one of the existing grids in order
-	// to include it as a light AOV.
-	for (int i = 0; i < num_grids; i++)
-	{
-		std::string grid(grid_names[i] ? grid_names[i] : "");
-
-		if (grid == emission_grid.toStdString())
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
 vdb_file_writer::vdb_file_writer(
 	const context& i_ctx,
 	OBJ_Node* i_obj,
