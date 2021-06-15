@@ -211,57 +211,23 @@ void vdb_file::set_attributes_at_time(
 */
 std::string vdb_file::node_is_vdb_loader( OBJ_Node *i_node, double i_time )
 {
-	std::vector< SOP_Node *> files;
-	std::vector< OP_Node * > traversal; traversal.push_back( i_node );
-
-	while( traversal.size() )
+	SOP_Node* sop = i_node->getRenderSopPtr();
+	if(!sop)
 	{
-		OP_Node *network = traversal.back();
-		traversal.pop_back();
-		int nkids = network->getNchildren();
-		for( int i=0; i< nkids; i++ )
-		{
-			OP_Node *node = network->getChild(i);
-			SOP_Node *sop = node->castToSOPNode();
-			if( sop && sop->getRender() )
-			{
-				const UT_StringRef &SOP_name = node->getOperator()->getName();
-				if( SOP_name == "file" )
-					files.push_back( sop );
-			}
-
-			if( !node->isNetwork() )
-				continue;
-
-			OP_Network *kidnet = (OP_Network *)node;
-			if( kidnet->getNchildren() )
-			{
-				traversal.push_back( kidnet );
-			}
-		}
-	}
-
-	if( files.size() != 1 )
-	{
-#if 0
-		fprintf(
-			stderr,
-			"3Delight for Houdini: we support only one VDB file per file obj" );
-#endif
 		return {};
 	}
+	
+	std::string sop_type = sop->getOperator()->getName().toStdString();
 
-	SOP_Node *file_sop = files.back();
-	int index = file_sop->getParmIndex( "file" );
-	if( index < 0 )
+	if(sop_type != "file" || !sop->hasParm("file"))
 	{
 		return {};
 	}
 
 	UT_String file;
-	file_sop->evalString( file, "file", 0, i_time );
+	sop->evalString( file, "file", 0, i_time );
 
-	if( !file.fileExtension() || ::strcmp(file.fileExtension(),".vdb") )
+	if( !file.fileExtension() || ::strcmp(file.fileExtension(), ".vdb") != 0 )
 	{
 		return {};
 	}
