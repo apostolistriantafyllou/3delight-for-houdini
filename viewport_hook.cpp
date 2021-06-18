@@ -836,7 +836,8 @@ viewport_hook::connect(NSI::Context* io_nsi)
 			NSI::CStringPArg("scalarformat", "uint8"),
 			NSI::CStringPArg("layertype", "color"),
 			NSI::IntegerArg("withalpha", 1),
-			NSI::IntegerArg("dithering", 1)
+			NSI::IntegerArg("dithering", 1),
+			NSI::IntegerArg("drawoutlines", 1)
 		) );
 	m_nsi->Connect(layer, "", screen, "outputlayers");
 
