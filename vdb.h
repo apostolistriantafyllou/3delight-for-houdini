@@ -7,12 +7,7 @@
 class OBJ_Node;
 
 /**
-	\brief Exports a file node that points to a VDB file.
-
-	This support a specific Houdini network which is one OBJ
-	node with a SOP file inside that references a VDB file path.
-
-	This is not a generic volume support for Houdini.
+	\brief Exports an NSI "volume" node.
 */
 class vdb_file : public primitive
 {
@@ -34,8 +29,6 @@ public:
 		double i_time,
 		const GT_PrimitiveHandle i_gt_primitive)const override;
 
-	static std::string node_is_vdb_loader( OBJ_Node *i_node, double i_time );
-
 	/// Get existing grid names for a specific vdb.
 	static bool get_grid_names(const char* i_vdb_path,
 		int* num_grids,
@@ -47,6 +40,34 @@ private:
 	/* VDB file path. */
 	std::string m_vdb_file;
 };
+
+
+/**
+	\brief Exports a file node that points to a VDB file.
+
+	This support a specific Houdini network which is one OBJ
+	node with a SOP file inside that references a VDB file path.
+*/
+class vdb_file_loader : public vdb_file
+{
+public:
+
+	vdb_file_loader(
+		const context& i_ctx,
+		OBJ_Node* i_obj,
+		double i_time,
+		const GT_PrimitiveHandle &i_handle,
+		unsigned i_primitive_index);
+
+	/**
+		\brief Returns the path of the VDB file used by i_node.
+		
+		If i_node is not supported by vdb_file_loader, an empty string is
+		returned instead.
+	*/
+	static std::string get_path(OBJ_Node *i_node, double i_time);
+};
+
 
 /**
 	\brief Exports a VDB primitive through the use of a VDB file.

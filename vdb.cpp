@@ -197,45 +197,6 @@ void vdb_file::set_attributes_at_time(
 #endif
 }
 
-/**
-	\brief Returns the path of a VDB file if this node is a "VDB loader".
-
-	\returns path to VDB file if the file SOP indeed loads a VDB file or
-	empty string if not a valid VDB loader.
-
-	Just try to find any FILE SOP that has a VDB.
-
-	We don't support the general case VDB as we go through the file
-	SOP. For now we just skip this until we can find a more elegant
-	way to handle both file-loaded VDBs and general Houdini volumes.
-*/
-std::string vdb_file::node_is_vdb_loader( OBJ_Node *i_node, double i_time )
-{
-	SOP_Node* sop = i_node->getRenderSopPtr();
-	if(!sop)
-	{
-		return {};
-	}
-	
-	std::string sop_type = sop->getOperator()->getName().toStdString();
-
-	if(sop_type != "file" || !sop->hasParm("file"))
-	{
-		return {};
-	}
-
-	UT_String file;
-	sop->evalString( file, "file", 0, i_time );
-
-	if( !file.fileExtension() || ::strcmp(file.fileExtension(), ".vdb") != 0 )
-	{
-		return {};
-	}
-
-	return std::string( file.c_str() );
-}
-
-
 bool vdb_file::get_grid_names(const char* i_vdb_path,
 	int* i_num_grids,
 	const char* const** i_grid_names)
@@ -281,6 +242,50 @@ bool vdb_file::get_grid_names(const char* i_vdb_path,
 	}
 	return true;
 }
+
+
+vdb_file_loader::vdb_file_loader(
+	const context& i_ctx,
+	OBJ_Node* i_obj,
+	double i_time,
+	const GT_PrimitiveHandle &i_handle,
+	unsigned i_primitive_index)
+	:	vdb_file(
+			i_ctx,
+			i_obj,
+			i_time,
+			i_handle,
+			i_primitive_index,
+			get_path(i_obj, i_time))
+{
+}
+
+std::string vdb_file_loader::get_path(OBJ_Node* i_node, double i_time)
+{
+	SOP_Node* sop = i_node->getRenderSopPtr();
+	if(!sop)
+	{
+		return {};
+	}
+
+	std::string sop_type = sop->getOperator()->getName().toStdString();
+
+	if(sop_type != "file" || !sop->hasParm("file"))
+	{
+		return {};
+	}
+
+	UT_String file;
+	sop->evalString( file, "file", 0, i_time );
+
+	if( !file.fileExtension() || ::strcmp(file.fileExtension(), ".vdb") != 0 )
+	{
+		return {};
+	}
+
+	return std::string( file.c_str() );
+}
+
 
 vdb_file_writer::vdb_file_writer(
 	const context& i_ctx,

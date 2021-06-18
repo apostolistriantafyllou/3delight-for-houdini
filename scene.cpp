@@ -740,13 +740,10 @@ void scene::find_lights(
 			OP_Node *node = network->getChild(i);
 			OBJ_Node *obj = node->castToOBJNode();
 
-			/*
-				has_emission() function already checks if node is a vdb loader.
-				Also don't render a phantom vdb as a separate layer.
-			*/
+			// Don't render a phantom vdb as a separate layer.
 			if( obj &&
 				(obj->castToOBJLight() ||
-					(!vdb_file::node_is_vdb_loader(obj, time).empty() &&
+					(!vdb_file_loader::get_path(obj, time).empty() &&
 					!ctx->object_is_phantom(*obj))
 					))
 			{
@@ -779,7 +776,7 @@ void scene::find_lights(
 }
 
 /*
-	\brief find the "AVOGroup" in the scene.
+	\brief find the "AOVGroup" in the scene.
 
 	This is relly heavy duty as it uses a scene export to find the vops.
 	But it is also robust as we use the same logic as scen export.
