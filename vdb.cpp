@@ -174,7 +174,7 @@ void vdb_file::set_attributes_at_time(
 	const GT_PrimitiveHandle i_gt_primitive) const
 {
 	/*
-		FIXME: hopefull this will always be idenityt as the instancer takes
+		FIXME: hopefully this will always be identity as the instancer takes
 		care of the transform. If not we are in trouble.
 	*/
 
@@ -262,28 +262,150 @@ vdb_file_loader::vdb_file_loader(
 
 std::string vdb_file_loader::get_path(OBJ_Node* i_node, double i_time)
 {
-	SOP_Node* sop = i_node->getRenderSopPtr();
+	SOP_Node* transform_sop = nullptr;
+	SOP_Node* file_sop = nullptr;
+	std::string vdb_path;
+	get_geo(i_node, i_time, transform_sop, file_sop, vdb_path);
+	return vdb_path;
+}
+
+void vdb_file_loader::set_attributes_at_time(
+	double i_time,
+	const GT_PrimitiveHandle i_gt_primitive)const
+{
+	vdb_file::set_attributes_at_time(i_time, i_gt_primitive);
+
+	SOP_Node* transform_sop = nullptr;
+	SOP_Node* file_sop = nullptr;
+	std::string vdb_path;
+	get_geo(m_object, i_time, transform_sop, file_sop, vdb_path);
+
+	if(!transform_sop)
+	{
+		return;
+	}
+
+	/*
+		Compute the transform matrix applied by this SOP node.
+		There doesn't seem to be a direct way to do it. The other simple way
+		this could be done would be to rely on the "addattrib" and
+		"outputattrib" parameters in order to write the resulting matrix to an
+		attribute accessible from the the node's "detail", but it's less
+		reliable because these parameters are accessible to the user.
+	*/
+
+	/*
+		We need to retrieve the string, and not the menu item position of
+		"xOrd", since the values in the menu are in the *reverse order* compared
+		to the values of enum UT_XformOrder::rstOrder.
+		Parameter "rOrd" doesn't have this problem, but processing it the same
+		way seems safer, since it decouples the UI from the implementation.
+	*/
+	UT_String xOrd;
+	transform_sop->evalString(xOrd, "xOrd", 0, i_time);
+	UT_String rOrd;
+	transform_sop->evalString(rOrd, "rOrd", 0, i_time);
+	UT_XformOrder order(xOrd.c_str(), rOrd.c_str());
+
+	double t[3];
+	transform_sop->evalFloats("t", t, i_time);
+	double r[3];
+	transform_sop->evalFloats("r", r, i_time);
+	double s[3];
+	transform_sop->evalFloats("s", s, i_time);
+	double shear[3];
+	transform_sop->evalFloats("shear", shear, i_time);
+	double scale = transform_sop->evalFloat("scale", 0, i_time);
+
+	double p[3];
+	transform_sop->evalFloats("p", p, i_time);
+	double pr[3];
+	transform_sop->evalFloats("pr", pr, i_time);
+	/*
+		This should be
+		UT_Matrix4D::PivotSpace pivot(UT_Vector3D(p), UT_Vector3D(pr));
+		but gcc doesn't like it!
+	*/
+	UT_Matrix4D::PivotSpace pivot =
+		UT_Matrix4D::PivotSpace(UT_Vector3D(p), UT_Vector3D(pr));
+
+	int invertxform = transform_sop->evalInt("invertxform", 0, i_time);
+
+	/*
+		NB : shear and invertxform don't mix well : at least, the "xform" call
+		below doesn't result in the same matrix as the SOP's "output attribute"
+		feature when both parameters are used. This is probably not a big deal
+		as neither is likely to be used in that context.
+	*/
+	UT_Matrix4D transform(1.0);
+	transform.xform(
+		order,
+		t[0], t[1], t[2],
+		r[0], r[1], r[2],
+		s[0]*scale, s[1]*scale, s[2]*scale,
+		shear[0], shear[1], shear[2],
+		pivot,
+		invertxform);
+
+	m_nsi.SetAttributeAtTime(
+		m_handle,
+		i_time,
+		NSI::DoubleMatrixArg("transformationmatrix", transform.data()));
+}
+
+void vdb_file_loader::get_geo(
+	OBJ_Node* i_obj,
+	double i_time,
+	SOP_Node*& o_transform_sop,
+	SOP_Node*& o_file_sop,
+	std::string& o_vdb_path)
+{
+	o_transform_sop = nullptr;
+	o_file_sop = nullptr;
+
+	SOP_Node* sop = i_obj->getRenderSopPtr();
 	if(!sop)
 	{
-		return {};
+		return;
 	}
 
+	// Retrieve the Transform SOP if there is one
 	std::string sop_type = sop->getOperator()->getName().toStdString();
+	if(sop_type == "xform")
+	{
+		o_transform_sop = sop;
 
+		if(sop->nInputs() != 1)
+		{
+			return;
+		}
+
+		OP_Node* geo = sop->getInput(0);
+		sop = geo->castToSOPNode();
+		if(!sop)
+		{
+			return;
+		}
+
+		sop_type = sop->getOperator()->getName().toStdString();
+	}
+
+	// Check that the SOP is a file loader
 	if(sop_type != "file" || !sop->hasParm("file"))
 	{
-		return {};
+		return;
 	}
 
+	// Retrieve the file name
 	UT_String file;
-	sop->evalString( file, "file", 0, i_time );
-
-	if( !file.fileExtension() || ::strcmp(file.fileExtension(), ".vdb") != 0 )
+	sop->evalString(file, "file", 0, i_time);
+	if(!file.fileExtension() || ::strcmp(file.fileExtension(), ".vdb") != 0)
 	{
-		return {};
+		return;
 	}
 
-	return std::string( file.c_str() );
+	o_file_sop = sop;
+	o_vdb_path = file.toStdString();
 }
 
 

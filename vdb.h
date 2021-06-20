@@ -66,6 +66,27 @@ public:
 		returned instead.
 	*/
 	static std::string get_path(OBJ_Node *i_node, double i_time);
+
+protected:
+
+	/// Exports time-dependent attributes to NSI
+	void set_attributes_at_time(
+		double i_time,
+		const GT_PrimitiveHandle i_gt_primitive)const override;
+
+private:
+
+	/**
+		\brief Retrieves useful stuff all at once.
+		This avoids scattering the same logic through the class by retrieving
+		each value separately.
+	*/
+	static void get_geo(
+		OBJ_Node* i_obj,
+		double i_time,
+		SOP_Node*& o_transform_sop,
+		SOP_Node*& o_file_sop,
+		std::string& o_vdb_path);
 };
 
 
