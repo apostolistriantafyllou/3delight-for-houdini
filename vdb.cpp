@@ -292,6 +292,7 @@ void vdb_file_loader::set_attributes_at_time(
 		"outputattrib" parameters in order to write the resulting matrix to an
 		attribute accessible from the the node's "detail", but it's less
 		reliable because these parameters are accessible to the user.
+		Also, it ignores the "pre-transform" part of the transform node.
 	*/
 
 	/*
@@ -346,6 +347,28 @@ void vdb_file_loader::set_attributes_at_time(
 		shear[0], shear[1], shear[2],
 		pivot,
 		invertxform);
+
+	// Also retrieve the "pre-transform"
+
+	transform_sop->evalString(xOrd, "prexform_xOrd", 0, i_time);
+	transform_sop->evalString(rOrd, "prexform_rOrd", 0, i_time);
+	UT_XformOrder prexform_order(xOrd.c_str(), rOrd.c_str());
+
+	transform_sop->evalFloats("prexform_t", t, i_time);
+	transform_sop->evalFloats("prexform_r", r, i_time);
+	transform_sop->evalFloats("prexform_s", s, i_time);
+	transform_sop->evalFloats("prexform_shear", shear, i_time);
+
+	/*
+		Apply the "pre-transform". It's actually applied afterwards, further
+		from the VDB node, so the "pre-" prefix seems a bit strange.
+	*/
+	transform.xform(
+		order,
+		t[0], t[1], t[2],
+		r[0], r[1], r[2],
+		s[0], s[1], s[2],
+		shear[0], shear[1], shear[2]);
 
 	m_nsi.SetAttributeAtTime(
 		m_handle,
