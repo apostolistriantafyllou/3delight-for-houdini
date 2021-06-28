@@ -219,23 +219,20 @@ struct OBJ_Node_Refiner : public GT_Refine
 			if( !vdb_path.empty() )
 			{
 				/*
-					We got ourselves an instancer of VDBs. This happens anytime
-					you have a packed disk file read with some transform.  If
-					we enter the refine below we will still get a correct
-					render but with loaded VDBs in memory; and we don't want
-					that.
+					We got ourselves an instancer of VDB loaders. If we enter
+					the refine below we will still get a correct render but with
+					loaded VDBs in memory; and we don't want that.
 				*/
 				m_result.push_back( new vdb_file_loader(
 					m_context, m_node, m_time, i_primitive, index) );
 				ret.push_back( m_result.back () );
 				m_return.push_back( m_result.back() );
+				break;
 			}
-			else
-			{
-				OBJ_Node_Refiner recursive(this);
-				I->geometry()->refine(recursive, &recursive.m_params);
-				ret = recursive.m_return;
-			}
+
+			OBJ_Node_Refiner recursive(this);
+			I->geometry()->refine(recursive, &recursive.m_params);
+			ret = recursive.m_return;
 
 			if(	ret.empty() )
 			{
