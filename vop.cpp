@@ -123,20 +123,22 @@ void vop::connect_input(int i_input_index)const
 
 		VOP_OutputInfoManager* vop_info = source->getOutputInfoManager();
 		int idx = vop_info->findCorrespondingInputIndex(bypass_node_output,false,true);
-		input_ref = source->getInputReferenceConst(i_input_index);
 
 		/*
 			Skip the node that is bypassed by replacing it with the node connected to the
 			it's input, which should also have pipethrough method on it's connected input.
 		*/
 		if (idx != -1)
+		{
+			input_ref = source->getInputReferenceConst(idx);
 			source = CAST_VOPNODE(source->getInput(idx));
+		}
 		if(idx == -1 || !source)
 			return;
 	}
 
 	//aov group connection is being handles on vop::add_and_connect_aov_group()
-	if (!is_aov_definition(source))
+	if (!is_aov_definition(source) && input_ref)
 	{
 		UT_String source_name;
 		int source_index = input_ref->getNodeOutputIndex();
@@ -233,11 +235,16 @@ void vop::changed_cb(
 			/*
 				connect the changed node as a source vop so we can
 				check if it's bypassed or no in the connect() function.
+				Don't connect vop nodes that are not assigned to any obj
+				node as they are not created at all through nsi.
 			*/
 			for (int i = 0; i < outputs.size(); i++)
 			{
-				vop k(*ctx, outputs[i]->castToVOPNode());
-				k.connect();
+				if (!ctx->material_to_objects[outputs[i]->castToVOPNode()].empty())
+				{
+					vop k(*ctx, outputs[i]->castToVOPNode());
+					k.connect();
+				}
 			}
 		}
 
