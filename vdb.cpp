@@ -359,17 +359,17 @@ void vdb_file_loader::set_attributes_at_time(
 	transform_sop->evalFloats("prexform_s", s, i_time);
 	transform_sop->evalFloats("prexform_shear", shear, i_time);
 
+
 	/*
 		Apply the "pre-transform". It's actually applied afterwards, further
 		from the VDB node, so the "pre-" prefix seems a bit strange.
 	*/
 	transform.xform(
-		order,
+		prexform_order,
 		t[0], t[1], t[2],
 		r[0], r[1], r[2],
 		s[0], s[1], s[2],
 		shear[0], shear[1], shear[2]);
-
 	m_nsi.SetAttributeAtTime(
 		m_handle,
 		i_time,
