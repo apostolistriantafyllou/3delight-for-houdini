@@ -240,10 +240,9 @@ void vop::changed_cb(
 			*/
 			for (int i = 0; i < outputs.size(); i++)
 			{
-				vop k(*ctx, outputs[i]->castToVOPNode());
-
 				if (!ctx->material_to_objects[outputs[i]->castToVOPNode()].empty())
 				{
+					vop k(*ctx, outputs[i]->castToVOPNode());
 					k.connect();
 				}
 			}
