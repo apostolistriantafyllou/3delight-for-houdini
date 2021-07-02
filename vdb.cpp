@@ -2,6 +2,7 @@
 
 #include "context.h"
 #include "VOP_ExternalOSL.h"
+#include "dl_system.h"
 
 #include <nsi_dynamic.hpp>
 #include <nsi.hpp>
@@ -431,6 +432,71 @@ void vdb_file_loader::get_geo(
 	o_vdb_path = file.toStdString();
 }
 
+bool vdb_file::has_vdb_light_layer(OBJ_Node* i_node, double i_time)
+{
+	std::string vdb_path =
+		vdb_file_loader::get_path(i_node, i_time);
+	if (vdb_path.empty() || !dl_system::file_exists(vdb_path.c_str()))
+	{
+		return false;
+	}
+	int num_grids = 0;
+	const char* const* grid_names = 0x0;
+	if (!get_grid_names(vdb_path.c_str(), &num_grids, &grid_names))
+	{
+		return false;
+	}
+
+	OP_Node* op = i_node->getMaterialNode(i_time);
+
+	VOP_Node* mats[3] = { nullptr };
+	if (op)
+	{
+		resolve_material_path(i_node, op->getFullPath().c_str(), mats);
+	}
+
+	VOP_Node* material = mats[2]; // volume
+	UT_String emission_grid;
+	UT_String temperature_grid;
+	UT_String heat_grid;
+
+	if (material)
+	{
+		using namespace VolumeGridParameters;
+
+		if (material->hasParm(emission_name))
+		{
+			material->evalString(emission_grid, emission_name, 0, i_time);
+		}
+
+		if (material->hasParm(emission_intensity_name))
+		{
+			material->evalString(heat_grid, emission_intensity_name, 0, i_time);
+		}
+
+		if (material->hasParm(temperature_name))
+		{
+			material->evalString(temperature_grid, temperature_name, 0, i_time);
+		}
+	}
+
+	/*
+		Check if the emission, temperature or heat grid used is one of the
+		existing grids of the VDB in order to include it as a light AOV.
+	*/
+	for (int i = 0; i < num_grids; i++)
+	{
+		std::string grid(grid_names[i] ? grid_names[i] : "");
+
+		if (grid == emission_grid.toStdString()
+			|| grid == temperature_grid.toStdString()
+			|| grid == heat_grid.toStdString())
+		{
+			return true;
+		}
+	}
+	return false;
+}
 
 vdb_file_writer::vdb_file_writer(
 	const context& i_ctx,

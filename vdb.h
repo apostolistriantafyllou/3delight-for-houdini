@@ -29,6 +29,9 @@ public:
 		double i_time,
 		const GT_PrimitiveHandle i_gt_primitive)const override;
 
+	/// Checks if the corresponing vdb needs to render a multi-light AOV.
+	static bool has_vdb_light_layer(OBJ_Node* i_node, double i_time);
+
 	/// Get existing grid names for a specific vdb.
 	static bool get_grid_names(const char* i_vdb_path,
 		int* num_grids,
