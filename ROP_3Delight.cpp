@@ -1123,7 +1123,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 
 		const aov::description& desc = aov::getDescription(label.toStdString());
 
-		// Don't do anything if layer is not active
+		// Don't do anything if layer is not active or a previously disconnected custom AOV.
 		if (!is_layer_active || desc.m_variable_name == "")
 			continue;
 

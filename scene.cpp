@@ -684,18 +684,22 @@ void scene::export_nsi(
 			lights_to_render );
 	}
 
-	if (!i_keep_exporters)
+	if (i_keep_exporters)
+	{
+		/*
+			Avoid re-creatation of exporters and delete them on find_custom_aovs()
+			function. This is necessary to update custom AOVs list.
+		*/
+		std::vector<VOP_Node*> custom_aovs;
+		scene::find_custom_aovs(i_context, i_to_export, custom_aovs);
+		aov::updateCustomVariables(custom_aovs);
+	}
+	else
 	{
 		for (auto& exporter : i_to_export)
 		{
 			delete exporter;
 		}
-	}
-	else
-	{
-		std::vector<VOP_Node*> custom_aovs;
-		scene::find_custom_aovs(i_context, i_to_export, custom_aovs);
-		aov::updateCustomVariables(custom_aovs);
 	}
 }
 
