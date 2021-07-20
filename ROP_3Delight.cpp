@@ -633,8 +633,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	object_attributes::export_object_attribute_nodes(*m_current_render);
 	ExportTransparentSurface(*m_current_render);
 
-	scene::convert_to_nsi( *m_current_render );
-
+	scene::convert_to_nsi(*m_current_render, true);
 
 	if(m_current_render->m_rop_type != rop_type::stand_in)
 	{
@@ -867,23 +866,6 @@ ROP_3Delight::updateParmsFlags()
 		changed |= enableParm(settings::k_view_layer, false);
 	}
 	return changed;
-}
-
-void
-ROP_3Delight::opChanged(OP_EventType reason, void* data)
-{
-	OP_Node::opChanged(reason, data);
-	if (reason != OP_NAME_CHANGED)
-	{
-		return;
-	}
-
-	// Update AOVs list so we're ready to render
-	double time =
-		OPgetDirector()->getChannelManager()->getEvaluateTime(SYSgetSTID());
-	std::vector<VOP_Node*> custom_aovs;
-	scene::find_custom_aovs(this, time, custom_aovs);
-	aov::updateCustomVariables(custom_aovs);
 }
 
 void
@@ -1135,14 +1117,15 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 	for (int i = 0; i < nb_aovs; i++)
 	{
 		bool is_layer_active = evalInt(aov::getAovActiveLayerToken(i), 0, current_time);
-		// Don't do anything if layer is not active
-		if (!is_layer_active)
-			continue;
 
 		UT_String label;
 		evalString(label, aov::getAovStrToken(i), 0, current_time );
 
 		const aov::description& desc = aov::getDescription(label.toStdString());
+
+		// Don't do anything if layer is not active
+		if (!is_layer_active || desc.m_variable_name == "")
+			continue;
 
 		bool idisplay_output, file_output;
 		if( i_ctx.m_batch || i_ctx.m_export_nsi )

@@ -606,7 +606,7 @@ void scene::create_exporters(
 	\brief Contains the high-level logic of scene conversion to
 	a NSI representation.
 */
-void scene::convert_to_nsi( const context &i_context )
+void scene::convert_to_nsi(const context& i_context, bool i_keep_exporter)
 {
 	/*
 		Start by getting the list of all OBJ exporters.
@@ -614,13 +614,14 @@ void scene::convert_to_nsi( const context &i_context )
 	std::vector<exporter *> to_export;
 	create_exporters( i_context, to_export );
 
-	export_nsi(i_context, to_export);
+	export_nsi(i_context, to_export, i_keep_exporter);
 }
 
 /// Run the exporters to export NSI nodes and their attributes
 void scene::export_nsi(
 	const context &i_context,
-	const std::vector<exporter*>& i_to_export)
+	const std::vector<exporter*>& i_to_export,
+	bool i_keep_exporters)
 {
 	/*
 		Create phase. This will create all the main NSI nodes from the Houdini
@@ -683,9 +684,18 @@ void scene::export_nsi(
 			lights_to_render );
 	}
 
-	for( auto &exporter : i_to_export )
+	if (!i_keep_exporters)
 	{
-		delete exporter;
+		for (auto& exporter : i_to_export)
+		{
+			delete exporter;
+		}
+	}
+	else
+	{
+		std::vector<VOP_Node*> custom_aovs;
+		scene::find_custom_aovs(i_context, i_to_export, custom_aovs);
+		aov::updateCustomVariables(custom_aovs);
 	}
 }
 
@@ -785,20 +795,16 @@ void scene::find_lights(
 	But it is also robust as we use the same logic as scen export.
 */
 void scene::find_custom_aovs(
-	ROP_3Delight *i_node,
-	double i_time,
+	const context& i_context,
+	std::vector<exporter*> i_exporters,
 	std::vector<VOP_Node*>& o_custom_aovs )
 {
-	assert( i_node );
-	context ctx( i_node, i_time );
+	if (i_exporters.empty())
+	{
+		scene::create_exporters(i_context, i_exporters);
+	}
 
-	/*
-		Start by getting the list of all OBJ exporters.
-	*/
-	std::vector<exporter *> exporters;
-	create_exporters( ctx, exporters );
-
-	for( auto exporter : exporters )
+	for( auto exporter : i_exporters)
 	{
 		vop *v = dynamic_cast<vop *>( exporter );
 		if( !v )
