@@ -727,6 +727,7 @@ void geometry::connect()const
 	*/
 	VOP_Node* mats[3] = { nullptr, nullptr, nullptr };
 	get_assigned_materials( mats );
+	bool mat_is_debugging = false;
 
 	m_nsi.Create( attributes_handle(), "attributes" );
 	m_nsi.Connect(
@@ -746,25 +747,53 @@ void geometry::connect()const
 			continue;
 
 		update_materials_mapping( mats[i], m_context, m_object );
+		if (mats[i]->getDebug() && m_context.m_ipr)
+		{
+			mat_is_debugging = true;
 
-		/*
-			Connect a passthrough shader if the attached material on the
-			geometry is not a surface shader. This would make it possible to
-			render a connected texture to iDisplay. This is needed when you
-			want to debug the scene.
-		*/
-		if( i==0 && vop::is_texture(mats[i]) )
-		{
-			connect_texture(mats[i], m_object, m_context, attributes_handle());
-		}
-		else
-		{
-			m_nsi.Connect(
-				vop::handle(*mats[i], m_context), "",
-				attributes_handle(), slots[i],
-				NSI::IntegerArg("strength", 1));
+			/*
+				Connect a passthrough shader if the attached material on the
+				geometry is not a surface shader. This would make it possible to
+				render a connected texture to iDisplay. This is needed when you
+				want to debug the scene.
+			*/
+			if (vop::is_texture(mats[i]))
+			{
+				connect_texture(mats[i], m_object, m_context, attributes_handle());
+			}
+			else
+			{
+				m_nsi.Connect(
+					vop::handle(*mats[i], m_context), "",
+					attributes_handle(), slots[i],
+					NSI::IntegerArg("strength", 1));
+			}
+			break;
 		}
 	}
+
+	//Ignore other connections if a material is being debugged.
+	if (!mat_is_debugging)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			if (!mats[i])
+				continue;
+
+			if (vop::is_texture(mats[i]))
+			{
+				connect_texture(mats[i], m_object, m_context, attributes_handle());
+			}
+			else
+			{
+				m_nsi.Connect(
+					vop::handle(*mats[i], m_context), "",
+					attributes_handle(), slots[i],
+					NSI::IntegerArg("strength", 1));
+			}
+		}
+	}
+
 	export_override_attributes();
 }
 
