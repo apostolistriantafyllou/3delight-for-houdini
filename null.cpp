@@ -40,8 +40,28 @@ void null::set_attributes_at_time( double i_time ) const
 {
 	OP_Context context( i_time );
 	UT_DMatrix4 local;
-	m_object->getLocalTransform( context, local );
+	UT_DMatrix4 parent_transform_subnet;
 
+	OP_Node* parent_node = m_object->getParent();
+	OP_Node* parent_object = m_object->getParentObject();
+
+	std::string parent_node_path(
+		parent_node ?
+		parent_node->getFullPath().toStdString() : std::string());
+
+	std::string parent_object_path(
+		parent_object ?
+		parent_object->getFullPath().toStdString() : std::string());
+
+	OP_Node* parent = parent_object_path.size() > parent_node_path.size() ?
+		parent_object : parent_node;
+
+	m_object->getLocalTransform(context, local);
+	if ((parent && parent->isSubNetwork(true)))
+	{
+		m_object->getParentToWorldTransform(context, parent_transform_subnet);
+		local *= parent_transform_subnet;
+	}
 	/* The stars are aligned for Houdini and NSI */
 	m_nsi.SetAttributeAtTime(
 		m_handle,
@@ -52,7 +72,12 @@ void null::set_attributes_at_time( double i_time ) const
 /**
 	\brief Connect to the parent object of this null object. This could
 	be the immediate parent in Houdini's scene hierarchy or NSI_SCENE_ROOT
-	if this null object has no parent.
+	if this null object has no parent. Although, there are special cases
+	where the connection is done on the parent level node such as subnetwork.
+	In this scenario, because sub-network inputs are not considered as nodes
+	we connect the child node to NSI_SCENE_ROOT, and modify their transfommatrix
+	based on the parent inputs modifications. We do this on set_attributes_at_time
+	function.
 
 	Note that Scene Hierarchy in Houdini is a very murky concept. Here we
 	take the parent node that has the longest scene path. Why ? Because
@@ -84,9 +109,16 @@ void null::connect( void ) const
 
 	if( parent && parent->getFullPath() != "/obj" )
 	{
-		m_nsi.Connect(
-			m_handle, "",
-			null::handle(*parent, m_context), "objects" );
+		if (parent->isSubNetwork(true))
+		{
+			m_nsi.Connect(m_handle, "", NSI_SCENE_ROOT, "objects");
+		}
+		else
+		{
+			m_nsi.Connect(
+				m_handle, "",
+				null::handle(*parent, m_context), "objects");
+		}
 	}
 	else
 	{
