@@ -27,7 +27,7 @@ namespace NSI { class Context; }
 class scene
 {
 public:
-	static void convert_to_nsi( const context & );
+	static void convert_to_nsi( const context &, bool i_keep_exporter = false);
 
 	static void insert_obj_node(
 		OBJ_Node& i_node,
@@ -51,9 +51,9 @@ public:
 		\brief Find the AOV Group nodes that can produce custom AOVs
 	*/
 	static void find_custom_aovs(
-		ROP_3Delight *i_rop,
-		double i_time,
-		std::vector<VOP_Node *> &o_custom_aovs);
+		const context& i_context,
+		std::vector<exporter*> exporters,
+		std::vector<VOP_Node*>& o_custom_aovs);
 
 	/**
 		\brief Exports connections to the proper sets to implement light linking.
@@ -100,7 +100,8 @@ private:
 
 	static void export_nsi(
 		const context &i_context,
-		const std::vector<exporter*>& i_to_export);
+		const std::vector<exporter*>& i_to_export,
+		bool i_keep_exporter = false);
 
 	static void scan_for_instanced(
 		const context &i_context,

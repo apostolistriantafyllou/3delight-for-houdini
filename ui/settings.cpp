@@ -1325,8 +1325,11 @@ int settings::add_layer_cb(
 	const PRM_Template* tplate)
 {
 	ROP_3Delight *node = reinterpret_cast<ROP_3Delight*>(data);
+	context ctx(node, t);
 	std::vector<VOP_Node*> custom_aovs;
-	scene::find_custom_aovs( node, t, custom_aovs );
+	std::vector<exporter*> to_export;
+
+	scene::find_custom_aovs(ctx, to_export, custom_aovs);
 	aov::updateCustomVariables(custom_aovs);
 
 	delete sm_dialog;
