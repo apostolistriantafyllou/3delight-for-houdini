@@ -64,7 +64,7 @@ namespace
 		NSI::Context& io_nsi,
 		const std::string& i_filename)
 	{
-		const char* format = i_filename == k_stdout ? "nsi" : "binarynsi";
+		const char* format = i_filename == k_stdout ? "nsi" : "autonsi";
 
 		// Output NSI commands to the specified file or standard output
 		io_nsi.Begin(
