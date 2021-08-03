@@ -9,6 +9,7 @@ if ( "$arg1" != "" && ("$DELIGHT_AUTOSPAREPARAMS" !=0 || "$arg2" !="")) then
 	# Remember whether some parameters were already defined before parameter
 	# collections are added.
 	set fov_defined = `run("opparm -ql $arg1 _3dl_fov")`
+	set fov_updated = `run("opparm -ql $arg1 _3dl_updated_fov")`
 	set shutter_defined = `run("opparm -ql $arg1 _3dl_shutter_duration")`
 	set blades_defined = `run("opparm -ql $arg1 _3dl_aperture_blades")`
 	set focal_distance_defined = `run("opparm -ql $arg1 _3dl_focal_distance")`
@@ -63,7 +64,7 @@ if ( "$arg1" != "" && ("$DELIGHT_AUTOSPAREPARAMS" !=0 || "$arg2" !="")) then
 	# expression, taking care of not overriding a new value specified by the
 	# user.
 
-	if("$fov_defined" == "") then
+	if("$fov_defined" == "" || "$fov_updated" == "") then
 		# Houdini's camera has an horizontal aperture parameter.  However,
 		# since we don't specify a "screenwindow" when exporting the screen,
 		# it will range from -1 to 1 along the vertical axis (while the
@@ -74,8 +75,10 @@ if ( "$arg1" != "" && ("$DELIGHT_AUTOSPAREPARAMS" !=0 || "$arg2" !="")) then
 		# using the same unit, which seems to be what Mantra does, even though
 		# the "focalunits" parameter seems to apply only to the focal length
 		# in the UI.
+		# Also update the fov for previously saved scene with the new changes.
 		chadd -t 0 0 $arg1 _3dl_fov
-		chkey -t 0 -T a -F '2.0 * atan((ch("aperture") / 2.0) * (ch("resy") / ch("resx")) / ch("focal"))' $arg1/_3dl_fov
+		chkey -t 0 -T a -F '2.0 * atan((ch("aperture") / 2.0) * (ch("resy") / (ch("resx") * ch("aspect"))) / ch("focal"))' $arg1/_3dl_fov
+		chkey -t 0 -T a -F '2.0 * atan((ch("aperture") / 2.0) * (ch("resy") / (ch("resx") * ch("aspect"))) / ch("focal"))' $arg1/_3dl_updated_fov
 	endif
 	if("$shutter_defined" == "") then
 		chadd -t 0 0 $arg1 _3dl_shutter_duration
