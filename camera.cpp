@@ -72,8 +72,9 @@ namespace
 	/**
 		\brief Returns the field of view for a perspective camera.
 
-		NOTE: this takes the pixel aspect ratio ('apsect') parameter into
-		account.
+		NOTE: We use pixel aspect ratio when we set _3dl_fov parameter. Using
+		it here as we were previously doing, would cause wrong results as for
+		very small value of pixel aspect ratio the fov value would be > 180.
 	*/
 	float get_fov(OBJ_Camera& i_camera, double i_time)
 	{
@@ -83,7 +84,8 @@ namespace
 		}
 
 		float fov = i_camera.evalFloat(k_fov, 0, i_time);
-		return fov / i_camera.ASPECT( i_time );
+
+		return fov;
 	}
 
 	const char* k_focal_distance = "_3dl_focal_distance";
@@ -697,7 +699,7 @@ void camera::get_screen_window(
 		float screen_window_x = i_camera.evalFloat( "win", 0, i_time );
 		float screen_window_y = i_camera.evalFloat( "win", 1, i_time );
 
-		float screen_window_size_x = i_camera.evalFloat( "winsize", 0, i_time );
+		float screen_window_size_x = i_camera.evalFloat( "winsize", 0, i_time ) * i_camera.ASPECT(i_time);
 		float screen_window_size_y = i_camera.evalFloat( "winsize", 1, i_time );
 
 		o_screen_window[0] = -A * screen_window_size_x + 2 * screen_window_x*A;
