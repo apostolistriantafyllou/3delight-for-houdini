@@ -153,7 +153,10 @@ private:
 
 	void ExportTransparentSurface(const context& i_ctx) const;
 	void ExportAtmosphere(const context& i_ctx, bool ipr_update = false);
-	void ExportOutputs(const context& i_ctx)const;
+	void ExportOutputs(
+		const context& i_ctx,
+		bool i_ipr_camera_change = false) const;
+
 	void ExportOneOutputLayer(
 		const context& i_ctx,
 		const std::string& i_layer_handle,
@@ -165,7 +168,8 @@ private:
 		const std::string& i_light_handle,
 		const std::string& i_driver_handle,
 		const std::string& i_driver_name,
-		unsigned& io_sort_key) const;
+		unsigned& io_sort_key,
+		bool i_ipr_camera_change = false) const;
 
 	void ExportLayerFeedbackData(
 		const context& i_ctx,

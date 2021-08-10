@@ -971,6 +971,17 @@ void ROP_3Delight::changed_cb(
 		ctx->m_nsi.RenderControl(
 			NSI::CStringPArg("action", "synchronize"));
 	}
+	else if (name == settings::k_camera)
+	{
+		context* ctx = (context*)i_callee;
+		OBJ_Camera* cam = rop->GetCamera(ctx->m_current_time);
+		if (cam)
+		{
+			rop->ExportOutputs(*ctx, true);
+			ctx->m_nsi.RenderControl(
+				NSI::CStringPArg("action", "synchronize"));
+		}
+	}
 }
 
 /**
@@ -1049,7 +1060,7 @@ ROP_3Delight::ExportAtmosphere(const context& i_ctx, bool ipr_update)
 }
 
 void
-ROP_3Delight::ExportOutputs(const context& i_ctx)const
+ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 {
 	OBJ_Camera* cam = GetCamera( i_ctx.m_current_time );
 	double current_time = i_ctx.m_current_time;
@@ -1168,9 +1179,11 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 		/**
 			Always render to iDisplay if "Start IPR" button is clicked OR
 			we called from inside 3Delight Display to re-render an IPR
-			session.
+			session. Also reconnect the camera for each layer when it changes
+			during IPR from Render Settings.
 		*/
-		if (evalInt(settings::k_ipr_start, 0, current_time) || m_idisplay_ipr)
+		if (evalInt(settings::k_ipr_start, 0, current_time)
+			|| m_idisplay_ipr || i_ipr_camera_change)
 		{
 			idisplay_output = true;
 			file_output = false;
@@ -1240,7 +1253,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx)const
 					filter, filter_width,
 					screen_name, category.first,
 					idisplay_driver_name, idisplay_driver.toStdString(),
-					sort_key );
+					sort_key, i_ipr_camera_update);
 
 				/*
 					3Delight Display's Multi-Light tool needs some information,
@@ -1373,7 +1386,8 @@ ROP_3Delight::ExportOneOutputLayer(
 	const std::string& i_light_category,
 	const std::string& i_driver_handle,
 	const std::string& i_driver_name,
-	unsigned& io_sort_key) const
+	unsigned& io_sort_key,
+	bool i_ipr_camera_change) const
 {
 	// Output only RGBA layer if Disable extra Image Layer has been selected.
 	if ((HasSpeedBoost(i_ctx.m_current_time)
@@ -1451,6 +1465,13 @@ ROP_3Delight::ExportOneOutputLayer(
 		cryptomatte_layers = 2;
 	}
 
+	if (i_ipr_camera_change)
+	{
+		i_ctx.m_nsi.Disconnect(
+			i_layer_handle, "",
+			".all", "outputlayers");
+	}
+
 	i_ctx.m_nsi.Connect(
 		i_layer_handle, "",
 		i_screen_handle, "outputlayers");
@@ -1499,6 +1520,13 @@ ROP_3Delight::ExportOneOutputLayer(
 					NSI::IntegerArg( "sortkey", io_sort_key++ ),
 					NSI::StringArg( "variablesource", "builtin" )
 				) );
+
+			if (i_ipr_camera_change)
+			{
+				i_ctx.m_nsi.Disconnect(
+					cl_handle, "",
+					".all", "outputlayers");
+			}
 
 			i_ctx.m_nsi.Connect(cl_handle, "", i_screen_handle, "outputlayers");
 
