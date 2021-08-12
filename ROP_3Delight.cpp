@@ -1253,7 +1253,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 					filter, filter_width,
 					screen_name, category.first,
 					idisplay_driver_name, idisplay_driver.toStdString(),
-					sort_key, i_ipr_camera_update);
+					sort_key, i_ipr_camera_change);
 
 				/*
 					3Delight Display's Multi-Light tool needs some information,
