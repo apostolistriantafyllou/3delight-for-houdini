@@ -1091,15 +1091,6 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 	UT_String image_display_name =
 		image_file_name.replaceExtension(idisplay_driver);
 
-	/*
-		Replacing file_name extension to exr if deepexr is selected,
-		while for other selections the extension will be the same
-		as the selected one. This does not change the drivername
-		which will still be deepexr when it is selected.
-	*/
-	image_file_name = image_file_name.replaceExtension
-		(file_driver == "deepexr" ? "exr":file_driver);
-
 	std::string idisplay_driver_name;
 	std::string file_driver_name;
 	std::string png_driver_name;

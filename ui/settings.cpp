@@ -1247,12 +1247,26 @@ int settings::image_format_cb(
 	PRM_Template* parmTemp = parm.getTemplatePtr();
 	assert(parmTemp);
 
+	UT_String image_filaname;
+	/*
+		Since we are dealing with UI stuff only (including extension modification),
+		we can simply consider image format as exr when deepexr is selected, as it
+		only affects drivername.
+	*/
+	if(image_format == "deepexr")
+		image_format = "exr";
+	node->evalStringRaw(image_filaname, k_default_image_filename, 0, t);
+	image_filaname = image_filaname.replaceExtension(image_format);
+
+	//set image filename with the new extension from image format selection.
+	node->setString(image_filaname, CH_STRING_LITERAL, k_default_image_filename, 0, t);
+
 	if (image_format == "tiff")
 	{
 		node->setString("uint8", CH_STRING_LITERAL, k_default_image_bits, 0, t);
 		parmTemp->setChoiceListPtr(&default_image_bits_c_tiff);
 	}
-	else if (image_format == "exr" || image_format == "deepexr")
+	else if (image_format == "exr")
 	{
 		node->setString("half", CH_STRING_LITERAL, k_default_image_bits, 0, t);
 		parmTemp->setChoiceListPtr(&default_image_bits_c_exr);
