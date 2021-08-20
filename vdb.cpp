@@ -17,6 +17,29 @@
 #include <assert.h>
 #include <iostream>
 
+namespace
+{
+	// Follows input an connection on a SOP and updates the SOP type
+	bool traverse_input(int i_index, SOP_Node*& io_sop, std::string& io_type)
+	{
+		if(io_sop->nInputs() <= i_index)
+		{
+			return false;
+		}
+
+		OP_Node* in = io_sop->getInput(i_index);
+		io_sop = in->castToSOPNode();
+		if(!io_sop)
+		{
+			return false;
+		}
+
+		io_type = io_sop->getOperator()->getName().toStdString();
+
+		return true;
+	}
+}
+
 
 vdb_file::vdb_file(
 	const context& i_ctx, OBJ_Node *i_obj,
@@ -393,36 +416,80 @@ void vdb_file_loader::get_geo(
 		return;
 	}
 
-	// Retrieve the Transform SOP if there is one
 	std::string sop_type = sop->getOperator()->getName().toStdString();
+
+	// Ignore a possible timeshift node
+	bool timeshift = false;
+	if(sop_type == "timeshift")
+	{
+		timeshift = true;
+		if(!traverse_input(0, sop, sop_type))
+		{
+			return;
+		}
+	}
+
+	// Retrieve the Transform SOP if there is one
 	if(sop_type == "xform")
 	{
 		o_transform_sop = sop;
-
-		if(sop->nInputs() != 1)
+		if(!traverse_input(0, sop, sop_type))
 		{
 			return;
 		}
+	}
 
-		OP_Node* geo = sop->getInput(0);
-		sop = geo->castToSOPNode();
-		if(!sop)
+	// Ignore a possible timeshift node
+	if(sop_type == "timeshift")
+	{
+		timeshift = true;
+		if(!traverse_input(0, sop, sop_type))
 		{
 			return;
 		}
-
-		sop_type = sop->getOperator()->getName().toStdString();
 	}
 
 	// Check that the SOP is a file loader
-	if(sop_type != "file" || !sop->hasParm("file"))
+	if(sop_type != "file")
 	{
 		return;
 	}
 
 	// Retrieve the file name
 	UT_String file;
-	sop->evalString(file, "file", 0, i_time);
+	if(timeshift)
+	{
+		/*
+			When a "timeshift" SOP is present AND the file SOP is set to load
+			Packed Disk Primitives, we should find a "path" primitive attribute
+			that contains the time-shifted file path.
+		*/
+		OP_Context context(i_time);
+		GU_DetailHandle detail_handle(
+			i_obj->getRenderSopPtr()->getCookedGeoHandle(context));
+
+		if(!detail_handle.isValid())
+		{
+			return;
+		}
+
+		GA_RWHandleS h(detail_handle.gdp(), GA_ATTRIB_PRIMITIVE, "path");
+		if(!h.isValid())
+		{
+			return;
+		}
+
+		file = h.get(0);
+	}
+	else
+	{
+		if(!sop->hasParm("file"))
+		{
+			return;
+		}
+		sop->evalString(file, "file", 0, i_time);
+	}
+
 	if(!file.fileExtension() || ::strcmp(file.fileExtension(), ".vdb") != 0)
 	{
 		return;
