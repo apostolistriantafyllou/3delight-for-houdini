@@ -239,7 +239,7 @@ hook_image_buffer::close()
 hook_image_buffer::~hook_image_buffer()
 {
 	assert(!m_hook);
-	operator delete (m_pixels);
+	delete[] m_pixels;
 }
 
 
