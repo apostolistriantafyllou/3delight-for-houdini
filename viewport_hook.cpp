@@ -7,6 +7,7 @@
 #include <OP/OP_Director.h>
 #include <SYS/SYS_Version.h>
 #include <OBJ/OBJ_Camera.h>
+#include <PXL/PXL_Raster.h>
 
 #include <ndspy.h>
 #include <nsi_dynamic.hpp>
@@ -72,12 +73,7 @@ public:
 	void disconnect();
 
 	/// Returns the address of the pixels array
-	UT_RGBA* pixels()const { return m_pixels; }
-	/**
-		Returns the number of bytes separating the beginning of two consecutive
-		lines of pixels.
-	*/
-	size_t line_offset()const { return m_width*sizeof(UT_RGBA); }
+	void* pixels()const { return m_pixels; }
 
 	/**
 		\brief Makes all pixels transparent.
@@ -107,6 +103,9 @@ public:
 
 private:
 
+	// 4 x 16-bit integers, interpreted as 4 x 16-bit floats
+	typedef UT_BIG_RGBA pixel_t;
+
 	/// Constructor : connects the render hook to the image buffer.
 	hook_image_buffer(DM_SceneRenderHook* i_hook, int i_width, int i_height);
 
@@ -125,7 +124,7 @@ private:
 	*/
 	static void update_viewport_loop(
 		std::shared_ptr<hook_image_buffer>& i_buffer);
-	
+
 	/*
 		Pointer to the Scene Render Hook that needs to be refreshed when the
 		image is updated.
@@ -136,7 +135,7 @@ private:
 	std::mutex m_mutex;
 
 	// Memory holding pixels data
-	UT_RGBA* m_pixels{nullptr};
+	pixel_t* m_pixels{nullptr};
 
 	// Update count, incremented each time data() is called
 	std::atomic<unsigned> m_timestamp{0};
@@ -151,7 +150,7 @@ hook_image_buffer::hook_image_buffer(
 		m_width(i_width),
 		m_height(i_height)
 {
-	m_pixels = new UT_RGBA[m_width*m_height];
+	m_pixels = new pixel_t[m_width*m_height];
 	clear_pixels();
 }
 
@@ -215,8 +214,7 @@ hook_image_buffer::data(int i_x, int i_y, int i_w, int i_h, const void* i_data)
 {
 	assert(m_pixels);
 
-	size_t pixel_size = 4;
-	assert(sizeof(UT_RGBA) == pixel_size);
+	size_t pixel_size = sizeof(pixel_t);
 	size_t source_line_length = i_w*pixel_size;
 	for(unsigned y = 0; y < i_h; y++)
 	{
@@ -247,7 +245,7 @@ void
 hook_image_buffer::clear_pixels()
 {
 	assert(m_pixels);
-	memset(m_pixels, 0, m_width*m_height*sizeof(UT_RGBA));
+	memset(m_pixels, 0, m_width*m_height*sizeof(pixel_t));
 	m_timestamp++;
 }
 
@@ -647,7 +645,7 @@ viewport_hook::render(
 
 	/*
 		The image might not be the same size as the viewport, either because
-		the camera its own aspect ratio, or because the viewport has been
+		the camera has its own aspect ratio, or because the viewport has been
 		resized. So, we adjust the image so it keeps the same aspect ratio
 		and is as big as possible while still fitting entirely in the
 		viewport. This leaves a pair of margins.
@@ -677,13 +675,21 @@ viewport_hook::render(
 		y = (vh - zoom*ih) / 2.0f;
 	}
 
+	/*
+		There are 3 versions of RE_Render::displayRasterTexture, but only the
+		one using PXL_Raster supports 16-bit floats. However, since PXL_Raster
+		manages its own OpenGL texture ID, it can only be destroyed when there
+		is an active OpenGL context. This forces us to manage the pixels buffer
+		separately and create a local PXL_Raster that is usd only once.
+	*/
+	PXL_Raster raster(PACK_RGBA, PXL_FLOAT16, buffer->m_width, buffer->m_height, 0, 0);
+	// Second parameter : give_ownership = false
+	raster.setRaster(buffer->pixels(), false);
+
 	// Render the image
-	i_render->displayRasterTexture(
-		x, y, z,
-		buffer->m_width, buffer->m_height,
-		buffer->pixels(),
-		buffer->line_offset(),
-		zoom, zoom);
+	RE_RasterOpts opts;
+	opts.myZoomX = opts.myZoomY = zoom;
+	i_render->displayRasterTexture(x, y, z, &raster, &opts);
 
 	// Restore OpenGL state
 	if(!pixel_space)
@@ -826,14 +832,14 @@ viewport_hook::connect(NSI::Context* io_nsi)
 	export_screen_attributes(vs, active_camera, false);
 	m_nsi->Connect(screen, "", camera, "screens");
 
-	// Export 8-bit Ci layer
+	// Export half-precision Ci layer
 	std::string layer = prefix + "Ci_layer";
 	m_nsi->Create(layer, "outputlayer");
 	m_nsi->SetAttribute(
 		layer,
 		(
 			NSI::CStringPArg("variablename", "Ci"),
-			NSI::CStringPArg("scalarformat", "uint8"),
+			NSI::CStringPArg("scalarformat", "half"),
 			NSI::CStringPArg("layertype", "color"),
 			NSI::IntegerArg("withalpha", 1),
 			NSI::IntegerArg("dithering", 1),
