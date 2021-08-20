@@ -136,7 +136,7 @@ private:
 	std::mutex m_mutex;
 
 	// Memory holding pixels data
-	std::atomic<UT_RGBA*> m_pixels{nullptr};
+	UT_RGBA* m_pixels{nullptr};
 
 	// Update count, incremented each time data() is called
 	std::atomic<unsigned> m_timestamp{0};
