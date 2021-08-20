@@ -287,9 +287,8 @@ vdb_file_loader::vdb_file_loader(
 std::string vdb_file_loader::get_path(OBJ_Node* i_node, double i_time)
 {
 	SOP_Node* transform_sop = nullptr;
-	SOP_Node* file_sop = nullptr;
 	std::string vdb_path;
-	get_geo(i_node, i_time, transform_sop, file_sop, vdb_path);
+	get_geo(i_node, i_time, transform_sop, vdb_path);
 	return vdb_path;
 }
 
@@ -300,9 +299,8 @@ void vdb_file_loader::set_attributes_at_time(
 	vdb_file::set_attributes_at_time(i_time, i_gt_primitive);
 
 	SOP_Node* transform_sop = nullptr;
-	SOP_Node* file_sop = nullptr;
 	std::string vdb_path;
-	get_geo(m_object, i_time, transform_sop, file_sop, vdb_path);
+	get_geo(m_object, i_time, transform_sop, vdb_path);
 
 	if(!transform_sop)
 	{
@@ -404,11 +402,9 @@ void vdb_file_loader::get_geo(
 	OBJ_Node* i_obj,
 	double i_time,
 	SOP_Node*& o_transform_sop,
-	SOP_Node*& o_file_sop,
 	std::string& o_vdb_path)
 {
 	o_transform_sop = nullptr;
-	o_file_sop = nullptr;
 
 	SOP_Node* sop = i_obj->getRenderSopPtr();
 	if(!sop)
@@ -495,7 +491,6 @@ void vdb_file_loader::get_geo(
 		return;
 	}
 
-	o_file_sop = sop;
 	o_vdb_path = file.toStdString();
 }
 

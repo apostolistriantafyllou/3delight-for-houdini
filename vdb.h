@@ -88,7 +88,6 @@ private:
 		OBJ_Node* i_obj,
 		double i_time,
 		SOP_Node*& o_transform_sop,
-		SOP_Node*& o_file_sop,
 		std::string& o_vdb_path);
 };
 
