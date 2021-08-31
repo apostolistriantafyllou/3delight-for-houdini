@@ -812,7 +812,10 @@ void scene::find_custom_aovs(
 	{
 		vop *v = dynamic_cast<vop *>( exporter );
 		if( !v )
+		{
+			delete exporter;
 			continue;
+		}
 
 		VOP_Node *vop_node = CAST_VOPNODE( v->node() );
 		assert( vop_node);
