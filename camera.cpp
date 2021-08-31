@@ -568,16 +568,6 @@ void camera::set_attributes_at_time( double i_time ) const
 		return;
 	}
 
-	double nsi_clip[2] = { cam->getNEAR(i_time), cam->getFAR(i_time) };
-
-	m_nsi.SetAttributeAtTime(
-		m_handle,
-		i_time,
-		*NSI::Argument("clippingdistance")
-			.SetType(NSITypeDouble)
-			->SetCount(2)
-			->CopyValue(nsi_clip, sizeof(nsi_clip)));
-
 	if(m_type == "perspectivecamera")
 	{
 		int nb_blades = 0;
