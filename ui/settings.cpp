@@ -466,14 +466,14 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &camera, &camera_d, nullptr, nullptr, nullptr, &PRM_SpareData::objCameraPath),
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &atmosphere, &atmosphere_d, nullptr, nullptr, nullptr),
 		PRM_Template(PRM_TOGGLE, 1, &override_display_flags, &override_display_flags_d),
-		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &objects_to_render, &objects_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objGeometryPath, 1, nullptr, &override_display_flags_g),
-		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &lights_to_render, &lights_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objLightPath, 1, nullptr, &override_display_flags_g),
+		PRM_Template(PRM_STRING_OPLIST, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &objects_to_render, &objects_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objGeometryPath, 1, nullptr, &override_display_flags_g),
+		PRM_Template(PRM_STRING_OPLIST, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &lights_to_render, &lights_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objLightPath, 1, nullptr, &override_display_flags_g),
 		PRM_Template(
-			PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &phantom_objects,
+			PRM_STRING_OPLIST, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &phantom_objects,
 			&phantom_objects_d, nullptr, nullptr, nullptr,
 			&PRM_SpareData::objGeometryPath, 1, nullptr, nullptr),
 		PRM_Template(
-			PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &matte_objects,
+			PRM_STRING_OPLIST, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &matte_objects,
 			&matte_objects_d, nullptr, nullptr, nullptr,
 			&PRM_SpareData::objGeometryPath, 1, nullptr, nullptr)
 	};
@@ -567,9 +567,9 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	static std::vector<PRM_Template>standin_elements_templates =
 	{
 		PRM_Template(PRM_TOGGLE, 1, &override_display_flags, &override_display_flags_d),
-		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &objects_to_render, &objects_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objGeometryPath, 1, nullptr, &override_display_flags_g),
+		PRM_Template(PRM_STRING_OPLIST, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &objects_to_render, &objects_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objGeometryPath, 1, nullptr, &override_display_flags_g),
 		PRM_Template(
-			PRM_STRING, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &matte_objects,
+			PRM_STRING_OPLIST, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &matte_objects,
 			&matte_objects_d, nullptr, nullptr, nullptr,
 			&PRM_SpareData::objGeometryPath, 1, nullptr, nullptr),
 
