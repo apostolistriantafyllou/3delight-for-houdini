@@ -682,6 +682,13 @@ void camera::get_screen_window(
 		o_screen_window[2] = half_width;
 		o_screen_window[3] = half_height;
 	}
+	else if (type == "sphericalcamera")
+	{
+		o_screen_window[0] = -1;
+		o_screen_window[1] = -1;
+		o_screen_window[2] = 1;
+		o_screen_window[3] = 1;
+	}
 	else
 	{
 		double A = i_camera.RESX(i_time) / double(i_camera.RESY(i_time));
