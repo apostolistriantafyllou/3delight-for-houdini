@@ -12,6 +12,43 @@
 #include <type_traits>
 #include <iostream>
 
+namespace
+{
+	/// This seems important.
+	void repair_alembic(GT_PackedAlembicArchive& io_alembic)
+	{
+		GT_RefineParms params;
+
+		/**
+			NOTE: this is a weird/secret call in the GT context. The refine()
+			should have dealt with all this properly. This has been communicated
+			to SideFx.
+
+			FIXME: what to do with the first parameter ?
+		*/
+		io_alembic.bucketPrims( nullptr, &params, true );
+	}
+
+	/// Extracts the Alembic's archive file name.
+	std::string get_archive_name(const GT_PackedAlembicArchive& i_alembic)
+	{
+		/*
+			archiveName() returns a file name of the form "[<length>s<value>]",
+			such as "[10s/a/b/c.abc]".
+		*/
+
+		std::string name = i_alembic.archiveName().toStdString();
+		unsigned s = name.find('s');
+		if(s >= name.length())
+		{
+			return {};
+		}
+
+		assert(name.back() == ']');
+		return name.substr(s+1, name.length()-s-2);
+	}
+}
+
 alembic::alembic(
 	const context& i_ctx,
 	OBJ_Node *i_object,
@@ -51,15 +88,8 @@ void alembic::set_attributes( void ) const
 
 	GT_PackedAlembicArchive *alembic =
 		static_cast<GT_PackedAlembicArchive *>(default_gt_primitive().get());
-	GT_RefineParms params;
 
-	/**
-		NOTE: this is weird/secret call in the GT context. The refine() should
-		have dealt with all this properly. This has been communicated to SideFx.
-
-		FIXME: what to do with the first parameter ?
-	*/
-	alembic->bucketPrims( nullptr, &params, true );
+	repair_alembic(*alembic);
 
 	const UT_StringArray &names = alembic->getAlembicObjects();
     const GA_OffsetArray &offsets = alembic->getAlembicOffsets();
@@ -83,14 +113,11 @@ void alembic::set_attributes( void ) const
 		memcpy( &transforms[i*16], trs.data(), sizeof(double)*16 ) ;
 	}
 
-	char *file_name = ::strdup( alembic->archiveName().c_str() );
-	char *to_free = file_name;
-	file_name = strchr( file_name, 's' );
-	if( !file_name )
+	std::string file_name = get_archive_name(*alembic);
+	if(file_name.empty())
+	{
 		return;
-
-	file_name ++;
-	file_name[ ::strlen(file_name)-1 ] = 0;
+	}
 
 	const char *k_subdiv = "_3dl_render_poly_as_subd";
 	bool poly_as_subd =
