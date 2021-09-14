@@ -126,11 +126,11 @@ void alembic::set_attributes( void ) const
 
 	nsi.Evaluate(
 		(
-		*NSI::Argument::New("transforms")
+		*NSI::Argument::New("overrides.transforms")
 			->SetType(NSITypeDoubleMatrix)
 			->SetCount(names.size())
 			->SetValuePointer( &transforms[0]),
-		*NSI::Argument::New("shapes")
+		*NSI::Argument::New("overrides.shapes")
 			->SetType(NSITypeString)
 			->SetCount(names.size())
 			->SetValuePointer(&shapes[0]),
