@@ -83,7 +83,6 @@ void alembic::set_attributes( void ) const
 		memcpy( &transforms[i*16], trs.data(), sizeof(double)*16 ) ;
 	}
 
-	NSI::ArgumentList args;
 	char *file_name = ::strdup( alembic->archiveName().c_str() );
 	char *to_free = file_name;
 	file_name = strchr( file_name, 's' );
