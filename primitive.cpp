@@ -123,8 +123,14 @@ bool primitive::add_time_sample(
 			m_gt_primitives.back().second->findAttribute( "P", type1, 0 );
 		auto P_new = i_primitive->findAttribute( "P", type2, 0 );
 
-		if( P_main->entries() != P_new->entries() ||
-			type1 != type2 )
+		if(!P_main != !P_new)
+		{
+			// "P" is defined in only one of the primitives
+			return false;
+		}
+
+		if(P_main && P_new &&
+			(P_main->entries() != P_new->entries() || type1 != type2) )
 		{
 			return false;
 		}
