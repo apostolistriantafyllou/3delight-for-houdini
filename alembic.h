@@ -16,4 +16,10 @@ protected:
 	void set_attributes_at_time(
 		double i_time,
 		const GT_PrimitiveHandle i_gt_primitive)const override;
+
+private:
+
+	// Filled by set_attributes_at_time, cleared by set_attributes afterwards
+	mutable std::vector<UT_Matrix4D> m_transforms;
+	mutable std::vector<double> m_transform_times;
 };

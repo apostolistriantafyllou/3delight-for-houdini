@@ -93,14 +93,6 @@ bool primitive::add_time_sample(
 	double i_time,
 	const GT_PrimitiveHandle& i_primitive)
 {
-	if( !m_gt_primitives.empty() &&
-		i_primitive->getPrimitiveType() == GT_PRIM_ALEMBIC_ARCHIVE )
-	{
-		assert( false );
-		/* motion blur is *inside* the damdn alembic . */
-		return false;
-	}
-
 	if(!m_gt_primitives.empty() &&
 		m_gt_primitives.front().second->getPrimitiveType() !=
 			i_primitive->getPrimitiveType())

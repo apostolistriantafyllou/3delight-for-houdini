@@ -88,34 +88,48 @@ void alembic::set_attributes( void ) const
 
 	GT_PackedAlembicArchive *alembic =
 		static_cast<GT_PackedAlembicArchive *>(default_gt_primitive().get());
-
 	repair_alembic(*alembic);
 
 	const UT_StringArray &names = alembic->getAlembicObjects();
-    const GA_OffsetArray &offsets = alembic->getAlembicOffsets();
+
+	/*
+		Call the base-class version of set_attributes so it loops over our
+		set_attributes_at_time, accumulating transforms for each time sample.
+		This is needed because the Alembic procedural is called through
+		NSIEvaluate instead of an NSI "procedural" node, which means it can't be
+		exported in multiple independent calls.
+	*/
+	assert(m_transforms.empty());
+	assert(m_transform_times.empty());
+	primitive::set_attributes();
 
 	std::vector< const char* > shapes;
-	shapes.resize(names.size());
-
-	std::vector< double > transforms;
-	transforms.resize(16 * names.size());
-
-	GU_DetailHandleAutoReadLock gdplock( alembic->parentDetail() );
-
 	for( int i=0; i<names.size(); i++ )
 	{
-		shapes[i] = names[i].c_str();
-
-		const GU_PrimPacked *prim = static_cast<const GU_PrimPacked *>
-			(gdplock->getPrimitive(offsets[i]));
-
-		UT_Matrix4D trs; prim->getFullTransform4( trs );
-		memcpy( &transforms[i*16], trs.data(), sizeof(double)*16 ) ;
+		shapes.push_back(names[i].c_str());
 	}
+
+	/*
+		Transpose the list of transforms so they're grouped by shape instead of
+		time.
+	*/
+	assert(m_transforms.size() == names.size() * m_transform_times.size());
+	std::vector<double> transforms;
+	transforms.resize(m_transforms.size()*16);
+	for(unsigned sx = 0; sx < m_transforms.size(); sx++)
+	{
+		unsigned p = sx % names.size();
+		unsigned t = sx / names.size();
+		unsigned tx = p * m_transform_times.size() + t;
+		unsigned td = tx * 16;
+		memcpy(&transforms[td], m_transforms[sx].data(), sizeof(double)*16);
+	}
+	m_transforms.clear();
 
 	std::string file_name = get_archive_name(*alembic);
 	if(file_name.empty())
 	{
+		m_transform_times.clear();
 		return;
 	}
 
@@ -127,9 +141,12 @@ void alembic::set_attributes( void ) const
 	nsi.Evaluate(
 		(
 		*NSI::Argument::New("overrides.transforms")
-			->SetType(NSITypeDoubleMatrix)
+			->SetArrayType(NSITypeDoubleMatrix, m_transform_times.size())
 			->SetCount(names.size())
-			->SetValuePointer( &transforms[0]),
+			->SetValuePointer(&transforms[0]),
+		*NSI::Argument::New("overrides.transforms.times")
+			->SetArrayType(NSITypeDouble, m_transform_times.size())
+			->SetValuePointer(&m_transform_times[0]),
 		*NSI::Argument::New("overrides.shapes")
 			->SetType(NSITypeString)
 			->SetCount(names.size())
@@ -143,11 +160,37 @@ void alembic::set_attributes( void ) const
 		NSI::FloatArg( "fps", m_context.m_fps),
 		NSI::DoubleArg( "frame", m_context.m_current_time*m_context.m_fps)) );
 
-	::free( (void *) to_free );
+	m_transform_times.clear();
 }
 
 void alembic::set_attributes_at_time(
 	double i_time,
 	const GT_PrimitiveHandle i_gt_primitive) const
 {
+	/*
+		Since the Alembic procedural is called through NSIEvaluate instead of
+		an NSI "procedural" node, this function simply accumulates data for each
+		time sample, which will then be exported all at once in
+		set_attributes().
+	*/
+
+	// Accumulate times
+	m_transform_times.push_back(i_time);
+
+	GT_PackedAlembicArchive* alembic =
+		static_cast<GT_PackedAlembicArchive*>(i_gt_primitive.get());
+	repair_alembic(*alembic);
+	const GA_OffsetArray& offsets = alembic->getAlembicOffsets();
+
+	GU_DetailHandleAutoReadLock gdplock(alembic->parentDetail());
+
+	// Accumulate transforms (for each shape)
+	for(auto offset : offsets)
+	{
+		const GU_PrimPacked* prim =
+			static_cast<const GU_PrimPacked*>(gdplock->getPrimitive(offset));
+
+		m_transforms.push_back(UT_Matrix4D());
+		prim->getFullTransform4(m_transforms.back());
+	}
 }
