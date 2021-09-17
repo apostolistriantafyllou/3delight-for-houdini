@@ -95,10 +95,10 @@ void alembic::set_attributes( void ) const
     const GA_OffsetArray &offsets = alembic->getAlembicOffsets();
 
 	std::vector< const char* > shapes;
-	shapes.reserve(names.size());
+	shapes.resize(names.size());
 
 	std::vector< double > transforms;
-	transforms.reserve(16 * names.size());
+	transforms.resize(16 * names.size());
 
 	GU_DetailHandleAutoReadLock gdplock( alembic->parentDetail() );
 
