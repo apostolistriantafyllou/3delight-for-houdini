@@ -71,17 +71,6 @@ public:
 	/// Returns true if the primitive should be rendered as a volume
 	virtual bool is_volume()const;
 
-	/**
-		Returns true when the primitive requires a single sample aligned on the
-		exact time of a frame, even when motion blur is enabled. Otherwise, it
-		will use as many samples as specified by a properly initialized
-		time_sampler object.
-	*/
-	bool requires_frame_aligned_sample()const
-	{
-		return m_requires_frame_aligned_sample;
-	}
-
 protected:
 
 	/// Exports time-dependent attributes to NSI
@@ -141,6 +130,4 @@ private:
 
 	/// One GT primitive for each time sample
 	std::vector<TimedPrimitive> m_gt_primitives;
-
-	bool m_requires_frame_aligned_sample;
 };
