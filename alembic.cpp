@@ -90,6 +90,12 @@ void alembic::set_attributes( void ) const
 		static_cast<GT_PackedAlembicArchive *>(default_gt_primitive().get());
 	repair_alembic(*alembic);
 
+	std::string file_name = get_archive_name(*alembic);
+	if(file_name.empty())
+	{
+		return;
+	}
+
 	const UT_StringArray &names = alembic->getAlembicObjects();
 
 	/*
@@ -125,13 +131,6 @@ void alembic::set_attributes( void ) const
 		memcpy(&transforms[td], m_transforms[sx].data(), sizeof(double)*16);
 	}
 	m_transforms.clear();
-
-	std::string file_name = get_archive_name(*alembic);
-	if(file_name.empty())
-	{
-		m_transform_times.clear();
-		return;
-	}
 
 	const char *k_subdiv = "_3dl_render_poly_as_subd";
 	bool poly_as_subd =
