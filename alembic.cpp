@@ -109,10 +109,12 @@ void alembic::set_attributes( void ) const
 	assert(m_transform_times.empty());
 	primitive::set_attributes();
 
+	std::vector<std::string> strings_holder;
 	std::vector< const char* > shapes;
 	for( int i=0; i<names.size(); i++ )
 	{
-		shapes.push_back(names[i].c_str());
+		strings_holder.push_back(names[i].toStdString());
+		shapes.push_back(strings_holder.back().c_str());
 	}
 
 	/*
