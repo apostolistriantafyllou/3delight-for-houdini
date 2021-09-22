@@ -111,7 +111,7 @@ protected:
 	/**
 		Return all the materials needed by this geometry.
 	*/
-	void get_all_material_paths(
+	virtual void get_all_material_paths(
 		std::unordered_set< std::string > &o_materials ) const;
 private:
 	/**
