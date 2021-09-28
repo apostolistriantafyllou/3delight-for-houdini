@@ -112,7 +112,7 @@ void alembic::set_attributes( void ) const
 	primitive::set_attributes();
 
 	// Holds strings sent to NSIEvaluate so we can safely use their char*.
-	std::vector<std::string> strings_holder;
+	std::deque<std::string> strings_holder;
 
 	std::vector< const char* > shapes;
 	for( int i=0; i<names.size(); i++ )
