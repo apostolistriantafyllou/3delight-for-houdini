@@ -1256,10 +1256,13 @@ int settings::image_format_cb(
 	if(image_format == "deepexr")
 		image_format = "exr";
 	node->evalStringRaw(image_filaname, k_default_image_filename, 0, t);
-	image_filaname = image_filaname.replaceExtension(image_format);
+	if (::strcmp(image_filaname.fileExtension(),".<ext>")!=0)
+	{
+		image_filaname = image_filaname.replaceExtension(image_format);
 
-	//set image filename with the new extension from image format selection.
-	node->setString(image_filaname, CH_STRING_LITERAL, k_default_image_filename, 0, t);
+		//set image filename with the new extension from image format selection.
+		node->setString(image_filaname, CH_STRING_LITERAL, k_default_image_filename, 0, t);
+	}
 
 	if (image_format == "tiff")
 	{
