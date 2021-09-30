@@ -1059,6 +1059,27 @@ ROP_3Delight::ExportAtmosphere(const context& i_ctx, bool ipr_update)
 		env_handle, "geometryattributes" );
 }
 
+//If image filename or NSI filename contain some specific token, they will be expanded
+void replaceIndividualTokens(std::string &filename, std::string token, std::string new_val)
+{
+	size_t start_pos = filename.find(token);
+	while (start_pos != std::string::npos)
+	{
+		filename.replace(start_pos, token.length() , new_val);
+		start_pos = filename.find(token, start_pos + 1);
+	}
+}
+
+void replaceAllTokens(std::string& filename, std::string ext, std::string cam)
+{
+	replaceIndividualTokens(filename, "<project>", "`$HIP`");
+	replaceIndividualTokens(filename, "<scene>", "`$HIPNAME`");
+	replaceIndividualTokens(filename, "<pass>", "`$OS`");
+	replaceIndividualTokens(filename, "<ext>", ext);
+	replaceIndividualTokens(filename, "<camera>", cam);
+	replaceIndividualTokens(filename, "#", "$F4");
+}
+
 void
 ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 {
@@ -1083,10 +1104,14 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 	std::string jpeg_driver = "jpeg";
 
 	UT_String image_file_name;
-	evalString(
+	evalStringRaw(
 		image_file_name,
 		settings::k_default_image_filename, 0,
 		current_time );
+
+	std::string image_file_name_str = image_file_name.toStdString();
+	replaceAllTokens(image_file_name_str, file_driver.toStdString(), cam->getName().toStdString());
+	OPgetDirector()->getChannelManager()->expandString(image_file_name_str.c_str(),image_file_name,current_time);
 
 	UT_String image_display_name =
 		image_file_name.replaceExtension(idisplay_driver);
@@ -1906,8 +1931,13 @@ ROP_3Delight::GetNSIExportFilename(double i_time)const
 	if (!export_to_nsi)
 		return {};
 
+	OBJ_Camera* cam = GetCamera(i_time);
+
 	UT_String export_file;
-	evalString(export_file, settings::k_default_export_nsi_filename, 0, i_time);
+	evalStringRaw(export_file, settings::k_default_export_nsi_filename, 0, i_time);
+	std::string export_file_str = export_file.toStdString();
+	replaceAllTokens(export_file_str, "nsi", cam ? cam->getName().toStdString() : "");
+	OPgetDirector()->getChannelManager()->expandString(export_file_str.c_str(), export_file, i_time);
 
 	if(export_file.length() == 0)
 	{
