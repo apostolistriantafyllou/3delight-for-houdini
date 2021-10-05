@@ -211,8 +211,10 @@ void alembic::set_attributes( void ) const
 		NSI::StringArg( "abc_file", file_name ),
 		NSI::IntegerArg( "poly_as_subd", poly_as_subd ),
 		NSI::IntegerArg( "do_mblur", m_context.MotionBlur() ),
-		NSI::FloatArg( "fps", m_context.m_fps),
-		NSI::DoubleArg( "frame", m_context.m_current_time*m_context.m_fps)) );
+		NSI::FloatArg( "shutter_open", m_context.ShutterOpen()),
+		NSI::FloatArg( "shutter_close", m_context.ShutterClose()),
+		NSI::FloatArg( "fps", 1.0),
+		NSI::DoubleArg( "frame", 0.0)) );
 
 	m_transform_times.clear();
 }
