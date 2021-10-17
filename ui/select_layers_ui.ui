@@ -31,6 +31,7 @@ dlg.gad = DIALOG "AOV Selector"
             TOGGLE_BUTTON "Reflection (indirect)":LABEL_WIDTH VALUE(reflection.indirect.val);
             TOGGLE_BUTTON "Refraction":LABEL_WIDTH VALUE(refraction.val);
             TOGGLE_BUTTON "Volume scattering":LABEL_WIDTH VALUE(volume.val);
+            TOGGLE_BUTTON "Volume scattering (direct)":LABEL_WIDTH VALUE(volume.direct.val);
             TOGGLE_BUTTON "Volume scattering (indirect)":LABEL_WIDTH VALUE(volume.indirect.val);
             TOGGLE_BUTTON "Incandescence":LABEL_WIDTH VALUE(incandescence.val);
             TOGGLE_BUTTON "Toon Base":LABEL_WIDTH VALUE(too_base.val);

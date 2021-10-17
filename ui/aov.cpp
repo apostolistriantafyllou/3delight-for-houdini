@@ -27,6 +27,7 @@ std::vector<aov::description> descriptions =
 	{ aov::e_shading, "Reflection (indirect)", "indirectreflection", "reflection.indirect", "shader", "color", false, true },
 	{ aov::e_shading, "Refraction", "refraction", "refraction", "shader", "color", false, true },
 	{ aov::e_shading, "Volume Scattering", "volume", "volume", "shader", "color", false, true },
+	{ aov::e_shading, "Volume Scattering (direct)", "directvolume", "volume.direct", "shader", "color", false, true },
 	{ aov::e_shading, "Volume Scattering (indirect)", "indirectvolume", "volume.indirect", "shader", "color", false, true },
 	{ aov::e_shading, "Incandescence", "incandescence", "incandescence", "shader", "color", false, true },
 	{ aov::e_shading, "Toon Base", "toon_base", "toon_base", "shader", "color", false, false },
