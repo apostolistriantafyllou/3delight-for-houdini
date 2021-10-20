@@ -1080,6 +1080,29 @@ void replaceAllTokens(std::string& filename, std::string ext, std::string cam)
 	replaceIndividualTokens(filename, "#", "$F4");
 }
 
+//Used to output individual layers when using <aov> and <light> tokens.
+std::string getImageFilenamePerAOV(UT_String image_file_name, std::string aov_layer_name, std::string light_path)
+{
+	std::string file_output_name = image_file_name.toStdString();
+
+	//Replace <aov> token with the image layer name.
+	replaceIndividualTokens(file_output_name, "<aov>", aov_layer_name);
+
+	//For lights we only get their name from their full path.
+	UT_String dir_name, light_layer_name;
+	UT_String light = light_path.c_str();
+	light.splitPath(dir_name, light_layer_name);
+
+	if (!light_layer_name.isstring())
+	{
+		light_layer_name = "all";
+	}
+
+	//Replace <light> token with the proper light name used as a layer.
+	replaceIndividualTokens(file_output_name, "<light>", light_layer_name.toStdString());
+	return file_output_name;
+}
+
 void
 ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 {
@@ -1281,16 +1304,21 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 			if (file_output)
 			{
 				std::string file_layer_name = layer_name + "_file";
+				std::string file_output_name =
+					getImageFilenamePerAOV(image_file_name, desc.m_filename_token, category.first);
 
-				if (file_driver_name.empty())
+				if (file_driver_name.empty() || file_output_name != image_file_name.toStdString())
 				{
-					file_driver_name = "file_driver";
+					char suffix[12] = "";
+					::sprintf(suffix, "%u", i*nb_light_categories+j+1);
+					file_driver_name = "file_driver_";
+					file_driver_name += suffix;
 					i_ctx.m_nsi.Create(file_driver_name, "outputdriver");
 					i_ctx.m_nsi.SetAttribute(
 						file_driver_name,
 					(
 						NSI::CStringPArg("drivername", file_driver.c_str()),
-						NSI::StringArg("imagefilename", image_file_name)
+						NSI::StringArg("imagefilename", file_output_name)
 					) );
 				}
 
@@ -1312,9 +1340,24 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 				png_driver_name += suffix;
 
 				UT_String image_png_name;
-				BuildImageUniqueName(
-					image_file_name, category.first,
-					desc.m_filename_token, ".png", image_png_name);
+
+				size_t aov_token = image_file_name.toStdString().find("<aov>");
+				size_t light_token = image_file_name.toStdString().find("<light>");
+
+				if (aov_token == std::string::npos && light_token == std::string::npos)
+				{
+					//If user is not using any of <aov> or <light> token, we automatically
+					//output one png per layer
+					BuildImageUniqueName(
+						image_file_name, category.first,
+						desc.m_filename_token, ".png", image_png_name);
+				}
+				else
+				{
+					//use the tokens instead.
+					image_png_name =
+						getImageFilenamePerAOV(image_file_name, desc.m_filename_token, category.first);
+				}
 
 				i_ctx.m_nsi.Create(png_driver_name, "outputdriver");
 				i_ctx.m_nsi.SetAttribute(
@@ -1342,6 +1385,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 				jpeg_driver_name += suffix;
 
 				UT_String image_jpeg_name;
+
 				BuildImageUniqueName(
 					image_file_name, category.first,
 					desc.m_filename_token, ".jpg", image_jpeg_name);
