@@ -1164,6 +1164,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 	ExportLightCategories( i_ctx, light_categories, current_time );
 
 	bool has_frame_buffer = false;
+	std::vector<std::string> file_layers;
 	for (int i = 0; i < nb_aovs; i++)
 	{
 		bool is_layer_active = evalInt(aov::getAovActiveLayerToken(i), 0, current_time);
@@ -1307,8 +1308,12 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 				std::string file_output_name =
 					getImageFilenamePerAOV(image_file_name, desc.m_filename_token, category.first);
 
-				if (file_driver_name.empty() || file_output_name != image_file_name.toStdString())
+				//Don't create a new driver for the same filename.
+				//Could have a nicer solution rather than using vector.
+				if (file_driver_name.empty() 
+					|| std::find(file_layers.begin(), file_layers.end(), file_output_name) == file_layers.end())
 				{
+					file_layers.push_back(file_output_name);
 					char suffix[12] = "";
 					::sprintf(suffix, "%u", i*nb_light_categories+j+1);
 					file_driver_name = "file_driver_";
@@ -1378,17 +1383,11 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 			if (jpeg_output)
 			{
 				std::string jpeg_layer_name = layer_name + "_jpeg";
+				jpeg_driver_name = "jpeg_driver";
 
-				char suffix[12] = "";
-				::sprintf(suffix, "%u", i*nb_light_categories+j+1);
-				jpeg_driver_name = "jpeg_driver_";
-				jpeg_driver_name += suffix;
-
-				UT_String image_jpeg_name;
-
-				BuildImageUniqueName(
-					image_file_name, category.first,
-					desc.m_filename_token, ".jpg", image_jpeg_name);
+				UT_String image_jpeg_name = image_file_name.replaceExtension("jpg");
+				image_jpeg_name.substitute("<aov>","",true);
+				image_jpeg_name.substitute("<light>","",true);
 
 				i_ctx.m_nsi.Create(jpeg_driver_name, "outputdriver");
 				i_ctx.m_nsi.SetAttribute(
