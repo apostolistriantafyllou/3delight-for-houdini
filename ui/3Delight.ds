@@ -374,6 +374,20 @@
 		disablewhen "{ light_type == "distant" } { light_type == "sun" }"
 	}
 
+	DELIGHT_FULL_TITLE(_3dl_texture_color, "Texture Color")
+	parm
+	{
+		SOHO_PARM(env_map_meta_colorspace, "Color Space", "3Delight", string, 1, 0)
+		menu
+		{
+			#Provide something when adding 3Delight properties via shelf. OCIO parameters
+			#can not be loaded via script so we only load them on node creation.
+			"auto" "auto"
+			"sRGB" "sRGB"
+			"Rec. 709" "Rec. 709"
+			"linear" "linear"
+		}
+	}
 
 	DELIGHT_FULL_TITLE(_3dl_obj_light_contrib, "Contributions")
 
