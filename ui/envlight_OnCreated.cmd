@@ -36,6 +36,8 @@ if ( "$arg1" != "" && ("$DELIGHT_AUTOSPAREPARAMS" !=0 || "$arg2"!="")) then
 			node.setParmTemplateGroup(group)'
 	endif
 
+	opproperty -f $arg1 3Delight _3dl_texture_color_title
+	opproperty -f $arg1 3Delight env_map_meta_colorspace
 	opproperty -f $arg1 3Delight _3dl_obj_light_contrib_title
 	opproperty -f $arg1 3Delight _3dl_contributions_group
 	opproperty -f $arg1 3Delight _3dl_compositing_group_title

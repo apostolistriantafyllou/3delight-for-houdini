@@ -5,9 +5,14 @@
 
 #include "OBJ/OBJ_Node.h"
 #include "OP/OP_Director.h"
+#include "PRM/PRM_Include.h"
+#include "PI/PI_EditScriptedParms.h"
+#include "shader_library.h"
+#include "osl_utilities.h"
 
 #include <mutex>
 #include <vector>
+#define LEAKED(x) (x)
 
 namespace
 {
@@ -257,6 +262,73 @@ void creation_callbacks::init()
 	register_manager_cb(*OPgetDirector());
 }
 
+void formOptionsParameter(std::vector<PRM_Item>& items, char* options)
+{
+	int start = 0, end = 0;
+	int value = -1;
+
+	while (options && *options)
+	{
+		// Items are separated by vertical bars.
+		char* next = strchr(options, '|');
+		if (next)
+		{
+			/* Cut the string. */
+			*next = '\0';
+			++next;
+		}
+
+		/* Give the cut string directly to the item. */
+		items.push_back(PRM_Item(options, options));
+
+		options = next;
+	}
+}
+
+void add_colorspace_dropdown(OBJ_Node* node)
+{
+	const shader_library& library = shader_library::get_instance();
+	std::string path = library.get_shader_path("environmentlight");
+	const DlShaderInfo* shader_info = library.get_shader_info(path.c_str());
+	std::vector<PRM_Item>* items = LEAKED(new std::vector<PRM_Item>);
+	static const char* k_env_colorspace = "env_map_meta_colorspace";
+
+	for (unsigned p = 0; p < shader_info->nparams(); p++)
+	{
+		const DlShaderInfo::Parameter* param = shader_info->getparam(p);
+
+		if (param->name == k_env_colorspace)
+		{
+			//Fill colorspace dropdown.
+			osl_utilities::ParameterMetaData meta;
+			osl_utilities::GetParameterMetaData(meta, param->metadata);
+			char* options = LEAKED(strdup(meta.m_options));
+			formOptionsParameter(*items, options);
+			break;
+		}
+	}
+	items->push_back(PRM_Item());
+
+	PI_EditScriptedParms nodeParms(node, 1, 0);
+	static PRM_ChoiceList color_space_c(PRM_CHOICELIST_SINGLE, &(*items)[0]);
+
+	PI_EditScriptedParm* spareParms = nodeParms.getParmWithName(k_env_colorspace);
+	if (spareParms)
+	{
+		spareParms->setMenu(&color_space_c, PRM_TypeExtended::PRM_TYPE_NONE);
+		UT_String color_selected;
+		node->evalString(color_selected, k_env_colorspace,0,0);
+		//Update selected options only when node is created and has no option selected.
+		//This will avoid resetting the selected option when opening a saved scene.
+		if (color_selected == "0")
+		{
+			node->setString(items->at(0).getLabel(), CH_STRING_LITERAL, k_env_colorspace, 0, 0);
+		}
+		nodeParms.updateNode();
+	}
+	return;
+}
+
 void creation_callbacks::add_attributes_to_node(OBJ_Node& io_node)
 {
 	// Retrieve the node's operator type
@@ -275,6 +347,10 @@ void creation_callbacks::add_attributes_to_node(OBJ_Node& io_node)
 		"private/" + node_type + "_OnCreated.cmd " +
 		io_node.getFullPath().toStdString();
 	OPgetDirector()->getCommandManager()->execute(init_cmd.c_str());
+	if (node_type == "envlight")
+	{
+		add_colorspace_dropdown(&io_node);
+	}
 }
 
 void creation_callbacks::register_ROP(ROP_3Delight* i_rop)
