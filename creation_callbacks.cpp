@@ -264,9 +264,6 @@ void creation_callbacks::init()
 
 void formOptionsParameter(std::vector<PRM_Item>& items, char* options)
 {
-	int start = 0, end = 0;
-	int value = -1;
-
 	while (options && *options)
 	{
 		// Items are separated by vertical bars.
