@@ -168,6 +168,11 @@ void alembic::set_attributes( void ) const
 		m_object->hasParm(k_subdiv) &&
 		m_object->evalInt(k_subdiv, 0, m_context.m_current_time) != 0;
 
+	// Alembic's time is base on frame 0, while Houdini's time is based on frame 1
+	// FIXME : shift time according to the SOP's "frame" parameter
+	double nsi_time_offset = -1.0/m_context.m_fps;
+	double abc_time = m_context.current_time() - nsi_time_offset;
+
 	/*
 		FIXME : here, we sent handles of shader nodes to the "alembic"
 		procedural through a call to NSIEvaluate, which executes the procedural
@@ -211,10 +216,15 @@ void alembic::set_attributes( void ) const
 		NSI::StringArg( "abc_file", file_name ),
 		NSI::IntegerArg( "poly_as_subd", poly_as_subd ),
 		NSI::IntegerArg( "do_mblur", m_context.MotionBlur() ),
-		NSI::FloatArg( "shutter_open", m_context.ShutterOpen()),
-		NSI::FloatArg( "shutter_close", m_context.ShutterClose()),
-		NSI::FloatArg( "fps", 1.0),
-		NSI::DoubleArg( "frame", 0.0)) );
+		NSI::FloatArg(
+			"shutter_open",
+			m_context.ShutterOpen() - m_context.current_time() ),
+		NSI::FloatArg(
+			"shutter_close",
+			m_context.ShutterClose() - m_context.current_time() ),
+		NSI::DoubleArg( "abc_time", abc_time ),
+		NSI::FloatArg( "time_scale", 1.0 ),
+		NSI::FloatArg( "nsi_time_offset", nsi_time_offset )) );
 
 	m_transform_times.clear();
 }
