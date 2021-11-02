@@ -110,10 +110,7 @@ void polygonmesh::set_attributes( void ) const
 		as this goes against the logic of rest attibutes.
 	*/
 	std::vector< std::string > rest{ "rest" };
-	if( !m_is_subdiv )
-	{
-		rest.push_back( "rnml" );
-	}
+	rest.push_back( "rnml" );
 	exporter::export_attributes(
 		rest, *polygon_mesh,
 		m_context.ShutterOpen(), polygon_mesh->getVertexList() );
