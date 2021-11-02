@@ -93,6 +93,9 @@ install(
 # 3Delight includes
 target_include_directories( ${library_name} PRIVATE "${DELIGHT}/include" )
 
+# Compensate for missing "OpenEXR/" in some of Houdini's include directives
+target_include_directories( ${library_name} SYSTEM PRIVATE "$ENV{HFS}/toolkit/include/OpenEXR" )
+
 # Must use windows.h instead of boost redeclarations or there are conflicts.
 target_compile_definitions( ${library_name} PRIVATE HBOOST_USE_WINDOWS_H )
 

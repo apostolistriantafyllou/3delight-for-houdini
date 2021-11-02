@@ -6,6 +6,7 @@
 #include <nsi.hpp>
 
 #include <GA/GA_Names.h>
+#include "GABC/GABC_PackedImpl.h"
 #include <GT/GT_PackedAlembic.h>
 #include <GT/GT_RefineParms.h>
 #include <GU/GU_PrimPacked.h>
@@ -168,10 +169,8 @@ void alembic::set_attributes( void ) const
 		m_object->hasParm(k_subdiv) &&
 		m_object->evalInt(k_subdiv, 0, m_context.m_current_time) != 0;
 
-	// Alembic's time is base on frame 0, while Houdini's time is based on frame 1
-	// FIXME : shift time according to the SOP's "frame" parameter
-	double nsi_time_offset = -1.0/m_context.m_fps;
-	double abc_time = m_context.current_time() - nsi_time_offset;
+	double abc_time = get_abc_time();
+	double nsi_time_offset = m_context.current_time() - abc_time;
 
 	/*
 		FIXME : here, we sent handles of shader nodes to the "alembic"
@@ -324,4 +323,54 @@ void alembic::get_shape_materials(std::vector<alembic::material>& o_materials)co
 		resolve_material_path(s, mat.m_vops);
 		o_materials.push_back(mat);
 	}
+}
+
+double alembic::get_abc_time()const
+{
+	GT_PackedAlembicArchive *alembic =
+		static_cast<GT_PackedAlembicArchive *>(default_gt_primitive().get());
+	repair_alembic(*alembic);
+	const GA_OffsetArray& offsets = alembic->getAlembicOffsets();
+	GU_DetailHandleAutoReadLock gdplock(alembic->parentDetail());
+
+	// Retrieve the time at which the Alembic archive should be sampled.
+	const GU_Detail* gdp = gdplock.getGdp();
+	for(auto offset : offsets)
+	{
+		using GABC_NAMESPACE::GABC_PackedImpl;
+		const GEO_Primitive* geo = gdp->getGEOPrimitive(offset);
+		if(!geo)
+		{
+			continue;
+		}
+		const GU_PrimPacked* packed = UTverify_cast<const GU_PrimPacked*>(geo);
+		if(!packed)
+		{
+			continue;
+		}
+		const GU_PackedImpl* imp = packed->sharedImplementation();
+		if(!imp)
+		{
+			continue;
+		}
+		const GABC_PackedImpl* abc = UTverify_cast<const GABC_PackedImpl*>(imp);
+		if(!abc)
+		{
+			continue;
+		}
+		
+		/*
+			Houdini provides us with one time per shape, but our procedural
+			supports only a single one. That should be enough for now.
+		*/
+		return abc->frame();
+	}
+
+	/*
+		By default, evaluate the archive at the current time.
+		Alembic's time is based on frame 0, while Houdini's time is based on
+		frame 1.
+	*/
+	double one_frame = 1.0/m_context.m_fps;
+	return m_context.current_time() + one_frame;
 }

@@ -37,6 +37,9 @@ private:
 	// Retrieves all material references hidden inside the Alembic primitive
 	void get_shape_materials(std::vector<material>& o_materials)const;
 
+	// Returns the time at which the archive should be evaluated
+	double get_abc_time()const;
+
 	// Filled by set_attributes_at_time, cleared by set_attributes afterwards
 	mutable std::vector<UT_Matrix4D> m_transforms;
 	mutable std::vector<double> m_transform_times;

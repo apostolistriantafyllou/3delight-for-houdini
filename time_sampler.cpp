@@ -10,6 +10,16 @@ namespace
 	const char* k_nb_transformation_samples = "_3dl_transformation_extra_samples";
 	const char* k_add_deformation_samples = "_3dl_deformation";
 	const char* k_nb_deformation_samples = "_3dl_add_samples";
+
+	bool is_alembic(const OBJ_Node& i_node)
+	{
+		/*
+			This is a very poor way of checking whether the node contains
+			Alembic primitives. However, it works without having to refine the
+			node into GT primitives first, which is what we need.
+		*/
+		return i_node.hasParm("_3dl_use_alembic_procedural");
+	}
 }
 
 bool time_sampler::is_time_dependent(
@@ -123,9 +133,23 @@ time_sampler::time_sampler(
 	if( m_nb_intervals == 0 )
 	{
 		/*
-			This is needed for velocity blur to make sure we centered
-			on the frame.
+			We either have velocity-based blur or no motion blur at all, so we
+			need to sample the exact time of the frame.
 		*/
 		m_first = m_last = i_context.m_current_time;
+	}
+
+	/*
+		Alembic archives need an odd number of samples (which means an even
+		number of intervals) so primitive::default_gt_primitive() returns a
+		primitive that is aligned on the frame, which is the one that should be
+		used when computing the procedural's "abc_time". This depends on
+		context::ShutterOpen() and context::ShutterClose() being equidistant
+		from context::current_time() (which will be the case as long as their
+		implementation doesn't change).
+	*/
+	if(i_type == e_deformation && is_alembic(i_node))
+	{
+		m_nb_intervals += m_nb_intervals % 2;
 	}
 }
