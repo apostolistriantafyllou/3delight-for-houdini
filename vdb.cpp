@@ -228,6 +228,9 @@ bool vdb_file::get_grid_names(const char* i_vdb_path,
 	NSI::DynamicAPI api;
 #ifdef __APPLE__
 	/*
+		FIXME : do we also need this fix in ROP_3Delight, context,
+		shader_library and viewport_hook? Or is it obsolete?
+
 		Houdini will nuke [DY]LD_LIBRARY_PATH on macOS. This is a bit insane
 		but reality is more insane so that's fine. We will try to get the
 		library path manually, something we usually try to avoid for robustness
