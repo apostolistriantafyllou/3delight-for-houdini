@@ -154,6 +154,8 @@ public:
 	static const char* k_resolution_factor;
 	static const char* k_sampling_factor;
 	static const char* k_default_export_nsi_filename;
+	static const char* k_enable_clamp;
+	static const char* k_clamp_value;
 
 private:
 

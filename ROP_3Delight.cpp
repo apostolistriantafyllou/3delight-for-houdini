@@ -306,6 +306,16 @@ ROP_3Delight::ExportGlobals(const context& i_ctx)const
 			NSI::IntegerArg("quality.volumesamples", volume_samples)
 		) );
 
+	if( hasParm(settings::k_clamp_value) )
+	{
+		i_ctx.m_nsi.SetAttribute(
+		".global",
+		(
+			NSI::DoubleArg("clampindirect",
+				evalFloat(settings::k_clamp_value,0.0f,t))
+		) );
+	}
+
 	int max_diffuse_depth = evalInt(settings::k_max_diffuse_depth, 0, t);
 	int max_reflection_depth = evalInt(settings::k_max_reflection_depth, 0, t);
 	int max_refraction_depth = evalInt(settings::k_max_refraction_depth, 0, t);
@@ -1487,7 +1497,11 @@ ROP_3Delight::ExportOneOutputLayer(
 				NSI::DoubleArg("filterwidth", i_filter_width)
 			) );
 
-		if(i_desc.m_layer_type == "color")
+		bool enable_clamping =
+			hasParm(settings::k_enable_clamp) &&
+			evalInt(settings::k_enable_clamp, 0, i_ctx.m_current_time);
+
+		if( !enable_clamping && i_desc.m_layer_type == "color" )
 		{
 			/*
 				Use 3Delight's fancy tonemapping technique. This allows

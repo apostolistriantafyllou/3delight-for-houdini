@@ -89,6 +89,8 @@ const char* settings::k_disable_extra_image_layers = "disable_extra_image_layers
 const char* settings::k_resolution_factor = "resolution_factor";
 const char* settings::k_sampling_factor = "sampling_factor";
 const char* settings::k_default_export_nsi_filename = "default_export_nsi_filename";
+const char* settings::k_enable_clamp = "enable_clamp";
+const char* settings::k_clamp_value = "clamp_value";
 
 SelectLayersDialog* settings::sm_dialog = nullptr;
 
@@ -374,6 +376,12 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	static PRM_Default motion_blur_d(true);
 	static PRM_Default viewport_motion_blur_d(false);
 
+	static PRM_Name enable_clamp(k_enable_clamp, "Enable Clamping of Indirect Light" );
+	static PRM_Default enable_clamp_d(false);
+	static PRM_Name clamp_value(k_clamp_value, "Clamping Value" );
+	static PRM_Default clamp_value_d(2.0f);
+	static PRM_Range clamp_value_r(PRM_RANGE_RESTRICTED, 0.1f, PRM_RANGE_UI, 15.0f);
+
 	static PRM_Name motion_blur_note1(
 		"motion_blur_note1",
 		"                        This enables linear blur with 2 samples. For motion blur with noticeable");
@@ -406,6 +414,9 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 		PRM_Template(PRM_INT, 1, &shading_samples, &shading_samples_d, nullptr, &shading_samples_r),
 		PRM_Template(PRM_INT, 1, &pixel_samples, &pixel_samples_d, nullptr, &pixel_samples_r),
 		PRM_Template(PRM_INT, 1, &volume_samples, &volume_samples_d, nullptr, &volume_samples_r),
+		PRM_Template(PRM_TOGGLE, 1, &enable_clamp, &enable_clamp_d),
+		PRM_Template(PRM_FLT|PRM_TYPE_PLAIN, 1,
+			&clamp_value, &clamp_value_d, nullptr, &clamp_value_r),
 		PRM_Template(PRM_SEPARATOR, 0, &separator1),
 		PRM_Template(PRM_STRING, 1, &pixel_filter, &pixel_filter_d, &pixel_filter_c),
 		PRM_Template(PRM_FLT, 1, &filter_width, &filter_width_d, nullptr, &filter_width_r),
@@ -578,6 +589,10 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 
 		//Motion blur is set to invisible on Standin ROP as we are exporting it as enabled on NSI.
 		PRM_Template(PRM_TOGGLE | PRM_TYPE_INVISIBLE, 1, &motion_blur, &motion_blur_d),
+
+		// Same for clamp
+		PRM_Template(PRM_TOGGLE | PRM_TYPE_INVISIBLE, 1, &enable_clamp, &enable_clamp_d),
+		PRM_Template(PRM_TOGGLE | PRM_TYPE_INVISIBLE, 1, &clamp_value, &clamp_value_d),
 	};
 
 	static std::vector<PRM_Template> output_templates =
