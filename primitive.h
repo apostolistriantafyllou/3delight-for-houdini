@@ -81,7 +81,16 @@ protected:
 	/// Returns the GT primitive to use when exporting constant attributes
 	const GT_PrimitiveHandle& default_gt_primitive()const
 	{
-		return m_gt_primitives.front().second;
+		/*
+			We use the time sample that is the closest to the middle of the
+			motion interval (which should normally be the closest to the exact
+			frame time). In case of an even number of samples, we prefer the
+			sample that comes just after the frame, because its attributes have
+			a greater probability of matching those of the primitive at the
+			exact frame time (in discrete animations that update once per
+			frame, for example).
+		*/
+		return m_gt_primitives[m_gt_primitives.size()/2].second;
 	}
 
 	/**
