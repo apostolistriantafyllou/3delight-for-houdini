@@ -12,6 +12,7 @@
 #include <GU/GU_PrimPacked.h>
 #include <OBJ/OBJ_Node.h>
 #include <UT/UT_Array.h>
+#include <UT/UT_HDKVersion.h>
 #include <VOP/VOP_Node.h>
 
 #include <type_traits>
@@ -348,7 +349,11 @@ double alembic::get_abc_time()const
 		{
 			continue;
 		}
+#if HDK_API_VERSION >= 18050000
 		const GU_PackedImpl* imp = packed->sharedImplementation();
+#else
+		const GU_PackedImpl* imp = packed->implementation();
+#endif
 		if(!imp)
 		{
 			continue;
