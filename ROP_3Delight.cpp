@@ -1679,15 +1679,12 @@ ROP_3Delight::ExportLayerFeedbackData(
 
 	// Retrieve connection information
 	idisplay_port *idp = idisplay_port::get_instance();
-	std::string host = idp->GetServerHost();
-	int port = idp->GetServerPort();
-
+	std::string feedback_id = idp->GetServerID();
 	i_ctx.m_nsi.SetAttribute(
 		i_layer_handle,
 		(
 			NSI::StringArg( "sourceapp", "Houdini" ),
-			NSI::StringArg( "feedbackhost", host ),
-			NSI::IntegerArg( "feedbackport", port ),
+			NSI::StringArg( "feedbackid", feedback_id ),
 			NSI::StringArg( "feedbackdata", feedback_data )
 		));
 }

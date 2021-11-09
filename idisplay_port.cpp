@@ -8,14 +8,11 @@
 #include <ROP/ROP_Node.h>
 #include <UT/UT_JSONParser.h>
 #include <UT/UT_JSONValue.h>
-#include <UT/UT_NetSocket.h>
 #include <UT/UT_PackageUtils.h>
-#include <UT/UT_WorkBuffer.h>
 
 #include <assert.h>
-#include <stdarg.h>
 
-#include <memory>
+#include <3Delight/Feedback.h>
 
 
 namespace
@@ -109,36 +106,6 @@ namespace
 		assert(obj_node);
 		return obj_node;
 	}
-	
-	/*
-		Ensures that io_wb contains at least i_min_length bytes.
-
-		Returns false if reading from io_client fails.
-	*/
-	bool
-	PrepareBuffer(
-		UT_WorkBuffer& io_wb,
-		size_t i_min_length,
-		UT_NetSocket& io_client)
-	{
-		while(io_wb.length() < i_min_length)
-		{
-			/*
-				Read into a local work buffer to avoid replacing the contents
-				of possibly non-empty io_wb.
-			*/
-			UT_WorkBuffer wb;
-			if(io_client.read(wb) != UT_NetSocket::UT_CONNECT_SUCCESS ||
-				wb.isEmpty())
-			{
-				return false;
-			}
-
-			io_wb.append(wb);
-		}
-
-		return true;
-	}
 }
 
 
@@ -154,169 +121,39 @@ idisplay_port *idisplay_port::get_instance()
 }
 
 idisplay_port::idisplay_port()
-	:	UT_SocketListener(UT_NetSocket::newSocket(0)),
-		m_main_thread(SYSgetSTID())
+	:	m_main_thread(SYSgetSTID())
 {
-	start();
+	decltype(&DlFeedbackSetHandler) set_handler = nullptr;
+	m_api.LoadFunction(set_handler, "DlFeedbackSetHandler");
+	assert(set_handler);
+	if(set_handler)
+	{
+		set_handler(&idisplay_port::feedback_cb, this);
+	}
+
+	decltype(&DlFeedbackGetID) get_id = nullptr;
+	m_api.LoadFunction(get_id, "DlFeedbackGetID");
+	assert(get_id);
+	if(get_id)
+	{
+		m_server_id = get_id();
+	}
 }
 
 idisplay_port::~idisplay_port()
 {
-	stop();
-	CleanUp();
-}
-
-/**
-	Keep reading until socket is closed from 3Delight Display.
-*/
-void clientConnection(UT_NetSocket* client, idisplay_port* dp)
-{
-	UT_WorkBuffer wb;
-	for(;;)
+	decltype(&DlFeedbackRemoveHandler) reset_handler = nullptr;
+	m_api.LoadFunction(reset_handler, "DlFeedbackRemoveHandler");
+	assert(reset_handler);
+	if(reset_handler)
 	{
-		// Read enough bytes in the buffer for the message length
-		if(!PrepareBuffer(wb, 4, *client))
-		{
-			break;
-		}
-
-		// Retrieve big-endian message length
-		unsigned char* len = (unsigned char*)wb.buffer();
-		unsigned message_length =
-			unsigned(len[0]) << 24 | unsigned(len[1]) << 16 |
-			unsigned(len[2]) << 8 | unsigned(len[3]);
-		wb.eraseHead(4);
-
-		if(message_length == 0)
-		{
-			dp->Log("invalid message format");
-			break;
-		}
-
-		// Read enough bytes in the buffer for the complete message
-		if(!PrepareBuffer(wb, message_length, *client))
-		{
-			break;
-		}
-
-		// Retrieve JSON-format message
-		assert(wb.buffer()[0] == '{');
-		UT_IStream in(wb.buffer(), message_length, UT_ISTREAM_ASCII);
-		UT_JSONParser parser;
-		UT_JSONValue js;
-
-		if( js.parseValue(parser, &in) &&
-			js.getType() == UT_JSONValue::JSON_MAP )
-		{
-			dp->ExecuteJSonCommand(js);
-		}
-		else
-		{
-			dp->Log( "invalid read operation from socket" );
-		}
-
-		wb.eraseHead(message_length);
+		reset_handler();
 	}
 }
 
-/**
-	As soon as we accept a read socket, we start a thread for reading.
-	This is needed to be able to accept other client connection.
-*/
-void idisplay_port::onSocketEvent(int event_types)
+void idisplay_port::ExecuteJSonCommand(const UT_JSONValue& i_command)const
 {
-	if (event_types != UT_SOCKET_READ_READY)
-	{
-		assert( false );
-		return;
-	}
-
-	UT_NetSocket* server = getSocket();
-
-	if( !server )
-	{
-		assert( false );
-		return;
-	}
-
-	int res = server->dataAvailable();
-
-	if (res <= 0)
-		return;
-
-	int condition;
-	UT_NetSocket *client = server->accept(true, condition);
-
-	if( !client || !client->isConnected() )
-		return;
-
-	m_clients.push_back(client);	
-	m_threads.push_back(std::thread(clientConnection, client, this));
-}
-
-
-void idisplay_port::CleanUp()
-{
-	idisplay_port *idp = idisplay_port::get_instance();
-
-	// Wait for client threads to terminate
-	while (!idp->m_threads.empty())
-	{
-		idp->m_threads.back().join();
-		idp->m_threads.pop_back();
-	}
-	// Delete all client sockets
-	while (!idp->m_clients.empty())
-	{
-		delete idp->m_clients.back();
-		idp->m_clients.pop_back();
-	}
-}
-
-int idisplay_port::GetServerPort()
-{
-	UT_NetSocket* server = getSocket();
-	if( !server || !server->isValid() )
-	{
-		assert( false );
-		return -1;
-	}
-
-	return server->getPort();
-}
-
-std::string idisplay_port::GetServerHost()
-{
-	unsigned char hostAddress[4];
-	char hostName[4*3+4];
-
-	UT_NetSocket* server = getSocket();
-	if( !server || !server->isValid() )
-	{
-		assert( false );
-		return {};
-	}
-
-	// First try with host name (in server->getAddress)
-	int res = UT_NetSocket::getHostAddress(hostAddress, server->getAddress());
-	if (res == 0)
-	{
-		// If fails, try with the name localhost
-		res = UT_NetSocket::getHostAddress(hostAddress, "localhost");
-		// Last resort, return local host address
-		if (res == 0) return "127.0.0.1";
-	}
-	assert(res == 1);
-	int nc = sprintf(hostName, "%hhu.%hhu.%hhu.%hhu",
-					hostAddress[0], hostAddress[1],
-					hostAddress[2], hostAddress[3]);
-	hostName[nc] = '\0';
-	return hostName;
-}
-
-void idisplay_port::ExecuteJSonCommand(const UT_JSONValue& i_object)
-{
-	UT_JSONValueMap* object_map = i_object.getMap();
+	UT_JSONValueMap* object_map = i_command.getMap();
 	assert( object_map );
 
 	UT_JSONValue* opObj = object_map->get("operation");
@@ -352,8 +189,8 @@ void idisplay_port::ExecuteJSonCommand(const UT_JSONValue& i_object)
 		ROP_3Delight* rop_3dl = Get3DelightROP(fromObj->getS());
 		if(!rop_3dl)
 		{
-			Log( "render node `%s` hasn't been found, render impossible",
-				fromObj->getS() );
+			Log(std::string("render node `") + fromObj->getS() +
+				"` hasn't been found, render impossible");
 			return;
 		}
 
@@ -384,8 +221,8 @@ void idisplay_port::ExecuteJSonCommand(const UT_JSONValue& i_object)
 		ROP_3Delight* rop_3dl = Get3DelightROP(fromObj->getS());
 		if(!rop_3dl)
 		{
-			Log( "render node `%s` hasn't been found, render impossible",
-				fromObj->getS() );
+			Log(std::string("render node `") + fromObj->getS() +
+				"` hasn't been found, render impossible");
 			return;
 		}
 
@@ -532,24 +369,36 @@ void idisplay_port::ExecuteJSonCommand(const UT_JSONValue& i_object)
 	}
 }
 
-void idisplay_port::Log( const char *i_msg, ... ) const
+
+void idisplay_port::Log(const std::string& i_message)const
 {
-	char theMessage[ 2048 ];
-
-	va_list ap;
-	va_start(ap, i_msg);
-
-	vsnprintf( theMessage, sizeof(theMessage)-1, i_msg, ap );
-
-	va_end( ap );
-
 	std::string error("3Delight for Houdini: 3Delight Display port - " );
-	error += theMessage;
+	error += i_message;
 
 	static UT_Package::utils::Logger logger;
 	logger.error( error.c_str() );
 
 	error += "\n";
 	::fprintf( stderr, "%s", error.c_str() );
+}
+
+void idisplay_port::feedback_cb(void* i_userdata, const char* i_message)
+{
+	// Retrieve JSON-format message
+	assert(i_message && i_message[0] == '{');
+	UT_IStream in(i_message, strlen(i_message), UT_ISTREAM_ASCII);
+	UT_JSONParser parser;
+	UT_JSONValue js;
+
+	idisplay_port* dp = static_cast<idisplay_port*>(i_userdata);
+	if( js.parseValue(parser, &in) &&
+		js.getType() == UT_JSONValue::JSON_MAP )
+	{
+		dp->ExecuteJSonCommand(js);
+	}
+	else
+	{
+		dp->Log("invalid JSON object");
+	}
 }
 
