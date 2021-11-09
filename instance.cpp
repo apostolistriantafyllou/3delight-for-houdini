@@ -2,6 +2,7 @@
 
 #include "context.h"
 #include "vop.h"
+#include "dl_system.h"
 
 #include <nsi.hpp>
 
@@ -118,15 +119,22 @@ void instance::connect( void ) const
 		{
 			if( object.find(k_procedural_prefix)==0)
 			{
-				m_nsi.Create( object, "procedural" );
-				m_nsi.SetAttribute( object,
-					(
-						NSI::CStringPArg("type", "apistream"),
-						NSI::CStringPArg(
-							"filename",
-							object.c_str()+ ::strlen(k_procedural_prefix))
-					) );
-				m_nsi.Connect(object, "", merge_h, "objects" );
+				std::string path = object.substr(::strlen(k_procedural_prefix));
+
+				//This should be handled directly on NSI, but for now we do this to avoid
+				//a crash for invalid filename. Seems it only happens on windows.
+				if (dl_system::file_exists(path.c_str()))
+				{
+					m_nsi.Create(object, "procedural");
+					m_nsi.SetAttribute(object,
+						(
+							NSI::CStringPArg("type", "apistream"),
+							NSI::CStringPArg(
+								"filename",
+								path.c_str())
+							));
+					m_nsi.Connect(object, "", merge_h, "objects");
+				}
 			}
 			else
 			{
