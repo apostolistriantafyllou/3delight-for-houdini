@@ -1361,10 +1361,19 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 
 				if (aov_token == std::string::npos && light_token == std::string::npos)
 				{
-					//If user is not using any of <aov> or <light> token, we automatically
-					//output one png per layer
+					/*
+						If user is not using any of <aov> or <light> token, we automatically
+						output one png per layer. Evaluate the raw string for image filename
+						in order to find if $F string is used as frame number.
+					*/
+					UT_String png_file_name;
+					evalStringRaw(
+						png_file_name,
+						settings::k_default_image_filename, 0,
+						current_time);
+
 					BuildImageUniqueName(
-						image_file_name, category.first,
+						png_file_name, category.first,
 						desc.m_filename_token, ".png", image_png_name);
 				}
 				else
@@ -1694,8 +1703,19 @@ ROP_3Delight::BuildImageUniqueName(
 	o_image_unique_name = i_image_file_name.pathUpToExtension();
 
 	std::string fn = o_image_unique_name.toStdString();
-	size_t pos = fn.find_last_of('_');
-	UT_String frame_number = fn.assign(fn.begin()+pos+1, fn.end()).c_str();
+
+	/*
+		Checking for the last '_' character to find the frame number is not a good
+		idea and results in wrong behavior when another character is used before the
+		frame keyword '$F'.
+	*/
+	size_t pos = fn.find_last_of('$F');
+	UT_String frame_number = fn.assign(fn.begin()+pos-1, fn.end()).c_str();
+
+	OPgetDirector()->getChannelManager()->expandString(
+		o_image_unique_name.c_str(), o_image_unique_name, m_current_render->m_current_time);
+	OPgetDirector()->getChannelManager()->expandString(
+		frame_number.c_str(), frame_number, m_current_render->m_current_time);
 
 	o_image_unique_name.removeTrailingDigits();
 
@@ -1703,7 +1723,9 @@ ROP_3Delight::BuildImageUniqueName(
 	UT_String dir_name, light_name;
 	light.splitPath(dir_name, light_name);
 
-	if (o_image_unique_name.toStdString().back() != '_')
+	//Some users might prefer using . instead of _ as a separator.
+	if (o_image_unique_name.toStdString().back() != '_'
+		&& o_image_unique_name.toStdString().back() != '.')
 	{
 		o_image_unique_name += "_";
 	}
@@ -1713,7 +1735,7 @@ ROP_3Delight::BuildImageUniqueName(
 		o_image_unique_name += "_";
 		o_image_unique_name += light_name;
 	}
-	if (frame_number.isInteger())
+	if (frame_number.isInteger(true))
 	{
 		o_image_unique_name += "_";
 		o_image_unique_name += frame_number;
