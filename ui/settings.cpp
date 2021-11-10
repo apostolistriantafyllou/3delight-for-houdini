@@ -4,6 +4,9 @@
 #include "../scene.h"
 #include "../ROP_3Delight.h"
 
+#include <map>
+#include <OP/OP_Bundle.h>
+#include <OP/OP_BundleList.h>
 #include "delight.h"
 #include "nsi_dynamic.hpp"
 
@@ -1511,6 +1514,46 @@ void settings::UpdateLights()
 		pattern,
 		m_parameters.getFullPath().c_str(), true, m_lights);
 
+	OP_BundleList* blist = OPgetDirector()->getBundles();
+	assert(blist);
+	int numBundles = blist->entries();
+	std::map<std::string, std::vector<OBJ_Node*>> o_light_categories;
+
+	for (auto light : m_lights)
+	{
+		bool foundInBundle = false;
+		bool incand =
+			light->getOperator()->getName() ==
+			"3Delight::IncandescenceLight";
+		bool isvdb = light->castToOBJLight() == nullptr;
+
+		std::string light_handle = light->getFullPath().toStdString();
+
+		for (int i = 0; !incand && !isvdb && i < numBundles; i++)
+		{
+			OP_Bundle* bundle = blist->getBundle(i);
+			assert(bundle);
+			if (bundle && bundle->contains(light, false))
+			{
+				std::string category = bundle->getName();
+				o_light_categories[category].push_back(light);
+				foundInBundle = true;
+			}
+		}
+
+		if (!foundInBundle)
+		{
+			/* Make a category for this single light */
+			std::string category = light->getFullPath().toStdString();
+			o_light_categories[category].push_back(light);
+		}
+	}
+
+	if(pattern)
+	{
+		OP_BundlePattern::freePattern( pattern );
+	}
+
 	PRM_Parm& light_sets_parm = m_parameters.getParm(k_light_sets);
 	unsigned nb_lights = m_parameters.evalInt(k_light_sets, 0, 0.0f);
 
@@ -1529,17 +1572,18 @@ void settings::UpdateLights()
 		light_sets_parm.removeMultiParmItem(i);
 	}
 
-	for (unsigned i = 0; i < m_lights.size(); i++)
+	std::map<std::string, std::vector<OBJ_Node*>>::iterator it = o_light_categories.begin();
+	int i = 0;
+	for (; it != o_light_categories.end(); it++,i++)
 	{
-		// Create a new item
 		light_sets_parm.insertMultiParmItem(light_sets_parm.getMultiParmNumItems());
 		const char* light_token = GetLightToken(i);
 
 		m_parameters.setString(
-			m_lights[i]->getFullPath(), CH_STRING_LITERAL, light_token, 0, 0.0);
+			it->first, CH_STRING_LITERAL, light_token, 0, 0.0);
 		m_parameters.setVisibleState(light_token, false);
 
-		std::string light_name = m_lights[i]->getFullPath().toStdString();
+		std::string light_name = it->first;
 		bool selected = false;
 		UT_Map<std::string, bool>::iterator sel_item =
 			selectedLights.find(light_name);

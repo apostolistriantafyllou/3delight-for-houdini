@@ -174,7 +174,8 @@ private:
 	void ExportLayerFeedbackData(
 		const context& i_ctx,
 		const std::string& i_layer_handle,
-		const std::string& i_light_handle) const;
+		const std::string& i_light_category,
+		const std::vector<OBJ_Node*>& i_lights) const;
 
 	void ExportGlobals(const context& i_ctx)const;
 	void ExportDefaultMaterial( const context &i_context ) const;
@@ -190,6 +191,16 @@ private:
 		const char* i_extension,
 		UT_String& o_image_unique_name) const;
 
+	void ExportLightCategories(
+		const context& i_ctx,
+		std::map<std::string, std::vector<OBJ_Node*>>& o_light_categories,
+		fpreal t) const;
+
+	/**
+		\brief Exports light categories, either bundles or single lights.
+
+		Each category name is returned with the list of light nodes.
+	*/
 	bool HasSpeedBoost( double i_time )const;
 
 	/** volumesm can be disabled in speed boost */

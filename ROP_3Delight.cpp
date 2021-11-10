@@ -1175,6 +1175,10 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 
 	bool has_frame_buffer = false;
 	std::vector<std::string> file_layers;
+
+	std::map<std::string, std::vector<OBJ_Node*>> o_light_categories;
+	ExportLightCategories(i_ctx, o_light_categories, current_time);
+
 	for (int i = 0; i < nb_aovs; i++)
 	{
 		bool is_layer_active = evalInt(aov::getAovActiveLayerToken(i), 0, current_time);
@@ -1294,7 +1298,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 					3Delight Display's Multi-Light tool needs some information,
 					called "feedback data" to communicate back the values.
 				*/
-				ExportLayerFeedbackData( i_ctx, layer_name, light_names[j]);
+				ExportLayerFeedbackData( i_ctx, layer_name, light_names[j],m_settings.m_lights);
 			}
 
 			if (file_output)
@@ -1606,78 +1610,72 @@ void
 ROP_3Delight::ExportLayerFeedbackData(
 	const context& i_ctx,
 	const std::string& i_layer_handle,
-	const std::string& i_light_handle) const
+	const std::string& i_light_category,
+	const std::vector<OBJ_Node*>& i_lights) const
 {
-	// Retrieve connection information
-	idisplay_port* idp = idisplay_port::get_instance();
-	std::string feedback_id = idp->GetServerID();
-
-	if (i_light_handle.empty())
-	{
-		i_ctx.m_nsi.SetAttribute(i_layer_handle,
-			(
-				NSI::StringArg("sourceapp", "Houdini"),
-				NSI::StringArg("feedbackid", feedback_id)
-				));
-		return;
-	}
+	// Build nodes, intensities and colors JSON arrays
 
 	std::string nodes = "\"nodes\":[";
 	std::string intensities = "\"intensities\":[";
 	std::string colors = "\"colors\":[";
 
 	double time = i_ctx.m_current_time;
-
-	OBJ_Node* obj_node = OPgetDirector()->findOBJNode(i_light_handle.c_str());
-	assert(obj_node);
-	OBJ_Light* light = obj_node->castToOBJLight();
-	double intensity = 1.0;
-	if(light->hasParm("light_intensity"))
+	for (OBJ_Node* light : i_lights)
 	{
-		intensity = light->evalFloat("light_intensity", 0, time);
-	}
+		double intensity = 1.0;
+		if (light->hasParm("light_intensity"))
+		{
+			intensity = light->evalFloat("light_intensity", 0, time);
+		}
 
-	double color[3] = { 1.0, 1.0, 1.0 };
-	if(light->hasParm("light_color"))
-	{
-		color[0] = light->evalFloat("light_color", 0, time);
-		color[1] = light->evalFloat("light_color", 1, time);
-		color[2] = light->evalFloat("light_color", 2, time);
-	}
+		double color[3] = { 1.0, 1.0, 1.0 };
+		if (light->hasParm("light_color"))
+		{
+			color[0] = light->evalFloat("light_color", 0, time);
+			color[1] = light->evalFloat("light_color", 1, time);
+			color[2] = light->evalFloat("light_color", 2, time);
+		}
 
-	nodes += "\"" + light->getFullPath().toStdString() + "\",";
-	intensities += std::to_string(intensity) + ",";
-	colors +=
-		"[" + std::to_string(color[0]) + "," + std::to_string(color[1]) +
-		"," + std::to_string(color[2]) + "],";
+		nodes += "\"" + light->getFullPath().toStdString() + "\",";
+		intensities += std::to_string(intensity) + ",";
+		colors +=
+			"[" + std::to_string(color[0]) + "," + std::to_string(color[1]) +
+			"," + std::to_string(color[2]) + "],";
+	}
 
 	// Remove trailing commas
-	nodes.pop_back();
-	intensities.pop_back();
-	colors.pop_back();
+	if (!i_lights.empty())
+	{
+		nodes.pop_back();
+		intensities.pop_back();
+		colors.pop_back();
+	}
 
 	nodes += "]";
 	intensities += "]";
 	colors += "]";
 
 	// Build name and type JSON attributes
-	std::string name = "\"name\":\"" + i_light_handle + "\"";
+	std::string name = "\"name\":\"" + i_light_category + "\"";
 	std::string light_type =
 		std::string("\"type\":") +
-		(1 == 1 ? "\"single light\"" : "\"light group\"");
+		(i_lights.size() == 1 ? "\"single light\"" : "\"light group\"");
 
 	// Put all attributes together in a single JSON object.
 	std::string feedback_data =
 		"{" + name + "," + light_type + "," + nodes + "," + intensities + "," +
 		colors + "}";
 
+	// Retrieve connection information
+	idisplay_port* idp = idisplay_port::get_instance();
+	std::string feedback_id = idp->GetServerID();
 	i_ctx.m_nsi.SetAttribute(
 		i_layer_handle,
 		(
-			NSI::StringArg( "sourceapp", "Houdini" ),
-			NSI::StringArg( "feedbackid", feedback_id ),
-			NSI::StringArg( "feedbackdata", feedback_data )
-		));
+			NSI::StringArg("sourceapp", "Houdini"),
+			NSI::StringArg("feedbackid", feedback_id),
+			NSI::StringArg("feedbackdata", feedback_data)
+			));
 }
 
 void
@@ -1729,6 +1727,73 @@ ROP_3Delight::BuildImageUniqueName(
 		o_image_unique_name += frame_number;
 	}
 	o_image_unique_name += i_extension;
+}
+
+void ROP_3Delight::ExportLightCategories(
+	const context& i_ctx,
+	std::map<std::string, std::vector<OBJ_Node*>>& o_light_categories,
+	fpreal t) const
+{
+	if (m_settings.m_lights.empty())
+		return;
+
+	OP_BundleList* blist = OPgetDirector()->getBundles();
+	assert(blist);
+	int numBundles = blist->entries();
+
+	for (auto light_source : m_settings.m_lights)
+	{
+		bool foundInBundle = false;
+		bool incand =
+			light_source->getOperator()->getName() ==
+			"3Delight::IncandescenceLight";
+		bool isvdb = light_source->castToOBJLight() == nullptr;
+
+		std::string light_handle = exporter::handle(*light_source, i_ctx);
+
+		for (int i = 0; !incand && !isvdb && i < numBundles; i++)
+		{
+			OP_Bundle* bundle = blist->getBundle(i);
+			assert(bundle);
+			if (bundle && bundle->contains(light_source, false))
+			{
+				std::string category = bundle->getName();
+
+				if (o_light_categories[category].empty())
+				{
+					// Create a set the first time we encounter a bundle
+					i_ctx.m_nsi.Create(category, "set");
+				}
+
+				o_light_categories[category].push_back(light_source);
+
+				// Connect the light to the set
+				i_ctx.m_nsi.Connect(light_handle, "", category, "members");
+
+				foundInBundle = true;
+			}
+		}
+
+		if (!foundInBundle)
+		{
+			/* Make a category for this single light */
+			std::string category = light_source->getFullPath().toStdString();
+
+			if (category != light_handle && !incand)
+			{
+				/*
+					In IPR, the light handle is not the same as its full path,
+					but we still want to use the full path as a category name,
+					so we create a set with the proper name.
+				*/
+				assert(i_ctx.m_ipr);
+				i_ctx.m_nsi.Create(category, "set");
+				i_ctx.m_nsi.Connect(light_handle, "", category, "members");
+			}
+
+			o_light_categories[category].push_back(light_source);
+		}
+	}
 }
 
 /*
