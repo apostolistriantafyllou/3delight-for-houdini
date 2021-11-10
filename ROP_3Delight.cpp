@@ -1707,9 +1707,9 @@ ROP_3Delight::BuildImageUniqueName(
 	/*
 		Checking for the last '_' character to find the frame number is not a good
 		idea and results in wrong behavior when another character is used before the
-		frame keyword '$F'.
+		frame keyword "$F".
 	*/
-	size_t pos = fn.find_last_of('$F');
+	size_t pos = fn.find_last_of("$F");
 	UT_String frame_number = fn.assign(fn.begin()+pos-1, fn.end()).c_str();
 
 	OPgetDirector()->getChannelManager()->expandString(
