@@ -77,7 +77,10 @@ const char* settings::k_aov = "aov";
 const char* settings::k_aov_clear = "aov_clear_#";
 const char* settings::k_add_layer = "add_layer";
 const char* settings::k_view_layer = "view_layer";
-const char* settings::k_enable_multi_light = "enable_multi_light";
+const char* settings::k_light_sets = "light_sets";
+const char* settings::k_use_light_set = "use_light_set_#";
+const char* settings::k_light_set = "light_set_#";
+const char* settings::k_display_all_lights = "display_all_lights";
 const char* settings::k_speed_boost = "speed_boost";
 const char* settings::k_disable_motion_blur = "disable_motion_blur";
 const char* settings::k_disable_depth_of_field = "disable_depth_of_field";
@@ -706,25 +709,8 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	static PRM_Name view_layer(k_view_layer, "View...");
 	static PRM_Name dummy("dummy", "");
 
-	static PRM_Name enable_multi_light(k_enable_multi_light, "Multi-Light");
-	static PRM_Name multi_light_note1(
-		"multi_light_note1",
-		"                        Enables light mixing in 3Delight Display (or other application) by creating");
-	static PRM_Name multi_light_note2(
-		"multi_light_note2",
-		"                        an image layer (AOV) for each light or group of lights. For scenes with many");
-	static PRM_Name multi_light_note3(
-		"multi_light_note3",
-		"                        lights, they must be grouped to avoid creating an excessive amount of layers.");
-
-	static PRM_Default enable_multi_light_d(false);
-
 	static std::vector<PRM_Template> image_layers_templates =
 	{
-		PRM_Template(PRM_TOGGLE, 1, &enable_multi_light, &enable_multi_light_d),
-		PRM_Template(PRM_LABEL, 0, &multi_light_note1),
-		PRM_Template(PRM_LABEL, 0, &multi_light_note2),
-		PRM_Template(PRM_LABEL, 0, &multi_light_note3),
 		PRM_Template(PRM_SEPARATOR, 0, &separator4),
 		PRM_Template(PRM_LABEL|PRM_TYPE_JOIN_NEXT, 1, &aovs_titles1),
 		PRM_Template(PRM_LABEL, 1, &aovs_titles2),
@@ -734,6 +720,41 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 		PRM_Template(PRM_CALLBACK|PRM_TYPE_JOIN_NEXT, 1, &view_layer),
 		PRM_Template(PRM_LABEL, 1, &dummy),
 		PRM_Template(PRM_SEPARATOR, 0, &separator5)
+	};
+
+
+
+	//// Multi-Light
+
+	static PRM_Name light_sets(k_light_sets, "Light Sets");
+	static PRM_Name use_light_set(k_use_light_set, "");
+	static PRM_Default use_light_set_d(false);
+	static PRM_Name light_set(k_light_set, "Light Set");
+	static PRM_Default light_set_d(0.0, "");
+	static PRM_Default nb_lights(1);
+	static PRM_Template light_set_templates[] =
+	{
+		PRM_Template(PRM_TOGGLE | PRM_TYPE_JOIN_NEXT, 1, &use_light_set, &use_light_set_d),
+		PRM_Template(PRM_STRING | PRM_TYPE_LABEL_NONE, 1, &light_set, &light_set_d),
+		PRM_Template()
+	};
+
+	static PRM_Name display_all_lights(k_display_all_lights, "Display All Lights");
+	static PRM_Default display_all_lights_d(false);
+	static PRM_Name refresh_lights("refresh_lights", "Refresh");
+
+	static std::vector<PRM_Template> multi_light_templates =
+	{
+		PRM_Template(PRM_MultiType(PRM_MULTITYPE_SCROLL | PRM_MULTITYPE_NO_CONTROL_UI), light_set_templates, k_one_line * 10.0f, &light_sets, &nb_lights),
+		PRM_Template(PRM_TOGGLE, 1, &display_all_lights, &display_all_lights_d),
+		PRM_Template(PRM_CALLBACK, 1, &refresh_lights, 0, 0, 0,
+					&settings::refresh_lights_cb)
+
+	};
+	static PRM_Name image_layers_tabs_name("image_layers_tabs");
+	static std::vector<PRM_Default> image_layers_tabs =
+	{
+		PRM_Default(multi_light_templates.size(), "Multi-Light")
 	};
 
 	// Overrides
@@ -857,7 +878,7 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 		PRM_Default(quality_templates.size(), "Quality"),
 		PRM_Default(scene_elements_templates.size(), "Scene Elements"),
 		PRM_Default(output_templates.size(), "Output"),
-		PRM_Default(image_layers_templates.size(), "Image Layers"),
+		PRM_Default(image_layers_templates.size()+1, "Image Layers"),
 		PRM_Default(overrides_templates.size(), "Overrides"),
 		PRM_Default(scripts_templates.size(), "Scripts"),
 		PRM_Default(debug_templates.size(), "Debug")
@@ -1022,6 +1043,17 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 				templates.end(),
 				image_layers_templates.begin(),
 				image_layers_templates.end());
+
+			templates.push_back(
+				PRM_Template(
+					PRM_SWITCHER,
+					image_layers_tabs.size(),
+					&image_layers_tabs_name,
+					&image_layers_tabs[0]));
+			templates.insert(
+				templates.end(),
+				multi_light_templates.begin(),
+				multi_light_templates.end());
 
 			// Overrides
 			templates.insert(
@@ -1435,26 +1467,126 @@ int settings::export_standin_sequence(
 	return 1;
 }
 
-void settings::GetLights(
-	std::vector<OBJ_Node*>& o_lights,
-	fpreal t ) const
+int settings::refresh_lights_cb(
+	void* data, int index, fpreal t,
+	const PRM_Template* tplate)
 {
-	if (!EnableMultiLight(t))
-		return;
+	ROP_3Delight* node = reinterpret_cast<ROP_3Delight*>(data);
+	node->m_settings.UpdateLights();
+	return 1;
+}
 
+void settings::GetSelectedLights(
+	std::vector<std::string>& o_light_names) const
+{
+	unsigned nb_lights = m_parameters.evalInt(k_light_sets, 0, 0.0f);
+
+	for (unsigned i = 0; i < nb_lights; i++)
+	{
+		const char* use_light_token = GetUseLightToken(i);
+		bool selected = m_parameters.evalInt(use_light_token, 0, 0.0f);
+		if (selected)
+		{
+			const PRM_Parm* use_light_parm = m_parameters.getParmPtr(use_light_token);
+			assert(use_light_parm);
+			const PRM_Template* use_light_tmpl =
+				use_light_parm->getTemplatePtr();
+			assert(use_light_tmpl);
+			const PRM_Name* use_light_name = use_light_tmpl->getNamePtr();
+			assert(use_light_name);
+			o_light_names.push_back(use_light_name->getLabel());
+		}
+	}
+}
+
+void settings::UpdateLights()
+{
+	m_lights.clear();
 	auto pattern =
-		OverrideDisplayFlags(t)
-		? OP_BundlePattern::allocPattern(GetLightsToRender(t))
+		OverrideDisplayFlags()
+		? OP_BundlePattern::allocPattern(GetLightsToRender())
 		: nullptr;
 
 	scene::find_lights(
 		pattern,
-		m_parameters.getFullPath().c_str(), true, o_lights);
+		m_parameters.getFullPath().c_str(), true, m_lights);
 
-	if(pattern)
+	PRM_Parm& light_sets_parm = m_parameters.getParm(k_light_sets);
+	unsigned nb_lights = m_parameters.evalInt(k_light_sets, 0, 0.0f);
+
+	// The only way I know to modify the label of a specific toggle is to
+	// remove the multi item and rebuild it! Using setLabel of an existing
+	// PRM_Name changes the internal label but not what you see on the screen!
+	UT_Map<std::string, bool> selectedLights;
+	for (int i = nb_lights - 1; i >= 0; i--)
 	{
-		OP_BundlePattern::freePattern( pattern );
+		const char* use_light_token = GetUseLightToken(i);
+		bool selected = m_parameters.evalInt(use_light_token, 0, 0.0f);
+		PRM_Parm* use_light_parm = m_parameters.getParmPtr(use_light_token);
+		assert(use_light_parm);
+
+		selectedLights[use_light_parm->getLabel()] = selected;
+		light_sets_parm.removeMultiParmItem(i);
 	}
+
+	for (unsigned i = 0; i < m_lights.size(); i++)
+	{
+		// Create a new item
+		light_sets_parm.insertMultiParmItem(light_sets_parm.getMultiParmNumItems());
+		const char* light_token = GetLightToken(i);
+
+		m_parameters.setString(
+			m_lights[i]->getFullPath(), CH_STRING_LITERAL, light_token, 0, 0.0);
+		m_parameters.setVisibleState(light_token, false);
+
+		std::string light_name = m_lights[i]->getFullPath().toStdString();
+		bool selected = false;
+		UT_Map<std::string, bool>::iterator sel_item =
+			selectedLights.find(light_name);
+		if (sel_item != selectedLights.end())
+		{
+			selected = sel_item->second;
+			selectedLights.erase(light_name);
+		}
+
+		const char* use_light_token = GetUseLightToken(i);
+		m_parameters.setInt(use_light_token, 0, 0.0f, (exint)selected);
+
+		PRM_Parm* use_light_parm = m_parameters.getParmPtr(use_light_token);
+		assert(use_light_parm);
+		PRM_Template* use_light_tmpl = use_light_parm->getTemplatePtr();
+		assert(use_light_tmpl);
+		PRM_Name* use_light_name = use_light_tmpl->getNamePtr();
+		assert(use_light_name);
+		use_light_name->setLabel(light_name.c_str());
+	}
+	selectedLights.clear();
+}
+
+const char* settings::GetUseLightToken(int index)
+{
+	static std::string use_light_token;
+	use_light_token = settings::k_use_light_set;
+	use_light_token.pop_back();
+
+	char suffix[12] = "";
+	::sprintf(suffix, "%d", index + 1);
+	use_light_token += suffix;
+
+	return use_light_token.c_str();
+}
+
+const char* settings::GetLightToken(int index)
+{
+	static std::string light_token;
+	light_token = settings::k_light_set;
+	light_token.pop_back();
+
+	char suffix[12] = "";
+	::sprintf(suffix, "%d", index + 1);
+	light_token += suffix;
+
+	return light_token.c_str();
 }
 
 UT_String settings::GetAtmosphere( fpreal t) const
@@ -1464,15 +1596,10 @@ UT_String settings::GetAtmosphere( fpreal t) const
 	return atmosphere;
 }
 
-bool settings::OverrideDisplayFlags( fpreal t)const
+bool settings::OverrideDisplayFlags( )const
 {
 	return (m_parameters.m_rop_type != rop_type::viewport
-			&& m_parameters.evalInt(settings::k_override_display_flags, 0, t) != 0);
-}
-
-bool settings::EnableMultiLight( fpreal t )const
-{
-	return m_parameters.evalInt(settings::k_enable_multi_light, 0, t) != 0;
+			&& m_parameters.evalInt(settings::k_override_display_flags, 0, 0.0f) != 0);
 }
 
 UT_String settings::GetObjectsToRender( fpreal t ) const
@@ -1483,7 +1610,7 @@ UT_String settings::GetObjectsToRender( fpreal t ) const
 }
 
 
-UT_String settings::GetLightsToRender( fpreal t ) const
+UT_String settings::GetLightsToRender() const
 {
 	UT_String lights_pattern("*");
 	/*
@@ -1493,7 +1620,7 @@ UT_String settings::GetLightsToRender( fpreal t ) const
 	*/
 	if (m_parameters.m_rop_type != rop_type::stand_in)
 	{
-		m_parameters.evalString(lights_pattern, settings::k_lights_to_render, 0, t);
+		m_parameters.evalString(lights_pattern, settings::k_lights_to_render, 0, 0.0f);
 	}
 	return lights_pattern;
 }
