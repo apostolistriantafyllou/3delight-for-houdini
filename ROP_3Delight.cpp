@@ -1706,7 +1706,7 @@ ROP_3Delight::BuildImageUniqueName(
 		idea and results in wrong behavior when another character is used before the
 		frame keyword "$F".
 	*/
-	size_t pos = fn.find_last_of("$F");
+	size_t pos = fn.rfind("$F");
 	UT_String frame_number = fn.assign(fn.begin()+pos-1, fn.end()).c_str();
 
 	OPgetDirector()->getChannelManager()->expandString(
