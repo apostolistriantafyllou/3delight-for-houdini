@@ -16,6 +16,8 @@ if (MSVC)
 	# Remove cmake's default warning level. Houdini adds /W1 which conflicts
 	# and the compiler complains loudly.
 	string (REGEX REPLACE "/W[0-4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+	# Avoid "mt.exe : general error c101008d". We don't need a manifest anyway.
+	add_link_options(/MANIFEST:NO)
 endif()
 
 # Locate Houdini's libraries and header files.
