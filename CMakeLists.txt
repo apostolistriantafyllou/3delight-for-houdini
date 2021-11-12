@@ -185,7 +185,7 @@ install(
 
 install(
 	FILES ui/delightvopfxmenu.py
-	DESTINATION python2.7libs )
+	DESTINATION python${_houdini_python_version}libs )
 
 # Add the Hydra plugin, if present, for Houdini >= 18.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/HydraNSI/CMakeLists.txt"
@@ -204,5 +204,5 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/HydraNSI/CMakeLists.txt"
 		DESTINATION soho/parameters)
 	install(
 		DIRECTORY Solaris/husdshadertranslators
-		DESTINATION python2.7libs)
+		DESTINATION python${_houdini_python_version}libs)
 endif()
