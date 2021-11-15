@@ -146,6 +146,7 @@ public:
 	static const char* k_aov_clear;
 	static const char* k_add_layer;
 	static const char* k_view_layer;
+	static const char* k_old_enable_multi_light;
 	static const char* k_light_sets;
 	static const char* k_use_light_set;
 	static const char* k_light_set;

@@ -80,6 +80,7 @@ const char* settings::k_aov = "aov";
 const char* settings::k_aov_clear = "aov_clear_#";
 const char* settings::k_add_layer = "add_layer";
 const char* settings::k_view_layer = "view_layer";
+const char* settings::k_old_enable_multi_light = "enable_multi_light";
 const char* settings::k_light_sets = "light_sets";
 const char* settings::k_use_light_set = "use_light_set_#";
 const char* settings::k_light_set = "light_set_#";
@@ -1157,7 +1158,18 @@ PRM_Template* settings::GetObsoleteParameters()
 		PRM_Item("no file", "Disable file output"),
 		PRM_Item(),
 	};
+
 	static PRM_ChoiceList interactive_output_mode_c(PRM_CHOICELIST_SINGLE, interactive_output_mode_i);
+	static PRM_Name enable_multi_light(k_old_enable_multi_light, "Multi-Light");
+	static PRM_Name multi_light_note1(
+		"multi_light_note1",
+		"");
+	static PRM_Name multi_light_note2(
+		"multi_light_note2",
+		"");
+	static PRM_Name multi_light_note3(
+		"multi_light_note3",
+		"");
 
 	static PRM_Name export_n(k_export, "Export");
 	static PRM_Name overrides_note_spacing("overrides_note_spacing", "");
@@ -1177,6 +1189,10 @@ PRM_Template* settings::GetObsoleteParameters()
 		PRM_Template(PRM_LABEL, 0, &overrides_note_spacing),
 		PRM_Template(PRM_LABEL, 0, &overrides_note),
 		PRM_Template(PRM_SEPARATOR, 0, &separator7),
+		PRM_Template(PRM_TOGGLE, 1, &enable_multi_light),
+		PRM_Template(PRM_LABEL, 0, &multi_light_note1),
+		PRM_Template(PRM_LABEL, 0, &multi_light_note2),
+		PRM_Template(PRM_LABEL, 0, &multi_light_note3),
 		PRM_Template()
 	};
 
@@ -1500,6 +1516,10 @@ void settings::GetSelectedLights(
 
 void settings::UpdateLights()
 {
+	if (m_parameters.m_rop_type == rop_type::viewport ||
+		m_parameters.m_rop_type == rop_type::stand_in)
+		return;
+
 	m_lights.clear();
 	auto pattern =
 		OverrideDisplayFlags()
