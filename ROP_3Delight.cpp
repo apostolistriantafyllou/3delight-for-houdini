@@ -865,18 +865,23 @@ ROP_3Delight::updateParmsFlags()
 	m_settings.UpdateLights();
 
 	PRM_Parm& parm = getParm(settings::k_aov);
+	int size = parm.getMultiParmNumItems();
+	if (size > 0) changed |= enableParm("aov_clear_1", size > 1);
+
+	for (int i = 0; i < size; i++)
 	{
-		int size = parm.getMultiParmNumItems();
-		if (size > 0) changed |= enableParm("aov_clear_1", size > 1);
-
-		for (int i = 0; i < size; i++)
-		{
-			changed |= enableParm(aov::getAovStrToken(i), false);
-		}
-
-		changed |= enableParm(settings::k_view_layer, false);
-		changed |= enableParm(settings::k_display_all_lights, false);
+		changed |= enableParm(aov::getAovStrToken(i), false);
 	}
+
+	changed |= enableParm(settings::k_view_layer, false);
+
+	PRM_Parm& multilight_parm = getParm(settings::k_light_sets);
+	int multilight_size = multilight_parm.getMultiParmNumItems();
+	for (int i = 0; i < multilight_size; i++)
+	{
+		changed |= enableParm(settings::GetLightToken(i), false);
+	}
+
 	return changed;
 }
 

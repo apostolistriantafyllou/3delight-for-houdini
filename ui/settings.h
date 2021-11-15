@@ -149,7 +149,6 @@ public:
 	static const char* k_light_sets;
 	static const char* k_use_light_set;
 	static const char* k_light_set;
-	static const char* k_display_all_lights;
 	static const char* k_speed_boost;
 	static const char* k_disable_motion_blur;
 	static const char* k_disable_depth_of_field;

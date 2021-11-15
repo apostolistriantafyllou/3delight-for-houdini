@@ -83,7 +83,6 @@ const char* settings::k_view_layer = "view_layer";
 const char* settings::k_light_sets = "light_sets";
 const char* settings::k_use_light_set = "use_light_set_#";
 const char* settings::k_light_set = "light_set_#";
-const char* settings::k_display_all_lights = "display_all_lights";
 const char* settings::k_speed_boost = "speed_boost";
 const char* settings::k_disable_motion_blur = "disable_motion_blur";
 const char* settings::k_disable_depth_of_field = "disable_depth_of_field";
@@ -737,22 +736,19 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	static PRM_Default nb_lights(1);
 	static PRM_Template light_set_templates[] =
 	{
-		PRM_Template(PRM_TOGGLE | PRM_TYPE_JOIN_NEXT, 1, &use_light_set, &use_light_set_d),
+		PRM_Template(PRM_TOGGLE | PRM_TYPE_LABEL_NONE | PRM_TYPE_JOIN_NEXT, 1, &use_light_set, &use_light_set_d),
 		PRM_Template(PRM_STRING | PRM_TYPE_LABEL_NONE, 1, &light_set, &light_set_d),
 		PRM_Template()
 	};
 
-	static PRM_Name display_all_lights(k_display_all_lights, "Display All Lights");
-	static PRM_Default display_all_lights_d(false);
 	static PRM_Name refresh_lights("refresh_lights", "Refresh");
+	static PRM_Name dummy2("dummy2", "");
 
 	static std::vector<PRM_Template> multi_light_templates =
 	{
-		PRM_Template(PRM_MultiType(PRM_MULTITYPE_SCROLL | PRM_MULTITYPE_NO_CONTROL_UI), light_set_templates, k_one_line * 10.0f, &light_sets, &nb_lights),
-		PRM_Template(PRM_TOGGLE, 1, &display_all_lights, &display_all_lights_d),
-		PRM_Template(PRM_CALLBACK, 1, &refresh_lights, 0, 0, 0,
-					&settings::refresh_lights_cb)
-
+		PRM_Template(PRM_MultiType(PRM_MULTITYPE_SCROLL | PRM_MULTITYPE_NO_CONTROL_UI), light_set_templates, k_one_line * 6.0f, &light_sets, &nb_lights),
+		PRM_Template(PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &refresh_lights, 0, 0, 0,&settings::refresh_lights_cb),
+		PRM_Template(PRM_LABEL, 1, &dummy2),
 	};
 	static PRM_Name image_layers_tabs_name("image_layers_tabs");
 	static std::vector<PRM_Default> image_layers_tabs =
@@ -1568,20 +1564,22 @@ void settings::UpdateLights()
 		PRM_Parm* use_light_parm = m_parameters.getParmPtr(use_light_token);
 		assert(use_light_parm);
 
-		selectedLights[use_light_parm->getLabel()] = selected;
+		const char* light_token = GetLightToken(i);
+		UT_String val;
+		m_parameters.evalString(val,light_token,0, 0, 0.0);
+		std::string str = val.toStdString();
+		selectedLights[str] = selected;
 		light_sets_parm.removeMultiParmItem(i);
 	}
 
 	std::map<std::string, std::vector<OBJ_Node*>>::iterator it = o_light_categories.begin();
-	int i = 0;
-	for (; it != o_light_categories.end(); it++,i++)
+	for (int i=0; it != o_light_categories.end(); it++, i++)
 	{
 		light_sets_parm.insertMultiParmItem(light_sets_parm.getMultiParmNumItems());
 		const char* light_token = GetLightToken(i);
 
 		m_parameters.setString(
 			it->first, CH_STRING_LITERAL, light_token, 0, 0.0);
-		m_parameters.setVisibleState(light_token, false);
 
 		std::string light_name = it->first;
 		bool selected = false;
