@@ -511,15 +511,19 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 			have exported the first frame of the sequence.
 		*/
 		m_renderdl = new UT_ReadWritePipe;
-		std::string renderdl_command = bin_dir + "renderdl -stdinfiles";
+		std::string renderdl_command = bin_dir + "renderdl -stdinfiles -cloudtag HOUDINI";
+		if( batch || !m_current_render->SingleFrame() )
+		{
+			renderdl_command += "_BATCH";
+		}
 
 		if(m_rop_type == rop_type::cloud)
 		{
-			renderdl_command += " -cloud -cloudtag HOUDINI";
-			if( batch || !m_current_render->SingleFrame() )
-			{
-				renderdl_command += "_BATCH";
-			}
+			renderdl_command += " -cloud";
+		}
+		else
+		{
+			renderdl_command += " -processingoptions";
 		}
 
 		if(!m_renderdl->open(renderdl_command.c_str()))
@@ -614,8 +618,16 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	}
 	else
 	{
+		NSI::ArgumentList argList;
+
+		if( m_current_render->m_ipr )
+			argList.Add( new NSI::CStringPArg( "software", "HOUDINI_LIVE" ) );
+		else
+			argList.Add( new NSI::CStringPArg( "software", "HOUDINI" ) );
+
+
 		// Render directly from the current process
-		m_nsi.Begin();
+		m_nsi.Begin( argList );
 	}
 
 	if(m_static_nsi_file.empty())
@@ -1434,11 +1446,12 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 		Also, when rendering a sequence, it makes little sense to have a
 		framebuffer as we need maximum efficiency in that case as well.
 	*/
-	i_ctx.m_nsi.SetAttribute(
-		NSI_SCENE_GLOBAL,
-		NSI::CStringPArg(
-			"bucketorder",
-			has_frame_buffer && i_ctx.SingleFrame() ? "circle" : "horizontal"));
+	if( !has_frame_buffer || !i_ctx.SingleFrame() )
+	{
+		i_ctx.m_nsi.SetAttribute(
+			NSI_SCENE_GLOBAL,
+			NSI::CStringPArg( "bucketorder", "horizontal"));
+	}
 
 	/* Don't take too much CPU if the Houdini UI is present */
 	if( UTisUIAvailable() )

@@ -12,7 +12,6 @@
     <memberTool name="_3dl_rop_render_3Delight"/>
     <memberTool name="_3dl_rop_renderviewport_3Delight"/>
     <memberTool name="_3dl_rop_3Delight"/>
-    <memberTool name="_3dl_rop_3DelightCloud"/>
     <memberTool name="_3dl_rop_select_3Delight"/>
     <memberTool name="_3dl_object_pointlight"/>
     <memberTool name="_3dl_object_spotlight"/>
@@ -33,15 +32,6 @@
 import roptoolutils
 
 newnode = roptoolutils.createRenderNode('3Delight')
-	]]></script>
-  </tool>
-
-  <tool name="_3dl_rop_3DelightCloud" label="ROP Cloud" icon="shelf_ROP_3Delight_cloud">
-    <helpText><![CDATA[Creates a render node 3DelightCloud.]]></helpText>
-    <script scriptType="python"><![CDATA[
-import roptoolutils
-
-newnode = roptoolutils.createRenderNode('3DelightCloud')
 	]]></script>
   </tool>
 
