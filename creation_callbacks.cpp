@@ -326,6 +326,20 @@ void add_colorspace_dropdown(OBJ_Node* node)
 	return;
 }
 
+void addLightFilters(OBJ_Node* node)
+{
+	PI_EditScriptedParms nodeParms(node, 1, 0);
+	PI_EditScriptedParm* spareParms = nodeParms.getParmWithName("decayCurve");
+
+	//Change decayCurve to ramp type as there is no way to set it as ramp using SOHO API
+	if (spareParms)
+	{
+		spareParms->changeTypeToRampFloat();
+		nodeParms.updateNode();
+	}
+	return;
+}
+
 void creation_callbacks::add_attributes_to_node(OBJ_Node& io_node)
 {
 	// Retrieve the node's operator type
@@ -347,6 +361,10 @@ void creation_callbacks::add_attributes_to_node(OBJ_Node& io_node)
 	if (node_type == "envlight")
 	{
 		add_colorspace_dropdown(&io_node);
+	}
+	else if (node_type == "hlight--2.0")
+	{
+		addLightFilters(&io_node);
 	}
 }
 

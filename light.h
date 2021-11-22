@@ -74,6 +74,12 @@ private:
 	/// Sets the visibility.camera attribute
 	void set_visibility_to_camera()const;
 
+	/// Connects the selected filter to it's light parent.
+	void connect_filter()const;
+
+	///Sets attributes for light filters.
+	void set_filter_attributes(double i_time)const;
+
 	/// Returns the handle of the light's NSI attributes node
 	std::string attributes_handle()const
 	{

@@ -282,9 +282,25 @@ void vop::list_shader_parameters(
 
 	const shader_library &library = shader_library::get_instance();
 	std::string path;
+
+	/*
+		This will be true when the shader we are looking into, is not a VOP node, but
+		provided only as OSL. Useful for light filters where we don't create VOP nodes.
+	*/
+	bool is_shader_loaded = true;
 	if(i_shader)
 	{
-		path = library.get_shader_path( i_shader );
+		//Check if we provide the full path of the osl shader. This would mean that we have
+		//not load the shader as a VOP node.
+		if (strcmp((i_shader + strlen(i_shader) - 4), ".oso") == 0)
+		{
+			path = i_shader;
+			is_shader_loaded = false;
+		}
+		else
+		{
+			path = library.get_shader_path(i_shader);
+		}
 	} else {
 		const VOP_Node *vop = dynamic_cast<const VOP_Node*>(
 				i_parameters );
@@ -341,7 +357,8 @@ void vop::list_shader_parameters(
 				*shader_info,
 				*parameter,
 				i_time,
-				o_list);
+				o_list,
+				is_shader_loaded);
 			continue;
 		}
 
@@ -361,7 +378,7 @@ void vop::list_shader_parameters(
 			*/
 			int input_index =
 				i_parameters->getInputFromName(parameter->name.c_str());
-			if (i_parameters->castToVOPNode()
+			if (input_index != -1 && i_parameters->castToVOPNode()
 				->findSimpleInput(input_index) == nullptr)
 			{
 				/* Check for default uv coordintes */
@@ -705,7 +722,8 @@ void vop::list_ramp_parameters(
 	const DlShaderInfo& i_shader,
 	const DlShaderInfo::Parameter& i_param,
 	float i_time,
-	NSI::ArgumentList& o_list)
+	NSI::ArgumentList& o_list,
+	bool i_is_node_loaded)
 {
 	using namespace osl_utilities::ramp;
 
@@ -741,17 +759,20 @@ void vop::list_ramp_parameters(
 	{
 		std::string index = ExpandedIndexSuffix(p);
 
-		std::string pos_item = pos_string + index;
+		std::string pos_item = i_is_node_loaded ?
+			pos_string + index : base_name + std::to_string(p+1) + "pos";
 		positions.push_back(i_opp->evalFloat(pos_item.c_str(), 0, i_time));
 
-		std::string value_item = value_string + index;
+		std::string value_item = i_is_node_loaded ?
+			value_string + index : base_name + std::to_string(p + 1) + "value";
 		unsigned nc = i_param.type.elementtype == NSITypeColor ? 3 : 1;
 		for(unsigned c = 0; c < nc; c++)
 		{
 			values.push_back(i_opp->evalFloat(value_item.c_str(), c, i_time));
 		}
 
-		std::string inter_item = inter_string + index;
+		std::string inter_item = i_is_node_loaded ?
+			inter_string + index : base_name + std::to_string(p + 1) + "interp";
 		int inter = i_opp->evalInt(inter_item.c_str(), 0, i_time);
 		interpolations.push_back(
 			FromHoudiniInterpolation((PRM_RampInterpType)inter));

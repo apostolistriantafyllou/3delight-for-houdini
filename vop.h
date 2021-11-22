@@ -154,7 +154,8 @@ private:
 		const DlShaderInfo& i_shader,
 		const DlShaderInfo::Parameter& i_param,
 		float i_time,
-		NSI::ArgumentList& o_list );
+		NSI::ArgumentList& o_list,
+		bool i_is_node_loaded = true);
 
 	static bool is_aov_definition( VOP_Node *i_vop );
 };

@@ -7,6 +7,8 @@
 #include "shader_library.h"
 #include "time_sampler.h"
 #include "vop.h"
+#include "delight.h"
+#include "osl_utilities.h"
 
 #include <VOP/VOP_Node.h>
 #include <OBJ/OBJ_Node.h>
@@ -19,6 +21,13 @@
 
 namespace
 {
+
+	NSI::DynamicAPI&
+		GetNSIAPI()
+	{
+		static NSI::DynamicAPI api;
+		return api;
+	}
 
 	/**
 		Returns the handle of the NSI "attributes" node that has a "prelit"
@@ -328,6 +337,7 @@ void light::set_attributes( void ) const
 	for(time_sampler t(m_context, *m_object, time_sampler::e_deformation); t; t++)
 	{
 		set_attributes_at_time(*t);
+		set_filter_attributes(*t);
 	}
 }
 
@@ -377,6 +387,7 @@ void light::connect( void ) const
 			prelit_attribute_node_handle(), "",
 			m_handle, "geometryattributes");
 	}
+	connect_filter();
 }
 
 /**
@@ -419,11 +430,16 @@ void light::changed_cb(
 		PRM_Parm& parm = node.m_object->getParm(parm_index);
 		std::string name = parm.getToken();
 
-		if(name == "light_enable" || name == "_3dl_light_prelit")
+		if(name == "light_enable" || name == "_3dl_light_prelit" ||
+			name == "_3dl_filters_menu")
 		{
 			node.disconnect();
 			// Will connect only if required
 			node.connect();
+			if (name == "_3dl_filters_menu")
+			{
+				node.set_filter_attributes(node.m_context.m_current_time);
+			}
 		}
 		else if(name == "light_contribprimary")
 		{
@@ -437,6 +453,10 @@ void light::changed_cb(
 			node.delete_geometry();
 			node.create_geometry();
 			node.connect();
+		}
+		else if (name == "_3dl_gobo_scale")
+		{
+			node.set_filter_attributes(node.m_context.m_current_time);
 		}
 		else
 		{
@@ -455,6 +475,7 @@ void light::disconnect()const
 	m_nsi.Disconnect(
 		prelit_attribute_node_handle(), "",
 		m_handle, "geometryattributes");
+	m_nsi.Disconnect(NSI_ALL_NODES, "filter_output", shader_handle(), "filter");
 }
 
 /*
@@ -482,7 +503,40 @@ bool light::set_single_shader_attribute(int i_parm_index)const
 
 	if(list.empty())
 	{
-		return false;
+		//Check if we are modifying filter's parameters.
+		UT_String filter_name;
+		fpreal time = m_context.m_current_time;
+
+		m_object->evalString(filter_name, "_3dl_filters_menu", 0, time);
+		if (filter_name == "none" || m_object->getParmIndex("_3dl_filters_menu") == i_parm_index)
+			return false;
+
+		// Find the directory containing the osl shaders
+		decltype(&DlGetInstallRoot) get_install_root = nullptr;
+		GetNSIAPI().LoadFunction(get_install_root, "DlGetInstallRoot");
+		std::string osl_dir;
+		if (get_install_root)
+		{
+			osl_dir = std::string(get_install_root()) + "/osl/";
+		}
+
+		std::string filter_path = osl_dir + filter_name.toStdString() + ".oso";
+		std::string filter_shader = m_handle + filter_name.toStdString() + "|shader";
+
+		vop::list_shader_parameters(
+			m_context,
+			m_vop,
+			filter_path.c_str(),
+			m_context.m_current_time, i_parm_index, list, dummy);
+		if (list.empty())
+		{
+			return false;
+		}
+		else
+		{
+			m_nsi.SetAttribute(filter_shader, list);
+			return true;
+		}
 	}
 
 	m_nsi.SetAttribute( shader_handle(), list );
@@ -496,6 +550,75 @@ void light::set_visibility_to_camera()const
 		m_object->evalInt("light_contribprimary", 0, m_context.m_current_time);
 	m_nsi.SetAttribute(
 		attributes_handle(), NSI::IntegerArg("visibility.camera", cam_vis));
+}
+
+void light::connect_filter()const
+{
+	UT_String filter_name;
+	fpreal time = m_context.m_current_time;
+
+	m_object->evalString(filter_name, "_3dl_filters_menu", 0, time);
+	if (filter_name == "none")
+		return;
+
+	std::string filter_transform = m_handle + "|" + filter_name.toStdString();
+	std::string filter_shader = m_handle + filter_name.toStdString() + "|shader";
+
+	m_nsi.Create(filter_transform, "transform");
+	m_nsi.Connect(filter_transform, "", m_handle, "objects");
+	m_nsi.Create(filter_shader, "shader");
+	m_nsi.Connect(filter_shader, "filter_output", shader_handle(), "filter");
+}
+
+void light::set_filter_attributes(double i_time) const
+{
+	UT_String filter_name;
+	fpreal time = m_context.m_current_time;
+
+	m_object->evalString(filter_name, "_3dl_filters_menu", 0, time);
+	if (filter_name == "none")
+		return;
+
+	// Find the directory containing the osl shaders
+	decltype(&DlGetInstallRoot) get_install_root = nullptr;
+	GetNSIAPI().LoadFunction(get_install_root, "DlGetInstallRoot");
+	std::string osl_dir;
+	if (get_install_root)
+	{
+		osl_dir = std::string(get_install_root()) + "/osl/";
+	}
+
+	//We don't load filters as VOP node so we have to find the path manually.
+	std::string filter_path = osl_dir + filter_name.toStdString() + ".oso";
+	std::string filter_shader = m_handle + filter_name.toStdString() + "|shader";
+
+	NSI::ArgumentList list;
+	std::string dummy;
+
+	//Get all filter parameters from the corresponding osl file.
+	vop::list_shader_parameters(
+		m_context,
+		m_vop,
+		filter_path.c_str(),
+		time, -1, list, dummy);
+
+	m_nsi.SetAttributeAtTime(
+		filter_shader, i_time, NSI::StringArg("shaderfilename", filter_path));
+
+	//scale parameter is already existent on light node, so we can't have the same name
+	//for our filter scale parameter. Instead we use another name and set it manually on NSI.
+	if (filter_name == "dlGoboFilter")
+	{
+		float scale[2] =
+		{
+			(float)m_object->evalFloat("_3dl_gobo_scale", 0, time),
+			(float)m_object->evalFloat("_3dl_gobo_scale", 1, time),
+		};
+		list.Add(NSI::Argument::New("scale")
+			->SetArrayType(NSITypeFloat, 2)
+			->CopyValue((float*)&scale[0], 2 * sizeof(float)));
+	}
+	m_nsi.SetAttributeAtTime(filter_shader, i_time, list);
 }
 
 std::string light::get_geometry_path( void ) const
