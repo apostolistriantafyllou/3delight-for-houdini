@@ -284,8 +284,8 @@ void vop::list_shader_parameters(
 	std::string path;
 
 	/*
-		This will be true when the shader we are looking into, is not a VOP node, but
-		provided only as OSL. Useful for light filters where we don't create VOP nodes.
+		This will be true when the shader we are looking into, is loaded as VOP node.
+		Useful for light filters where we don't create VOP nodes and take the whole path instead.
 	*/
 	bool is_shader_loaded = true;
 	if(i_shader)
