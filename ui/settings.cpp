@@ -80,9 +80,11 @@ const char* settings::k_aov = "aov";
 const char* settings::k_aov_clear = "aov_clear_#";
 const char* settings::k_add_layer = "add_layer";
 const char* settings::k_view_layer = "view_layer";
+const char* settings::k_multi_light_selection = "multi_light_selection";
 const char* settings::k_old_enable_multi_light = "enable_multi_light";
 const char* settings::k_light_sets = "light_sets";
 const char* settings::k_use_light_set = "use_light_set_#";
+const char* settings::k_use_rgba_only_set = "use_rgba_only_set_#";
 const char* settings::k_light_set = "light_set_#";
 const char* settings::k_speed_boost = "speed_boost";
 const char* settings::k_disable_motion_blur = "disable_motion_blur";
@@ -732,13 +734,33 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	static PRM_Name light_sets(k_light_sets, "Light Sets");
 	static PRM_Name use_light_set(k_use_light_set, "");
 	static PRM_Default use_light_set_d(false);
+	static PRM_Name use_rgba_only_set(k_use_rgba_only_set, "");
+	static PRM_Default use_rgba_only_set_d(false);
 	static PRM_Name light_set(k_light_set, "Light Set");
 	static PRM_Default light_set_d(0.0, "");
 	static PRM_Default nb_lights(1);
+
+	static PRM_Name ml_titles1("ml_titles1", "Layer Name");
+	static PRM_Name ml_titles2("ml_titles2", "");
+	static PRM_Name ml_titles3("ml_titles3", "");
+	static PRM_Name ml_titles4("ml_titles4", "RGBA only");
+
+	static PRM_Name multilight_selector(k_multi_light_selection, "Render Multi-Light");
+	static PRM_Default multilight_selector_d(0.0f, "off");
+	static PRM_Item multilight_selector_i[] =
+	{
+		PRM_Item("off", "Off"),
+		PRM_Item("all", "All"),
+		PRM_Item("selection", "Selection"),
+		PRM_Item()
+	};
+	static PRM_ChoiceList multilight_selector_c(PRM_CHOICELIST_SINGLE, multilight_selector_i);
+
 	static PRM_Template light_set_templates[] =
 	{
 		PRM_Template(PRM_TOGGLE | PRM_TYPE_LABEL_NONE | PRM_TYPE_JOIN_NEXT, 1, &use_light_set, &use_light_set_d),
-		PRM_Template(PRM_STRING | PRM_TYPE_LABEL_NONE, 1, &light_set, &light_set_d),
+		PRM_Template(PRM_STRING | PRM_TYPE_LABEL_NONE | PRM_TYPE_JOIN_NEXT, 1, &light_set, &light_set_d),
+		PRM_Template(PRM_TOGGLE | PRM_TYPE_LABEL_NONE, 1, &use_rgba_only_set, &use_rgba_only_set_d),
 		PRM_Template()
 	};
 
@@ -747,6 +769,11 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 
 	static std::vector<PRM_Template> multi_light_templates =
 	{
+		PRM_Template(PRM_ORD, 1, &multilight_selector, &multilight_selector_d, &multilight_selector_c),
+		PRM_Template(PRM_LABEL | PRM_TYPE_JOIN_NEXT, 1, &ml_titles1),
+		PRM_Template(PRM_LABEL | PRM_TYPE_JOIN_NEXT, 1, &ml_titles2),
+		PRM_Template(PRM_LABEL | PRM_TYPE_JOIN_NEXT, 1, &ml_titles3),
+		PRM_Template(PRM_LABEL, 1, &ml_titles4),
 		PRM_Template(PRM_MultiType(PRM_MULTITYPE_SCROLL | PRM_MULTITYPE_NO_CONTROL_UI), light_set_templates, k_one_line * 6.0f, &light_sets, &nb_lights),
 		PRM_Template(PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &refresh_lights, 0, 0, 0,&settings::refresh_lights_cb),
 		PRM_Template(PRM_LABEL, 1, &dummy2),
@@ -1492,15 +1519,27 @@ int settings::refresh_lights_cb(
 }
 
 void settings::GetSelectedLights(
-	std::vector<std::string>& o_light_names) const
+	std::vector<std::string>& o_light_names,
+	std::vector<bool>& o_rgba_only) const
 {
-	unsigned nb_lights = m_parameters.evalInt(k_light_sets, 0, 0.0f);
+	UT_String multilight_selection_val;
+	m_parameters.evalString(multilight_selection_val, k_multi_light_selection, 0, 0.0f);
+	if (multilight_selection_val == "off")
+	{
+		return;
+	}
 
+	unsigned nb_lights = m_parameters.evalInt(k_light_sets, 0, 0.0f);
+	
 	for (unsigned i = 0; i < nb_lights; i++)
 	{
 		const char* use_light_token = GetUseLightToken(i);
+		const char* use_rgba_only_light_token = GetUseRBBAOnlyToken(i);
 		bool selected = m_parameters.evalInt(use_light_token, 0, 0.0f);
-		if (selected)
+		bool rgba_only_selected = m_parameters.evalInt(use_rgba_only_light_token, 0, 0.0f);
+
+		//If 'all' option is selected, treat the lights as they are all selected.
+		if (selected || multilight_selection_val == "all")
 		{
 			const PRM_Parm* use_light_parm = m_parameters.getParmPtr(use_light_token);
 			assert(use_light_parm);
@@ -1510,6 +1549,7 @@ void settings::GetSelectedLights(
 			const PRM_Name* use_light_name = use_light_tmpl->getNamePtr();
 			assert(use_light_name);
 			o_light_names.push_back(use_light_name->getLabel());
+			o_rgba_only.push_back(rgba_only_selected);
 		}
 	}
 }
@@ -1577,18 +1617,20 @@ void settings::UpdateLights()
 	// remove the multi item and rebuild it! Using setLabel of an existing
 	// PRM_Name changes the internal label but not what you see on the screen!
 	UT_Map<std::string, bool> selectedLights;
+	UT_Map<std::string, bool> selectedRGBAOnlyLights;
 	for (int i = nb_lights - 1; i >= 0; i--)
 	{
 		const char* use_light_token = GetUseLightToken(i);
+		const char* use_rgba_only_light_token = GetUseRBBAOnlyToken(i);
 		bool selected = m_parameters.evalInt(use_light_token, 0, 0.0f);
-		PRM_Parm* use_light_parm = m_parameters.getParmPtr(use_light_token);
-		assert(use_light_parm);
+		bool selected_rgba_only = m_parameters.evalInt(use_rgba_only_light_token, 0, 0.0f);
 
 		const char* light_token = GetLightToken(i);
 		UT_String val;
 		m_parameters.evalString(val,light_token,0, 0, 0.0);
 		std::string str = val.toStdString();
 		selectedLights[str] = selected;
+		selectedRGBAOnlyLights[str] = selected_rgba_only;
 		light_sets_parm.removeMultiParmItem(i);
 	}
 
@@ -1603,16 +1645,25 @@ void settings::UpdateLights()
 
 		std::string light_name = it->first;
 		bool selected = false;
-		UT_Map<std::string, bool>::iterator sel_item =
-			selectedLights.find(light_name);
+		bool selected_rgba_only = false;
+		UT_Map<std::string, bool>::iterator sel_item = selectedLights.find(light_name);
+		UT_Map<std::string, bool>::iterator sel_rgba_only_item = selectedRGBAOnlyLights.find(light_name);
 		if (sel_item != selectedLights.end())
 		{
 			selected = sel_item->second;
 			selectedLights.erase(light_name);
 		}
 
+		if (sel_rgba_only_item != selectedRGBAOnlyLights.end())
+		{
+			selected_rgba_only = sel_rgba_only_item->second;
+			selectedRGBAOnlyLights.erase(light_name);
+		}
+
 		const char* use_light_token = GetUseLightToken(i);
+		const char* use_rgba_only_light_token = GetUseRBBAOnlyToken(i);
 		m_parameters.setInt(use_light_token, 0, 0.0f, (exint)selected);
+		m_parameters.setInt(use_rgba_only_light_token, 0, 0.0f, (exint)selected_rgba_only);
 
 		PRM_Parm* use_light_parm = m_parameters.getParmPtr(use_light_token);
 		assert(use_light_parm);
@@ -1623,6 +1674,7 @@ void settings::UpdateLights()
 		use_light_name->setLabel(light_name.c_str());
 	}
 	selectedLights.clear();
+	selectedRGBAOnlyLights.clear();
 }
 
 const char* settings::GetUseLightToken(int index)
@@ -1636,6 +1688,19 @@ const char* settings::GetUseLightToken(int index)
 	use_light_token += suffix;
 
 	return use_light_token.c_str();
+}
+
+const char* settings::GetUseRBBAOnlyToken(int index)
+{
+	static std::string use_rgba_only_light_token;
+	use_rgba_only_light_token = settings::k_use_rgba_only_set;
+	use_rgba_only_light_token.pop_back();
+
+	char suffix[12] = "";
+	::sprintf(suffix, "%d", index + 1);
+	use_rgba_only_light_token += suffix;
+
+	return use_rgba_only_light_token.c_str();
 }
 
 const char* settings::GetLightToken(int index)

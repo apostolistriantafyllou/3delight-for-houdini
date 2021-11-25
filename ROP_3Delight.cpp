@@ -875,11 +875,20 @@ ROP_3Delight::updateParmsFlags()
 
 	changed |= enableParm(settings::k_view_layer, false);
 
+	UT_String multilight_selection_val;
+	evalString(multilight_selection_val, settings::k_multi_light_selection, 0, 0.0f);
+	bool enable_multi_light_list = multilight_selection_val == "selection";
+
 	PRM_Parm& multilight_parm = getParm(settings::k_light_sets);
 	int multilight_size = multilight_parm.getMultiParmNumItems();
+
+	//Disable Multi-Light list if 'off' or 'selection' options are selected.
 	for (int i = 0; i < multilight_size; i++)
 	{
 		changed |= enableParm(settings::GetLightToken(i), false);
+		changed |= enableParm(settings::GetUseRBBAOnlyToken(i),
+			enable_multi_light_list && evalInt(settings::GetUseLightToken(i), 0, 0.0f));
+		changed |= enableParm(settings::GetUseLightToken(i), enable_multi_light_list);
 	}
 
 	return changed;
@@ -1175,13 +1184,18 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 	double filter_width = evalFloat(settings::k_filter_width, 0, current_time);
 
 	std::vector<std::string> light_names;
+	std::vector<bool> rgba_only;
 	light_names.push_back(""); // no light for the first one
-	m_settings.GetSelectedLights(light_names);
+	rgba_only.push_back(false);
+	m_settings.GetSelectedLights(light_names,rgba_only);
 
 	bool has_frame_buffer = false;
 	std::vector<std::string> file_layers;
 
 	std::map<std::string, std::vector<OBJ_Node*>> o_light_categories;
+	UT_String multilight_selection_val;
+	evalString(multilight_selection_val, settings::k_multi_light_selection, 0, 0.0f);
+
 	ExportLightCategories(i_ctx, o_light_categories, current_time);
 
 	for (int i = 0; i < nb_aovs; i++)
@@ -1258,10 +1272,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 		::sprintf(prefix, "%d", i+1);
 
 		unsigned nb_light_categories = 1;
-		if (desc.m_support_multilight)
-		{
-			nb_light_categories = light_names.size();
-		}
+		nb_light_categories = light_names.size();
 
 		/*
 			Some of the AOVs cannot be exported in Multi-light.
@@ -1269,6 +1280,9 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 		*/
 		for (unsigned j = 0; j < nb_light_categories; j++)
 		{
+			if (multilight_selection_val == "selection" && rgba_only[j] && desc.m_variable_name != "Ci")
+				continue;
+
 			std::string layer_name = prefix;
 			layer_name += "-";
 			layer_name += desc.m_filename_token;

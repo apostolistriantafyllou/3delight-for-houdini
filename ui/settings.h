@@ -146,9 +146,11 @@ public:
 	static const char* k_aov_clear;
 	static const char* k_add_layer;
 	static const char* k_view_layer;
+	static const char* k_multi_light_selection;
 	static const char* k_old_enable_multi_light;
 	static const char* k_light_sets;
 	static const char* k_use_light_set;
+	static const char* k_use_rgba_only_set;
 	static const char* k_light_set;
 	static const char* k_speed_boost;
 	static const char* k_disable_motion_blur;
@@ -170,13 +172,15 @@ private:
 		\brief Update UI lights from scene lights.
 	*/
 	void UpdateLights();
-	void GetSelectedLights(std::vector<std::string>& o_light_names) const;
+	void GetSelectedLights(std::vector<std::string>& o_light_names,
+						   std::vector<bool>& o_rgba_only) const;
 
 	/**
 		\brief Returns the use light's token for the specified index
 		\brief Get lights from scene lights.
 	*/
 	static const char* GetUseLightToken(int index);
+	static const char* GetUseRBBAOnlyToken(int index);
 	static const char* GetLightToken(int index);
 
 	UT_String GetAtmosphere( fpreal t ) const;
