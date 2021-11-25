@@ -1616,8 +1616,7 @@ void settings::UpdateLights()
 	// The only way I know to modify the label of a specific toggle is to
 	// remove the multi item and rebuild it! Using setLabel of an existing
 	// PRM_Name changes the internal label but not what you see on the screen!
-	UT_Map<std::string, bool> selectedLights;
-	UT_Map<std::string, bool> selectedRGBAOnlyLights;
+	UT_Map<std::string, std::pair<bool,bool>> selectedLights;
 	for (int i = nb_lights - 1; i >= 0; i--)
 	{
 		const char* use_light_token = GetUseLightToken(i);
@@ -1629,8 +1628,8 @@ void settings::UpdateLights()
 		UT_String val;
 		m_parameters.evalString(val,light_token,0, 0, 0.0);
 		std::string str = val.toStdString();
-		selectedLights[str] = selected;
-		selectedRGBAOnlyLights[str] = selected_rgba_only;
+		selectedLights[str].first = selected;
+		selectedLights[str].second = selected_rgba_only;
 		light_sets_parm.removeMultiParmItem(i);
 	}
 
@@ -1646,18 +1645,12 @@ void settings::UpdateLights()
 		std::string light_name = it->first;
 		bool selected = false;
 		bool selected_rgba_only = false;
-		UT_Map<std::string, bool>::iterator sel_item = selectedLights.find(light_name);
-		UT_Map<std::string, bool>::iterator sel_rgba_only_item = selectedRGBAOnlyLights.find(light_name);
+		UT_Map < std::string, std::pair<bool, bool> > ::iterator sel_item = selectedLights.find(light_name);
 		if (sel_item != selectedLights.end())
 		{
-			selected = sel_item->second;
+			selected = sel_item->second.first;
+			selected_rgba_only = sel_item->second.second;
 			selectedLights.erase(light_name);
-		}
-
-		if (sel_rgba_only_item != selectedRGBAOnlyLights.end())
-		{
-			selected_rgba_only = sel_rgba_only_item->second;
-			selectedRGBAOnlyLights.erase(light_name);
 		}
 
 		const char* use_light_token = GetUseLightToken(i);
@@ -1674,7 +1667,6 @@ void settings::UpdateLights()
 		use_light_name->setLabel(light_name.c_str());
 	}
 	selectedLights.clear();
-	selectedRGBAOnlyLights.clear();
 }
 
 const char* settings::GetUseLightToken(int index)
