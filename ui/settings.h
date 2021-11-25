@@ -79,11 +79,15 @@ public:
 		void* data, int index, fpreal t,
 		const PRM_Template* tplate);
 
+	static int refresh_lights_cb(
+		void* data, int index, fpreal t,
+		const PRM_Template* tplate);
+
 	UT_String GetObjectsToRender( fpreal ) const;
-	UT_String GetLightsToRender( fpreal ) const;
+	UT_String GetLightsToRender( ) const;
 	UT_String get_matte_objects( fpreal ) const;
 	UT_String get_phantom_objects(fpreal) const;
-	bool OverrideDisplayFlags( fpreal )const;
+	bool OverrideDisplayFlags( )const;
 
 public:
 
@@ -142,7 +146,12 @@ public:
 	static const char* k_aov_clear;
 	static const char* k_add_layer;
 	static const char* k_view_layer;
-	static const char* k_enable_multi_light;
+	static const char* k_multi_light_selection;
+	static const char* k_old_enable_multi_light;
+	static const char* k_light_sets;
+	static const char* k_use_light_set;
+	static const char* k_use_rgba_only_set;
+	static const char* k_light_set;
 	static const char* k_speed_boost;
 	static const char* k_disable_motion_blur;
 	static const char* k_disable_depth_of_field;
@@ -160,12 +169,21 @@ public:
 private:
 
 	/**
+		\brief Update UI lights from scene lights.
+	*/
+	void UpdateLights();
+	void GetSelectedLights(std::vector<std::string>& o_light_names,
+						   std::vector<bool>& o_rgba_only) const;
+
+	/**
+		\brief Returns the use light's token for the specified index
 		\brief Get lights from scene lights.
 	*/
-	void GetLights(std::vector<OBJ_Node*>& o_lights, fpreal t ) const;
+	static const char* GetUseLightToken(int index);
+	static const char* GetUseRBBAOnlyToken(int index);
+	static const char* GetLightToken(int index);
 
 	UT_String GetAtmosphere( fpreal t ) const;
-	bool EnableMultiLight( fpreal t )const;
 	UT_String get_render_mode( fpreal t )const;
 	bool export_to_nsi( fpreal t )const;
 
@@ -175,5 +193,6 @@ private:
 	/** ROP containing all the parameters */
 	ROP_3Delight& m_parameters;
 
+	std::vector<OBJ_Node*> m_lights;
 	static SelectLayersDialog* sm_dialog;
 };
