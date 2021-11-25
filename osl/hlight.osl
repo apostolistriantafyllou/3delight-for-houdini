@@ -28,7 +28,11 @@ surface hlight(
 	int coneenable = 0,
 	float coneangle = 45,
 	float conedelta = 10,
-	string projmap = "" [[ int texturefile = 1 ]]
+	string projmap = "" [[ int texturefile = 1 ]],
+
+	/* Light filters support. */
+	color filter = 1
+		[[ string widget = "null" ]]
 )
 {
 	Ci = 0;
@@ -122,6 +126,8 @@ surface hlight(
 	{
 		result /= sqrt(dot(I,I));
 	}
+
+	result *= filter;
 
 	if( coneenable )
 	{

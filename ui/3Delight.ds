@@ -428,6 +428,122 @@
 		SOHO_TOGGLE(_3dl_light_prelit, "Prelit", "3Delight", 0)
 	}
 
+	DELIGHT_FULL_TITLE(_3dl_filters_group, "Filters")
+
+	parm
+	{
+		SOHO_PARM(_3dl_filters_menu, "Filters", "3Delight", string, 1, "none")
+		menu
+		{
+			"none" "None"
+			"dlGoboFilter" "Gobo Filter"
+			"dlDecayFilter" "Decay Filter"
+		}
+	}
+
+	collection
+	{
+		name _3dl_decay_filter_group
+		parmtag	{ spare_category "3Delight" }
+		parm
+		{
+			SOHO_PARM(decayType, "Type", "3Delight", int, 1, 0)
+			menu
+			{
+				"0" "Distance from light"
+				"1" "Distance from light plane"
+				"2" "Angle from axis"
+				"3" "Distance from axis"
+			}
+			hidewhen "{ _3dl_filters_menu != "dlDecayFilter"}"
+		}
+
+		parm
+		{
+			SOHO_PARM(decayRangeStart, "Range Start", "3Delight", float, 1, 0)
+			hidewhen "{ _3dl_filters_menu != "dlDecayFilter"}"
+		}
+		parm
+		{
+			SOHO_PARM(decayRangeEnd, "Range End", "3Delight", float, 1, 10)
+			hidewhen "{ _3dl_filters_menu != "dlDecayFilter"}"
+		}
+
+		parm
+		{
+			SOHO_PARM(decayCurve, "Ramp", "3Delight", string, 1, 0)
+			hidewhen "{ _3dl_filters_menu != "dlDecayFilter"}"
+		}
+	}
+
+	collection
+	{
+		name _3dl_gobo_filter_group
+		parmtag	{ spare_category "3Delight" }
+		parm
+		{
+			SOHO_PARM(textureName, "Map", "3Delight", file, 1, "")
+			hidewhen "{ _3dl_filters_menu != "dlGoboFilter"}"
+		}
+
+		parm
+		{
+			SOHO_FLOAT(density, "Density", "3Delight", 1)
+			range { 0! 1 }
+			hidewhen "{ _3dl_filters_menu != "dlGoboFilter"}"
+		}
+
+		parm
+		{
+			SOHO_TOGGLE(invert, "Invert", "3Delight", 0)
+			hidewhen "{ _3dl_filters_menu != "dlGoboFilter"}"
+		}
+
+		parm
+		{
+			SOHO_PARM(_3dl_gobo_scale, "Scale", "3Delight", vector2, 2, 1.0 1.0)
+			hidewhen "{ _3dl_filters_menu != "dlGoboFilter"}"
+		}
+
+		parm
+		{
+			SOHO_PARM(offset, "Offset", "3Delight", vector2, 2, 0.0 0.0)
+			hidewhen "{ _3dl_filters_menu != "dlGoboFilter"}"
+		}
+
+		parm
+		{
+			SOHO_PARM(swrap, "S Wrap Mode", "3Delight", string, 1, "clamp")
+			menu
+			{
+				"clamp" "Clamp"
+				"black" "Black"
+				"mirror" "Mirror"
+				"periodic" "Periodic"
+			}
+			hidewhen "{ _3dl_filters_menu != "dlGoboFilter"}"
+		}
+
+		parm
+		{
+			SOHO_PARM(twrap, "T Wrap Mode", "3Delight", string, 1, "clamp")
+			menu
+			{
+				"clamp" "Clamp"
+				"black" "Black"
+				"mirror" "Mirror"
+				"periodic" "Periodic"
+			}
+			hidewhen "{ _3dl_filters_menu != "dlGoboFilter"}"
+		}
+
+		parm
+		{
+			SOHO_TOGGLE(useFilterCoordinateSystem, "Use Filter Coordinate System", "3Delight", 0)
+			hidewhen "{ _3dl_filters_menu != "dlGoboFilter"}"
+		}
+	}
+
 	DELIGHT_FULL_TITLE(_3dl_shutter, "Shutter")
 
 	collection

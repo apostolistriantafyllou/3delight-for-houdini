@@ -43,5 +43,10 @@ if ( "$arg1" != "" && ("$DELIGHT_AUTOSPAREPARAMS" !=0 || "$arg2"!="")) then
 	opproperty -f $arg1 3Delight _3dl_contributions_group
 	opproperty -f $arg1 3Delight _3dl_compositing_group_title
 	opproperty -f $arg1 3Delight _3dl_light_prelit
+	opproperty -f $arg1 3Delight _3dl_filters_group_title
+	opproperty -f $arg1 3Delight _3dl_filters_menu
+	opproperty -f $arg1 3Delight _3dl_decay_filter_group
+	opproperty -f $arg1 3Delight _3dl_gobo_filter_group
+
 
 endif
