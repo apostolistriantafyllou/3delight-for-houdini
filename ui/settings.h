@@ -84,10 +84,10 @@ public:
 		const PRM_Template* tplate);
 
 	UT_String GetObjectsToRender( fpreal ) const;
-	UT_String GetLightsToRender( ) const;
+	UT_String GetLightsToRender(fpreal) const;
 	UT_String get_matte_objects( fpreal ) const;
 	UT_String get_phantom_objects(fpreal) const;
-	bool OverrideDisplayFlags( )const;
+	bool OverrideDisplayFlags(fpreal)const;
 
 public:
 
@@ -167,6 +167,11 @@ public:
 	static const char* k_clamp_value;
 
 private:
+
+	/**
+	\brief Get lights from scene lights.
+	*/
+	void GetLights(std::vector<OBJ_Node*>& o_lights, fpreal t) const;
 
 	/**
 		\brief Update UI lights from scene lights.

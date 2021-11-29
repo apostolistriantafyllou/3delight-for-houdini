@@ -15,7 +15,7 @@ object_visibility_resolver::object_visibility_resolver(
 	m_rop_path(i_rop_path)
 {
 	UT_String lights_to_render, objects_to_render;
-	bool override_display_flags = i_settings.OverrideDisplayFlags();
+	bool override_display_flags = i_settings.OverrideDisplayFlags(i_time);
 
 	if( override_display_flags )
 	{
@@ -23,7 +23,7 @@ object_visibility_resolver::object_visibility_resolver(
 			OP_BundlePattern::allocPattern( i_settings.GetObjectsToRender(i_time) );
 
 		m_lights_to_render_pattern =
-			OP_BundlePattern::allocPattern(i_settings.GetLightsToRender());
+			OP_BundlePattern::allocPattern(i_settings.GetLightsToRender(i_time));
 	}
 
 	m_mattes_pattern =

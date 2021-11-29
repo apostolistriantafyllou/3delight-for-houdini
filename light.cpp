@@ -51,7 +51,6 @@ light::light( const context& i_ctx, OBJ_Node *i_object )
 	m_is_env_light = m_object->getParmPtr("env_map") != nullptr;
 	m_is_sky_map = m_object->getParmIndex("skymap_enable") != -1 &&
 		m_object->evalInt("skymap_enable", 0, i_ctx.m_current_time) != 0;
-
 	if( m_is_sky_map )
 		m_is_env_light = true;
 
@@ -504,9 +503,12 @@ bool light::set_single_shader_attribute(int i_parm_index)const
 	if(list.empty())
 	{
 		//Check if we are modifying filter's parameters.
+		PRM_Parm* menu = m_object->getParmPtr("_3dl_filters_menu");
+		if (!menu)
+			return false;
+
 		UT_String filter_name;
 		fpreal time = m_context.m_current_time;
-
 		m_object->evalString(filter_name, "_3dl_filters_menu", 0, time);
 		if (filter_name == "none" || m_object->getParmIndex("_3dl_filters_menu") == i_parm_index)
 			return false;
@@ -554,10 +556,12 @@ void light::set_visibility_to_camera()const
 
 void light::connect_filter()const
 {
-	UT_String filter_name;
-	fpreal time = m_context.m_current_time;
+	PRM_Parm* menu = m_object->getParmPtr("_3dl_filters_menu");
+	if (!menu)
+		return;
 
-	m_object->evalString(filter_name, "_3dl_filters_menu", 0, time);
+	UT_String filter_name;
+	m_object->evalString(filter_name, "_3dl_filters_menu", 0, m_context.m_current_time);
 	if (filter_name == "none")
 		return;
 
@@ -572,9 +576,12 @@ void light::connect_filter()const
 
 void light::set_filter_attributes(double i_time) const
 {
+	PRM_Parm* menu = m_object->getParmPtr("_3dl_filters_menu");
+	if (!menu)
+		return;
+
 	UT_String filter_name;
 	fpreal time = m_context.m_current_time;
-
 	m_object->evalString(filter_name, "_3dl_filters_menu", 0, time);
 	if (filter_name == "none")
 		return;

@@ -485,9 +485,15 @@ for node in hou.selectedNodes():
 	#Replace ':' with '-' to get the right naming for light nodes.
 	node_type = node_type.replace(":","-")
 	if not prm_group.findFolder(DELIGHT_FOLDER):
-		hou.hscript(
-               "private/"+node_type+"_OnCreated.cmd "+node.path() +" added_from_shelf"
-                )
+		hou.hscript("private/"+node_type+"_OnCreated.cmd "+node.path() +" added_from_shelf")
+		if node_type=="hlight--2.0":
+			prm_group = node.parmTemplateGroup()
+			oldParm = "decayCurve"
+			newParm = hou.RampParmTemplate("decayCurve", "Ramp", hou.rampParmType.Float)
+			newParm.setConditional(hou.parmCondType.HideWhen, "{ _3dl_filters_menu != dlDecayFilter }")
+			prm_group.replace(oldParm, newParm)
+			node.setParmTemplateGroup(prm_group)
+
 ]]></script>
   </tool>
 

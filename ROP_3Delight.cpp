@@ -1204,12 +1204,15 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 	bool has_frame_buffer = false;
 	std::vector<std::string> file_layers;
 
-	std::map<std::string, std::vector<OBJ_Node*>> o_light_categories;
+	std::map<std::string, std::vector<OBJ_Node*>> light_categories;
+	// Create a category with empty name and empty list (which means ALL lights)
+	light_categories[std::string()];
+
 	UT_String multilight_selection_val;
 	evalString(multilight_selection_val, settings::k_multi_light_selection, 0, 0.0f);
 
-	ExportLightCategories(i_ctx, o_light_categories, current_time);
-
+	//Export only the selected categories.
+	ExportLightCategories(i_ctx, light_categories, light_names, current_time);
 	for (int i = 0; i < nb_aovs; i++)
 	{
 		bool is_layer_active = evalInt(aov::getAovActiveLayerToken(i), 0, current_time);
@@ -1283,23 +1286,38 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 		char prefix[12] = "";
 		::sprintf(prefix, "%d", i+1);
 
-		unsigned nb_light_categories = 1;
-		nb_light_categories = light_names.size();
-
 		/*
 			Some of the AOVs cannot be exported in Multi-light.
 			For example, "Z"
 		*/
-		for (unsigned j = 0; j < nb_light_categories; j++)
+		std::map<std::string, std::vector<OBJ_Node*>> aov_light_categories;
+		unsigned nb_light_categories = 1;
+		if (desc.m_support_multilight)
 		{
+			aov_light_categories = light_categories;
+			nb_light_categories = light_categories.size();
+		}
+		else
+		{
+			/* Empty category = All lights */
+			aov_light_categories[std::string()];
+		}
+
+		int j = -1;
+		for (auto& category : aov_light_categories)
+		{
+			j++;
 			if (multilight_selection_val == "selection" && rgba_only[j] && desc.m_variable_name != "Ci")
 				continue;
 
 			std::string layer_name = prefix;
 			layer_name += "-";
 			layer_name += desc.m_filename_token;
-			layer_name += "-";
-			layer_name += light_names[j];
+			if (!category.first.empty())
+			{
+				layer_name += "-";
+				layer_name += category.first;
+			}
 
 			if (idisplay_output)
 			{
@@ -1321,7 +1339,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 				ExportOneOutputLayer(
 					i_ctx, layer_name, desc, scalar_format,
 					filter, filter_width,
-					screen_name, light_names[j],
+					screen_name, category.first,
 					idisplay_driver_name, idisplay_driver.toStdString(),
 					sort_key, i_ipr_camera_change);
 
@@ -1329,14 +1347,14 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 					3Delight Display's Multi-Light tool needs some information,
 					called "feedback data" to communicate back the values.
 				*/
-				ExportLayerFeedbackData( i_ctx, layer_name, light_names[j],m_settings.m_lights);
+				ExportLayerFeedbackData( i_ctx, layer_name, category.first,category.second);
 			}
 
 			if (file_output)
 			{
 				std::string file_layer_name = layer_name + "_file";
 				std::string file_output_name =
-					getImageFilenamePerAOV(image_file_name, desc.m_filename_token, light_names[j]);
+					getImageFilenamePerAOV(image_file_name, desc.m_filename_token, category.first);
 
 				//Don't create a new driver for the same filename.
 				//Could have a nicer solution rather than using vector.
@@ -1360,7 +1378,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 				ExportOneOutputLayer(
 					i_ctx, file_layer_name, desc, scalar_format,
 					filter, filter_width,
-					screen_name, light_names[j],
+					screen_name, category.first,
 					file_driver_name, file_driver.toStdString(),
 					sort_key);
 			}
@@ -1393,14 +1411,14 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 						current_time);
 
 					BuildImageUniqueName(
-						png_file_name, light_names[j],
+						png_file_name, category.first,
 						desc.m_filename_token, ".png", image_png_name);
 				}
 				else
 				{
 					//use the tokens instead.
 					image_png_name =
-						getImageFilenamePerAOV(image_file_name, desc.m_filename_token, light_names[j]);
+						getImageFilenamePerAOV(image_file_name, desc.m_filename_token, category.first);
 				}
 
 				i_ctx.m_nsi.Create(png_driver_name, "outputdriver");
@@ -1414,7 +1432,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 				ExportOneOutputLayer(
 					i_ctx, png_layer_name, desc, "uint8",
 					filter, filter_width,
-					screen_name, light_names[j],
+					screen_name, category.first,
 					png_driver_name, png_driver,
 					sort_key);
 			}
@@ -1439,7 +1457,7 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 				ExportOneOutputLayer(
 					i_ctx, jpeg_layer_name, desc, "uint8",
 					filter, filter_width,
-					screen_name, light_names[j],
+					screen_name, category.first,
 					jpeg_driver_name, jpeg_driver,
 					sort_key);
 			}
@@ -1764,16 +1782,20 @@ ROP_3Delight::BuildImageUniqueName(
 void ROP_3Delight::ExportLightCategories(
 	const context& i_ctx,
 	std::map<std::string, std::vector<OBJ_Node*>>& o_light_categories,
+	std::vector<std::string> o_sel_lights,
 	fpreal t) const
 {
-	if (m_settings.m_lights.empty())
+	std::vector<OBJ_Node*> i_lights;
+	m_settings.GetLights(i_lights, t);
+
+	if (i_lights.empty())
 		return;
 
 	OP_BundleList* blist = OPgetDirector()->getBundles();
 	assert(blist);
 	int numBundles = blist->entries();
 
-	for (auto light_source : m_settings.m_lights)
+	for (auto light_source : i_lights)
 	{
 		bool foundInBundle = false;
 		bool incand =
@@ -1787,7 +1809,10 @@ void ROP_3Delight::ExportLightCategories(
 		{
 			OP_Bundle* bundle = blist->getBundle(i);
 			assert(bundle);
-			if (bundle && bundle->contains(light_source, false))
+
+			if (bundle && bundle->contains(light_source, false)
+				&& std::find(o_sel_lights.begin(), o_sel_lights.end(), bundle->getName())
+				!= o_sel_lights.end())
 			{
 				std::string category = bundle->getName();
 
@@ -1811,6 +1836,11 @@ void ROP_3Delight::ExportLightCategories(
 			/* Make a category for this single light */
 			std::string category = light_source->getFullPath().toStdString();
 
+			if (std::find(o_sel_lights.begin(), o_sel_lights.end(), category)
+				== o_sel_lights.end())
+			{
+				continue;
+			}
 			if (category != light_handle && !incand)
 			{
 				/*

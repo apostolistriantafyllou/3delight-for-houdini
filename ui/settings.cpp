@@ -1562,8 +1562,8 @@ void settings::UpdateLights()
 
 	m_lights.clear();
 	auto pattern =
-		OverrideDisplayFlags()
-		? OP_BundlePattern::allocPattern(GetLightsToRender())
+		OverrideDisplayFlags(0.0f)
+		? OP_BundlePattern::allocPattern(GetLightsToRender(0.0f))
 		: nullptr;
 
 	scene::find_lights(
@@ -1708,6 +1708,25 @@ const char* settings::GetLightToken(int index)
 	return light_token.c_str();
 }
 
+void settings::GetLights(
+	std::vector<OBJ_Node*>& o_lights,
+	fpreal t) const
+{
+	auto pattern =
+		OverrideDisplayFlags(t)
+		? OP_BundlePattern::allocPattern(GetLightsToRender(t))
+		: nullptr;
+
+	scene::find_lights(
+		pattern,
+		m_parameters.getFullPath().c_str(), true, o_lights);
+
+	if (pattern)
+	{
+		OP_BundlePattern::freePattern(pattern);
+	}
+}
+
 UT_String settings::GetAtmosphere( fpreal t) const
 {
 	UT_String atmosphere;
@@ -1715,10 +1734,10 @@ UT_String settings::GetAtmosphere( fpreal t) const
 	return atmosphere;
 }
 
-bool settings::OverrideDisplayFlags( )const
+bool settings::OverrideDisplayFlags(fpreal t)const
 {
 	return (m_parameters.m_rop_type != rop_type::viewport
-			&& m_parameters.evalInt(settings::k_override_display_flags, 0, 0.0f) != 0);
+			&& m_parameters.evalInt(settings::k_override_display_flags, 0, t) != 0);
 }
 
 UT_String settings::GetObjectsToRender( fpreal t ) const
@@ -1729,7 +1748,7 @@ UT_String settings::GetObjectsToRender( fpreal t ) const
 }
 
 
-UT_String settings::GetLightsToRender() const
+UT_String settings::GetLightsToRender(fpreal t) const
 {
 	UT_String lights_pattern("*");
 	/*
@@ -1739,7 +1758,7 @@ UT_String settings::GetLightsToRender() const
 	*/
 	if (m_parameters.m_rop_type != rop_type::stand_in)
 	{
-		m_parameters.evalString(lights_pattern, settings::k_lights_to_render, 0, 0.0f);
+		m_parameters.evalString(lights_pattern, settings::k_lights_to_render, 0, t);
 	}
 	return lights_pattern;
 }
