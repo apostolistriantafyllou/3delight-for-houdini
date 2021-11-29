@@ -194,6 +194,7 @@ private:
 	void ExportLightCategories(
 		const context& i_ctx,
 		std::map<std::string, std::vector<OBJ_Node*>>& o_light_categories,
+		std::vector<std::string> o_selected_light_names,
 		fpreal t) const;
 
 	/**
