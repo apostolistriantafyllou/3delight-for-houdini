@@ -564,13 +564,26 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 	*/
 
 	m_static_nsi_file.clear();
-	if(m_current_render->m_export_nsi && m_current_render->m_rop_type != rop_type::stand_in)
+	if(m_current_render->m_export_nsi &&
+		m_current_render->m_rop_type != rop_type::stand_in)
 	{
 		std::string first_frame =
 			GetNSIExportFilename( m_current_render->m_start_time );
 		if(first_frame != k_stdout)
 		{
-			m_static_nsi_file = first_frame + ".static";
+			/*
+				Add ".static" in the file name, but try to preserve its
+				extension. This also works for ".nsia", which is important.
+			*/
+			std::string extension;
+			unsigned extension_index = first_frame.rfind(".nsi");
+			if(extension_index != std::string::npos)
+			{
+				extension = first_frame.substr(extension_index);
+				first_frame.resize(extension_index);
+			}
+
+			m_static_nsi_file = first_frame + ".static" + extension;
 		}
 	}
 	else if(m_renderdl)
