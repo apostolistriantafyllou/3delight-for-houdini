@@ -1594,7 +1594,7 @@ ROP_3Delight::ExportOneOutputLayer(
 	unsigned cryptomatte_layers = 0;
 	if(i_desc.m_variable_name.substr(0, 3) == "id." &&
 		i_desc.m_variable_source == "builtin" &&
-		i_driver_name == "exr")
+		(i_driver_name == "exr" || i_driver_name == "dwaaexr"))
 	{
 		cryptomatte_layers = 2;
 	}

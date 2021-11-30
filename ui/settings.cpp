@@ -540,6 +540,7 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 		PRM_Item("tiff", "TIFF"),
 		PRM_Item("exr", "OpenEXR"),
 		PRM_Item("deepexr", "OpenEXR (deep)"),
+		PRM_Item("dwaaexr", "OpenEXR (DWAA)"),
 		PRM_Item("png", "PNG"),
 		PRM_Item(),
 	};
@@ -1339,10 +1340,11 @@ int settings::image_format_cb(
 	UT_String image_filaname;
 	/*
 		Since we are dealing with UI stuff only (including extension modification),
-		we can simply consider image format as exr when deepexr is selected, as it
-		only affects drivername.
+		we can simply consider image format as exr when deepexr or dwaaexr is
+		selected, as it only affects drivername.
 	*/
-	if(image_format == "deepexr")
+
+	if(image_format == "deepexr" || image_format == "dwaaexr")
 		image_format = "exr";
 	node->evalStringRaw(image_filaname, k_default_image_filename, 0, t);
 	if (::strcmp(image_filaname.fileExtension(),".<ext>")!=0)
