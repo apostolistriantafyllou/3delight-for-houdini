@@ -576,7 +576,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 				extension. This also works for ".nsia", which is important.
 			*/
 			std::string extension;
-			unsigned extension_index = first_frame.rfind(".nsi");
+			std::string::size_type extension_index = first_frame.rfind(".nsi");
 			if(extension_index != std::string::npos)
 			{
 				extension = first_frame.substr(extension_index);
