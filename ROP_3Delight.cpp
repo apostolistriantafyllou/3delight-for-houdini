@@ -639,6 +639,8 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 			argList.Add( new NSI::CStringPArg( "software", "HOUDINI" ) );
 
 
+		argList.Add( new NSI::IntegerArg( "readpreferences", 1  ) );
+
 		// Render directly from the current process
 		m_nsi.Begin( argList );
 	}
