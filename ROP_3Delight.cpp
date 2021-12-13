@@ -1629,7 +1629,6 @@ ROP_3Delight::ExportOneOutputLayer(
 			i_layer_handle,
 			(
 				NSI::StringArg( "layertype", "color" ),
-				NSI::StringArg( "scalarformat", "float" ),
 				NSI::IntegerArg( "withalpha", 0 ),
 				NSI::StringArg( "filter", "cryptomatteheader" )
 			) );
