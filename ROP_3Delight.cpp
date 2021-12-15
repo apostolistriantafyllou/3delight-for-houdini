@@ -889,7 +889,6 @@ ROP_3Delight::updateParmsFlags()
 		setVisibleState("take", false);
 		return changed;
 	}
-	m_settings.UpdateLights();
 
 	PRM_Parm& parm = getParm(settings::k_aov);
 	int size = parm.getMultiParmNumItems();
