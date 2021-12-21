@@ -1347,7 +1347,7 @@ int settings::image_format_cb(
 	if(image_format == "deepexr" || image_format == "dwaaexr")
 		image_format = "exr";
 	node->evalStringRaw(image_filaname, k_default_image_filename, 0, t);
-	if (::strcmp(image_filaname.fileExtension(),".<ext>")!=0)
+	if (!image_filaname.fileExtension() || ::strcmp(image_filaname.fileExtension(),".<ext>")!=0)
 	{
 		image_filaname = image_filaname.replaceExtension(image_format);
 
