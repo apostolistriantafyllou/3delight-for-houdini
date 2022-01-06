@@ -412,6 +412,13 @@ void camera::set_attributes( void ) const
 		int(::roundf(cam->RESY(t)*scale))
 	};
 
+	//Get user specified resolution overrider.
+	if (scale == -1)
+	{
+		default_resolution[0] = m_context.m_rop->evalInt(settings::k_resolution_override_value, 0, t);
+		default_resolution[1] = m_context.m_rop->evalInt(settings::k_resolution_override_value, 1, t);
+	}
+
 	m_nsi.SetAttribute(
 		screen_handle(),
 		(
