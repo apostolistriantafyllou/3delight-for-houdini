@@ -30,6 +30,10 @@ private:
 	void export_creases(
 		GT_DataArrayHandle i_indices, int *i_nvertices, size_t i_n ) const;
 
+	void generate_uv_connectivity(
+		const GT_Primitive &i_primitive,
+		NSI::ArgumentList &io_mesh_args) const;
+
 private:
 	bool m_is_subdiv{false};
 };

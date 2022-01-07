@@ -8,6 +8,8 @@
 #include <OBJ/OBJ_Node.h>
 #include <nsi.hpp>
 
+#include <map>
+#include <tuple>
 #include <type_traits>
 
 polygonmesh::polygonmesh(
@@ -84,6 +86,7 @@ void polygonmesh::set_attributes( void ) const
 	{
 		mesh_args.Add(
 			new NSI::StringArg("subdivision.scheme", "catmull-clark") );
+		generate_uv_connectivity(*polygon_mesh, mesh_args);
 	}
 
 	// Retrieve a context that might redirect the attributes to a shared file
@@ -250,5 +253,45 @@ void polygonmesh::export_creases(
 			->SetValuePointer( &crease_sharpness[0] ) );
 
 		nsi.SetAttribute( m_handle, mesh_args );
+	}
+}
+
+/**
+	Generate connectivity for uv coordinates which is needed for proper
+	interpolation on subdivision surfaces. Houdini does not track this natively
+	so we have to make it up from the values.
+
+	Note that "uv" was exported as "st" by exporter::export_attributes.
+
+	For now, to keep the code simple, we don't bother writing a shorter version
+	of that attribute without the duplicate values.
+*/
+void polygonmesh::generate_uv_connectivity(
+	const GT_Primitive &i_primitive,
+	NSI::ArgumentList &io_mesh_args) const
+{
+	GT_Owner owner;
+	GT_DataArrayHandle data = i_primitive.findAttribute("uv", owner, 0);
+	if( !data || !data->entries() || owner != GT_OWNER_VERTEX )
+		return;
+	if( data->getTypeInfo() != GT_TYPE_TEXTURE )
+		return;
+	GT_Size n = data->entries();
+	NSI::Argument *index_arg = new NSI::Argument("st.indices");
+	index_arg->SetCount(n);
+	index_arg->SetType(NSITypeInteger);
+	unsigned *index_buffer = reinterpret_cast<unsigned*>(
+		index_arg->AllocValue(sizeof(unsigned) * n));
+	io_mesh_args.Add(index_arg);
+
+	GT_DataArrayHandle buffer;
+	const float *uv_data = data->getF32Array(buffer);
+	typedef std::tuple<float, float, float> uv_t;
+	std::map<uv_t, unsigned> uv_map;
+	for( GT_Size i = 0; i < n; ++i )
+	{
+		index_buffer[i] = uv_map.emplace(
+			uv_t{uv_data[i*3+0], uv_data[i*3+1], uv_data[i*3+2]}, i)
+			.first->second;
 	}
 }
