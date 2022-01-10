@@ -291,7 +291,7 @@ void polygonmesh::generate_uv_connectivity(
 	for( GT_Size i = 0; i < n; ++i )
 	{
 		index_buffer[i] = uv_map.emplace(
-			uv_t{uv_data[i*3+0], uv_data[i*3+1], uv_data[i*3+2]}, i)
+			uv_t{uv_data[i*3+0], uv_data[i*3+1], uv_data[i*3+2]}, unsigned(i))
 			.first->second;
 	}
 }
