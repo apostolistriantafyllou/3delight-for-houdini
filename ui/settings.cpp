@@ -58,6 +58,7 @@ const char* settings::k_max_refraction_depth = "max_refraction_depth";
 const char* settings::k_max_hair_depth = "max_hair_depth";
 const char* settings::k_max_distance = "max_distance";
 const char* settings::k_camera = "camera";
+const char* settings::k_override_camera_resolution = "override_camera_resolution";
 const char* settings::k_atmosphere = "atmosphere";
 const char* settings::k_override_display_flags = "override_display_flags";
 const char* settings::k_objects_to_render = "objects_to_render";
@@ -94,7 +95,9 @@ const char* settings::k_disable_subsurface = "disable_subsurface";
 const char* settings::k_disable_atmosphere = "disable_atmosphere";
 const char* settings::k_disable_multiple_scattering = "disable_multiple_scattering";
 const char* settings::k_disable_extra_image_layers = "disable_extra_image_layers";
-const char* settings::k_resolution_factor = "resolution_factor";
+const char* settings::k_resolution_factor_override = "resolution_factor_override";
+const char* settings::k_resolution_override_value = "resolution_override_value";
+const char* settings::k_resolution_factor_speed_boost = "resolution_factor";
 const char* settings::k_sampling_factor = "sampling_factor";
 const char* settings::k_default_export_nsi_filename = "default_export_nsi_filename";
 const char* settings::k_enable_clamp = "enable_clamp";
@@ -461,6 +464,38 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	static PRM_Name camera(k_camera, "Camera");
 	static PRM_Default camera_d(0.0f, "/obj/cam1");
 
+	static PRM_Name override_camera_resolution(k_override_camera_resolution, "Override Camera Resolution");
+	static PRM_Default override_camera_resolution_d(false);
+	static PRM_Conditional override_camera_resolution_h(("{ " + std::string(k_override_camera_resolution) + " == 0 }").c_str(),PRM_CONDTYPE_HIDE);
+
+	/*
+		Show user specified resolution if Override Camera Resolution is enabled, and
+		enable it only if User Specified Resolution is selected from Resolution Scale.
+	*/
+	static PRM_Name resolution_override(k_resolution_override_value, "Resolution");
+	static PRM_Default resolution_override_d[2] = { 1280, 720 };
+	static PRM_Conditional resolution_override_disable(("{ " + std::string(k_resolution_factor_override) + " != 0 }").c_str(), PRM_CONDTYPE_DISABLE);
+	static PRM_ConditionalGroup resolution_override_cond;
+	resolution_override_cond.addConditional(override_camera_resolution_h);
+	resolution_override_cond.addConditional(resolution_override_disable);
+
+	static PRM_Name resolution_factor(k_resolution_factor_override, "Resolution Scale");
+	static PRM_Default resolution_factor_d(1);
+	static PRM_Item resolution_factor_i[] =
+	{
+		PRM_Item("1/8", "1/8 (One Eighth Resolution)"),
+		PRM_Item("1/4", "1/4 (Quarter Resolution)"),
+		PRM_Item("1/3", "1/3 (One Third Resolution)"),
+		PRM_Item("1/2", "1/2 (Half Resolution)"),
+		PRM_Item("2/3", "2/3 (Two Thirds Resolution)"),
+		PRM_Item("3/4", "3/4 (Three Quarter Resolution)"),
+		PRM_Item("1.5", "1.5 (One and a Half Resolution)"),
+		PRM_Item("2.0", "2.0 (Double Resolution)"),
+		PRM_Item("0", "User Specified Resolution"),
+		PRM_Item(),
+	};
+	static PRM_ChoiceList resolution_factor_c(PRM_CHOICELIST_SINGLE, resolution_factor_i);
+
 	static PRM_Name atmosphere(k_atmosphere, "Atmosphere");
 	static PRM_Default atmosphere_d(0.0f, "");
 
@@ -482,7 +517,6 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 
 	static std::vector<PRM_Template> scene_elements_templates =
 	{
-		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &camera, &camera_d, nullptr, nullptr, nullptr, &PRM_SpareData::objCameraPath),
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &atmosphere, &atmosphere_d, nullptr, nullptr, nullptr),
 		PRM_Template(PRM_TOGGLE, 1, &override_display_flags, &override_display_flags_d),
 		PRM_Template(PRM_STRING_OPLIST, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &objects_to_render, &objects_to_render_d, nullptr, nullptr, nullptr, &PRM_SpareData::objGeometryPath, 1, nullptr, &override_display_flags_g),
@@ -495,6 +529,14 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 			PRM_STRING_OPLIST, PRM_TYPE_DYNAMIC_PATH_LIST, 1, &matte_objects,
 			&matte_objects_d, nullptr, nullptr, nullptr,
 			&PRM_SpareData::objGeometryPath, 1, nullptr, nullptr)
+	};
+
+	static std::vector<PRM_Template> camera_templates =
+	{
+		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &camera, &camera_d, nullptr, nullptr, nullptr, &PRM_SpareData::objCameraPath),
+		PRM_Template(PRM_TOGGLE, 1, &override_camera_resolution, &override_camera_resolution_d),
+		PRM_Template(PRM_ORD, 1, &resolution_factor, &resolution_factor_d, &resolution_factor_c, 0, nullptr, nullptr, 1, nullptr, &override_camera_resolution_h),
+		PRM_Template(PRM_INT, 2, &resolution_override, resolution_override_d,nullptr, 0, nullptr, nullptr, 1, nullptr, &resolution_override_cond),
 	};
 
 	static std::vector<PRM_Template> viewport_actions
@@ -813,9 +855,9 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	static PRM_Name disable_extra_layers(k_disable_extra_image_layers, "Disable extra Image Layers");
 	static PRM_Default disable_extra_layers_d(false);
 
-	static PRM_Name resolution_factor(k_resolution_factor, "Resolution");
-	static PRM_Default resolution_factor_d(1);
-	static PRM_Item resolution_factor_i[] =
+	static PRM_Name resolution_factor_speed_boost(k_resolution_factor_speed_boost, "Resolution");
+	static PRM_Default resolution_factor_speed_boost_d(1);
+	static PRM_Item resolution_factor_speed_boost_i[] =
 	{
 		PRM_Item("1", "Full"),
 		PRM_Item("1/2", "Half"),
@@ -823,13 +865,14 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 		PRM_Item("1/8", "Eighth"),
 		PRM_Item(),
 	};
-	static PRM_ChoiceList resolution_factor_c(PRM_CHOICELIST_SINGLE, resolution_factor_i);
+	static PRM_ChoiceList resolution_factor_speed_boost_c(PRM_CHOICELIST_SINGLE, resolution_factor_speed_boost_i);
 
 	static PRM_Name sampling_factor(k_sampling_factor, "Sampling");
 	static PRM_Default sampling_factor_d( 2 );
 	static PRM_Item sampling_factor_i[] =
 	{
 		PRM_Item("1.00", "100%"),
+		PRM_Item("0.50", "  50%"),
 		PRM_Item("0.25", "  25%"),
 		PRM_Item("0.10", "  10%"),
 		PRM_Item("0.04", "    4%"),
@@ -850,7 +893,8 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 		PRM_Template(PRM_TOGGLE, 1, &disable_multiscatter, &disable_multiscatter_d, 0, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
 		PRM_Template(PRM_TOGGLE, 1, &disable_extra_layers, &disable_extra_layers_d, 0, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
 		PRM_Template(PRM_SEPARATOR, 0, &separator6),
-		PRM_Template(PRM_ORD, 1, &resolution_factor, &resolution_factor_d, &resolution_factor_c, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
+		PRM_Template(PRM_ORD, 1, &resolution_factor_speed_boost, &resolution_factor_speed_boost_d,
+								 &resolution_factor_speed_boost_c, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
 		PRM_Template(PRM_ORD, 1, &sampling_factor, &sampling_factor_d, &sampling_factor_c, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
 	};
 
@@ -1041,6 +1085,12 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 		}
 		else
 		{
+			// Insert Camera
+			templates.insert(
+				templates.end(),
+				camera_templates.begin(),
+				camera_templates.end());
+
 			templates.push_back(
 				PRM_Template(
 					PRM_SWITCHER,

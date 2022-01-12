@@ -124,6 +124,7 @@ public:
 	static const char* k_max_hair_depth;
 	static const char* k_max_distance;
 	static const char* k_camera;
+	static const char* k_override_camera_resolution;
 	static const char* k_atmosphere;
 	static const char* k_override_display_flags;
 	static const char* k_objects_to_render;
@@ -160,7 +161,9 @@ public:
 	static const char* k_disable_atmosphere;
 	static const char* k_disable_multiple_scattering;
 	static const char* k_disable_extra_image_layers;
-	static const char* k_resolution_factor;
+	static const char* k_resolution_factor_override;
+	static const char* k_resolution_override_value;
+	static const char* k_resolution_factor_speed_boost;
 	static const char* k_sampling_factor;
 	static const char* k_default_export_nsi_filename;
 	static const char* k_enable_clamp;

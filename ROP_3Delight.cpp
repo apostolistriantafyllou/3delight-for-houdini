@@ -1928,15 +1928,37 @@ ROP_3Delight::GetResolutionFactor()const
 {
 	fpreal t = m_current_render->m_current_time;
 
-	if(!HasSpeedBoost(t))
+	if(!evalInt(settings::k_override_camera_resolution, 0, t))
 	{
 		return 1.0f;
 	}
 
-	int resolution_factor = evalInt(settings::k_resolution_factor, 0, t);
+	int resolution_factor = evalInt(settings::k_resolution_factor_override, 0, t);
 
-	float factors[] = { 1.0f, 0.5f, 0.25f, 0.125f };
+	//-1 factor stands for user specified resolution.
+	float factors[] = { 0.125f, 0.25f, 1.0f/3.0f, 0.5f, 2.0f/3.0f, 0.75f, 1.5f, 2.0f, -1 };
 	if(resolution_factor < 0 ||
+		resolution_factor >= sizeof(factors) / sizeof(factors[0]))
+	{
+		return 1.0f;
+	}
+
+	return factors[resolution_factor];
+}
+
+float
+ROP_3Delight::GetSpeedBoostResolutionFactor()const
+{
+	fpreal t = m_current_render->m_current_time;
+
+	if (!HasSpeedBoost(t))
+	{
+		return 1.0f;
+	}
+
+	int resolution_factor = evalInt(settings::k_resolution_factor_speed_boost, 0, t);
+	float factors[] = { 1.0f, 0.5f, 0.25f, 0.125f };
+	if (resolution_factor < 0 ||
 		resolution_factor >= sizeof(factors) / sizeof(factors[0]))
 	{
 		return 1.0f;
@@ -1956,7 +1978,7 @@ ROP_3Delight::GetSamplingFactor()const
 
 	int sampling_factor = evalInt(settings::k_sampling_factor, 0, t);
 
-	float factors[] = { 1.0f, 0.25f, 0.1f, 0.04f, 0.01f };
+	float factors[] = { 1.0f, 0.5f, 0.25f, 0.1f, 0.04f, 0.01f };
 	if(sampling_factor < 0 ||
 		sampling_factor >= sizeof(factors) / sizeof(factors[0]))
 	{

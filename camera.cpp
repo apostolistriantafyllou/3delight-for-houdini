@@ -406,11 +406,22 @@ void camera::set_attributes( void ) const
 
 	fpreal t = m_context.m_current_time;
 	float scale = m_context.m_rop->GetResolutionFactor();
+	float speed_boost_scale = m_context.m_rop->GetSpeedBoostResolutionFactor();
+
 	int default_resolution[2] =
 	{
-		int(::roundf(cam->RESX(t)*scale)),
-		int(::roundf(cam->RESY(t)*scale))
+		int(::roundf(cam->RESX(t)*scale*speed_boost_scale)),
+		int(::roundf(cam->RESY(t)*scale*speed_boost_scale))
 	};
+
+	//Get user specified resolution overrider.
+	if (scale == -1)
+	{
+		default_resolution[0] =
+			m_context.m_rop->evalInt(settings::k_resolution_override_value, 0, t) * speed_boost_scale;
+		default_resolution[1] =
+			m_context.m_rop->evalInt(settings::k_resolution_override_value, 1, t) * speed_boost_scale;
+	}
 
 	m_nsi.SetAttribute(
 		screen_handle(),
