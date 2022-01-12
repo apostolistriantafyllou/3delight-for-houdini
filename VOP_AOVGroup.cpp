@@ -4,6 +4,10 @@
 #include <VOP/VOP_Operator.h>
 #include "VOP_AOVGroup.h"
 
+const char* VOP_AOVGroup::k_diffuse_visibility = "visible_in_diffuse";
+const char* VOP_AOVGroup::k_reflection_visibility = "visible_in_reflections";
+const char* VOP_AOVGroup::k_refraction_visibility = "visible_in_refractions";
+
 void
 VOP_AOVGroup::Register(OP_OperatorTable* table)
 {
@@ -23,46 +27,51 @@ static PRM_Name AOVInputs("aovs", "AOVs");
 static PRM_Name AOVInputName("input_aov#", "AOV Name #");
 static PRM_Default AOVInputDefault(0, "aov#");
 
-static std::vector<PRM_Template>
-vopPlugInpTemplate =
+PRM_Template* VOP_AOVGroup::GetTemplates()
 {
-    PRM_Template(PRM_ALPHASTRING, 1, &AOVInputName, &AOVInputDefault),
-    PRM_Template()
-};
+    static std::vector<PRM_Template> vopPlugInpTemplate =
+    {
+        PRM_Template(PRM_ALPHASTRING, 1, &AOVInputName, &AOVInputDefault),
+        PRM_Template()
+    };
 
-static PRM_Name difuse_visibility("visible_in_diffuse", "Visible in Diffuse");
-static PRM_Default difuse_visibility_d(true);
-static PRM_Name reflection_visibility("visible_in_reflections", "Visible in Reflection");
-static PRM_Default reflection_visibility_d(true);
-static PRM_Name refraction_visibility("visible_in_refractions", "Visible in Refraction");
-static PRM_Default refraction_visibility_d(true);
+    static PRM_Name difuse_visibility(k_diffuse_visibility, "Visible in Diffuse");
+    static PRM_Default difuse_visibility_d(true);
+    static PRM_Name reflection_visibility(k_reflection_visibility, "Visible in Reflection");
+    static PRM_Default reflection_visibility_d(true);
+    static PRM_Name refraction_visibility(k_refraction_visibility, "Visible in Refraction");
+    static PRM_Default refraction_visibility_d(true);
 
-static std::vector<PRM_Template>
-visibilityTab =
-{
-    PRM_Template(),
-    PRM_Template(PRM_TOGGLE, 1, &difuse_visibility, &difuse_visibility_d),
-    PRM_Template(PRM_TOGGLE, 1, &reflection_visibility, &reflection_visibility_d),
-    PRM_Template(PRM_TOGGLE, 1, &refraction_visibility, &refraction_visibility_d),
-};
+    static std::vector<PRM_Template> visibilityTab =
+    {
+        PRM_Template(),
+        PRM_Template(PRM_TOGGLE, 1, &difuse_visibility, &difuse_visibility_d),
+        PRM_Template(PRM_TOGGLE, 1, &reflection_visibility, &reflection_visibility_d),
+        PRM_Template(PRM_TOGGLE, 1, &refraction_visibility, &refraction_visibility_d),
+    };
 
-static PRM_Name tabs_name("tabs");
-static std::vector<PRM_Default> main_tabs =
-{
-    PRM_Default(vopPlugInpTemplate.size()-1, "Main"),
-    PRM_Default(3, "Visibility"),
-};
+    static PRM_Name tabs_name("tabs");
+    static std::vector<PRM_Default> main_tabs =
+    {
+        PRM_Default(vopPlugInpTemplate.size() - 1, "Main"),
+        PRM_Default(visibilityTab.size() - 1, "Visibility"),
+    };
 
-PRM_Template VOP_AOVGroup::myTemplateList[] =
-{
-    PRM_Template(PRM_SWITCHER, main_tabs.size(), &tabs_name, &main_tabs[0]),
-    PRM_Template(PRM_MULTITYPE_LIST, &vopPlugInpTemplate[0], 0, &AOVInputs,
-                 0, 0, &PRM_SpareData::multiStartOffsetZero),
-    PRM_Template(PRM_TOGGLE, 1, &difuse_visibility, &difuse_visibility_d),
-    PRM_Template(PRM_TOGGLE, 1, &reflection_visibility, &reflection_visibility_d),
-    PRM_Template(PRM_TOGGLE, 1, &refraction_visibility, &refraction_visibility_d),
-    PRM_Template()
-};
+
+    static PRM_Template myTemplateList[] =
+    {
+        PRM_Template(PRM_SWITCHER, main_tabs.size(), &tabs_name, &main_tabs[0]),
+        PRM_Template(PRM_MULTITYPE_LIST, &vopPlugInpTemplate[0], 0, &AOVInputs,
+                     0, 0, &PRM_SpareData::multiStartOffsetZero),
+        PRM_Template(PRM_TOGGLE, 1, &difuse_visibility, &difuse_visibility_d),
+        PRM_Template(PRM_TOGGLE, 1, &reflection_visibility, &reflection_visibility_d),
+        PRM_Template(PRM_TOGGLE, 1, &refraction_visibility, &refraction_visibility_d),
+        PRM_Template()
+    };
+
+    return myTemplateList;
+}
+
 VOP_AOVGroup::VOP_AOVGroup(OP_Network* parent, const char* name, VOP_AOVGroupOperator* entry)
     : VOP_Node(parent, name, entry)
 {
@@ -73,7 +82,6 @@ VOP_AOVGroup::~VOP_AOVGroup()
 bool
 VOP_AOVGroup::updateParmsFlags()
 {
-
     return true;
 }
 
@@ -233,7 +241,7 @@ VOP_AOVGroupOperator::VOP_AOVGroupOperator()
             "dlAOVGroup",
             "AOV Group",
             VOP_AOVGroup::alloc,
-            VOP_AOVGroup::myTemplateList,
+            VOP_AOVGroup::GetTemplates(),
             VOP_AOVGroup::theChildTableName,
             0,
             VOP_VARIABLE_INOUT_MAX,

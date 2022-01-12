@@ -1,6 +1,7 @@
 #pragma once
 
 #include <VOP/VOP_Node.h>
+#include <VOP/VOP_Operator.h>
 
 struct VOP_AOVGroupOperator;
 
@@ -15,7 +16,7 @@ public:
     static OP_Node* alloc(OP_Network* net, const char* name, OP_Operator* entry);
 
     /// Returns the templates for the shader's parameters
-    static PRM_Template myTemplateList[];
+    static PRM_Template* GetTemplates();
 
     /* 
         Disable our parameters based on which inputs are connected. 
@@ -38,6 +39,12 @@ public:
 
     //Updates label when it is empty or duplicated.
     void UpdateLabelNaming(void* data);
+
+public:
+    static const char* k_diffuse_visibility;
+    static const char* k_refraction_visibility;
+    static const char* k_reflection_visibility;
+
 protected:
 
     ///Constructor
