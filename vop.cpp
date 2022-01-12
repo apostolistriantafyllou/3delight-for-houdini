@@ -6,6 +6,7 @@
 #include "scene.h"
 #include "shader_library.h"
 #include "geometry.h"
+#include "VOP_AOVGroup.h"
 
 #include <VOP/VOP_Node.h>
 #include <OP/OP_Input.h>
@@ -622,9 +623,9 @@ void vop::add_and_connect_aov_group() const
 			aov_values.push_back(0.0f);
 		}
 
-		int diffuse_visibility = aovGroupNode->evalInt("visible_in_diffuse", 0, m_context.m_current_time);
-		int reflection_visibility = aovGroupNode->evalInt("visible_in_reflections", 0, m_context.m_current_time);
-		int refraction_visibility = aovGroupNode->evalInt("visible_in_refractions", 0, m_context.m_current_time);
+		int diffuse_visibility = aovGroupNode->evalInt(VOP_AOVGroup::k_diffuse_visibility, 0, m_context.m_current_time);
+		int reflection_visibility = aovGroupNode->evalInt(VOP_AOVGroup::k_reflection_visibility, 0, m_context.m_current_time);
+		int refraction_visibility = aovGroupNode->evalInt(VOP_AOVGroup::k_refraction_visibility, 0, m_context.m_current_time);
 
 		NSI::ArgumentList list;
 
@@ -636,17 +637,17 @@ void vop::add_and_connect_aov_group() const
 			->SetArrayType( NSITypeColor, aov_values.size() / 3 )
 			->CopyValue(&aov_values[0], aov_values.size()*sizeof(aov_values[0])));
 
-		list.Add(NSI::Argument::New("visible_in_diffuse")
+		list.Add(NSI::Argument::New(VOP_AOVGroup::k_diffuse_visibility)
 			->SetType(NSITypeInteger)
 			->SetCount(1)
 			->SetValuePointer(&diffuse_visibility));
 
-		list.Add(NSI::Argument::New("visible_in_reflections")
+		list.Add(NSI::Argument::New(VOP_AOVGroup::k_reflection_visibility)
 			->SetType(NSITypeInteger)
 			->SetCount(1)
 			->SetValuePointer(&reflection_visibility));
 
-		list.Add(NSI::Argument::New("visible_in_refractions")
+		list.Add(NSI::Argument::New(VOP_AOVGroup::k_refraction_visibility)
 			->SetType(NSITypeInteger)
 			->SetCount(1)
 			->SetValuePointer(&refraction_visibility));
