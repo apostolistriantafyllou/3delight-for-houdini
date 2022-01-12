@@ -22,17 +22,45 @@ VOP_AOVGroup::alloc(OP_Network* net, const char* name, OP_Operator* entry)
 static PRM_Name AOVInputs("aovs", "AOVs");
 static PRM_Name AOVInputName("input_aov#", "AOV Name #");
 static PRM_Default AOVInputDefault(0, "aov#");
-static PRM_Template
-vopPlugInpTemplate[] =
+
+static std::vector<PRM_Template>
+vopPlugInpTemplate =
 {
     PRM_Template(PRM_ALPHASTRING, 1, &AOVInputName, &AOVInputDefault),
     PRM_Template()
 };
 
+static PRM_Name difuse_visibility("visible_in_diffuse", "Visible in Diffuse");
+static PRM_Default difuse_visibility_d(true);
+static PRM_Name reflection_visibility("visible_in_reflections", "Visible in Reflection");
+static PRM_Default reflection_visibility_d(true);
+static PRM_Name refraction_visibility("visible_in_refractions", "Visible in Refraction");
+static PRM_Default refraction_visibility_d(true);
+
+static std::vector<PRM_Template>
+visibilityTab =
+{
+    PRM_Template(),
+    PRM_Template(PRM_TOGGLE, 1, &difuse_visibility, &difuse_visibility_d),
+    PRM_Template(PRM_TOGGLE, 1, &reflection_visibility, &reflection_visibility_d),
+    PRM_Template(PRM_TOGGLE, 1, &refraction_visibility, &refraction_visibility_d),
+};
+
+static PRM_Name tabs_name("tabs");
+static std::vector<PRM_Default> main_tabs =
+{
+    PRM_Default(vopPlugInpTemplate.size()-1, "Main"),
+    PRM_Default(3, "Visibility"),
+};
+
 PRM_Template VOP_AOVGroup::myTemplateList[] =
 {
-    PRM_Template(PRM_MULTITYPE_LIST, vopPlugInpTemplate, 0, &AOVInputs,
+    PRM_Template(PRM_SWITCHER, main_tabs.size(), &tabs_name, &main_tabs[0]),
+    PRM_Template(PRM_MULTITYPE_LIST, &vopPlugInpTemplate[0], 0, &AOVInputs,
                  0, 0, &PRM_SpareData::multiStartOffsetZero),
+    PRM_Template(PRM_TOGGLE, 1, &difuse_visibility, &difuse_visibility_d),
+    PRM_Template(PRM_TOGGLE, 1, &reflection_visibility, &reflection_visibility_d),
+    PRM_Template(PRM_TOGGLE, 1, &refraction_visibility, &refraction_visibility_d),
     PRM_Template()
 };
 VOP_AOVGroup::VOP_AOVGroup(OP_Network* parent, const char* name, VOP_AOVGroupOperator* entry)
