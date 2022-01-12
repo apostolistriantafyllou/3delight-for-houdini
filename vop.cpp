@@ -578,45 +578,19 @@ void vop::add_and_connect_aov_group() const
 		Second, check if any aov node is connected to this material
 		and accumulate it into a list.
 	*/
-	std::vector<VOP_Node*> aov_export_nodes;
 
-	std::vector<OP_Node*> traversal; traversal.push_back( m_vop );
-	while( traversal.size() )
+	VOP_Node* aovGroupNode;
+	int aov_input_idx = m_vop->getInputFromName("aovGroup");
+	if (aov_input_idx != -1 && m_vop->isConnected(aov_input_idx,true))
 	{
-		OP_Node* node = traversal.back();
-		traversal.pop_back();
-
-		int ninputs = node->nInputs();
-		for( int i = 0; i < ninputs; i++ )
-		{
-			OP_Input *input_ref = node->getInputReferenceConst(i);
-			if( !input_ref )
-			{
-				continue;
-			}
-
-			VOP_Node *output = CAST_VOPNODE( node->getInput(i) );
-			if( !output )
-			{
-				continue;
-			}
-
-			if( is_aov_definition(output) )
-			{
-				aov_export_nodes.push_back( output );
-			}
-			else
-			{
-				traversal.push_back( output );
-			}
-		}
+		aovGroupNode = CAST_VOPNODE(m_vop->getInput(aov_input_idx));
 	}
 
 	/*
 		Last, add and connect our aov group to the material and connect the
 		aov export nodes to it.
 	*/
-	if (aov_export_nodes.size() > 0)
+	if (aovGroupNode && is_aov_definition(aovGroupNode))
 	{
 		std::string handle = m_handle;
 		handle += "|dlAOVGroup|shader";
@@ -635,23 +609,22 @@ void vop::add_and_connect_aov_group() const
 		std::vector<const char *> aov_names;
 		std::vector<float> aov_values;
 
-		for ( unsigned i = 0; i < aov_export_nodes.size(); i++ )
+		//Get Values of all the AOV Colors from the dlAOVGroup
+		for (int j = 0; j < aovGroupNode->getNumVisibleInputs(); j++)
 		{
-			//Get Values of all the AOV Colors from the dlAOVGroup
-			for (int j = 0; j < aov_export_nodes[i]->getNumVisibleInputs(); j++)
-			{
-				UT_String aov_name = aov_export_nodes[i]->inputLabel(j);
-				char* aov_name_buffer = new char[aov_name.toStdString().size() + 1];
-				std::strncpy(aov_name_buffer, aov_name.toStdString().c_str(), aov_name.toStdString().size() + 1);
-				aov_names.push_back(aov_name_buffer);
+			UT_String aov_name = aovGroupNode->inputLabel(j);
+			char* aov_name_buffer = new char[aov_name.toStdString().size() + 1];
+			std::strncpy(aov_name_buffer, aov_name.toStdString().c_str(), aov_name.toStdString().size() + 1);
+			aov_names.push_back(aov_name_buffer);
 
-				aov_values.push_back(0.0f);
-				aov_values.push_back(0.0f);
-				aov_values.push_back(0.0f);
-			}
+			aov_values.push_back(0.0f);
+			aov_values.push_back(0.0f);
+			aov_values.push_back(0.0f);
 		}
 
-
+		int diffuse_visibility = aovGroupNode->evalInt("visible_in_diffuse", 0, m_context.m_current_time);
+		int reflection_visibility = aovGroupNode->evalInt("visible_in_reflections", 0, m_context.m_current_time);
+		int refraction_visibility = aovGroupNode->evalInt("visible_in_refractions", 0, m_context.m_current_time);
 
 		NSI::ArgumentList list;
 
@@ -663,32 +636,44 @@ void vop::add_and_connect_aov_group() const
 			->SetArrayType( NSITypeColor, aov_values.size() / 3 )
 			->CopyValue(&aov_values[0], aov_values.size()*sizeof(aov_values[0])));
 
+		list.Add(NSI::Argument::New("visible_in_diffuse")
+			->SetType(NSITypeInteger)
+			->SetCount(1)
+			->SetValuePointer(&diffuse_visibility));
+
+		list.Add(NSI::Argument::New("visible_in_reflections")
+			->SetType(NSITypeInteger)
+			->SetCount(1)
+			->SetValuePointer(&reflection_visibility));
+
+		list.Add(NSI::Argument::New("visible_in_refractions")
+			->SetType(NSITypeInteger)
+			->SetCount(1)
+			->SetValuePointer(&refraction_visibility));
+
 		m_nsi.SetAttribute( handle, list );
 
-		for ( unsigned i = 0; i < aov_export_nodes.size(); i++ )
+		for (int j = 0; j < aovGroupNode->getNumVisibleInputs(); j++)
 		{
-			for (int j = 0; j < aov_export_nodes[i]->getNumVisibleInputs(); j++)
-			{
-				VOP_Node* current_vop = aov_export_nodes[i];
+			VOP_Node* current_vop = aovGroupNode;
 
-				OP_Input* input_ref = current_vop->getInputReferenceConst(j);
-				if (!input_ref)
-					continue;
+			OP_Input* input_ref = current_vop->getInputReferenceConst(j);
+			if (!input_ref)
+				continue;
 
-				VOP_Node* source = CAST_VOPNODE(current_vop->getInput(j));
-				if (!source)
-					continue;
+			VOP_Node* source = CAST_VOPNODE(current_vop->getInput(j));
+			if (!source)
+				continue;
 
-				UT_String source_output_name;
-				int source_index = input_ref->getNodeOutputIndex();
-				source->getOutputName(source_output_name, source_index);
+			UT_String source_output_name;
+			int source_index = input_ref->getNodeOutputIndex();
+			source->getOutputName(source_output_name, source_index);
 
-				UT_String aov_value;
-				aov_value.sprintf("colorAOVValues[%u]", j);
-				m_nsi.Connect(
-					vop::handle(*source, m_context), source_output_name.toStdString(),
-					handle, aov_value.toStdString());
-			}
+			UT_String aov_value;
+			aov_value.sprintf("colorAOVValues[%u]", j);
+			m_nsi.Connect(
+				vop::handle(*source, m_context), source_output_name.toStdString(),
+				handle, aov_value.toStdString());
 		}
 	}
 }
