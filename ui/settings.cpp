@@ -95,8 +95,9 @@ const char* settings::k_disable_subsurface = "disable_subsurface";
 const char* settings::k_disable_atmosphere = "disable_atmosphere";
 const char* settings::k_disable_multiple_scattering = "disable_multiple_scattering";
 const char* settings::k_disable_extra_image_layers = "disable_extra_image_layers";
-const char* settings::k_resolution_factor = "resolution_factor";
+const char* settings::k_resolution_factor_override = "resolution_factor_override";
 const char* settings::k_resolution_override_value = "resolution_override_value";
+const char* settings::k_resolution_factor_speed_boost = "resolution_factor";
 const char* settings::k_sampling_factor = "sampling_factor";
 const char* settings::k_default_export_nsi_filename = "default_export_nsi_filename";
 const char* settings::k_enable_clamp = "enable_clamp";
@@ -473,12 +474,12 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	*/
 	static PRM_Name resolution_override(k_resolution_override_value, "Resolution");
 	static PRM_Default resolution_override_d[2] = { 1280, 720 };
-	static PRM_Conditional resolution_override_disable(("{ " + std::string(k_resolution_factor) + " != 0 }").c_str(), PRM_CONDTYPE_DISABLE);
+	static PRM_Conditional resolution_override_disable(("{ " + std::string(k_resolution_factor_override) + " != 0 }").c_str(), PRM_CONDTYPE_DISABLE);
 	static PRM_ConditionalGroup resolution_override_cond;
 	resolution_override_cond.addConditional(override_camera_resolution_h);
 	resolution_override_cond.addConditional(resolution_override_disable);
 
-	static PRM_Name resolution_factor(k_resolution_factor, "Resolution Scale");
+	static PRM_Name resolution_factor(k_resolution_factor_override, "Resolution Scale");
 	static PRM_Default resolution_factor_d(1);
 	static PRM_Item resolution_factor_i[] =
 	{
@@ -854,6 +855,18 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	static PRM_Name disable_extra_layers(k_disable_extra_image_layers, "Disable extra Image Layers");
 	static PRM_Default disable_extra_layers_d(false);
 
+	static PRM_Name resolution_factor_speed_boost(k_resolution_factor_speed_boost, "Resolution");
+	static PRM_Default resolution_factor_speed_boost_d(1);
+	static PRM_Item resolution_factor_speed_boost_i[] =
+	{
+		PRM_Item("1", "Full"),
+		PRM_Item("1/2", "Half"),
+		PRM_Item("1/4", "Quarter"),
+		PRM_Item("1/8", "Eighth"),
+		PRM_Item(),
+	};
+	static PRM_ChoiceList resolution_factor_speed_boost_c(PRM_CHOICELIST_SINGLE, resolution_factor_speed_boost_i);
+
 	static PRM_Name sampling_factor(k_sampling_factor, "Sampling");
 	static PRM_Default sampling_factor_d( 2 );
 	static PRM_Item sampling_factor_i[] =
@@ -880,6 +893,8 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 		PRM_Template(PRM_TOGGLE, 1, &disable_multiscatter, &disable_multiscatter_d, 0, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
 		PRM_Template(PRM_TOGGLE, 1, &disable_extra_layers, &disable_extra_layers_d, 0, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
 		PRM_Template(PRM_SEPARATOR, 0, &separator6),
+		PRM_Template(PRM_ORD, 1, &resolution_factor_speed_boost, &resolution_factor_speed_boost_d,
+								 &resolution_factor_speed_boost_c, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
 		PRM_Template(PRM_ORD, 1, &sampling_factor, &sampling_factor_d, &sampling_factor_c, 0, nullptr, nullptr, 1, nullptr, &speed_boost_g),
 	};
 

@@ -120,8 +120,11 @@ protected:
     virtual void resolveObsoleteParms(PRM_ParmList*);
 
 protected:
-	/** Returns the resolution multiplier from Speed Boost */
+	/** Returns the resolution multiplier from camera overrider */
 	float GetResolutionFactor()const;
+
+	/** Returns the resolution multiplier from Speed Boost */
+	float GetSpeedBoostResolutionFactor()const;
 
 	/** Returns the pixel samples (AA oversampling) in this ROP */
 	int GetPixelSamples()const;
