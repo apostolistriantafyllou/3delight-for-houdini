@@ -580,7 +580,7 @@ void vop::add_and_connect_aov_group() const
 		and accumulate it into a list.
 	*/
 
-	VOP_Node* aovGroupNode;
+	VOP_Node* aovGroupNode = nullptr;
 	int aov_input_idx = m_vop->getInputFromName("aovGroup");
 	if (aov_input_idx != -1 && m_vop->isConnected(aov_input_idx,true))
 	{
