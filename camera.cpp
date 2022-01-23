@@ -405,8 +405,13 @@ void camera::set_attributes( void ) const
 			->CopyValue(clipping_range, sizeof(clipping_range)));
 
 	fpreal t = m_context.m_current_time;
-	float scale = m_context.m_rop->GetResolutionFactor();
+	float scale = 1;
 	float speed_boost_scale = m_context.m_rop->GetSpeedBoostResolutionFactor();
+
+	if (m_context.m_rop->hasParm(settings::k_override_camera_resolution))
+	{
+		scale = m_context.m_rop->GetResolutionFactor();
+	}
 
 	int default_resolution[2] =
 	{
