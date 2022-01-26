@@ -44,7 +44,11 @@ context::context(
 {
 	m_object_visibility_resolver =
 		new object_visibility_resolver(m_rop_path, i_settings, i_start_time);
+	update_export_path_value();
+}
 
+void context::update_export_path_value()
+{
 	// Remove ".nsi" prefix
 	std::string nsi_extension = ".nsi";
 	if(m_export_path_prefix.length() > nsi_extension.length())
