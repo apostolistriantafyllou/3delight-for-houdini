@@ -36,7 +36,6 @@ context::context(
 	m_batch(i_batch),
 	m_ipr(i_ipr),
 	m_export_nsi(i_export_nsi),
-	m_export_path_prefix(i_export_path),
 	m_rop_type(i_rop_type),
 	m_rop_path(i_rop->getFullPath().c_str()),
 	m_settings(i_settings),
@@ -44,11 +43,13 @@ context::context(
 {
 	m_object_visibility_resolver =
 		new object_visibility_resolver(m_rop_path, i_settings, i_start_time);
-	update_export_path_value();
+	set_export_path(i_export_path);
 }
 
-void context::update_export_path_value()
+void context::set_export_path(const std::string& i_path)
 {
+	m_export_path_prefix = i_path;
+
 	// Remove ".nsi" prefix
 	std::string nsi_extension = ".nsi";
 	if(m_export_path_prefix.length() > nsi_extension.length())

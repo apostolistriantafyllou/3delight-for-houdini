@@ -613,8 +613,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	{
 		std::string export_file = GetNSIExportFilename(time);
 		assert(!export_file.empty());
-		m_current_render->m_export_path_prefix = export_file.c_str();
-		m_current_render->update_export_path_value();
+		m_current_render->set_export_path(export_file);
 		InitNSIExport(m_nsi, export_file);
 	}
 	else if(m_renderdl)
