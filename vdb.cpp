@@ -62,19 +62,20 @@ void vdb_file::create( void ) const
 	m_nsi.Connect( volume, "", m_handle, "objects" );
 }
 
-void vdb_file::set_attributes( void ) const
+void vdb_file::get_attributes_from_material(
+	NSI::ArgumentList& io_arguments,
+	const std::string& i_vdb_file,
+	VOP_Node* i_volume,
+	double i_time)
 {
 	std::vector<std::string> grid_names;
-	if( !get_grid_names( m_vdb_file, grid_names))
+	if( !get_grid_names( i_vdb_file, grid_names))
 	{
 		return;
 	}
 
-	NSI::ArgumentList arguments;
-	arguments.Add( new NSI::CStringPArg( "vdbfilename", m_vdb_file.c_str()) );
-
 	/*
-		Retrieve the required grid names from the material (see
+		Retrieve the required grid names from the volume shader (see
 		GetVolumeParams() in VOP_ExternalOSL.cpp), along with the velocity
 		scale.
 	*/
@@ -87,54 +88,39 @@ void vdb_file::set_attributes( void ) const
 	UT_String velocity_grid;
 	double velocity_scale = 1.0;
 
-	double time = m_context.m_current_time;
-	OP_Node* op = m_object->getMaterialNode(time);
-
-	/*
-		This might seem useless but it's not, as resolve_material_path might
-		return a child of "op" instead of "op" itself, if it's a Material
-		Builder.
-	*/
-	VOP_Node *mats[3] = { nullptr };
-	if( op )
-	{
-		resolve_material_path( op->getFullPath().c_str(), mats );
-	}
-
-	VOP_Node *material = mats[2]; // volume
-	if(material)
+	if(i_volume)
 	{
 		using namespace VolumeGridParameters;
 
-		if(material->hasParm(density_name))
+		if(i_volume->hasParm(density_name))
 		{
-			material->evalString(density_grid, density_name, 0, time);
+			i_volume->evalString(density_grid, density_name, 0, i_time);
 		}
-		if(material->hasParm(color_name))
+		if(i_volume->hasParm(color_name))
 		{
-			material->evalString(color_grid, color_name, 0, time);
+			i_volume->evalString(color_grid, color_name, 0, i_time);
 		}
-		if(material->hasParm(temperature_name))
+		if(i_volume->hasParm(temperature_name))
 		{
-			material->evalString(temperature_grid, temperature_name, 0, time);
+			i_volume->evalString(temperature_grid, temperature_name, 0, i_time);
 		}
-		if(material->hasParm(emission_intensity_name))
+		if(i_volume->hasParm(emission_intensity_name))
 		{
-			material->evalString(
-				emissionintensity_grid, emission_intensity_name, 0, time);
+			i_volume->evalString(
+				emissionintensity_grid, emission_intensity_name, 0, i_time);
 		}
-		if(material->hasParm(emission_name))
+		if(i_volume->hasParm(emission_name))
 		{
-			material->evalString(emission_grid, emission_name, 0, time);
+			i_volume->evalString(emission_grid, emission_name, 0, i_time);
 		}
-		if(material->hasParm(velocity_name))
+		if(i_volume->hasParm(velocity_name))
 		{
-			material->evalString(velocity_grid, velocity_name, 0, time);
+			i_volume->evalString(velocity_grid, velocity_name, 0, i_time);
 		}
 
-		if(material->hasParm(velocity_scale_name))
+		if(i_volume->hasParm(velocity_scale_name))
 		{
-			velocity_scale = material->evalFloat(velocity_scale_name, 0, time);
+			velocity_scale = i_volume->evalFloat(velocity_scale_name, 0, i_time);
 		}
 	}
 
@@ -143,36 +129,59 @@ void vdb_file::set_attributes( void ) const
 	{
 		if( grid == density_grid.toStdString() )
 		{
-			arguments.Add( new NSI::StringArg("densitygrid", grid) );
+			io_arguments.Add( new NSI::StringArg("densitygrid", grid) );
 		}
 
 		if( grid == color_grid.toStdString() )
 		{
-			arguments.Add( new NSI::StringArg( "colorgrid", grid) );
+			io_arguments.Add( new NSI::StringArg( "colorgrid", grid) );
 		}
 
 		if( grid == temperature_grid.toStdString() )
 		{
-			arguments.Add( new NSI::StringArg( "temperaturegrid", grid) );
+			io_arguments.Add( new NSI::StringArg( "temperaturegrid", grid) );
 		}
 
 		if( grid == emissionintensity_grid.toStdString() )
 		{
-			arguments.Add( new NSI::StringArg( "emissionintensitygrid", grid) );
+			io_arguments.Add( new NSI::StringArg( "emissionintensitygrid", grid) );
 		}
 
 		if( grid == emission_grid.toStdString() )
 		{
-			arguments.Add( new NSI::StringArg( "emissiongrid", grid) );
+			io_arguments.Add( new NSI::StringArg( "emissiongrid", grid) );
 		}
 
 		if( grid == velocity_grid.toStdString() )
 		{
-			arguments.Add( new NSI::StringArg( "velocitygrid", grid) );
+			io_arguments.Add( new NSI::StringArg( "velocitygrid", grid) );
 		}
 	}
 
-	arguments.Add( new NSI::DoubleArg( "velocityscale", velocity_scale ) );
+	io_arguments.Add( new NSI::DoubleArg( "velocityscale", velocity_scale ) );
+}
+
+void vdb_file::set_attributes( void ) const
+{
+	NSI::ArgumentList arguments;
+	arguments.Add( new NSI::CStringPArg( "vdbfilename", m_vdb_file.c_str()) );
+
+	double time = m_context.m_current_time;
+
+	OP_Node* op = m_object->getMaterialNode(time);
+
+	/*
+		This might seem useless but it's not, as resolve_material_path might
+		return a child of "i_material" instead of "i_material" itself, if it's a
+		Material Builder.
+	*/
+	VOP_Node *mats[3] = { nullptr };
+	if( op )
+	{
+		resolve_material_path( m_object, op->getFullPath().c_str(), mats );
+	}
+
+	get_attributes_from_material(arguments, m_vdb_file, mats[2], time);
 
 	m_nsi.SetAttribute( m_handle + "|volume", arguments );
 

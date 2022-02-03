@@ -37,6 +37,13 @@ public:
 		const std::string& i_vdb_path,
 		std::vector<std::string>& o_names);
 
+	/// Retrieves some NSI volume node attributes from the volume shader VOP.
+	static void get_attributes_from_material(
+		NSI::ArgumentList& io_arguments,
+		const std::string& i_vdb_file,
+		VOP_Node* i_volume,
+		double i_time);
+
 protected:
 	const std::string& path()const { return m_vdb_file; }
 
@@ -96,8 +103,8 @@ private:
 /**
 	\brief Exports a VDB primitive through the use of a VDB file.
 	
-	This collects VDB grids and writes them to a file, then exports an NSI "vdb"
-	node that will read it back.
+	This collects VDB grids and writes them to a file, then exports an NSI
+	"volume" node that will read it back.
 */
 class vdb_file_writer : public vdb_file
 {

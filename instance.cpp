@@ -1,6 +1,7 @@
 #include "instance.h"
 
 #include "context.h"
+#include "vdb.h"
 #include "vop.h"
 #include "dl_system.h"
 
@@ -114,6 +115,13 @@ void instance::connect( void ) const
 		std::string merge_h = merge_handle(merge);
 		m_nsi.Create( merge_h, "transform" );
 
+		VOP_Node *materials[3] = {nullptr};
+		if( merge.second )
+		{
+			resolve_material_path(
+				m_object, merge.second->getFullPath().c_str(), materials );
+		}
+
 		const std::string &object = merge.first;
 		if( !object.empty() )
 		{
@@ -122,15 +130,12 @@ void instance::connect( void ) const
 				std::string path = object.substr(::strlen(k_file_prefix));
 
 				/*
-					Avoid loading non-NSI files, such as VDB and Alembic files,
-					since they are not supported and trying to read non-NSI
-					files only generates a truckload of errors. We use an
-					intentionally permissive test so that slight variations on
-					".nsi" are accepted.
+					Detect NSI files. We use an intentionally permissive test so
+					that slight variations on ".nsi" are accepted.
 
-					Also, avoid loading non-existent files, as this was reported
-					to crash on Windows, although this seems suspicious since
-					3Delight should already handle that properly.
+					Also, avoid loading non-existent NSI files, as this was
+					reported to crash on Windows (although this seems suspicious
+					since 3Delight should already handle that properly).
 				*/
 				if( path.find(".nsi") != std::string::npos &&
 					dl_system::file_exists(path.c_str()) )
@@ -142,6 +147,17 @@ void instance::connect( void ) const
 							NSI::CStringPArg("type", "apistream"),
 							NSI::StringArg("filename", path)
 						) );
+					m_nsi.Connect(object, "", merge_h, "objects");
+				}
+				// Detect VDB files
+				else if(path.size() > 4 && path.substr(path.size()-4) == ".vdb")
+				{
+					m_nsi.Create(object, "volume");
+					NSI::ArgumentList args;
+					args.Add(new NSI::StringArg("vdbfilename", path));
+					vdb_file::get_attributes_from_material(
+						args, path, materials[2], m_context.m_current_time);
+					m_nsi.SetAttribute(object, args);
 					m_nsi.Connect(object, "", merge_h, "objects");
 				}
 			}
@@ -172,13 +188,6 @@ void instance::connect( void ) const
 
 		const char *names[3] =
 			{ "surfaceshader", "displacementshader", "volumeshader" };
-
-		VOP_Node *materials[3] = {nullptr};
-		if( merge.second )
-		{
-			resolve_material_path(
-				m_object, merge.second->getFullPath().c_str(), materials );
-		}
 
 		for( int i=0; i<3; i++ )
 		{
