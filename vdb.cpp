@@ -225,6 +225,9 @@ bool vdb_file::get_grid_names(const char* i_vdb_path,
 	int* i_num_grids,
 	const char* const** i_grid_names)
 {
+	assert(i_num_grids);
+	assert(i_grid_names);
+
 	NSI::DynamicAPI api;
 #ifdef __APPLE__
 	/*
@@ -259,14 +262,16 @@ bool vdb_file::get_grid_names(const char* i_vdb_path,
 	}
 
 	if (!vdb_grids(i_vdb_path, i_num_grids, i_grid_names) ||
-		i_num_grids == 0 ||
-		!i_grid_names)
+		*i_num_grids == 0 ||
+		!*i_grid_names)
 	{
 		::fprintf(stderr,
 			"3Delight for Houdini: no usable grid in VDB %s",
 			i_vdb_path);
 		return false;
 	}
+
+	
 	return true;
 }
 
