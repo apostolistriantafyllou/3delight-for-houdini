@@ -64,9 +64,8 @@ void vdb_file::create( void ) const
 
 void vdb_file::set_attributes( void ) const
 {
-	int num_grids = 0;
-	const char *const *grid_names = nullptr;
-	if( !get_grid_names( m_vdb_file.c_str(), &num_grids, &grid_names))
+	std::vector<std::string> grid_names;
+	if( !get_grid_names( m_vdb_file, grid_names))
 	{
 		return;
 	}
@@ -140,10 +139,8 @@ void vdb_file::set_attributes( void ) const
 	}
 
 	// Export required grid names if they're available
-	for( int i=0; i<num_grids; i++ )
+	for( const std::string& grid : grid_names )
 	{
-		std::string grid( grid_names[i] ? grid_names[i] : "" );
-
 		if( grid == density_grid.toStdString() )
 		{
 			arguments.Add( new NSI::StringArg("densitygrid", grid) );
@@ -221,12 +218,11 @@ void vdb_file::set_attributes_at_time(
 #endif
 }
 
-bool vdb_file::get_grid_names(const char* i_vdb_path,
-	int* i_num_grids,
-	const char* const** i_grid_names)
+bool vdb_file::get_grid_names(
+	const std::string& i_vdb_path,
+	std::vector<std::string>& o_names)
 {
-	assert(i_num_grids);
-	assert(i_grid_names);
+	o_names.clear();
 
 	NSI::DynamicAPI api;
 #ifdef __APPLE__
@@ -252,8 +248,10 @@ bool vdb_file::get_grid_names(const char* i_vdb_path,
 	*/
 	decltype(&DlVDBGetGridNames) vdb_grids = nullptr;
 	api.LoadFunction(vdb_grids, "DlVDBGetGridNames");
+	decltype(&DlVDBFreeGridNames) free_grids = nullptr;
+	api.LoadFunction(free_grids, "DlVDBFreeGridNames");
 
-	if (vdb_grids == nullptr)
+	if (!vdb_grids || !free_grids)
 	{
 		::fprintf(stderr,
 			"3Delight for Houdini: unable to load VDB utility "
@@ -261,16 +259,24 @@ bool vdb_file::get_grid_names(const char* i_vdb_path,
 		return false;
 	}
 
-	if (!vdb_grids(i_vdb_path, i_num_grids, i_grid_names) ||
-		*i_num_grids == 0 ||
-		!*i_grid_names)
+	int num_grids = 0;
+	const char* const* grid_names = nullptr;
+	if (!vdb_grids(i_vdb_path.c_str(), &num_grids, &grid_names) ||
+		num_grids == 0 ||
+		!grid_names)
 	{
 		::fprintf(stderr,
 			"3Delight for Houdini: no usable grid in VDB %s",
-			i_vdb_path);
+			i_vdb_path.c_str());
 		return false;
 	}
 
+	for(int g = 0; g < num_grids; g++)
+	{
+		o_names.emplace_back(grid_names[g]);
+	}
+
+	free_grids(grid_names);
 	
 	return true;
 }
@@ -510,9 +516,9 @@ bool vdb_file::has_vdb_light_layer(OBJ_Node* i_node, double i_time)
 	{
 		return false;
 	}
-	int num_grids = 0;
-	const char* const* grid_names = 0x0;
-	if (!get_grid_names(vdb_path.c_str(), &num_grids, &grid_names))
+
+	std::vector<std::string> grid_names;
+	if (!get_grid_names(vdb_path, grid_names))
 	{
 		return false;
 	}
@@ -554,10 +560,8 @@ bool vdb_file::has_vdb_light_layer(OBJ_Node* i_node, double i_time)
 		Check if the emission, temperature or heat grid used is one of the
 		existing grids of the VDB in order to include it as a light AOV.
 	*/
-	for (int i = 0; i < num_grids; i++)
+	for (const std::string& grid : grid_names)
 	{
-		std::string grid(grid_names[i] ? grid_names[i] : "");
-
 		if (grid == emission_grid.toStdString()
 			|| grid == temperature_grid.toStdString()
 			|| grid == heat_grid.toStdString())
