@@ -121,18 +121,27 @@ void instance::connect( void ) const
 			{
 				std::string path = object.substr(::strlen(k_procedural_prefix));
 
-				//This should be handled directly on NSI, but for now we do this to avoid
-				//a crash for invalid filename. Seems it only happens on windows.
-				if (dl_system::file_exists(path.c_str()))
+				/*
+					Avoid loading non-NSI files, such as VDB and Alembic files,
+					since they are not supported and trying to read non-NSI
+					files only generates a truckload of errors. We use an
+					intentionally permissive test so that slight variations on
+					".nsi" are accepted.
+
+					Also, avoid loading non-existent files, as this was reported
+					to crash on Windows, although this seems suspicious since
+					3Delight should already handle that properly.
+				*/
+				if( path.find(".nsi") != std::string::npos &&
+					dl_system::file_exists(path.c_str()) )
 				{
 					m_nsi.Create(object, "procedural");
-					m_nsi.SetAttribute(object,
+					m_nsi.SetAttribute(
+						object,
 						(
 							NSI::CStringPArg("type", "apistream"),
-							NSI::CStringPArg(
-								"filename",
-								path.c_str())
-							));
+							NSI::StringArg("filename", path)
+						) );
 					m_nsi.Connect(object, "", merge_h, "objects");
 				}
 			}
