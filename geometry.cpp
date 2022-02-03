@@ -429,7 +429,7 @@ struct OBJ_Node_Refiner : public GT_Refine
 #ifdef VERBOSE
 			fprintf( stderr, "%p: Opening %s and result is %d, return is %d (level %d)\n",
 				this,
-				i_primitive->className(), m_result.size(), m_return.size(), m_level );
+				i_primitive->className(), (int)m_result.size(), (int)m_return.size(), m_level );
 #endif
 			OBJ_Node_Refiner recursive(this);
 			i_primitive->refine(recursive, &recursive.m_params);
