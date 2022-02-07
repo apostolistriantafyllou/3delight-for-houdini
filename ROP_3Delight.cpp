@@ -2001,7 +2001,13 @@ OBJ_Camera*
 ROP_3Delight::GetCamera( double t )const
 {
 	UT_String cam_path;
-	evalString(cam_path, settings::k_camera, 0, t);
+
+	if (hasParm(settings::k_camera))
+	{
+		evalString(cam_path, settings::k_camera, 0, t);
+	}
+	if (!cam_path)
+		return nullptr;
 
 	OBJ_Node* obj_node = OPgetDirector()->findOBJNode(cam_path);
 	if(!obj_node)
