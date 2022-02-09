@@ -1408,8 +1408,10 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 				png_driver_name = "png_driver";
 
 				UT_String image_png_name = image_file_name.replaceExtension("png");
-				image_png_name.substitute("<aov>", "", true);
-				image_png_name.substitute("<light>", "", true);
+
+				//use meaningful replacements for <aov> and <light> token when multi-layer is ignored.
+				image_png_name.substitute("<aov>", "rgba", true);
+				image_png_name.substitute("<light>", "all", true);
 
 				i_ctx.m_nsi.Create(png_driver_name, "outputdriver");
 				i_ctx.m_nsi.SetAttribute(
@@ -1433,8 +1435,8 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 				jpeg_driver_name = "jpeg_driver";
 
 				UT_String image_jpeg_name = image_file_name.replaceExtension("jpg");
-				image_jpeg_name.substitute("<aov>","",true);
-				image_jpeg_name.substitute("<light>","",true);
+				image_jpeg_name.substitute("<aov>","rgba",true);
+				image_jpeg_name.substitute("<light>","all",true);
 
 				i_ctx.m_nsi.Create(jpeg_driver_name, "outputdriver");
 				i_ctx.m_nsi.SetAttribute(
