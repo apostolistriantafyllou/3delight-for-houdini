@@ -67,6 +67,10 @@ public:
 		void* data, int index, fpreal t,
 		const PRM_Template* tplate);
 
+	static int open_processing_panel(
+		void* data, int index, fpreal t,
+		const PRM_Template* tplate);
+
 	static int sequence_render(
 		void* data, int index, fpreal t,
 		const PRM_Template* tplate);

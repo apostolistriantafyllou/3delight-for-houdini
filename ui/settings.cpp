@@ -3,6 +3,8 @@
 #include "select_layers_dialog.h"
 #include "../scene.h"
 #include "../ROP_3Delight.h"
+#include <3Delight/ProcessingInfo.h>
+#include <3Delight/ShaderQuery.h>
 
 #include <map>
 #include <OP/OP_Bundle.h>
@@ -235,6 +237,8 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	start_ipr_group_h.addConditional(start_ipr_hide);
 	start_ipr_group_h.addConditional(start_ipr_disable);
 
+	static PRM_Name open_processing_options("open_processing", "Processing Options...");
+
 	static PRM_Name ipr_start(k_ipr_start, "Ipr Start");
 	static PRM_Default ipr_start_h(false);
 
@@ -328,6 +332,9 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 			&export_sequence_file_group_h),
 		PRM_Template(PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &SequenceRender, 0, 0, 0,
 					&settings::sequence_render,0,0,nullptr,&start_sequence_group_h),
+		PRM_Template(PRM_SEPARATOR | PRM_TYPE_INVISIBLE),
+		PRM_Template(PRM_CALLBACK | PRM_TYPE_JOIN_NEXT, 1, &open_processing_options, 0, 0, 0,
+					&settings::open_processing_panel,0,0,nullptr),
 	};
 
 	static std::vector<PRM_Template> standin_actions
@@ -1510,6 +1517,20 @@ int settings::ipr_render(
 	node->get_settings().m_parameters.setInt(k_ipr_start, 0, 0.0, true);
 	node->doRenderCback(data, index, t, tplate);
 	node->get_settings().m_parameters.setInt(k_ipr_start, 0, 0.0, false);
+	return 1;
+}
+
+int settings::open_processing_panel(
+	void* data, int index, fpreal t,
+	const PRM_Template* tplate)
+{
+	NSI::DynamicAPI api;
+	decltype(&DlShowProcessingPreferences) open_processing_panel = nullptr;
+	api.LoadFunction(open_processing_panel, "DlShowProcessingPreferences");
+	if (open_processing_panel)
+	{
+		open_processing_panel();
+	}
 	return 1;
 }
 
