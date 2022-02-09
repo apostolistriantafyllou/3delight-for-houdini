@@ -1275,9 +1275,12 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 		png_output = png_output && file_driver.toStdString() == "png";
 		bool jpeg_output = evalInt(settings::k_save_jpeg_copy, 0, current_time);
 
-		// We only output Jpeg images for beauth layer
+		// We only output Jpeg and PNG images for beauty layer
 		if (desc.m_variable_name != "Ci")
+		{
 			jpeg_output = false;
+			png_output = false;
+		}
 
 		/**
 			Always render to iDisplay if "Start IPR" button is clicked OR
@@ -1398,43 +1401,15 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 					sort_key);
 			}
 
-			if (png_output)
+			//png does not support multi-layers. Only output beauty layer for all lights.
+			if (png_output && j==0)
 			{
 				std::string png_layer_name = layer_name + "_png";
+				png_driver_name = "png_driver";
 
-				char suffix[12] = "";
-				::sprintf(suffix, "%u", i*nb_light_categories+j+1);
-				png_driver_name = "png_driver_";
-				png_driver_name += suffix;
-
-				UT_String image_png_name;
-
-				size_t aov_token = image_file_name.toStdString().find("<aov>");
-				size_t light_token = image_file_name.toStdString().find("<light>");
-
-				if (aov_token == std::string::npos && light_token == std::string::npos)
-				{
-					/*
-						If user is not using any of <aov> or <light> token, we automatically
-						output one png per layer. Evaluate the raw string for image filename
-						in order to find if $F string is used as frame number.
-					*/
-					UT_String png_file_name;
-					evalStringRaw(
-						png_file_name,
-						settings::k_default_image_filename, 0,
-						current_time);
-
-					BuildImageUniqueName(
-						png_file_name, category.first,
-						desc.m_filename_token, ".png", image_png_name);
-				}
-				else
-				{
-					//use the tokens instead.
-					image_png_name =
-						getImageFilenamePerAOV(image_file_name, desc.m_filename_token, category.first);
-				}
+				UT_String image_png_name = image_file_name.replaceExtension("png");
+				image_png_name.substitute("<aov>", "", true);
+				image_png_name.substitute("<light>", "", true);
 
 				i_ctx.m_nsi.Create(png_driver_name, "outputdriver");
 				i_ctx.m_nsi.SetAttribute(
@@ -1740,57 +1715,6 @@ ROP_3Delight::ExportLayerFeedbackData(
 			NSI::StringArg("feedbackid", feedback_id),
 			NSI::StringArg("feedbackdata", feedback_data)
 			));
-}
-
-void
-ROP_3Delight::BuildImageUniqueName(
-	const UT_String& i_image_file_name,
-	const std::string& i_light_name,
-	const std::string& i_aov_token,
-	const char* i_extension,
-	UT_String& o_image_unique_name) const
-{
-	o_image_unique_name = i_image_file_name.pathUpToExtension();
-
-	std::string fn = o_image_unique_name.toStdString();
-
-	/*
-		Checking for the last '_' character to find the frame number is not a good
-		idea and results in wrong behavior when another character is used before the
-		frame keyword "$F".
-	*/
-	size_t pos = fn.rfind("$F");
-	UT_String frame_number = fn.assign(fn.begin()+pos-1, fn.end()).c_str();
-
-	OPgetDirector()->getChannelManager()->expandString(
-		o_image_unique_name.c_str(), o_image_unique_name, m_current_render->m_current_time);
-	OPgetDirector()->getChannelManager()->expandString(
-		frame_number.c_str(), frame_number, m_current_render->m_current_time);
-
-	o_image_unique_name.removeTrailingDigits();
-
-	UT_String light = i_light_name.c_str();
-	UT_String dir_name, light_name;
-	light.splitPath(dir_name, light_name);
-
-	//Some users might prefer using . instead of _ as a separator.
-	if (o_image_unique_name.toStdString().back() != '_'
-		&& o_image_unique_name.toStdString().back() != '.')
-	{
-		o_image_unique_name += "_";
-	}
-	o_image_unique_name += i_aov_token;
-	if (light_name.isstring())
-	{
-		o_image_unique_name += "_";
-		o_image_unique_name += light_name;
-	}
-	if (frame_number.isInteger(true))
-	{
-		o_image_unique_name += "_";
-		o_image_unique_name += frame_number;
-	}
-	o_image_unique_name += i_extension;
 }
 
 void ROP_3Delight::ExportLightCategories(
