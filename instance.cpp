@@ -13,7 +13,7 @@
 
 #include <unordered_map>
 
-const char *k_procedural_prefix = "__procedural:";
+const char *k_file_prefix = "__file:";
 
 /**
 	\brief Constructor.
@@ -117,9 +117,9 @@ void instance::connect( void ) const
 		const std::string &object = merge.first;
 		if( !object.empty() )
 		{
-			if( object.find(k_procedural_prefix)==0)
+			if( object.find(k_file_prefix)==0)
 			{
-				std::string path = object.substr(::strlen(k_procedural_prefix));
+				std::string path = object.substr(::strlen(k_file_prefix));
 
 				/*
 					Avoid loading non-NSI files, such as VDB and Alembic files,
@@ -468,10 +468,10 @@ void instance::get_merge_points(
 
 		if( instancefile )
 		{
-			/*  This will be a an NSI procedural node. So prefix it so that we
+			/*  This refers to a file instead of a node. Prefix it so that we
 			don't have any collisions */
 
-			I = k_procedural_prefix + I;
+			I = k_file_prefix + I;
 		}
 
 		/*
