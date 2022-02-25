@@ -480,6 +480,7 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 		tstart,
 		tend,
 		GetShutterInterval(tstart),
+		GetShutterOffset(tstart),
 		fps,
 		HasDepthOfField(tstart),
 		batch,
@@ -1972,6 +1973,18 @@ ROP_3Delight::GetShutterInterval(double i_time)const
 
 	OBJ_Camera* cam = ROP_3Delight::GetCamera(i_time);
 	return cam ? camera::get_shutter_duration(*cam, i_time) : 1.0;
+}
+
+double
+ROP_3Delight::GetShutterOffset(double i_time)const
+{
+	if(!HasMotionBlur(i_time))
+	{
+		return 0.0;
+	}
+
+	OBJ_Camera* cam = ROP_3Delight::GetCamera(i_time);
+	return cam ? camera::get_shutter_offset(*cam, i_time) : 0.0;
 }
 
 bool

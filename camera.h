@@ -41,6 +41,18 @@ public:
 		double i_time);
 
 	/**
+		\brief Returns the relative shift of the camera open & close time.
+
+		This is expressed in number of half shutter durations, so an offset of
+		-1 makes the shutter close at the exact frame time, while an offset of
+		1 make the shutter open at the exact frame time. An offset of 0 centers
+		the shutter opening on the frame.
+	*/
+	static double get_shutter_offset(
+		OBJ_Camera& i_camera,
+		double i_time);
+
+	/**
 		\brief Computes the "screenwindow" attribute of an NSI screen node.
 
 		\param o_screen_window

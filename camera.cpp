@@ -664,6 +664,19 @@ camera::get_shutter_duration(OBJ_Camera& i_camera, double i_time)
 	return i_camera.SHUTTER(i_time);
 }
 
+double
+camera::get_shutter_offset(OBJ_Camera& i_camera, double i_time)
+{
+	const char* k_shutter_offset = "_3dl_shutter_offset";
+
+	if(i_camera.hasParm(k_shutter_offset))
+	{
+		return i_camera.evalFloat(k_shutter_offset, 0, i_time);
+	}
+
+	return 0.0;
+}
+
 void camera::get_screen_window(
 	double* o_screen_window,
 	OBJ_Camera& i_camera,

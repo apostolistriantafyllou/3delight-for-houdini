@@ -59,6 +59,7 @@ public:
 		fpreal i_start_time,
 		fpreal i_end_time,
 		fpreal i_shutter_interval,
+		fpreal i_shutter_offset,
 		fpreal i_fps,
 		bool i_dof,
 		bool i_batch,
@@ -72,9 +73,15 @@ public:
 	/// Returns true if motion blur is required for this render
 	bool MotionBlur()const { return m_shutter > 0.0f; }
 	/// Returns the time at which the shutter opens
-	double ShutterOpen()const { return m_current_time - m_shutter/2.0f; }
+	double ShutterOpen()const
+	{
+		return m_current_time + (m_shutter_offset-1.0)/2.0f * m_shutter;
+	}
 	/// Returns the time at which the shutter closes
-	double ShutterClose()const { return m_current_time + m_shutter/2.0f; }
+	double ShutterClose()const
+	{
+		return m_current_time + (m_shutter_offset+1.0)/2.0f * m_shutter;
+	}
 
 	/// Returns true if a single frame is to be rendered
 	bool SingleFrame()const { return m_start_time == m_end_time; }
@@ -143,6 +150,7 @@ public:
 	const fpreal m_current_time{.0f};
 	fpreal m_frame_duration{.0f};
 	fpreal m_shutter{.0f};
+	fpreal m_shutter_offset{.0};
 	fpreal m_fps{24.0f};
 	// True if depth-of-field is enabled
 	bool m_dof{false};

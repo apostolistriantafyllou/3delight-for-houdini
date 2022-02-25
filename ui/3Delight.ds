@@ -573,6 +573,24 @@
 			disablewhen  "{ _3dl_shutter_duration == 0 }"
 		}
 */
+
+		parm
+		{
+			SOHO_PARM(_3dl_shutter_offset_type, "Offset", "3Delight", string, 1, "center")
+			menu
+			{
+				"close" "Close on Frame"
+				"center" "Center on Frame"
+				"open" "Open on Frame"
+			}
+		}
+
+		parm
+		{
+			SOHO_FLOAT(_3dl_shutter_offset, "", "3Delight", 0.0)
+			range { -1 1 }
+			invisible
+		}
 	}
 
 	DELIGHT_FULL_TITLE(_3dl_aperture, "Lens")

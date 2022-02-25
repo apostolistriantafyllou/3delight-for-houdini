@@ -210,6 +210,7 @@ private:
 	OBJ_Camera* GetCamera( double i_time )const;
 
 	double GetShutterInterval(double i_time)const;
+	double GetShutterOffset(double i_time)const;
 
 	bool HasDepthOfField( double i_time )const;
 

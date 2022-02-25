@@ -15,6 +15,7 @@ if ( "$arg1" != "" && ("$DELIGHT_AUTOSPAREPARAMS" !=0 || "$arg2" !="")) then
 	set focal_distance_defined = `run("opparm -ql $arg1 _3dl_focal_distance")`
 	set fstop_defined = `run("opparm -ql $arg1 _3dl_fstop")`
 	set projection_defined = `run("opparm -ql $arg1 _3dl_projection_type")`
+	set offset_defined = `run("opparm -ql $arg1 _3dl_shutter_offset")`
 
 	# Add properties into tab 3Delight
 	opproperty -f $arg1 3Delight _3dl_shutter_title
@@ -96,6 +97,10 @@ if ( "$arg1" != "" && ("$DELIGHT_AUTOSPAREPARAMS" !=0 || "$arg2" !="")) then
 		# String values are a special case since they can be their own
 		# expression when surrounded by backticks.
 		opparm -q $arg1 _3dl_projection_type '`ifs(strcmp(chs("projection"),"ortho")==0,"orthographiccamera",ifs(strcmp(chs("projection"),"cylinder")==0,"cylindricalcamera",ifs(strcmp(chs("projection"),"sphere")==0,"sphericalcamera","perspectivecamera")))`'
+	endif
+	if("$offset_defined" == "") then
+		chadd -t 0 0 $arg1 _3dl_shutter_offset
+		chkey -t 0 -T a -F 'ifs(strcmp(chs("_3dl_shutter_offset_type"),"close")==0,-1,ifs(strcmp(chs("_3dl_shutter_offset_type"),"center")==0,0,ifs(strcmp(chs("_3dl_shutter_offset_type"),"open")==0,1,0)))' $arg1/_3dl_shutter_offset
 	endif
 
    opproperty -f $arg1 3Delight _3dl_obj_geo_label2_group
