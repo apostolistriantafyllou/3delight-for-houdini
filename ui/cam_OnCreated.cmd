@@ -20,6 +20,7 @@ if ( "$arg1" != "" && ("$DELIGHT_AUTOSPAREPARAMS" !=0 || "$arg2" !="")) then
 	# Add properties into tab 3Delight
 	opproperty -f $arg1 3Delight _3dl_shutter_title
 	opproperty -f $arg1 3Delight _3dl_shutter_group
+	opproperty -f $arg1 3Delight _3dl_shutter_group2
 	if("$fstop_defined" == "" && "$blades_defined" != "") then
 		# Here, we want to add fstop and focal_distance in their proper
 		# position, but the other parameters of their collection were already

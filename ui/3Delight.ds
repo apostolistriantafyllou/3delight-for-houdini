@@ -573,6 +573,12 @@
 			disablewhen  "{ _3dl_shutter_duration == 0 }"
 		}
 */
+	}
+
+	collection
+	{
+		name	_3dl_shutter_group2
+		parmtag	{ spare_category "3Delight" }
 
 		parm
 		{
