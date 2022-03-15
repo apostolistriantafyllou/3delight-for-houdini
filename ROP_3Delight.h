@@ -14,6 +14,7 @@
 #include <mutex>
 #include <thread>
 #include <vector>
+#include <memory>
 
 namespace NSI { class Context; class DynamicAPI; }
 
@@ -244,13 +245,16 @@ private:
 	*/
 	std::string m_static_nsi_file;
 
-	// renderdl process rendering a list of NSI files being read from stdin
-	UT_ReadWritePipe* m_renderdl;
+
+	/** The context which controls rendering sequences. */
+	std::shared_ptr<NSI::Context> m_sequence_context;
+
 	/*
-		A thread that waits for the m_renderdl process to finish so we could be
+		A thread that waits for the sequence process to finish so we could be
 		notified of it.
 	*/
-	std::thread m_renderdl_waiter;
+	std::thread m_sequence_waiter;
+
 
 	/*
 		Notifies the ROP of time changes during an IPR render, so that it can

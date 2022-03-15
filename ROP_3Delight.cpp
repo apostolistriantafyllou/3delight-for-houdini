@@ -29,9 +29,6 @@
 #include <ROP/ROP_Templates.h>
 #include <SYS/SYS_Version.h>
 #include <UT/UT_Exit.h>
-#include <UT/UT_ReadWritePipe.h>
-#include <UT/UT_Spawn.h>
-#include <UT/UT_TempFileManager.h>
 #include <UT/UT_UI.h>
 #include <VOP/VOP_Node.h>
 
@@ -169,7 +166,6 @@ ROP_3Delight::ROP_3Delight(
 		m_end_time(0.0),
 		m_nsi(GetNSIAPI()),
 		m_static_nsi(GetNSIAPI()),
-		m_renderdl(nullptr),
 		m_time_notifier(nullptr),
 		m_rendering(false),
 		m_idisplay_rendering(false),
@@ -374,12 +370,15 @@ void ROP_3Delight::StopRender()
 		*/
 		m_rendering = false;
 
-		if(m_renderdl)
+		if( m_sequence_context )
 		{
-			// Terminate the renderdl process
-			UTterminate(m_renderdl->getChildPid());
+			m_sequence_context->RenderControl(
+				NSI::CStringPArg( "action", "stop") );
+			/*
+				The ->End will be called in m_sequence_waiter
+			*/
+			//m_sequence_context.reset();
 
-			// Let the m_renderdl_waiter thread finish
 			m_render_end_mutex.unlock();
 		}
 		else
@@ -406,14 +405,13 @@ void ROP_3Delight::StopRender()
 	}
 
 	/*
-		Wait for m_renderdl_waiter to finish. This has to be done even if we
+		Wait for m_sequence_waiter to finish. This has to be done even if we
 		didn't explicitly terminate the renderdl process (ie : if it has
 		finished on its own), because we don't want	the thread hanging loose.
 	*/
-	if(m_renderdl_waiter.joinable())
+	if(m_sequence_waiter.joinable())
 	{
-		m_renderdl_waiter.join();
-		assert(!m_renderdl);
+		m_sequence_waiter.join();
 	}
 
 	// Notify the UI that rendering has stopped
@@ -498,51 +496,36 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 
 	if(m_current_render->BackgroundProcessRendering())
 	{
-		// Find the directory containing the renderdl executable
-		decltype(&DlGetInstallRoot) get_install_root = nullptr;
-		GetNSIAPI().LoadFunction(get_install_root, "DlGetInstallRoot" );
-		std::string bin_dir;
-		if(get_install_root)
-		{
-			bin_dir = std::string(get_install_root()) + "/bin/";
-		}
+		bool batch_tag = batch || !m_current_render->SingleFrame();
 
-		/*
-			Start a renderdl process that will start rendering as soon as we
-			have exported the first frame of the sequence.
-		*/
-		m_renderdl = new UT_ReadWritePipe;
-		std::string renderdl_command = bin_dir + "renderdl -stdinfiles -cloudtag HOUDINI";
-		if( batch || !m_current_render->SingleFrame() )
-		{
-			renderdl_command += "_BATCH";
-		}
+		m_sequence_context.reset(new NSI::Context( GetNSIAPI()) );
 
-		if(m_rop_type == rop_type::cloud)
+		if( m_rop_type == rop_type::cloud )
 		{
-			renderdl_command += " -cloud";
+			m_sequence_context->Begin((
+				NSI::IntegerArg("createsequencecontext", 1),
+				NSI::StringArg("software", batch_tag ? "HOUDINI_BATCH" : "HOUDINI"),
+				NSI::IntegerArg("cloud", 1)) );
 		}
 		else
 		{
-			renderdl_command += " -processingoptions";
-		}
-
-		if(!m_renderdl->open(renderdl_command.c_str()))
-		{
-			delete m_renderdl;
-			m_renderdl = nullptr;
-			return 0;
+			m_sequence_context->Begin((
+				NSI::IntegerArg("createsequencecontext", 1),
+				NSI::StringArg("software", batch_tag ? "HOUDINI_BATCH" : "HOUDINI"),
+				NSI::IntegerArg("readpreferences", batch ? 0 : 1)) );
 		}
 
 		/*
-			Start a thread that will wait for the renderdl process to finish and
-			then delete the m_renderdl pipe object.
+			Start a thread that will wait for the quence process to finish
 		*/
-		m_renderdl_waiter =
+		m_sequence_waiter =
 			std::thread(
 				[this]()
 				{
-					UTwait(m_renderdl->getChildPid());
+					m_sequence_context->RenderControl(
+						NSI::StringArg("action", "wait") );
+					m_sequence_context->End();
+					m_sequence_context.reset();
 
 					m_render_end_mutex.lock();
 
@@ -553,10 +536,9 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 					// Notify the UI that rendering has stopped
 					m_settings.Rendering(false,false);
 
-					delete m_renderdl; m_renderdl = nullptr;
-
 					m_render_end_mutex.unlock();
 				} );
+
 	}
 
 	/*
@@ -587,11 +569,6 @@ int ROP_3Delight::startRender(int, fpreal tstart, fpreal tend)
 			m_static_nsi_file = first_frame + ".static" + extension;
 		}
 	}
-	else if(m_renderdl)
-	{
-		m_static_nsi_file = UT_TempFileManager::getTempFilename();
-		m_current_render->m_temp_filenames.push_back( m_static_nsi_file );
-	}
 
 	if(error() < UT_ERROR_ABORT)
 	{
@@ -617,19 +594,15 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 		m_current_render->set_export_path(export_file);
 		InitNSIExport(m_nsi, export_file);
 	}
-	else if(m_renderdl)
+	else if(m_sequence_context)
 	{
 		/*
-			Output NSI commands to a temporary file that will be rendered by a
-			separate renderdl process.
-
-			We don't need to delete that file as renderdl will delete it by
-			itself but we still keep this as a safety (renderdl crash etc)
+			When exporting a sequence, the frames are tied to a sequence context.
+			3Delight takes care of storing, rendering, and deleting them.
 		*/
-		frame_nsi_file = UT_TempFileManager::getTempFilename();
-		m_current_render->m_temp_filenames.push_back( frame_nsi_file );
-
-		InitNSIExport(m_nsi, frame_nsi_file);
+		assert( m_sequence_context );
+		m_nsi.Begin( NSI::IntegerArg(
+			"sequencecontext", m_sequence_context->Handle()) );
 	}
 	else
 	{
@@ -799,7 +772,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 			must wait for the render to finish (as if we were rendering "in
 			foreground", from the current thread).
 		*/
-		if(m_current_render->m_batch && !m_renderdl)
+		if(m_current_render->m_batch && !m_sequence_context)
 		{
 			m_nsi.RenderControl(NSI::CStringPArg("action", "wait"));
 		}
@@ -814,13 +787,6 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 		m_static_nsi.SetHandle(NSI_BAD_CONTEXT);
 		// Close the main rendering/exporting context
 		m_nsi.End();
-	}
-
-	if(m_renderdl)
-	{
-		// Communicate the name of the exported NSI file to the renderdl process
-		fprintf(m_renderdl->getWriteFile(), "%s\n", frame_nsi_file.c_str());
-		fflush(m_renderdl->getWriteFile());
 	}
 
 	if(error() < UT_ERROR_ABORT)
@@ -839,22 +805,17 @@ ROP_3Delight::endRender()
 		executePostRenderScript(m_end_time);
 	}
 
-	// Close the renderdl NSI file names pipe if necessary
-	if(m_renderdl)
+	if(m_sequence_context)
 	{
-		/*
-			Send an empty file name to signal the end of the list. The renderdl
-			process will exit and close the pipe from its end.
-		*/
-		fprintf(m_renderdl->getWriteFile(), "\n");
-		fflush(m_renderdl->getWriteFile());
+		m_sequence_context->RenderControl(
+			NSI::StringArg("action", "endsequence") );
 
 		// In batch mode, wait for the renderdl process to finish before exiting
 		if(!UTisUIAvailable())
 		{
-			assert(m_renderdl_waiter.joinable());
-			m_renderdl_waiter.join();
-			assert(!m_renderdl);
+			m_sequence_context->RenderControl(
+				NSI::StringArg("action", "wait") );
+			m_sequence_context.reset();
 		}
 	}
 
@@ -863,7 +824,7 @@ ROP_3Delight::endRender()
 		If we render in a background thread, the rendering context will be
 		destroyed by that thread's stoppedcallback.
 		If we render in a separate renderdl process, it will be destroyed by the
-		m_renderdl_waiter thread.
+		m_sequence_waiter thread.
 		So, we actually only destroy it when exporting an NSI file or rendering
 		a single frame in batch mode, which doesn't occur in a separate thread.
 	*/
