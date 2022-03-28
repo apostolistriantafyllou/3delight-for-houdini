@@ -1271,11 +1271,10 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 			For example, "Z"
 		*/
 		std::map<std::string, std::vector<OBJ_Node*>> aov_light_categories;
-		unsigned nb_light_categories = 1;
+		unsigned nb_light_categories = light_categories.size();
 		if (desc.m_support_multilight)
 		{
 			aov_light_categories = light_categories;
-			nb_light_categories = light_categories.size();
 		}
 		else
 		{
@@ -1336,16 +1335,36 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 				std::string file_output_name =
 					getImageFilenamePerAOV(image_file_name, desc.m_filename_token, category.first);
 
+				size_t light_pos = image_file_name.toStdString().find("<light>");
+				size_t aov_pos = image_file_name.toStdString().find("<aov>");
+
+				char suffix[12] = "1";
+
+				bool suffix_updated = true;
+				//Use the proper suffix for drivername so it writes the aov properly when using layer tokens.
+
+				if (light_pos != std::string::npos && aov_pos != std::string::npos)
+				{
+					::sprintf(suffix, "%u", i * nb_light_categories + j + 1);
+				}
+				else if (aov_pos != std::string::npos)
+				{
+					::sprintf(suffix, "%u", i + 1);
+				}
+				else if (light_pos != std::string::npos)
+				{
+					::sprintf(suffix, "%u", j + 1);
+				}
+
+				file_driver_name = "file_driver_";
+				file_driver_name += suffix;
+
 				//Don't create a new driver for the same filename.
 				//Could have a nicer solution rather than using vector.
 				if (file_driver_name.empty() 
 					|| std::find(file_layers.begin(), file_layers.end(), file_output_name) == file_layers.end())
 				{
 					file_layers.push_back(file_output_name);
-					char suffix[12] = "";
-					::sprintf(suffix, "%u", i*nb_light_categories+j+1);
-					file_driver_name = "file_driver_";
-					file_driver_name += suffix;
 					i_ctx.m_nsi.Create(file_driver_name, "outputdriver");
 					i_ctx.m_nsi.SetAttribute(
 						file_driver_name,
