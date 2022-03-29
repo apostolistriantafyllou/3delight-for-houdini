@@ -1341,19 +1341,20 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 				char suffix[12] = "1";
 
 				bool suffix_updated = true;
-				//Use the proper suffix for drivername so it writes the aov properly when using layer tokens.
+				int buffer_len = sizeof(suffix)-1; //char is one byte so we don't need to divide with size of one element.
 
+				//Use the proper suffix for drivername so it writes the aov properly when using layer tokens.
 				if (light_pos != std::string::npos && aov_pos != std::string::npos)
 				{
-					::sprintf(suffix, "%u", i * nb_light_categories + j + 1);
+					::snprintf(suffix, buffer_len, "%u", i * nb_light_categories + j + 1);
 				}
 				else if (aov_pos != std::string::npos)
 				{
-					::sprintf(suffix, "%u", i + 1);
+					::snprintf(suffix, buffer_len, "%u", i + 1);
 				}
 				else if (light_pos != std::string::npos)
 				{
-					::sprintf(suffix, "%u", j + 1);
+					::snprintf(suffix, buffer_len, "%u", j + 1);
 				}
 
 				file_driver_name = "file_driver_";
