@@ -1,10 +1,16 @@
 # This is the module which handles the translation 3Delight for Houdini's
 # shader VOP nodes to USD shaders.
 import hou
-from husdshadertranslators.default \
-    import DefaultShaderTranslator as TranslatorBase
-from husdshadertranslators.default \
-    import DefaultShaderTranslatorHelper as HelperBase
+if hou.applicationVersion()[0] >= 19:
+    from husd.shadertranslator \
+        import ShaderTranslator as TranslatorBase
+    from husd.shadertranslator \
+        import ShaderTranslatorHelper as HelperBase
+else:
+    from husdshadertranslators.default \
+        import DefaultShaderTranslator as TranslatorBase
+    from husdshadertranslators.default \
+        import DefaultShaderTranslatorHelper as HelperBase
 
 class NSIShaderTranslatorHelper(HelperBase):
     def _createMBShader(self, mb_node, requested_shader_type):
@@ -51,8 +57,8 @@ class NSIShaderTranslator(TranslatorBase):
 
 ################################################################################
 # In order to be considered for shader translation, this python module
-# implements the function that returns a translator object.
-# See husdshadertranslators.default.usdShaderTranslator() for details.
+# implements the factory function that returns a translator object.
+# See husd.shadertranslator.usdShaderTranslator() for details.
 nsi_translator = NSIShaderTranslator()
 def usdShaderTranslator():
     return nsi_translator

@@ -208,7 +208,15 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/HydraNSI/CMakeLists.txt"
 			Solaris/HdNSIRendererPlugin_Geometry.ds
 			Solaris/HdNSIRendererPlugin_Viewport.ds
 		DESTINATION soho/parameters)
-	install(
-		DIRECTORY Solaris/husdshadertranslators
-		DESTINATION python${_houdini_python_version}libs)
+	if(Houdini_VERSION_MAJOR GREATER_EQUAL 19)
+		install(
+			FILES Solaris/husdshadertranslators/nsi.py
+			DESTINATION husdplugins/shadertranslators)
+	else()
+		# Once we drop support < 19 and remove this, move the .py to the new
+		# directory structure and use a directory install above.
+		install(
+			DIRECTORY Solaris/husdshadertranslators
+			DESTINATION python${_houdini_python_version}libs)
+	endif()
 endif()
