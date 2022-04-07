@@ -5,6 +5,8 @@ environmentlight(
     float light_intensity = 1,
     float light_exposure = 1,
 	float _3dl_spread = 1,
+	int use_background_texture = 0,
+	string background_texture = "" [[int texturefile = 1 ]],
 	float _3dl_diffuse_contribution = 1,
 	float _3dl_specular_contribution = 1,
 	float _3dl_hair_contribution = 1,
@@ -16,8 +18,19 @@ environmentlight(
 	R = rotate(R, M_PI, vector(0,1,0));
 	float s = (-atan2(R[0], R[2]) + M_PI) / (2*M_PI);
 	float t = 1 - acos(R[1]) / M_PI;
-	color tex = env_map == "" ? color(1) : (color)texture(env_map, s, t);
-	Ci = emission() * tex * light_color * light_intensity * pow(2, light_exposure);
+	color tex;
+
+	if( use_background_texture && raytype("camera") )
+	{
+		tex = (color)texture(background_texture, s, t);
+	}
+	else
+	{
+		tex = env_map == "" ? color(1) : (color)texture(env_map, s, t);
+		tex *= light_color * light_intensity * pow(2, light_exposure);
+	}
+
+	Ci = tex*emission();
 
 	/*
 		Conditions are arranged so that if 3Delight tags hair rays as

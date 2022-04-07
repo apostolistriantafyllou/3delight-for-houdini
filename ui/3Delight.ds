@@ -389,6 +389,29 @@
 		}
 	}
 
+	DELIGHT_FULL_TITLE(_3dl_obj_background_texture, "Background Texture")
+
+	collection
+	{
+		name _3dl_background_texture_group
+		parmtag	{ spare_category "3Delight" }
+
+		parm
+		{
+			SOHO_TOGGLE(use_background_texture, "Use Background Texture", "3Delight", 0)
+			help "Enables use of the background texture value as the camera background instead of the same texture as for lighting."
+		}
+
+		parm
+		{
+			SOHO_FILE(background_texture, "Background Texture", "3Delight", "")
+			parmtag	{ filechooser_mode	"read" }
+			help "Texture used as background for the camera."
+			disablewhen	"{ use_background_texture == 0 }"
+		}
+	}
+
+
 	DELIGHT_FULL_TITLE(_3dl_obj_light_contrib, "Contributions")
 
 	collection
