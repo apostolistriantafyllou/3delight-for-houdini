@@ -48,6 +48,7 @@ dlg.gad = DIALOG "AOV Selector"
             TOGGLE_BUTTON "Camera space normal":LABEL_WIDTH VALUE(N.camera.val);
             TOGGLE_BUTTON "World space position":LABEL_WIDTH VALUE(P.world.val);
             TOGGLE_BUTTON "World space normal":LABEL_WIDTH VALUE(N.world.val);
+            TOGGLE_BUTTON "Reference Position":LABEL_WIDTH VALUE(Pref.val);
             TOGGLE_BUTTON "Shadow Mask":LABEL_WIDTH VALUE(shadow_mask.val);
             TOGGLE_BUTTON "UV":LABEL_WIDTH VALUE(st.val);
             TOGGLE_BUTTON "Geometry Cryptomatte":LABEL_WIDTH VALUE(id.geometry.val);
