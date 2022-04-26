@@ -650,6 +650,7 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 	if(m_current_render->m_rop_type != rop_type::stand_in)
 	{
 		ExportDefaultMaterial(*m_current_render);
+		ExportAtmosphere(*m_current_render);
 		if(m_current_render->m_rop_type == rop_type::viewport)
 		{
 			viewport_hook_builder::instance().connect(&m_nsi);
@@ -659,7 +660,6 @@ ROP_3Delight::renderFrame(fpreal time, UT_Interrupt*)
 		}
 		else
 		{
-			ExportAtmosphere(*m_current_render);
 			ExportOutputs(*m_current_render);
 		}
 		ExportGlobals(*m_current_render);
