@@ -538,6 +538,11 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 			&PRM_SpareData::objGeometryPath, 1, nullptr, nullptr)
 	};
 
+	static std::vector<PRM_Template> viewport_scene_elements_templates =
+	{
+		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &atmosphere, &atmosphere_d, nullptr, nullptr, nullptr),
+	};
+
 	static std::vector<PRM_Template> camera_templates =
 	{
 		PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &camera, &camera_d, nullptr, nullptr, nullptr, &PRM_SpareData::objCameraPath),
@@ -974,6 +979,7 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	static std::vector<PRM_Default> viewport_main_tabs=
 	{
 		PRM_Default(viewport_quality_templates.size(), "Quality"),
+		PRM_Default(viewport_scene_elements_templates.size(), "Scene Elements"),
 		PRM_Default(overrides_templates.size(), "Overrides"),
 	};
 
@@ -1084,6 +1090,12 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 				templates.end(),
 				viewport_quality_templates.begin(),
 				viewport_quality_templates.end());
+
+			// Scene Elements
+			templates.insert(
+				templates.end(),
+				viewport_scene_elements_templates.begin(),
+				viewport_scene_elements_templates.end());
 
 			templates.insert(
 				templates.end(),
