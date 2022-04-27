@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <iostream>
 #include <unordered_set>
+#include <forward_list>
 
 vop::vop(
 	const context& i_ctx,
@@ -606,7 +607,7 @@ void vop::add_and_connect_aov_group() const
 
 		m_nsi.Connect( handle, "outColor", m_handle, "aovGroup" );
 
-		std::vector<std::string> aov_names_storage;
+		std::forward_list<std::string> aov_names_storage;
 		std::vector<const char *> aov_names;
 		std::vector<float> aov_values;
 
@@ -614,10 +615,8 @@ void vop::add_and_connect_aov_group() const
 		for (int j = 0; j < aovGroupNode->getNumVisibleInputs(); j++)
 		{
 			UT_String aov_name = aovGroupNode->inputLabel(j);
-			char* aov_name_buffer = new char[aov_name.toStdString().size() + 1];
-			std::strncpy(aov_name_buffer, aov_name.toStdString().c_str(), aov_name.toStdString().size() + 1);
-			aov_names.push_back(aov_name_buffer);
-
+			aov_names_storage.push_front(aov_name.toStdString());
+			aov_names.push_back(aov_names_storage.front().c_str());
 			aov_values.push_back(0.0f);
 			aov_values.push_back(0.0f);
 			aov_values.push_back(0.0f);
