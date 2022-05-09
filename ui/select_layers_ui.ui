@@ -38,6 +38,7 @@ dlg.gad = DIALOG "AOV Selector"
             TOGGLE_BUTTON "Toon Diffuse":LABEL_WIDTH VALUE(toon_diff.val);
             TOGGLE_BUTTON "Toon Specular":LABEL_WIDTH VALUE(toon_spec.val);
             TOGGLE_BUTTON "Toon Matte":LABEL_WIDTH VALUE(toon_matte.val);
+            TOGGLE_BUTTON "Toon Tint":LABEL_WIDTH VALUE(toon_tint.val);
             TOGGLE_BUTTON "Outlines":LABEL_WIDTH VALUE(outlines.val);
         }
         COL

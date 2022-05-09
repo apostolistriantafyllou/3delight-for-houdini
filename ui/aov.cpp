@@ -34,6 +34,7 @@ std::vector<aov::description> descriptions =
 	{ aov::e_shading, "Toon Diffuse", "toon_diff", "toon_diffuse", "shader", "color", false, false },
 	{ aov::e_shading, "Toon Specular", "toon_spec", "toon_specular", "shader", "color", false, false },
 	{ aov::e_shading, "Toon Matte", "toon_matte", "toon_matte", "shader", "color", false, false },
+	{ aov::e_shading, "Toon Tint", "toon_tint", "toon_tint", "shader", "color", false, false },
 	{ aov::e_shading, "Outlines", "outlines", "outlines", "shader", "quad", false, false },
 	{ aov::e_auxiliary, "Albedo", "albedo", "albedo", "shader", "color", false, false },
 	{ aov::e_auxiliary, "Z (depth)", "zdepth", "z", "builtin", "scalar", false, false },
