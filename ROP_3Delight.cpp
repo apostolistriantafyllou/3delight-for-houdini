@@ -1170,6 +1170,10 @@ ROP_3Delight::ExportOutputs(const context& i_ctx, bool i_ipr_camera_change)const
 
 	UT_String filter;
 	evalString(filter, settings::k_pixel_filter, 0, current_time);
+	if (filter == "blackman-harris-importance-sample")
+	{
+		filter = "blackman-harris";
+	}
 	double filter_width = evalFloat(settings::k_filter_width, 0, current_time);
 
 	std::vector<std::string> light_names;

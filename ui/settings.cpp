@@ -376,6 +376,7 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	static PRM_Item pixel_filter_i[] =
 	{
 		PRM_Item("blackman-harris", "Blackman-Harris"),
+		PRM_Item("blackman-harris-importance-sample", "Blackman-Harris Importance Sample"),
 		PRM_Item("mitchell", "Mitchell"),
 		PRM_Item("catmull-rom", "Catmull-Rom"),
 		PRM_Item("sinc", "Sinc"),
