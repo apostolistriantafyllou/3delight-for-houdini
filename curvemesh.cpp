@@ -142,6 +142,12 @@ void curvemesh::export_basic_attributes(
 
 	export_attributes(to_export, *curve, i_time);
 
+	std::vector< std::string > rest{ "rest" };
+	rest.push_back("rnml");
+	exporter::export_attributes(
+		rest, *curve,
+		m_context.ShutterOpen(), GT_DataArrayHandle());
+
 	if( std::find(to_export.begin(),to_export.end(),"width")!=to_export.end() &&
 		std::find(to_export.begin(),to_export.end(),"pscale")!=to_export.end() )
 	{
