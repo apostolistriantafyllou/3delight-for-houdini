@@ -120,6 +120,7 @@ public:
 	static const char* k_pixel_samples;
 	static const char* k_volume_samples;
 	static const char* k_pixel_filter;
+	static const char* k_importance_sample;
 	static const char* k_filter_width;
 	static const char* k_motion_blur;
 	static const char* k_max_diffuse_depth;

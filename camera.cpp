@@ -482,7 +482,7 @@ void camera::set_attributes( void ) const
 		->SetArrayType(NSITypeDouble, 2)
 		->SetCount(2)
 		->SetValuePointer(sw));
-	if (pixel_filter == "blackman-harris-importance-sample")
+	if (pixel_filter == settings::k_importance_sample)
 	{
 		m_nsi.SetAttribute(screen_handle(), NSI::IntegerArg("importancesamplefilter", 1));
 	}

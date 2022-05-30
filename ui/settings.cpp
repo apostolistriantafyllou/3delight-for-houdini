@@ -52,6 +52,7 @@ const char* settings::k_shading_samples = "shading_samples";
 const char* settings::k_pixel_samples = "pixel_samples";
 const char* settings::k_volume_samples = "volume_samples";
 const char* settings::k_pixel_filter = "pixel_filter";
+const char* settings::k_importance_sample = "blackman-harris-importance-sample";
 const char* settings::k_filter_width = "filter_width";
 const char* settings::k_motion_blur = "motion_blur";
 const char* settings::k_max_diffuse_depth = "max_diffuse_depth";
@@ -376,7 +377,7 @@ PRM_Template* settings::GetTemplates(rop_type i_rop_type)
 	static PRM_Item pixel_filter_i[] =
 	{
 		PRM_Item("blackman-harris", "Blackman-Harris"),
-		PRM_Item("blackman-harris-importance-sample", "Blackman-Harris Importance Sample"),
+		PRM_Item(k_importance_sample, "Blackman-Harris Importance Sample"),
 		PRM_Item("mitchell", "Mitchell"),
 		PRM_Item("catmull-rom", "Catmull-Rom"),
 		PRM_Item("sinc", "Sinc"),
