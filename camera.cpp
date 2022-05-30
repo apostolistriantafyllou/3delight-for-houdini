@@ -473,6 +473,8 @@ void camera::set_attributes( void ) const
 	*/
 	double sw[4];
 	get_screen_window(sw, *cam, m_context.m_current_time);
+	UT_String pixel_filter;
+	m_context.m_rop->evalString(pixel_filter, settings::k_pixel_filter, 0, m_context.m_current_time);
 
 	m_nsi.SetAttribute(
 		screen_handle(),
@@ -480,6 +482,10 @@ void camera::set_attributes( void ) const
 		->SetArrayType(NSITypeDouble, 2)
 		->SetCount(2)
 		->SetValuePointer(sw));
+	if (pixel_filter == settings::k_importance_sample)
+	{
+		m_nsi.SetAttribute(screen_handle(), NSI::IntegerArg("importancesamplefilter", 1));
+	}
 
 	if(m_type == "fisheyecamera")
 	{
